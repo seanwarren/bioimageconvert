@@ -1,0 +1,99 @@
+= Version Change Log =
+
+== 1.66 ==
+ * New: texture atlas generation
+ * New: support for multiple ROIs
+ * Update: Improved generation of video files, specifically H264 codec based
+ * Update: updated to ffmpeg 2.2.1
+ * Update: updated all image libraries
+
+== 1.65 ==
+ * New: thresholding, gamma correction, brightness and contrast
+ * New: Image transformations: color, space, etc
+ * New: Most operations are parallelized 
+ * New: rotation, flip and mirror commands
+ * New: slic superpixels
+ * New: guessing rotation based on EXIF
+ * New: reading input files from a text file
+ * New: combined channel enhancements for RGB images
+ * New: Axis reprojection: XYZ -> XZY and XYZ -> YZX
+ * Update: many speed updates to large tiff files, meta and info calls
+ * Fix: many fixes for very large files, pixel formats, 3D interpolation
+
+== 1.55 ==
+ * New: Support for Digital Camera RAW - Adobe DNG, Canon CR2, CRW, Nikon NEF...
+ * New: Support for MicroManager OME-TIFF JSON metadata
+ * New: Parallelized resize and pyramid construction functions
+
+== 1.54 ==
+ * New: Channel fusion to RGB image given RGB components for each channel
+ * New: Decoding of preferred RGB components for each channel for all formats
+ * Updated: Zeiss LSM parser improved to decode more meatdata
+ * Updated: More information is printed about formats in XML
+
+== 1.53 ==
+ * New: Full support for OME-BigTIFF
+ * ffmpeg 1.0 support with WebM, x264, etc
+ * video deinterlacing
+
+== 1.52 ==
+
+ * New: No upsample argument in resize
+ * Update: Many improvements and fixes to OIB reader
+
+== 1.51 ==
+
+ * Support Zeiss ZVI file format
+ * EXIF/IPTC metadata parsing
+ * improve preferred channel mapping for OIB and Fluoview
+ * add support for 7 channel visual mapping: R,G,B,Y,C,M,Gray
+ * add registration based "overlapping frames" constraint for sampling
+ * add skipping frames in the beginning and at the end
+ * new binary: gobjects renderer, separate due to Qt usage
+ * new: store to and use histogram from the file
+ * support progressive jpeg encoding, make it default but allow option to disable
+
+== 1.45 ==
+
+ * New: Channel fusion that allows combining channels, ex: 1+4,2+4,3
+ * New: 3D interpolation (for 3D images) with Nearest Neighbor, Trilinear and Tricubic
+ * New: Append channels from another file, images must match sizes and pixel formats
+ * Fix: Writing OME-TIFF images with multiple channels
+
+== 1.44 ==
+
+==== General ====
+
+ * Major library updates and support for new platforms
+ * Added testing framework and all releases are now tested against exhaustive benchmark
+ * Full support for Windows64
+ * Full support for Intel based MacOSX
+ * Full support for Signed, Unsigned and Float images in: 8/16/32/64 bits (includes resize, histogram and Luts)
+ * Updated Matlab MEX: bimread
+ * Updated libraries: ffmpeg, libtiff, libjpeg, libpng
+
+==== Command line ====
+
+ * Support for definition of 5D geometry from command line
+ * All metadata is now transfered by default 
+ * Add tiling command (generates a tiled pyramid is specified format in desired location)
+
+==== Formats ====
+
+ * Full support for BigTIFF 
+ * Added support for OIB version 2.0.0.0
+ * Many OME-TIFF fixes
+ 
+
+== 1.40 ==
+
+ * Heavily improved metadata system: extraction of many more tags for all formats, code clean-up, new command line options
+ * Added full support for OME-TIFF file format
+ * Heavily improved parsing for STK, LSM, Fluoview
+ * Improved command line parsing
+ * Several improvements and fixes for OIB format, mostly fixed loading of mosaics, greatly improved speed for large files
+ * Support for 1 and 4 bit images, they will be converted to 8 bit images
+
+== 1.33 ==
+
+ * Start of changelog

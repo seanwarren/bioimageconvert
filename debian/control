@@ -1,0 +1,16 @@
+Source: imgcnv
+Section: graphics
+Priority: extra
+Maintainer: kristian kvilekval <kgk@loup.ece.ucsb.edu>
+Build-Depends: debhelper (>= 8.0.0), qt4-qmake, libbz2-dev, libxvidcore-dev, libopenjpeg-dev, libschroedinger-dev, libtheora-dev, yasm, libfftw3-dev
+Standards-Version: 3.9.3
+Homepage: http://bioimage.ucsb.edu/
+#Vcs-Git: git://git.debian.org/collab-maint/imgcnv.git
+#Vcs-Browser: http://git.debian.org/?p=collab-maint/imgcnv.git;a=summary
+
+Package: imgcnv
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Image conversion for biological formats 
+ Jacknife of bioimage formats and processing
+

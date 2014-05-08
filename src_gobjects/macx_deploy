@@ -1,0 +1,3 @@
+#!/bin/sh
+
+macdeployqt ../imgcnv_gobjects.app

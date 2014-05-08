@@ -1,0 +1,17 @@
+imgcnv (1.65) unstable; urgency=low
+
+  * new upstream
+
+ -- kristian kvilekval <kgk@loup.ece.ucsb.edu>  Fri, 22 Nov 2013 15:47:04 -0800
+
+imgcnv (1.64) unstable; urgency=low
+
+  * new upostream
+
+ -- kristian kvilekval <kgk@loup.ece.ucsb.edu>  Thu, 26 Sep 2013 16:38:18 -0700
+
+imgcnv (1.62-1) unstable; urgency=low
+
+  * Initial release (Closes: #nnnn)  <nnnn is the bug number of your ITP>
+
+ -- kristian kvilekval <kgk@loup.ece.ucsb.edu>  Thu, 22 Aug 2013 10:54:53 -0700

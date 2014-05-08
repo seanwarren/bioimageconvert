@@ -1,0 +1,55 @@
+diff -r c0d2ca69e959 libsrc/libtiff/tif_dir.c
+--- a/libsrc/libtiff/tif_dir.c	Wed Oct 16 18:37:11 2013 -0700
++++ b/libsrc/libtiff/tif_dir.c	Mon Oct 21 11:06:15 2013 -0700
+@@ -1467,11 +1467,11 @@
+ /*
+  * Count the number of directories in a file.
+  */
+-uint16
++uint64
+ TIFFNumberOfDirectories(TIFF* tif)
+ {
+ 	uint64 nextdir;
+-	uint16 n;
++	uint64 n;
+ 	if (!(tif->tif_flags&TIFF_BIGTIFF))
+ 		nextdir = tif->tif_header.classic.tiff_diroff;
+ 	else
+diff -r c0d2ca69e959 libsrc/libtiff/tif_open.c
+--- a/libsrc/libtiff/tif_open.c	Wed Oct 16 18:37:11 2013 -0700
++++ b/libsrc/libtiff/tif_open.c	Mon Oct 21 11:06:15 2013 -0700
+@@ -592,7 +592,7 @@
+ /*
+  * Return index of the current directory.
+  */
+-uint16
++uint64
+ TIFFCurrentDirectory(TIFF* tif)
+ {
+ 	return (tif->tif_curdir);
+diff -r c0d2ca69e959 libsrc/libtiff/tiffio.h
+--- a/libsrc/libtiff/tiffio.h	Wed Oct 16 18:37:11 2013 -0700
++++ b/libsrc/libtiff/tiffio.h	Mon Oct 21 11:06:15 2013 -0700
+@@ -388,8 +388,8 @@
+ extern TIFFMapFileProc TIFFGetMapFileProc(TIFF*);
+ extern TIFFUnmapFileProc TIFFGetUnmapFileProc(TIFF*);
+ extern uint32 TIFFCurrentRow(TIFF*);
+-extern uint16 TIFFCurrentDirectory(TIFF*);
+-extern uint16 TIFFNumberOfDirectories(TIFF*);
++extern uint64 TIFFCurrentDirectory(TIFF*);
++extern uint64 TIFFNumberOfDirectories(TIFF*);
+ extern uint64 TIFFCurrentDirOffset(TIFF*);
+ extern uint32 TIFFCurrentStrip(TIFF*);
+ extern uint32 TIFFCurrentTile(TIFF* tif);
+diff -r c0d2ca69e959 libsrc/libtiff/tiffiop.h
+--- a/libsrc/libtiff/tiffiop.h	Wed Oct 16 18:37:11 2013 -0700
++++ b/libsrc/libtiff/tiffiop.h	Mon Oct 21 11:06:15 2013 -0700
+@@ -136,7 +136,7 @@
+ 	} tif_header;
+ 	uint16               tif_header_size;  /* file's header block and its length */
+ 	uint32               tif_row;          /* current scanline */
+-	uint16               tif_curdir;       /* current directory (index) */
++	uint64               tif_curdir;       /* current directory (index) */
+ 	uint32               tif_curstrip;     /* current strip for read/write */
+ 	uint64               tif_curoff;       /* current offset for read/write */
+ 	uint64               tif_dataoff;      /* current offset for writing dir */

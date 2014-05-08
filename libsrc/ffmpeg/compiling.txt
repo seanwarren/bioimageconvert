@@ -1,0 +1,21 @@
+
+Use the shared-64 shared-dev-64 builds from:
+  http://ffmpeg.arrozcru.org/autobuilds/
+
+
+BUILDING FFMPEG ON WINDOWS: (2006-10-03)
+- install cygwin
+- install extra cygwin packages:
+	gcc-mingw-core
+- start cygwin, change to the DV Scene Maker directory, and enter the following commands:
+	$ ./build-ffmpeg-cygwin.sh
+- If ./build-ffmpeg-cygwin.sh was unable to find your Visual Studio 2005 bin directory:
+- start a Visual Studio 2005 command prompt, change to the ffmpeg-out directory, and enter the following commands:
+	> lib /def:avutil-49.def
+	> lib /def:avformat-50.def
+	> lib /def:avcodec-51.def
+- now copy the *.dll and *.lib files from ffmpeg-out to vivia/Windows/lib
+
+
+Last Update: 2006-11-18, Ellis Whitehead
+Last Update: 2006-11-18: Kubuntu Edgy Eft dependencies
