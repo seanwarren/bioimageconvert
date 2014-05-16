@@ -336,5 +336,16 @@ void xstring::fromUTF16(const std::wstring &utf16) {
     *this = converter.to_bytes(utf16);
 }
 
+/*
+std::string xstring::toLatin1() const {
+    std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>, wchar_t> converter;
+    return converter.from_bytes(*this);
+}
+
+void xstring::fromLatin1(const std::string &str) {
+    std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>, wchar_t> converter;
+    *this = converter.to_bytes(utf16);
+}*/
+
 #endif
 

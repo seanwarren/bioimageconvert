@@ -1,5 +1,12 @@
 = Version Change Log =
 
+== 1.68 ==
+
+ * Update: OME-TIFF encoder/decoder updated to read and write new format, still compatible with the old one
+ * Update: Full support of unicode filenames for windows
+ * Fix: Report errors when tile could not be created due to unreadable format
+ * Fix: Removed error during PNG reading due to incorrect color space
+
 == 1.66 ==
  * New: texture atlas generation
  * New: support for multiple ROIs

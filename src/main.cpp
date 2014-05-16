@@ -111,7 +111,7 @@
  Ver : 54.2
 *******************************************************************************/
 
-#define IMGCNV_VER "1.67"
+#define IMGCNV_VER "1.68"
 
 #include <cmath>
 #include <cstdio>
@@ -142,6 +142,7 @@
 #define IMGCNV_ERROR_WRITING_FILE           5
 #define IMGCNV_ERROR_WRITING_NOT_SUPPORTED  6
 #define IMGCNV_ERROR_CREATING_IMAGE         7
+#define IMGCNV_ERROR_TIMEOUT                99
 
 using namespace bim;
 
@@ -1246,7 +1247,12 @@ int extractTiles(DConf *c) {
  
     ImagePyramid ip;
     ip.setMinImageSize( tile_size );
-    ip.fromFile( input_filename, 0 ); // dima: load only page 0 !!!!!!!!!!!!!
+    
+    // dima: load only page 0 !!!!!!!!!!!!!
+    if (!ip.fromFile(input_filename, 0)) {
+        printf("Input format is not supported\n");
+        return IMGCNV_ERROR_READING_FILE;
+    }
 
     for (int l=0; l<ip.numberLevels(); ++l) {
         Image *level_img = ip.imageAt(l);

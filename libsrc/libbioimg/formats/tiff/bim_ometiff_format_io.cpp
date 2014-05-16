@@ -371,178 +371,232 @@ void parse_json_object (bim::TagMap *hash, Jzon::Object &parent_node, const std:
   }
 }
 
-bim::uint append_metadata_omeTiff (bim::FormatHandle *fmtHndl, bim::TagMap *hash ) {
+bim::uint append_metadata_omeTiff(bim::FormatHandle *fmtHndl, bim::TagMap *hash) {
 
-  if (!fmtHndl) return 1;
-  if (!fmtHndl->internalParams) return 1;
-  if (!hash) return 1;
+    if (!fmtHndl) return 1;
+    if (!fmtHndl->internalParams) return 1;
+    if (!hash) return 1;
 
-  bim::TiffParams *par = (bim::TiffParams *) fmtHndl->internalParams;
-  bim::ImageInfo *info = &par->info;
-  bim::OMETiffInfo *ome = &par->omeTiffInfo;
+    bim::TiffParams *par = (bim::TiffParams *) fmtHndl->internalParams;
+    bim::ImageInfo *info = &par->info;
+    bim::OMETiffInfo *ome = &par->omeTiffInfo;
 
 
-  //----------------------------------------------------------------------------
-  // Dimensions
-  //----------------------------------------------------------------------------
-  hash->append_tag( bim::IMAGE_NUM_Z, (const unsigned int) info->number_z );
-  hash->append_tag( bim::IMAGE_NUM_T, (const unsigned int) info->number_t );
-  hash->append_tag( bim::IMAGE_NUM_C, ome->channels );
+    //----------------------------------------------------------------------------
+    // Dimensions
+    //----------------------------------------------------------------------------
+    hash->append_tag(bim::IMAGE_NUM_Z, (const unsigned int)info->number_z);
+    hash->append_tag(bim::IMAGE_NUM_T, (const unsigned int)info->number_t);
+    hash->append_tag(bim::IMAGE_NUM_C, ome->channels);
 
-  //----------------------------------------------------------------------------
-  // Resolution
-  //----------------------------------------------------------------------------
-  hash->set_value( bim::PIXEL_RESOLUTION_X, ome->pixel_resolution[0] );
-  hash->set_value( bim::PIXEL_RESOLUTION_Y, ome->pixel_resolution[1] );
-  hash->set_value( bim::PIXEL_RESOLUTION_Z, ome->pixel_resolution[2] );
-  hash->set_value( bim::PIXEL_RESOLUTION_T, ome->pixel_resolution[3] );
+    //----------------------------------------------------------------------------
+    // Resolution
+    //----------------------------------------------------------------------------
+    hash->set_value(bim::PIXEL_RESOLUTION_X, ome->pixel_resolution[0]);
+    hash->set_value(bim::PIXEL_RESOLUTION_Y, ome->pixel_resolution[1]);
+    hash->set_value(bim::PIXEL_RESOLUTION_Z, ome->pixel_resolution[2]);
+    hash->set_value(bim::PIXEL_RESOLUTION_T, ome->pixel_resolution[3]);
 
-  hash->set_value( bim::PIXEL_RESOLUTION_UNIT_X, bim::PIXEL_RESOLUTION_UNIT_MICRONS );
-  hash->set_value( bim::PIXEL_RESOLUTION_UNIT_Y, bim::PIXEL_RESOLUTION_UNIT_MICRONS );
-  hash->set_value( bim::PIXEL_RESOLUTION_UNIT_Z, bim::PIXEL_RESOLUTION_UNIT_MICRONS );
-  hash->set_value( bim::PIXEL_RESOLUTION_UNIT_T, bim::PIXEL_RESOLUTION_UNIT_SECONDS );
+    hash->set_value(bim::PIXEL_RESOLUTION_UNIT_X, bim::PIXEL_RESOLUTION_UNIT_MICRONS);
+    hash->set_value(bim::PIXEL_RESOLUTION_UNIT_Y, bim::PIXEL_RESOLUTION_UNIT_MICRONS);
+    hash->set_value(bim::PIXEL_RESOLUTION_UNIT_Z, bim::PIXEL_RESOLUTION_UNIT_MICRONS);
+    hash->set_value(bim::PIXEL_RESOLUTION_UNIT_T, bim::PIXEL_RESOLUTION_UNIT_SECONDS);
 
-  //----------------------------------------------------------------------------
-  // Reading OME-TIFF tag
-  //----------------------------------------------------------------------------
+    //----------------------------------------------------------------------------
+    // Reading OME-TIFF tag
+    //----------------------------------------------------------------------------
 
-  TinyTiff::IFD *ifd = par->ifds.firstIfd();
-  if (!ifd) return 1;  
-  TIFF *tif = par->tiff;
+    TinyTiff::IFD *ifd = par->ifds.firstIfd();
+    if (!ifd) return 1;
+    TIFF *tif = par->tiff;
 
-  bim::xstring tag_270 = ifd->readTagString(TIFFTAG_IMAGEDESCRIPTION);
-  if (tag_270.size()<=0) return 0;
-  hash->append_tag( bim::RAW_TAGS_PREFIX+"ome-tiff", tag_270 );
+    bim::xstring tag_270 = ifd->readTagString(TIFFTAG_IMAGEDESCRIPTION);
+    if (tag_270.size() <= 0) return 0;
+    hash->append_tag(bim::RAW_TAGS_PREFIX + "ome-tiff", tag_270);
 
-  //----------------------------------------------------------------------------
-  // Channel names and preferred mapping
-  //----------------------------------------------------------------------------
-  for (unsigned int i=0; i<(bim::uint)ome->channels; ++i) {
-    bim::xstring tag = bim::xstring::xprintf("<LightSource ID=\"LightSource:%d\">", i);
-    std::string::size_type p = tag_270.find(tag);
-    if (p == std::string::npos) continue;
-    bim::xstring tag_laser = tag_270.section("<Laser", ">", p);
-    if (tag_laser.size()<=0) continue;
-    bim::xstring medium = tag_laser.section(" LaserMedium=\"", "\"");
-    if (medium.size()<=0) continue;
-    bim::xstring wavelength = tag_laser.section(" Wavelength=\"", "\"");
-    if (wavelength.size()>0)
-      hash->append_tag( bim::xstring::xprintf(bim::CHANNEL_NAME_TEMPLATE.c_str(), i), medium+" - "+wavelength+"nm" );
-    else
-      hash->append_tag( bim::xstring::xprintf(bim::CHANNEL_NAME_TEMPLATE.c_str(), i), medium );
-  }
+    //----------------------------------------------------------------------------
+    // Channel names and preferred mapping
+    //----------------------------------------------------------------------------
+    for (unsigned int i = 0; i<(bim::uint)ome->channels; ++i) {
+        bim::xstring tag = bim::xstring::xprintf("<LightSource ID=\"LightSource:%d\">", i);
+        if (tag == "")
+            tag = bim::xstring::xprintf("<LightSource ID=\"LightSource:0:%d\">", i);
 
-  // channel names may also be stored in Logical channel in the Image
-  std::string::size_type p = tag_270.find("<LogicalChannel ");
-  if (p != std::string::npos)
-  for (unsigned int i=0; i<(bim::uint)ome->channels; ++i) {
-
-    //if (p == std::string::npos) continue;
-    bim::xstring tag = tag_270.section("<LogicalChannel", ">", p);
-    if (tag.size()<=0) continue;
-    tag = ometiff_normalize_xml_spaces( tag );
-    bim::xstring medium = tag.section(" Name=\"", "\"");
-    if (medium.size()<=0) continue;
-    bim::xstring wavelength = tag.section(" ExWave=\"", "\"");
-    int chan = i;
-    p = tag_270.find("<ChannelComponent", p);
-    tag = tag_270.section("<ChannelComponent", ">", p);
-    if (tag.size()>0) {
-      tag = ometiff_normalize_xml_spaces( tag );
-      bim::xstring index = tag.section(" Index=\"", "\"");
-      chan = index.toInt(i);
+        std::string::size_type p = tag_270.find(tag);
+        if (p == std::string::npos) continue;
+        bim::xstring tag_laser = tag_270.section("<Laser", ">", p);
+        if (tag_laser.size() <= 0) continue;
+        bim::xstring medium = tag_laser.section(" LaserMedium=\"", "\"");
+        if (medium.size() <= 0) continue;
+        bim::xstring wavelength = tag_laser.section(" Wavelength=\"", "\"");
+        if (wavelength.size()>0)
+            hash->append_tag(bim::xstring::xprintf(bim::CHANNEL_NAME_TEMPLATE.c_str(), i), medium + " - " + wavelength + "nm");
+        else
+            hash->append_tag(bim::xstring::xprintf(bim::CHANNEL_NAME_TEMPLATE.c_str(), i), medium);
     }
 
-    if (wavelength.size()>0)
-      hash->append_tag( bim::xstring::xprintf(bim::CHANNEL_NAME_TEMPLATE.c_str(), chan), medium+" - "+wavelength+"nm" );
-    else
-      hash->append_tag( bim::xstring::xprintf(bim::CHANNEL_NAME_TEMPLATE.c_str(), chan), medium );
+    // channel names may also be stored in Logical channel in the Image
+    // v <=4
+    std::string::size_type p = tag_270.find("<LogicalChannel ");
+    if (p != std::string::npos)
+    for (unsigned int i = 0; i < (bim::uint)ome->channels; ++i) {
 
-    p += 15;
-  }
+        //if (p == std::string::npos) continue;
+        bim::xstring tag = tag_270.section("<LogicalChannel", ">", p);
+        if (tag.size() <= 0) continue;
+        tag = ometiff_normalize_xml_spaces(tag);
+        bim::xstring medium = tag.section(" Name=\"", "\"");
+        if (medium.size() <= 0) continue;
+        bim::xstring wavelength = tag.section(" ExWave=\"", "\"");
+        int chan = i;
+        p = tag_270.find("<ChannelComponent", p);
+        tag = tag_270.section("<ChannelComponent", ">", p);
+        if (tag.size() > 0) {
+            tag = ometiff_normalize_xml_spaces(tag);
+            bim::xstring index = tag.section(" Index=\"", "\"");
+            chan = index.toInt(i);
+        }
+
+        if (wavelength.size() > 0)
+            hash->append_tag(bim::xstring::xprintf(bim::CHANNEL_NAME_TEMPLATE.c_str(), chan), medium + " - " + wavelength + "nm");
+        else
+            hash->append_tag(bim::xstring::xprintf(bim::CHANNEL_NAME_TEMPLATE.c_str(), chan), medium);
+
+        p += 15;
+    }
+
+    // channel names may also be stored in Logical channel in the Image
+    // v >=5
+    p = tag_270.find("<Channel ");
+    if (p != std::string::npos)
+    for (unsigned int i = 0; i < (bim::uint)ome->channels; ++i) {
+
+        bim::xstring tag = tag_270.section("<Channel", ">", p);
+        if (tag.size() <= 0) continue;
+        tag = ometiff_normalize_xml_spaces(tag);
+        bim::xstring medium = tag.section(" Name=\"", "\"");
+        if (medium.size() <= 0) continue;
+        bim::xstring index = tag.section(" ID=\"Channel:0:", "\"");
+        int chan = index.toInt(i);
+        bim::xstring wavelength = tag.section(" ExcitationWavelength=\"", "\"");
+
+        if (wavelength.size() > 0)
+            hash->append_tag(bim::xstring::xprintf(bim::CHANNEL_NAME_TEMPLATE.c_str(), chan), medium + " - " + wavelength + "nm");
+        else
+            hash->append_tag(bim::xstring::xprintf(bim::CHANNEL_NAME_TEMPLATE.c_str(), chan), medium);
+
+        p += 8;
+    }
 
 
-
-  // the preferred mapping seems to be the default order
-  /*
-  if ( fvi->display_lut.size() == 3 ) {
+    // the preferred mapping seems to be the default order
+    /*
+    if ( fvi->display_lut.size() == 3 ) {
     hash->append_tag( "display_channel_red",   fvi->display_lut[0] );
     hash->append_tag( "display_channel_green", fvi->display_lut[1] );
     hash->append_tag( "display_channel_blue",  fvi->display_lut[2] );
-  }
-  */
-
-  //----------------------------------------------------------------------------
-  // stage position
-  //----------------------------------------------------------------------------
-  p = tag_270.find("<Plane ");
-  while (p != std::string::npos) {
-    bim::xstring tag = tag_270.section("<Plane", ">", p); 
-    if (tag.size()>0) {
-      tag = ometiff_normalize_xml_spaces( tag );
-      int c = tag.section(" TheC=\"", "\"").toInt(0);
-      int t = tag.section(" TheT=\"", "\"").toInt(0);
-      int z = tag.section(" TheZ=\"", "\"").toInt(0);
-      
-      tag = tag_270.section("<StagePosition", ">", p); 
-      if (tag.size()>0) {
-        tag = ometiff_normalize_xml_spaces( tag );
-        double sx = tag.section(" PositionX=\"", "\"").toDouble(0);
-        double sy = tag.section(" PositionY=\"", "\"").toDouble(0);
-        double sz = tag.section(" PositionZ=\"", "\"").toDouble(0);
-        bim::uint64 page = t*info->number_z + z;
-        hash->append_tag( bim::xstring::xprintf( bim::STAGE_POSITION_TEMPLATE_X.c_str(), page), sx );
-        hash->append_tag( bim::xstring::xprintf( bim::STAGE_POSITION_TEMPLATE_Y.c_str(), page), sy );
-        hash->append_tag( bim::xstring::xprintf( bim::STAGE_POSITION_TEMPLATE_Z.c_str(), page), sz );
-      }
-
     }
-    p = tag_270.find("<Plane ", p+5);
-  }
+    */
 
+    //----------------------------------------------------------------------------
+    // stage position
+    //----------------------------------------------------------------------------
+    p = tag_270.find("<Plane ");
+    while (p != std::string::npos) {
+        bim::xstring tag = tag_270.section("<Plane", ">", p);
+        if (tag.size() > 0) {
+            tag = ometiff_normalize_xml_spaces(tag);
+            int c = tag.section(" TheC=\"", "\"").toInt(0);
+            int t = tag.section(" TheT=\"", "\"").toInt(0);
+            int z = tag.section(" TheZ=\"", "\"").toInt(0);
 
-  //----------------------------------------------------------------------------
-  // more stuff
-  //----------------------------------------------------------------------------
-  bim::xstring tag = tag_270.section("<CreationDate>", "</CreationDate>"); 
-  if (tag.size()>=19) {
-    tag[10] = ' ';
-    hash->append_tag( bim::IMAGE_DATE_TIME, tag );
-  }
+            tag = tag_270.section("<StagePosition", ">", p);
+            if (tag.size() > 0) {
+                tag = ometiff_normalize_xml_spaces(tag);
+                double sx = tag.section(" PositionX=\"", "\"").toDouble(0);
+                double sy = tag.section(" PositionY=\"", "\"").toDouble(0);
+                double sz = tag.section(" PositionZ=\"", "\"").toDouble(0);
+                bim::uint64 page = t*info->number_z + z;
+                hash->append_tag(bim::xstring::xprintf(bim::STAGE_POSITION_TEMPLATE_X.c_str(), page), sx);
+                hash->append_tag(bim::xstring::xprintf(bim::STAGE_POSITION_TEMPLATE_Y.c_str(), page), sy);
+                hash->append_tag(bim::xstring::xprintf(bim::STAGE_POSITION_TEMPLATE_Z.c_str(), page), sz);
+            }
 
-  p = tag_270.find("<Instrument ID=\"Instrument:0\">");
-  
-  bim::xstring tag_objective = tag_270.section("<Objective", ">", p);
-  tag_objective = ometiff_normalize_xml_spaces( tag_objective );
-  if (tag_objective.size()>0) {
-    bim::xstring model = tag_objective.section(" Model=\"", "\"");
-    if (model.size()>0)
-      hash->append_tag( bim::OBJECTIVE_DESCRIPTION, model );
-  }
-
-  bim::xstring tag_magnification = tag_270.section("<NominalMagnification>", "</NominalMagnification>", p);
-  if (tag_magnification.size()>0)
-    hash->append_tag( bim::OBJECTIVE_MAGNIFICATION, tag_magnification + "X" );
-
-
-  //----------------------------------------------------------------------------
-  // read all custom attributes
-  //----------------------------------------------------------------------------
-
-  p = tag_270.find("<CustomAttributes");
-  p = tag_270.find("<OriginalMetadata", p);
-  bim::xstring tag_original_meta = tag_270.section("<OriginalMetadata", ">", p);  
-  while (tag_original_meta.size()>0) {
-    tag_original_meta = ometiff_normalize_xml_spaces( tag_original_meta );
-    bim::xstring name = tag_original_meta.section(" Name=\"", "\"");
-    bim::xstring val = tag_original_meta.section(" Value=\"", "\"");
-    if (name.size()>0 && val.size()>0) {
-      // replace all / here with some other character
-      hash->append_tag( bim::CUSTOM_TAGS_PREFIX+name, val );
+        }
+        p = tag_270.find("<Plane ", p + 5);
     }
-    p += tag_original_meta.size();
-    tag_original_meta = tag_270.section("<OriginalMetadata", ">", p);
-  }
+
+
+    //----------------------------------------------------------------------------
+    // more stuff
+    //----------------------------------------------------------------------------
+
+    // v <=4
+    bim::xstring tag = tag_270.section("<CreationDate>", "</CreationDate>");
+    if (tag.size() >= 19) {
+        tag[10] = ' ';
+        hash->append_tag(bim::IMAGE_DATE_TIME, tag);
+    }
+
+    // v 5
+    tag = tag_270.section("<AcquisitionDate>", "</AcquisitionDate>");
+    if (tag.size() >= 19) {
+        tag[10] = ' ';
+        hash->append_tag(bim::IMAGE_DATE_TIME, tag);
+    }
+
+    p = tag_270.find("<Instrument ID=\"Instrument:0\">");
+
+    bim::xstring tag_objective = tag_270.section("<Objective", ">", p);
+    tag_objective = ometiff_normalize_xml_spaces(tag_objective);
+    if (tag_objective.size() > 0) {
+        bim::xstring model = tag_objective.section(" Model=\"", "\"");
+        if (model.size() > 0)
+            hash->append_tag(bim::OBJECTIVE_DESCRIPTION, model);
+    }
+
+    bim::xstring tag_magnification = tag_270.section("<NominalMagnification>", "</NominalMagnification>", p);
+    if (tag_magnification.size() > 0)
+        hash->append_tag(bim::OBJECTIVE_MAGNIFICATION, tag_magnification + "X");
+
+
+    //----------------------------------------------------------------------------
+    // read all custom attributes
+    //----------------------------------------------------------------------------
+
+    if (tag_270.contains("<StructuredAnnotations")) {
+        // new OME-TIFF annotations format >= 5
+        p = tag_270.find("<StructuredAnnotations");
+        p = tag_270.find("<OriginalMetadata", p);
+        bim::xstring tag_original_meta = tag_270.section("<OriginalMetadata>", "</OriginalMetadata>", p);
+        while (tag_original_meta.size() > 0) {
+            tag_original_meta = ometiff_normalize_xml_spaces(tag_original_meta);
+            bim::xstring name = tag_original_meta.section("<Key>", "</Key>");
+            bim::xstring val = tag_original_meta.section("<Value>", "</Value>");
+            if (name.size() > 0 && val.size() > 0) {
+                // replace all / here with some other character
+                hash->append_tag(bim::CUSTOM_TAGS_PREFIX + name, val);
+            }
+            p += tag_original_meta.size();
+            tag_original_meta = tag_270.section("<OriginalMetadata>", "</OriginalMetadata>", p);
+        }
+    }  else {
+        // old format <=4
+        p = tag_270.find("<CustomAttributes");
+        p = tag_270.find("<OriginalMetadata", p);
+        bim::xstring tag_original_meta = tag_270.section("<OriginalMetadata", ">", p);
+        while (tag_original_meta.size() > 0) {
+            tag_original_meta = ometiff_normalize_xml_spaces(tag_original_meta);
+            bim::xstring name = tag_original_meta.section(" Name=\"", "\"");
+            bim::xstring val = tag_original_meta.section(" Value=\"", "\"");
+            if (name.size() > 0 && val.size() > 0) {
+                // replace all / here with some other character
+                hash->append_tag(bim::CUSTOM_TAGS_PREFIX + name, val);
+            }
+            p += tag_original_meta.size();
+            tag_original_meta = tag_270.section("<OriginalMetadata", ">", p);
+        }
+    }
 
   //----------------------------------------------------------------------------
   // Reading Micro-Manager tag
@@ -569,31 +623,42 @@ bim::uint append_metadata_omeTiff (bim::FormatHandle *fmtHndl, bim::TagMap *hash
 //----------------------------------------------------------------------------
 
 std::string omeTiffPixelType( bim::ImageBitmap *img ) {
-  std::string pt = "Uint8";
-  if (img->i.depth==16 && img->i.pixelType==bim::FMT_UNSIGNED) pt = "Uint16";
-  if (img->i.depth==32 && img->i.pixelType==bim::FMT_UNSIGNED) pt = "Uint32";
-  if (img->i.depth==8  && img->i.pixelType==bim::FMT_SIGNED) pt = "int8";
-  if (img->i.depth==16 && img->i.pixelType==bim::FMT_SIGNED) pt = "int16";
-  if (img->i.depth==32 && img->i.pixelType==bim::FMT_SIGNED) pt = "int32";
-  if (img->i.depth==32 && img->i.pixelType==bim::FMT_FLOAT)  pt = "float";
-  if (img->i.depth==64 && img->i.pixelType==bim::FMT_FLOAT)  pt = "double"; 
-  return pt;
+    std::string pt = "uint8";
+    if (img->i.depth==16 && img->i.pixelType==bim::FMT_UNSIGNED) pt = "uint16";
+    if (img->i.depth==32 && img->i.pixelType==bim::FMT_UNSIGNED) pt = "uint32";
+    if (img->i.depth==8  && img->i.pixelType==bim::FMT_SIGNED)   pt = "int8";
+    if (img->i.depth==16 && img->i.pixelType==bim::FMT_SIGNED)   pt = "int16";
+    if (img->i.depth==32 && img->i.pixelType==bim::FMT_SIGNED)   pt = "int32";
+    if (img->i.depth==32 && img->i.pixelType==bim::FMT_FLOAT)    pt = "float";
+    if (img->i.depth==64 && img->i.pixelType==bim::FMT_FLOAT)    pt = "double"; 
+    return pt;
 }
 
 std::string constructOMEXML( bim::FormatHandle *fmtHndl, bim::TagMap *hash ) {
   bim::ImageBitmap *img = fmtHndl->image; 
   
   // Header
-  std::string str = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><!-- Warning: this comment is an OME-XML metadata block, which contains crucial dimensional parameters and other important metadata. Please edit cautiously (if at all), and back up the original data before doing so. For more information, see the OME-TIFF web site: http://loci.wisc.edu/ome/ome-tiff.html. --><OME xmlns=\"http://www.openmicroscopy.org/XMLschemas/OME/FC/ome.xsd\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.openmicroscopy.org/XMLschemas/OME/FC/ome.xsd http://www.openmicroscopy.org/XMLschemas/OME/FC/ome.xsd\">";
+  std::string str = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>";
+  str += "<!-- Warning: this comment is an OME-XML metadata block, which contains crucial dimensional parameters and other important metadata. Please edit cautiously (if at all), and back up the original data before doing so. For more information, see the OME-TIFF web site: http://loci.wisc.edu/ome/ome-tiff.html. -->";
+  // version <=4
+  //str += "<OME xmlns=\"http://www.openmicroscopy.org/XMLschemas/OME/FC/ome.xsd\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.openmicroscopy.org/XMLschemas/OME/FC/ome.xsd http://www.openmicroscopy.org/XMLschemas/OME/FC/ome.xsd\">";
+  // version >= 5
+  str += "<OME xmlns=\"http://www.openmicroscopy.org/Schemas/OME/2013-06\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.openmicroscopy.org/Schemas/OME/2013-06 http://www.openmicroscopy.org/Schemas/OME/2013-06/ome.xsd\">";
 
   // Image tag
-  str += bim::xstring::xprintf("<Image ID=\"openmicroscopy.org:Image:1\" Name=\"%s\" DefaultPixels=\"openmicroscopy.org:Pixels:1-1\">", "libbioimage" );
-  //str += "<CreationDate>2007-11-08T14:52:40</CreationDate>";
-  
-  str += "<Pixels ID=\"openmicroscopy.org:Pixels:1-1\"";
+  str += bim::xstring::xprintf("<Image ID=\"Image:0\" Name=\"%s\">", "bioimage.ome.tif" );
+
+  if (hash->hasKey(bim::IMAGE_DATE_TIME))
+      str += bim::xstring::xprintf("<AcquisitionDate>%s</AcquisitionDate>", hash->get_value(bim::IMAGE_DATE_TIME).c_str());
+
+  str += bim::xstring::xprintf("<Description>Constructed by libbioimage ome-tiff encoder v4.0.3</Description>");
+
+
+  str += "<Pixels ID=\"Pixels:0\"";
   str += " DimensionOrder=\"XYCZT\"";
-  str += bim::xstring::xprintf(" PixelType=\"%s\"", omeTiffPixelType(img).c_str() );
-  str += " BigEndian=\"false\""; 
+  str += bim::xstring::xprintf(" Type=\"%s\"", omeTiffPixelType(img).c_str() );
+  str += bim::xstring::xprintf(" SignificantBits=\"%d\"", img->i.depth);
+  str += " BigEndian=\"false\" Interleaved=\"false\"";
 
   str += bim::xstring::xprintf(" SizeX=\"%d\"", img->i.width );
   str += bim::xstring::xprintf(" SizeY=\"%d\"", img->i.height ); 
@@ -619,41 +684,43 @@ std::string constructOMEXML( bim::FormatHandle *fmtHndl, bim::TagMap *hash ) {
   }
 
   str += " >";
-  str += "<TiffData/></Pixels>";
 
   // channel names
   if (hash && hash->size()>0 && hash->hasKey(bim::CHANNEL_NAME_0)) {
-    for (bim::uint i=0; i<img->i.samples; ++i) {
-      bim::xstring key = bim::xstring::xprintf(bim::CHANNEL_NAME_TEMPLATE.c_str(), i);
-      if (hash->hasKey(key)) {
-        str += bim::xstring::xprintf("<LogicalChannel ID=\"LogicalChannel:%d\" Name=\"%s\" SamplesPerPixel=\"1\">", 
-          i, hash->get_value(key).c_str() );
-        str += bim::xstring::xprintf("<ChannelComponent Index=\"%d\" Pixels=\"Pixels:0\"/>", i);
-        str += "</LogicalChannel>";
+      for (bim::uint i = 0; i<img->i.samples; ++i) {
+          bim::xstring key = bim::xstring::xprintf(bim::CHANNEL_NAME_TEMPLATE.c_str(), i);
+          if (hash->hasKey(key)) {
+              str += bim::xstring::xprintf("<Channel ID=\"Channel:0:%d\" Name=\"%s\" SamplesPerPixel=\"1\">",
+                  i, hash->get_value(key).c_str());
+              str += bim::xstring::xprintf("<DetectorSettings ID=\"Detector:0:%d\" /><LightPath/>", i);
+              str += "</Channel>";
+          }
       }
-    }
   }
 
+
+  str += "<TiffData/></Pixels>";
+  str += "</Image>";
 
   // custom attributes
-  if (hash && hash->size()>0) {
-    str += "<CustomAttributes>";
-    int i=0;
-    std::map<std::string, std::string>::const_iterator it;
-    for(it = hash->begin(); it != hash->end(); ++it) {
-      bim::xstring key = (*it).first;
-      if (key.startsWith(bim::CUSTOM_TAGS_PREFIX) && key != "custom/Image Description") {
-        str += bim::xstring::xprintf("<OriginalMetadata ID=\"OriginalMetadata:%d\" Name=\"%s\" Value=\"%s\"/>", 
-          i, key.right(7).c_str(), (*it).second.c_str() );
-        i++;
+  if (hash && hash->size() > 0) {
+      str += "<StructuredAnnotations xmlns=\"http://www.openmicroscopy.org/Schemas/SA/2013-06\">";
+      int i = 0;
+      std::map<std::string, std::string>::const_iterator it;
+      for (it = hash->begin(); it != hash->end(); ++it) {
+          bim::xstring key = (*it).first;
+          if (key.startsWith(bim::CUSTOM_TAGS_PREFIX) && key != "custom/Image Description") {
+              str += bim::xstring::xprintf("<XMLAnnotation ID=\"Annotation:%d\" Namespace=\"openmicroscopy.org/OriginalMetadata\">", i);
+              str += "<Value xmlns=\"\"><OriginalMetadata>";
+              // dima: here we should be encoding strings into utf-8, though bioformats seems to expect latin1, skip encoding for now
+              str += bim::xstring::xprintf("<Key>%s</Key>", key.right(7).c_str());
+              str += bim::xstring::xprintf("<Value>%s</Value>", (*it).second.c_str());
+              str += "</OriginalMetadata></Value></XMLAnnotation>";
+              i++;
+          }
       }
-    }
-    str += "</CustomAttributes>";
+      str += "</StructuredAnnotations>";
   }
-
-  str += "</Image>";
-  if (hash && hash->size()>0)
-    str += "<SemanticTypeDefinitions xmlns=\"http://www.openmicroscopy.org/XMLschemas/STD/RC2/STD.xsd\"><SemanticType AppliesTo=\"I\" Name=\"OriginalMetadata\"><Element DBLocation=\"ORIGINAL_METADATA.NAME\" DataType=\"string\" Name=\"Name\"/><Element DBLocation=\"ORIGINAL_METADATA.VALUE\" DataType=\"string\" Name=\"Value\"/></SemanticType></SemanticTypeDefinitions>";
 
   str += "</OME>";
   return str;

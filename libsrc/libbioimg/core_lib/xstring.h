@@ -111,6 +111,9 @@ public:
 #ifdef BIM_USE_CODECVT
   std::wstring toUTF16() const;
   void fromUTF16(const std::wstring &utf16);
+  
+  //std::string toLatin1() const;
+  //void fromLatin1(const std::string &str);
 #endif
 
 private:

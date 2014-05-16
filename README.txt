@@ -1,4 +1,4 @@
-BioImageConvertor 1.66
+BioImageConvertor 1.68
 
 Author: Dima V. Fedorov <http://www.dimin.net/>
 
