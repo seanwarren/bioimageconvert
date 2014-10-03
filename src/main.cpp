@@ -111,7 +111,7 @@
  Ver : 54.2
 *******************************************************************************/
 
-#define IMGCNV_VER "1.68"
+#define IMGCNV_VER "1.69"
 
 #include <cmath>
 #include <cstdio>

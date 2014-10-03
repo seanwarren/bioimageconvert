@@ -585,7 +585,7 @@ bool AllocTable::isDirty()
 
 void AllocTable::markAsDirty(uint64 dataIndex, int64 bigBlockSize)
 {
-    uint64 dbidx = dataIndex / (bigBlockSize / sizeof(uint64));
+    uint64 dbidx = dataIndex / (bigBlockSize / sizeof(uint32));
     for (uint64 idx = 0; idx < static_cast<uint64>(dirtyBlocks.size()); idx++)
     {
         if (dirtyBlocks[idx] == dbidx)

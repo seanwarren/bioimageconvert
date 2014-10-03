@@ -28,7 +28,7 @@ APP_NAME = imgcnv
 TARGET = imgcnv
 
 TEMPLATE = app
-VERSION = 0.1.65
+VERSION = 0.1.69
 
 CONFIG = console
 

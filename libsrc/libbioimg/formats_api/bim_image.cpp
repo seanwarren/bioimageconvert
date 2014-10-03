@@ -1994,7 +1994,10 @@ Image Image::fuse( const std::vector< std::vector< std::pair<int,float> > > &map
     //if ( img.alloc( bmp->i.width, bmp->i.height, c, 64, FMT_FLOAT ) == 0 ) { // create a temp double image
         img.fill(0);
         for (unsigned int sample=0; sample<img.samples(); ++sample ) {
-            if ( map[sample].size()==1 ) // if no fusion is going on simply copy the data
+            if (map[sample].size() == 1 && map[sample].begin()->first < 0) // if no output is needed for this channel
+                continue;
+            else
+            if (map[sample].size() == 1) // if no fusion is going on simply copy the data
               memcpy( img.bits(sample), bmp->bits[map[sample].begin()->first], img.bytesPerChan() );
             else // ok, here we fuse
             if (bmp->i.depth==8 && bmp->i.pixelType==FMT_UNSIGNED)

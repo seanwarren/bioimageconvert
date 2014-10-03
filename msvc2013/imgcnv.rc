@@ -51,8 +51,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,65,0,65
- PRODUCTVERSION 1,65,0,65
+ FILEVERSION 1,69,0,69
+ PRODUCTVERSION 1,69,0,69
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -69,12 +69,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "Center for BioImage Informatics, UCSB"
             VALUE "FileDescription", "imgcnv - BioImage Converter"
-            VALUE "FileVersion", "1.65.0.65"
+            VALUE "FileVersion", "1.69.0.69"
             VALUE "InternalName", "imgcnv"
-            VALUE "LegalCopyright", "Copyright (C) 2004-2013, Dmtiry Fedorov, Center for BioImage Informatics"
+            VALUE "LegalCopyright", "Copyright (C) 2004-2014, Dmtiry Fedorov, Center for BioImage Informatics"
             VALUE "OriginalFilename", "imgcnv.exe"
             VALUE "ProductName", "imgcnv - BioImage Converter"
-            VALUE "ProductVersion", "1.65.0.65"
+            VALUE "ProductVersion", "1.69.0.69"
         END
     END
     BLOCK "VarFileInfo"

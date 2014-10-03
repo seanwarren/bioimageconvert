@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="Source Files">
@@ -29,18 +29,6 @@
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
-    <Library Include="..\libs\vc2010_x64\avcodec.lib">
-      <Filter>lib_win64</Filter>
-    </Library>
-    <Library Include="..\libs\vc2010_x64\avformat.lib">
-      <Filter>lib_win64</Filter>
-    </Library>
-    <Library Include="..\libs\vc2010_x64\avutil.lib">
-      <Filter>lib_win64</Filter>
-    </Library>
-    <Library Include="..\libs\vc2010_x64\swscale.lib">
-      <Filter>lib_win64</Filter>
-    </Library>
     <Library Include="..\libs\vc2010_x86\avcodec.lib">
       <Filter>lib_win32</Filter>
     </Library>
@@ -52,6 +40,18 @@
     </Library>
     <Library Include="..\libs\vc2010_x86\swscale.lib">
       <Filter>lib_win32</Filter>
+    </Library>
+    <Library Include="..\libs\vc2013_x64\avcodec-55.lib">
+      <Filter>lib_win64</Filter>
+    </Library>
+    <Library Include="..\libs\vc2013_x64\avformat-55.lib">
+      <Filter>lib_win64</Filter>
+    </Library>
+    <Library Include="..\libs\vc2013_x64\avutil-52.lib">
+      <Filter>lib_win64</Filter>
+    </Library>
+    <Library Include="..\libs\vc2013_x64\swscale-2.lib">
+      <Filter>lib_win64</Filter>
     </Library>
   </ItemGroup>
 </Project>
