@@ -17,7 +17,7 @@
 #include <cstdlib>
 #include <cstring>
 
-#include "bim_xtiffio.h"
+#include "xtiffio.h"
 #include "bim_tiff_format.h"
 
 #include <xstring.h>

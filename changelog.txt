@@ -1,5 +1,8 @@
 = Version Change Log =
 
+== 1.70 ==
+ * New: GeoTIFF metadata parsing and coordinate conversions
+
 == 1.68 ==
 
  * Update: OME-TIFF encoder/decoder updated to read and write new format, still compatible with the old one

@@ -88,6 +88,10 @@ public:
   std::vector<int>     splitInt( const xstring &separator, const int &def=0 ) const;
   std::vector<double>  splitDouble( const xstring &separator, const double &def=0.0 ) const;
 
+  //static xstring join(std::vector<xstring> v, const xstring &separator);
+  //static xstring join(std::vector<int> v,     const xstring &separator);
+  //static xstring join(std::vector<double> v,  const xstring &separator);
+
   xstring left(std::string::size_type pos) const;
   xstring left(const xstring &sub) const;
   xstring right(std::string::size_type pos) const;

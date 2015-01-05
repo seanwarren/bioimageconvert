@@ -34,7 +34,7 @@
   Ver : 2
 *****************************************************************************/
  
-#include "bim_xtiffio.h"
+#include "xtiffio.h"
 
 #include <stdio.h>
 
@@ -106,7 +106,6 @@ static const TIFFFieldInfo xtiffFieldInfo[] =
   { TIFFTAG_GEOKEYDIRECTORY,  -1,-1, TIFF_SHORT,  FIELD_CUSTOM, TRUE, TRUE, "GeoKeyDirectory" },
   { TIFFTAG_GEODOUBLEPARAMS,  -1,-1, TIFF_DOUBLE, FIELD_CUSTOM, TRUE, TRUE, "GeoDoubleParams" },
   { TIFFTAG_GEOASCIIPARAMS,   -1,-1, TIFF_ASCII,  FIELD_CUSTOM, TRUE, FALSE,"GeoASCIIParams" }
-
 };
 
 #undef FALSE

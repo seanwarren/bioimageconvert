@@ -29,7 +29,7 @@
 
 //#include "bim_stk_format.h"
 
-#include "bim_xtiffio.h"
+#include "xtiffio.h"
 #include "bim_tiny_tiff.h"
 #include "bim_tiff_format.h"
 #include "memio.h"

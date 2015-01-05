@@ -168,9 +168,9 @@ bim::uint dcrawOpenImageProc  (FormatHandle *fmtHndl, ImageIOModes io_mode) {
 
   if (io_mode == IO_READ) {
     try {
-#if defined(BIM_WIN)// && !defined(_DEBUG)
+#if defined(BIM_WIN) && !defined(_DEBUG)
         bim::xstring fn(fmtHndl->fileName);
-        if (par->processor->open_file(fn.toUTF16().c_str()) != LIBRAW_SUCCESS) {
+        if (par->processor->open_file((const wchar_t *)fn.toUTF16().c_str()) != LIBRAW_SUCCESS) {
 #else
         if (par->processor->open_file(fmtHndl->fileName) != LIBRAW_SUCCESS) {
 #endif       

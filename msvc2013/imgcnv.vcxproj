@@ -90,7 +90,7 @@
     </Midl>
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\libsrc\libbioimg\formats;..\libsrc\libbioimg\formats_api;..\libsrc\libbioimg\core_lib;..\libsrc\libjpeg;..\libsrc\libpng;..\libsrc\libtiff;..\libsrc\zlib;..\libsrc\ffmpeg\include;..\libsrc\ffmpeg\include-win;..\libsrc\libraw;..\libsrc\libbioimg;..\libsrc\pole;..\libsrc\exiv2;..\libsrc\eigen;..\libsrc\jzon;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\libsrc\libbioimg\formats;..\libsrc\libbioimg\formats_api;..\libsrc\libbioimg\core_lib;..\libsrc\libjpeg;..\libsrc\libpng;..\libsrc\libtiff;..\libsrc\zlib;..\libsrc\ffmpeg\include;..\libsrc\ffmpeg\include-win;..\libsrc\libraw;..\libsrc\libbioimg;..\libsrc\pole;..\libsrc\exiv2;..\libsrc\libgeotiff;..\libsrc\eigen;..\libsrc\jzon;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;__STDC_CONSTANT_MACROS;_MSVC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -133,7 +133,7 @@
     </Midl>
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\libsrc\libbioimg\formats;..\libsrc\libbioimg\formats_api;..\libsrc\libbioimg\core_lib;..\libsrc\libjpeg;..\libsrc\libpng;..\libsrc\libtiff;..\libsrc\zlib;..\libsrc\ffmpeg\include;..\libsrc\ffmpeg\include-win;..\libsrc\libraw;..\libsrc\libbioimg;..\libsrc\pole;..\libsrc\exiv2;..\libsrc\eigen;..\libsrc\jzon;..\libsrc\libfftw\src\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\libsrc\libbioimg\formats;..\libsrc\libbioimg\formats_api;..\libsrc\libbioimg\core_lib;..\libsrc\libjpeg;..\libsrc\libpng;..\libsrc\libtiff;..\libsrc\zlib;..\libsrc\ffmpeg\include;..\libsrc\ffmpeg\include-win;..\libsrc\libraw;..\libsrc\libbioimg;..\libsrc\pole;..\libsrc\exiv2;..\libsrc\libgeotiff;..\libsrc\eigen;..\libsrc\jzon;..\libsrc\libfftw\src\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;__STDC_CONSTANT_MACROS;BIM_USE_TRANSFORMS;BIM_USE_FILTERS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -179,7 +179,7 @@
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <OmitFramePointers>true</OmitFramePointers>
       <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
-      <AdditionalIncludeDirectories>..\libsrc\libbioimg\formats;..\libsrc\libbioimg\formats_api;..\libsrc\libbioimg\core_lib;..\libsrc\libjpeg;..\libsrc\libpng;..\libsrc\libtiff;..\libsrc\zlib;..\libsrc\ffmpeg\include;..\libsrc\ffmpeg\include-win;..\libsrc\libraw;..\libsrc\libbioimg;..\libsrc\pole;..\libsrc\exiv2;..\libsrc\eigen;..\libsrc\vjson;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\libsrc\libbioimg\formats;..\libsrc\libbioimg\formats_api;..\libsrc\libbioimg\core_lib;..\libsrc\libjpeg;..\libsrc\libpng;..\libsrc\libtiff;..\libsrc\zlib;..\libsrc\ffmpeg\include;..\libsrc\ffmpeg\include-win;..\libsrc\libraw;..\libsrc\libbioimg;..\libsrc\pole;..\libsrc\exiv2;..\libsrc\libgeotiff;..\libsrc\eigen;..\libsrc\vjson;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;__STDC_CONSTANT_MACROS;_MSVC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
@@ -226,7 +226,7 @@
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <OmitFramePointers>true</OmitFramePointers>
       <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
-      <AdditionalIncludeDirectories>..\libsrc\libbioimg\formats;..\libsrc\libbioimg\formats_api;..\libsrc\libbioimg\core_lib;..\libsrc\libjpeg;..\libsrc\libpng;..\libsrc\libtiff;..\libsrc\zlib;..\libsrc\ffmpeg\include;..\libsrc\ffmpeg\include-win;..\libsrc\libraw;..\libsrc\libbioimg;..\libsrc\pole;..\libsrc\exiv2;..\libsrc\eigen;..\libsrc\jzon;..\libsrc\libfftw\src\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\libsrc\libbioimg\formats;..\libsrc\libbioimg\formats_api;..\libsrc\libbioimg\core_lib;..\libsrc\libjpeg;..\libsrc\libpng;..\libsrc\libtiff;..\libsrc\zlib;..\libsrc\ffmpeg\include;..\libsrc\ffmpeg\include-win;..\libsrc\libraw;..\libsrc\libbioimg;..\libsrc\pole;..\libsrc\exiv2;..\libsrc\libgeotiff;..\libsrc\eigen;..\libsrc\jzon;..\libsrc\libfftw\src\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;__STDC_CONSTANT_MACROS;_MSVC;BIM_USE_OPENMP;BIM_USE_TRANSFORMS;BIM_USE_FILTERS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
@@ -382,6 +382,9 @@
     <ProjectReference Include="..\libsrc\libfftw\msvc2013\libfftw-3.3\libfftw-3.3.vcxproj">
       <Project>{ea3dcc95-2423-4ea0-a508-7a427b4c0594}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\libsrc\libgeotiff\projects\vc2013\libgeotiff.vcxproj">
+      <Project>{6ca0dcbc-d54f-4065-b329-36f009663010}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\libsrc\libjpeg\projects\vc2013\libjpeg.vcxproj">
       <Project>{7ba563e4-537b-4100-abbf-0448fc15ed9b}</Project>
     </ProjectReference>
@@ -393,6 +396,9 @@
     </ProjectReference>
     <ProjectReference Include="..\libsrc\libtiff\projects\vc2013\libtiff.vcxproj">
       <Project>{4f69756a-2106-408b-bab5-6dc294fdf3fe}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\libsrc\proj4\projects\vc2013\proj4.vcxproj">
+      <Project>{e092533a-6dd8-4d75-a5e8-aec82393e75d}</Project>
     </ProjectReference>
     <ProjectReference Include="..\libsrc\zlib\projects\vc2013\zlib.vcxproj">
       <Project>{1f68bb26-1be6-472e-8177-cafe65c38cc0}</Project>

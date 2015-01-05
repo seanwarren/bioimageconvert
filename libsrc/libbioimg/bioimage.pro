@@ -49,7 +49,8 @@ CONFIG += stat_exiv2
 CONFIG += stat_eigen
 CONFIG += libraw
 #CONFIG += stat_bzlib
-
+CONFIG += stat_libgeotiff
+CONFIG += stat_proj4
 CONFIG += libbioimage_transforms
 
 CONFIG(debug, debug|release) {
@@ -120,6 +121,8 @@ BIM_LIB_EXIV2   = $$BIM_LSRC/exiv2
 BIM_LIB_EIGEN   = $$BIM_LSRC/eigen
 BIM_LIB_RAW     = $$BIM_LSRC/libraw
 BIM_LIB_FFT     = $$BIM_LSRC/libfftw/src
+BIM_LIB_GEOTIF  = $$BIM_LSRC/libgeotiff
+BIM_LIB_PROJ4   = $$BIM_LSRC/proj4/src
 
 #---------------------------------------------------------------------
 # configuration: automatic
@@ -189,6 +192,7 @@ DEFINES += BIM_USE_OPENMP
 INCLUDEPATH += $$BIM_LIB_BIO
 INCLUDEPATH += $$BIM_FMTS_API
 INCLUDEPATH += $$BIM_FMTS
+INCLUDEPATH += $$BIM_FMTS/tiff
 INCLUDEPATH += $$BIM_CORE
 
 #core
@@ -219,7 +223,8 @@ SOURCES += $$BIM_FMTS/bim_format_manager.cpp \
            $$BIM_FMTS/tiff/bim_fluoview_format_io.cpp \
            $$BIM_FMTS/tiff/bim_psia_format_io.cpp \
            $$BIM_FMTS/tiff/bim_stk_format_io.cpp \
-           $$BIM_FMTS/tiff/bim_xtiff.c \
+           $$BIM_FMTS/tiff/bim_geotiff_parse.cpp \
+           $$BIM_FMTS/tiff/xtiff.c \
            $$BIM_FMTS/tiff/memio.c \
            $$BIM_FMTS/jpeg/bim_jpeg_format.cpp \
            $$BIM_FMTS/biorad_pic/bim_biorad_pic_format.cpp \
@@ -389,6 +394,88 @@ stat_libtiff {
 } else {
 #      unix:LIBS += -ltiff
 #      win32:LIBS += $$BIM_LIBS_PLTFM/libtiff.lib  
+}
+
+#---------------------------------------------------------------------
+# libGeoTiff
+#---------------------------------------------------------------------
+
+stat_libgeotiff {
+    INCLUDEPATH += $$BIM_LIB_GEOTIF
+    SOURCES += $$BIM_LIB_GEOTIF/cpl_csv.c $$BIM_LIB_GEOTIF/cpl_serv.c \
+               $$BIM_LIB_GEOTIF/geotiff_proj4.c $$BIM_LIB_GEOTIF/geo_extra.c \
+               $$BIM_LIB_GEOTIF/geo_free.c $$BIM_LIB_GEOTIF/geo_get.c \
+               $$BIM_LIB_GEOTIF/geo_names.c $$BIM_LIB_GEOTIF/geo_new.c \
+               $$BIM_LIB_GEOTIF/geo_normalize.c $$BIM_LIB_GEOTIF/geo_print.c \
+               $$BIM_LIB_GEOTIF/geo_set.c $$BIM_LIB_GEOTIF/geo_simpletags.c \
+               $$BIM_LIB_GEOTIF/geo_strtod.c $$BIM_LIB_GEOTIF/geo_tiffp.c \
+               $$BIM_LIB_GEOTIF/geo_trans.c $$BIM_LIB_GEOTIF/geo_write.c
+} else {
+      unix:LIBS += -lgeotiff
+      win32:LIBS += $$BIM_LIBS_PLTFM/libgeotiff.lib  
+}
+
+#---------------------------------------------------------------------
+# Proj.4
+#---------------------------------------------------------------------
+
+stat_proj4 {
+    INCLUDEPATH += $$BIM_LIB_PROJ4
+    SOURCES += $$BIM_LIB_PROJ4/aasincos.c $$BIM_LIB_PROJ4/adjlon.c $$BIM_LIB_PROJ4/bch2bps.c \
+                $$BIM_LIB_PROJ4/bchgen.c $$BIM_LIB_PROJ4/biveval.c $$BIM_LIB_PROJ4/dmstor.c \
+                $$BIM_LIB_PROJ4/emess.c $$BIM_LIB_PROJ4/gen_cheb.c $$BIM_LIB_PROJ4/geocent.c \
+                $$BIM_LIB_PROJ4/geod_for.c $$BIM_LIB_PROJ4/geod_inv.c $$BIM_LIB_PROJ4/geod_set.c \
+                $$BIM_LIB_PROJ4/jniproj.c $$BIM_LIB_PROJ4/mk_cheby.c $$BIM_LIB_PROJ4/nad_cvt.c \
+                $$BIM_LIB_PROJ4/nad_init.c $$BIM_LIB_PROJ4/nad_intr.c $$BIM_LIB_PROJ4/PJ_aea.c \
+                $$BIM_LIB_PROJ4/PJ_aeqd.c $$BIM_LIB_PROJ4/PJ_airy.c $$BIM_LIB_PROJ4/PJ_aitoff.c \
+                $$BIM_LIB_PROJ4/pj_apply_gridshift.c $$BIM_LIB_PROJ4/pj_apply_vgridshift.c $$BIM_LIB_PROJ4/PJ_august.c \
+                $$BIM_LIB_PROJ4/pj_auth.c $$BIM_LIB_PROJ4/PJ_bacon.c $$BIM_LIB_PROJ4/PJ_bipc.c \
+                $$BIM_LIB_PROJ4/PJ_boggs.c $$BIM_LIB_PROJ4/PJ_bonne.c $$BIM_LIB_PROJ4/PJ_cass.c \
+                $$BIM_LIB_PROJ4/PJ_cc.c $$BIM_LIB_PROJ4/PJ_cea.c $$BIM_LIB_PROJ4/PJ_chamb.c \
+                $$BIM_LIB_PROJ4/PJ_collg.c $$BIM_LIB_PROJ4/PJ_crast.c $$BIM_LIB_PROJ4/pj_ctx.c \
+                $$BIM_LIB_PROJ4/pj_datums.c $$BIM_LIB_PROJ4/pj_datum_set.c $$BIM_LIB_PROJ4/PJ_denoy.c \
+                $$BIM_LIB_PROJ4/pj_deriv.c $$BIM_LIB_PROJ4/PJ_eck1.c $$BIM_LIB_PROJ4/PJ_eck2.c \
+                $$BIM_LIB_PROJ4/PJ_eck3.c $$BIM_LIB_PROJ4/PJ_eck4.c $$BIM_LIB_PROJ4/PJ_eck5.c \
+                $$BIM_LIB_PROJ4/pj_ellps.c $$BIM_LIB_PROJ4/pj_ell_set.c $$BIM_LIB_PROJ4/PJ_eqc.c \
+                $$BIM_LIB_PROJ4/PJ_eqdc.c $$BIM_LIB_PROJ4/pj_errno.c $$BIM_LIB_PROJ4/pj_factors.c \
+                $$BIM_LIB_PROJ4/PJ_fahey.c $$BIM_LIB_PROJ4/PJ_fouc_s.c $$BIM_LIB_PROJ4/pj_fwd.c \
+                $$BIM_LIB_PROJ4/PJ_gall.c $$BIM_LIB_PROJ4/pj_gauss.c $$BIM_LIB_PROJ4/pj_geocent.c \
+                $$BIM_LIB_PROJ4/PJ_geos.c $$BIM_LIB_PROJ4/PJ_gins8.c $$BIM_LIB_PROJ4/PJ_gnom.c \
+                $$BIM_LIB_PROJ4/PJ_gn_sinu.c $$BIM_LIB_PROJ4/PJ_goode.c $$BIM_LIB_PROJ4/pj_gridinfo.c \
+                $$BIM_LIB_PROJ4/pj_gridlist.c $$BIM_LIB_PROJ4/PJ_gstmerc.c $$BIM_LIB_PROJ4/PJ_hammer.c \
+                $$BIM_LIB_PROJ4/PJ_hatano.c $$BIM_LIB_PROJ4/PJ_healpix.c $$BIM_LIB_PROJ4/PJ_igh.c \
+                $$BIM_LIB_PROJ4/PJ_imw_p.c $$BIM_LIB_PROJ4/pj_init.c $$BIM_LIB_PROJ4/pj_initcache.c \
+                $$BIM_LIB_PROJ4/pj_inv.c $$BIM_LIB_PROJ4/PJ_isea.c $$BIM_LIB_PROJ4/PJ_krovak.c \
+                $$BIM_LIB_PROJ4/PJ_labrd.c $$BIM_LIB_PROJ4/PJ_laea.c $$BIM_LIB_PROJ4/PJ_lagrng.c \
+                $$BIM_LIB_PROJ4/PJ_larr.c $$BIM_LIB_PROJ4/PJ_lask.c $$BIM_LIB_PROJ4/pj_latlong.c \
+                $$BIM_LIB_PROJ4/PJ_lcc.c $$BIM_LIB_PROJ4/PJ_lcca.c $$BIM_LIB_PROJ4/pj_list.c \
+                $$BIM_LIB_PROJ4/pj_log.c $$BIM_LIB_PROJ4/PJ_loxim.c $$BIM_LIB_PROJ4/PJ_lsat.c \
+                $$BIM_LIB_PROJ4/pj_malloc.c $$BIM_LIB_PROJ4/PJ_mbtfpp.c $$BIM_LIB_PROJ4/PJ_mbtfpq.c \
+                $$BIM_LIB_PROJ4/PJ_mbt_fps.c $$BIM_LIB_PROJ4/PJ_merc.c $$BIM_LIB_PROJ4/PJ_mill.c \
+                $$BIM_LIB_PROJ4/pj_mlfn.c $$BIM_LIB_PROJ4/PJ_mod_ster.c $$BIM_LIB_PROJ4/PJ_moll.c \
+                $$BIM_LIB_PROJ4/pj_msfn.c $$BIM_LIB_PROJ4/pj_mutex.c $$BIM_LIB_PROJ4/PJ_natearth.c \
+                $$BIM_LIB_PROJ4/PJ_nell.c $$BIM_LIB_PROJ4/PJ_nell_h.c $$BIM_LIB_PROJ4/PJ_nocol.c \
+                $$BIM_LIB_PROJ4/PJ_nsper.c $$BIM_LIB_PROJ4/PJ_nzmg.c $$BIM_LIB_PROJ4/PJ_ob_tran.c \
+                $$BIM_LIB_PROJ4/PJ_ocea.c $$BIM_LIB_PROJ4/PJ_oea.c $$BIM_LIB_PROJ4/PJ_omerc.c \
+                $$BIM_LIB_PROJ4/pj_open_lib.c $$BIM_LIB_PROJ4/PJ_ortho.c $$BIM_LIB_PROJ4/pj_param.c \
+                $$BIM_LIB_PROJ4/pj_phi2.c $$BIM_LIB_PROJ4/PJ_poly.c $$BIM_LIB_PROJ4/pj_pr_list.c \
+                $$BIM_LIB_PROJ4/PJ_putp2.c $$BIM_LIB_PROJ4/PJ_putp3.c $$BIM_LIB_PROJ4/PJ_putp4p.c \
+                $$BIM_LIB_PROJ4/PJ_putp5.c $$BIM_LIB_PROJ4/PJ_putp6.c $$BIM_LIB_PROJ4/pj_qsfn.c \
+                $$BIM_LIB_PROJ4/pj_release.c $$BIM_LIB_PROJ4/PJ_robin.c $$BIM_LIB_PROJ4/PJ_rpoly.c \
+                $$BIM_LIB_PROJ4/PJ_sconics.c $$BIM_LIB_PROJ4/PJ_somerc.c $$BIM_LIB_PROJ4/PJ_stere.c \
+                $$BIM_LIB_PROJ4/PJ_sterea.c $$BIM_LIB_PROJ4/pj_strerrno.c $$BIM_LIB_PROJ4/PJ_sts.c \
+                $$BIM_LIB_PROJ4/PJ_tcc.c $$BIM_LIB_PROJ4/PJ_tcea.c $$BIM_LIB_PROJ4/PJ_tmerc.c \
+                $$BIM_LIB_PROJ4/PJ_tpeqd.c $$BIM_LIB_PROJ4/pj_transform.c $$BIM_LIB_PROJ4/pj_tsfn.c \
+                $$BIM_LIB_PROJ4/pj_units.c $$BIM_LIB_PROJ4/PJ_urm5.c $$BIM_LIB_PROJ4/PJ_urmfps.c \
+                $$BIM_LIB_PROJ4/pj_utils.c $$BIM_LIB_PROJ4/PJ_vandg.c $$BIM_LIB_PROJ4/PJ_vandg2.c \
+                $$BIM_LIB_PROJ4/PJ_vandg4.c $$BIM_LIB_PROJ4/PJ_wag2.c $$BIM_LIB_PROJ4/PJ_wag3.c \
+                $$BIM_LIB_PROJ4/PJ_wag7.c $$BIM_LIB_PROJ4/PJ_wink1.c $$BIM_LIB_PROJ4/PJ_wink2.c \
+                $$BIM_LIB_PROJ4/pj_zpoly1.c $$BIM_LIB_PROJ4/proj.c $$BIM_LIB_PROJ4/proj_etmerc.c \
+                $$BIM_LIB_PROJ4/proj_mdist.c $$BIM_LIB_PROJ4/proj_rouss.c $$BIM_LIB_PROJ4/p_series.c \
+                $$BIM_LIB_PROJ4/rtodms.c $$BIM_LIB_PROJ4/vector1.c
+} else {
+      unix:LIBS += -lproj4
+      win32:LIBS += $$BIM_LIBS_PLTFM/proj4.lib  
 }
 
 #---------------------------------------------------------------------        

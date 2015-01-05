@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="libbioimg">
@@ -132,9 +132,6 @@
     <ClCompile Include="..\..\..\libbioimg\formats\tiff\bim_tiff_format.cpp">
       <Filter>libbioimg\Formats\Tiff</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\libbioimg\formats\tiff\bim_xtiff.c">
-      <Filter>libbioimg\Formats\Tiff</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\..\libbioimg\formats\tiff\memio.c">
       <Filter>libbioimg\Formats\Tiff</Filter>
     </ClCompile>
@@ -254,6 +251,12 @@
     </ClCompile>
     <ClCompile Include="..\..\formats_api\bim_image_5d.cpp">
       <Filter>libbioimg\FmtAPI</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\libbioimg\formats\tiff\xtiff.c">
+      <Filter>libbioimg\Formats\Tiff</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\libbioimg\formats\tiff\bim_geotiff_parse.cpp">
+      <Filter>libbioimg\Formats\Tiff</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

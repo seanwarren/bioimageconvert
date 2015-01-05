@@ -42,6 +42,7 @@ DECLARE_STR( PIXEL_RESOLUTION_UNIT_T, "pixel_resolution_unit_t" )
 
 DECLARE_STR( PIXEL_RESOLUTION_UNIT_MICRONS, "microns" )
 DECLARE_STR( PIXEL_RESOLUTION_UNIT_SECONDS, "seconds" )
+DECLARE_STR( PIXEL_RESOLUTION_UNIT_METERS,  "meters" )
 
 // objective - information about objective lens
 DECLARE_STR( OBJECTIVE_DESCRIPTION  , "objective" )

@@ -25,10 +25,11 @@
 #include <bim_metatags.h>
 #include <bim_exiv_parse.h>
 
-#include "bim_xtiffio.h"
+#include "xtiffio.h"
 #include "bim_tiny_tiff.h"
 #include "bim_tiff_format.h"
 #include "memio.h"
+#include "bim_geotiff_parse.h"
 
 
 // Disables Visual Studio 2005 warnings for deprecated code
@@ -491,6 +492,9 @@ bim::uint append_metadata_generic_tiff (FormatHandle *fmtHndl, TagMap *hash ) {
 
   // use EXIV2 to read metadata
   exiv_append_metadata (fmtHndl, hash );
+
+  // use GeoTIFF to read metadata
+  geotiff_append_metadata(fmtHndl, hash);
 
   return 0;
 }

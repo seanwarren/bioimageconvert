@@ -108,10 +108,10 @@
    2010-01-29 11:25:38 - preserve all metadata and correctly transform it
                          
 
- Ver : 54.2
+ Ver : 70
 *******************************************************************************/
 
-#define IMGCNV_VER "1.69"
+#define IMGCNV_VER "1.70"
 
 #include <cmath>
 #include <cstdio>

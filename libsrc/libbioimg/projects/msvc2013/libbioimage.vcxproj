@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -96,7 +96,7 @@
     </Midl>
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\..\..\libbioimg;..\..\..\libbioimg\formats;..\..\..\libbioimg\formats_api;..\..\..\libbioimg\core_lib;..\..\..\libjpeg;..\..\..\libpng;..\..\..\libtiff;..\..\..\zlib;..\..\..\ffmpeg\include;..\..\..\ffmpeg\include-win;..\..\..\libraw;..\..\..\pole;..\..\..\exiv2;..\..\..\eigen;..\..\..\jzon;..\..\..\libfftw\src\api;..\..\..\opencv\build\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\libbioimg;..\..\..\libbioimg\formats;..\..\..\libbioimg\formats_api;..\..\..\libbioimg\core_lib;..\..\..\libjpeg;..\..\..\libpng;..\..\..\libtiff;..\..\..\zlib;..\..\..\ffmpeg\include;..\..\..\ffmpeg\include-win;..\..\..\libraw;..\..\..\pole;..\..\..\exiv2;..\..\..\libgeotiff;..\..\..\eigen;..\..\..\jzon;..\..\..\libfftw\src\api;..\..\..\opencv\build\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_CONSOLE;__STDC_CONSTANT_MACROS;TIF_PLATFORM_CONSOLE;BIM_FFMPEG_FORMAT;FFMPEG_VIDEO_DISABLE_MATLAB;LIBRAW_BUILDLIB;LIBRAW_NODLL;USE_JPEG;BIM_USE_EIGEN;BIM_USE_OPENMP;BIM_USE_OPENCV;BIM_USE_TRANSFORMS;BIM_USE_FILTERS;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -142,7 +142,7 @@
     </Midl>
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\..\..\libbioimg;..\..\..\libbioimg\formats;..\..\..\libbioimg\formats_api;..\..\..\libbioimg\core_lib;..\..\..\libjpeg;..\..\..\libpng;..\..\..\libtiff;..\..\..\zlib;..\..\..\ffmpeg\include;..\..\..\ffmpeg\include-win;..\..\..\libraw;..\..\..\pole;..\..\..\exiv2;..\..\..\eigen;..\..\..\jzon;..\..\..\libfftw\src\api;..\..\..\opencv\build\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\libbioimg;..\..\..\libbioimg\formats;..\..\..\libbioimg\formats_api;..\..\..\libbioimg\core_lib;..\..\..\libjpeg;..\..\..\libpng;..\..\..\libtiff;..\..\..\zlib;..\..\..\ffmpeg\include;..\..\..\ffmpeg\include-win;..\..\..\libraw;..\..\..\pole;..\..\..\exiv2;..\..\..\libgeotiff;..\..\..\eigen;..\..\..\jzon;..\..\..\libfftw\src\api;..\..\..\opencv\build\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_CONSOLE;__STDC_CONSTANT_MACROS;TIF_PLATFORM_CONSOLE;BIM_FFMPEG_FORMAT;FFMPEG_VIDEO_DISABLE_MATLAB;LIBRAW_BUILDLIB;LIBRAW_NODLL;USE_JPEG;BIM_USE_EIGEN;BIM_USE_OPENMP;BIM_USE_OPENCV;BIM_USE_TRANSFORMS;BIM_USE_FILTERS;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -194,7 +194,7 @@
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <OmitFramePointers>true</OmitFramePointers>
       <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
-      <AdditionalIncludeDirectories>..\..\..\libbioimg;..\..\..\libbioimg\formats;..\..\..\libbioimg\formats_api;..\..\..\libbioimg\core_lib;..\..\..\libjpeg;..\..\..\libpng;..\..\..\libtiff;..\..\..\zlib;..\..\..\ffmpeg\include;..\..\..\ffmpeg\include-win;..\..\..\libraw;..\..\..\pole;..\..\..\exiv2;..\..\..\eigen;..\..\..\jzon;..\..\..\libfftw\src\api;..\..\..\opencv\build\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\libbioimg;..\..\..\libbioimg\formats;..\..\..\libbioimg\formats_api;..\..\..\libbioimg\core_lib;..\..\..\libjpeg;..\..\..\libpng;..\..\..\libtiff;..\..\..\zlib;..\..\..\ffmpeg\include;..\..\..\ffmpeg\include-win;..\..\..\libraw;..\..\..\pole;..\..\..\exiv2;..\..\..\libgeotiff;..\..\..\eigen;..\..\..\jzon;..\..\..\libfftw\src\api;..\..\..\opencv\build\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_CONSOLE;__STDC_CONSTANT_MACROS;TIF_PLATFORM_CONSOLE;BIM_FFMPEG_FORMAT;FFMPEG_VIDEO_DISABLE_MATLAB;LIBRAW_BUILDLIB;LIBRAW_NODLL;USE_JPEG;BIM_USE_EIGEN;BIM_USE_OPENMP;BIM_USE_OPENCV;BIM_USE_TRANSFORMS;BIM_USE_FILTERS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
@@ -244,7 +244,7 @@
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <OmitFramePointers>true</OmitFramePointers>
       <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
-      <AdditionalIncludeDirectories>..\..\..\libbioimg;..\..\..\libbioimg\formats;..\..\..\libbioimg\formats_api;..\..\..\libbioimg\core_lib;..\..\..\libjpeg;..\..\..\libpng;..\..\..\libtiff;..\..\..\zlib;..\..\..\ffmpeg\include;..\..\..\ffmpeg\include-win;..\..\..\libraw;..\..\..\pole;..\..\..\exiv2;..\..\..\eigen;..\..\..\jzon;..\..\..\libfftw\src\api;..\..\..\opencv\build\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\libbioimg;..\..\..\libbioimg\formats;..\..\..\libbioimg\formats_api;..\..\..\libbioimg\core_lib;..\..\..\libjpeg;..\..\..\libpng;..\..\..\libtiff;..\..\..\zlib;..\..\..\ffmpeg\include;..\..\..\ffmpeg\include-win;..\..\..\libraw;..\..\..\pole;..\..\..\exiv2;..\..\..\libgeotiff;..\..\..\eigen;..\..\..\jzon;..\..\..\libfftw\src\api;..\..\..\opencv\build\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_CONSOLE;__STDC_CONSTANT_MACROS;TIF_PLATFORM_CONSOLE;BIM_FFMPEG_FORMAT;FFMPEG_VIDEO_DISABLE_MATLAB;LIBRAW_BUILDLIB;LIBRAW_NODLL;USE_JPEG;BIM_USE_EIGEN;BIM_USE_OPENMP;BIM_USE_OPENCV;BIM_USE_TRANSFORMS;BIM_USE_FILTERS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
@@ -323,8 +323,9 @@
     <ClCompile Include="..\..\..\libbioimg\formats\mpeg\FfmpegOVideo.cpp" />
     <ClCompile Include="..\..\..\libbioimg\formats\mpeg\registry.cpp" />
     <ClCompile Include="..\..\..\libbioimg\formats\tiff\bim_tiff_format.cpp" />
-    <ClCompile Include="..\..\..\libbioimg\formats\tiff\bim_xtiff.c" />
+    <ClCompile Include="..\..\..\libbioimg\formats\tiff\xtiff.c" />
     <ClCompile Include="..\..\..\libbioimg\formats\tiff\memio.c" />
+    <ClCompile Include="..\..\..\libbioimg\formats\tiff\bim_geotiff_parse.cpp" />    
     <ClCompile Include="..\..\..\libbioimg\formats\ole\bim_ole_format.cpp" />
     <ClCompile Include="..\..\..\libbioimg\formats\ole\zvi.cpp" />
     <ClCompile Include="..\..\..\pole\pole.cpp" />

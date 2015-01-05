@@ -110,7 +110,7 @@ full:
 clean:
 	(cd src; $(MAKE) clean)
 	rm -rf .generated *.o *~
-	(cd $(LIBBIM); $(MAKE) clean)
+	(cd $(LIBBIM); $(MAKE) clean; rm -rf .generated)
 
 cleanfull:
 	(cd src; $(MAKE) clean)

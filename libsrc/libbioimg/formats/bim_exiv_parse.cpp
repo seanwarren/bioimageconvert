@@ -22,6 +22,24 @@
 
 using namespace bim;
 
+
+static double datum2coord(const Exiv2::Exifdatum &coord, const Exiv2::Exifdatum &ref) {
+    double d = coord.toRational(0).first / (double) coord.toRational(0).second;
+    double m = coord.toRational(1).first / (double) coord.toRational(1).second;
+    double s = coord.toRational(2).first / (double) coord.toRational(2).second;
+    std::string r = ref.toString();
+    double h = (r == "W" || r == "S") ? -1.0 : 1.0;
+    return (d + m / 60.0 + s / 3600.0) * h;
+}
+
+static double datum2alt(const Exiv2::Exifdatum &coord, const Exiv2::Exifdatum &ref) {
+    if (coord.count() < 1) return 0.0;
+    double h = coord.toRational(0).first / (double)coord.toRational(0).second;
+    int r = ref.toLong();
+    double l = (r == 1) ? -1.0 : 1.0;
+    return h * l;
+}
+
 void exiv_append_metadata (FormatHandle *fmtHndl, TagMap *hash ) {
   if (fmtHndl == NULL) return;
   if (isCustomReading (fmtHndl)) return;
@@ -52,7 +70,19 @@ void exiv_append_metadata (FormatHandle *fmtHndl, TagMap *hash ) {
               xstring myval = i->print();
               hash->set_value( mykey, myval );
           }
+
+          // write Geo coordinates
+          Exiv2::Exifdatum lat = exifData["Exif.GPSInfo.GPSLatitude"];
+          Exiv2::Exifdatum lon = exifData["Exif.GPSInfo.GPSLongitude"];
+          if (lat.count() >= 3 && lon.count() >= 3) {
+              double c1 = datum2coord(lat, exifData["Exif.GPSInfo.GPSLatitudeRef"]);
+              double c2 = datum2coord(lon, exifData["Exif.GPSInfo.GPSLongitudeRef"]);
+              double c3 = datum2alt(exifData["Exif.GPSInfo.GPSAltitude"], exifData["Exif.GPSInfo.GPSAltitudeRef"]);
+              xstring v = xstring::xprintf("%f,%f,%f", c1, c2, c3);
+              hash->set_value("Geo/Coordinates/center", v);
+          }
       }
+
 
       Exiv2::IptcData &iptcData = image->iptcData();
       if (!iptcData.empty()) {

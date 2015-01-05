@@ -323,7 +323,7 @@
     <ClCompile Include="..\..\..\libbioimg\formats\mpeg\FfmpegOVideo.cpp" />
     <ClCompile Include="..\..\..\libbioimg\formats\mpeg\registry.cpp" />
     <ClCompile Include="..\..\..\libbioimg\formats\tiff\bim_tiff_format.cpp" />
-    <ClCompile Include="..\..\..\libbioimg\formats\tiff\bim_xtiff.c" />
+    <ClCompile Include="..\..\..\libbioimg\formats\tiff\xtiff.c" />
     <ClCompile Include="..\..\..\libbioimg\formats\tiff\memio.c" />
     <ClCompile Include="..\..\..\libbioimg\formats\ole\bim_ole_format.cpp" />
     <ClCompile Include="..\..\..\libbioimg\formats\ole\zvi.cpp" />
