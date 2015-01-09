@@ -1,6 +1,6 @@
 BioImageConvertor
 
-Copyright © 2005-2014 Center for Bio-Image Informatics, UCSB 
+Copyright © 2005-2015 Center for Bio-Image Informatics, UCSB 
 <http://www.bioimage.ucsb.edu/>
 
 LICENCE

@@ -368,19 +368,21 @@ bool stkAreValidParams(TiffParams *tiffParams) {
 bim::int32 stkGetNumPlanes(TIFF *tif) {
   double *d_list = NULL;
   bim::int32 *l_list = NULL;
-  bim::int16   d_list_count[3];
-  int res[3] = {0,0,0};
+  bim::int16   d_list_count[4];
+  int res[4] = {0,0,0,0};
 
   if (tif == 0) return 0;
 
-  res[0] = TIFFGetField(tif, 33629, &d_list_count[0], &d_list);
-  res[1] = TIFFGetField(tif, 33630, &d_list_count[1], &d_list);
-  res[2] = TIFFGetField(tif, 33631, &d_list_count[2], &l_list);
+  res[0] = TIFFGetField(tif, TIFFTAG_STK_UIC2, &d_list_count[0], &d_list);
+  res[1] = TIFFGetField(tif, TIFFTAG_STK_UIC3, &d_list_count[1], &d_list);
+  res[2] = TIFFGetField(tif, TIFFTAG_STK_UIC4, &d_list_count[2], &l_list);
+  res[3] = TIFFGetField(tif, TIFFTAG_STK_UIC1, &d_list_count[3], &l_list);
 
   // if tag 33629 exists then the file is valid STAK file
   if (res[0] == 1) return d_list_count[0];
   if (res[1] == 1) return d_list_count[1];
   if (res[2] == 1) return d_list_count[2];
+  if (res[3] == 1) return d_list_count[3];
 
   return 1;
 }
@@ -390,18 +392,20 @@ bool stkIsTiffValid(TIFF *tif) {
   double *d_list = NULL;
   bim::int32 *l_list = NULL;
   bim::int16   d_list_count;
-  int res[3] = {0,0,0};
+  int res[4] = {0,0,0,0};
 
   if (tif == 0) return false;
 
-  res[0] = TIFFGetField(tif, 33629, &d_list_count, &d_list);
-  res[1] = TIFFGetField(tif, 33630, &d_list_count, &d_list);
-  res[2] = TIFFGetField(tif, 33631, &d_list_count, &l_list);
+  res[0] = TIFFGetField(tif, TIFFTAG_STK_UIC2, &d_list_count, &d_list);
+  res[1] = TIFFGetField(tif, TIFFTAG_STK_UIC3, &d_list_count, &d_list);
+  res[2] = TIFFGetField(tif, TIFFTAG_STK_UIC4, &d_list_count, &l_list);
+  res[3] = TIFFGetField(tif, TIFFTAG_STK_UIC1, &d_list_count, &d_list);
 
   // if tag 33629 exists then the file is valid STAK file
   if (res[0] == 1) return true;
   if (res[1] == 1) return true;
   if (res[2] == 1) return true;
+  if (res[3] == 1) return true;
 
   return false;
 }
@@ -411,9 +415,10 @@ bool stkIsTiffValid(TiffParams *tiffParams) {
   if (tiffParams->tiff->tif_flags&TIFF_BIGTIFF) return false;
 
   // if tag 33629 exists then the file is valid STAK file
-  if (tiffParams->ifds.tagPresentInFirstIFD(33629)) return true;
-  if (tiffParams->ifds.tagPresentInFirstIFD(33630)) return true;
-  if (tiffParams->ifds.tagPresentInFirstIFD(33631)) return true;
+  if (tiffParams->ifds.tagPresentInFirstIFD(TIFFTAG_STK_UIC1)) return true;
+  if (tiffParams->ifds.tagPresentInFirstIFD(TIFFTAG_STK_UIC2)) return true;
+  if (tiffParams->ifds.tagPresentInFirstIFD(TIFFTAG_STK_UIC3)) return true;
+  if (tiffParams->ifds.tagPresentInFirstIFD(TIFFTAG_STK_UIC4)) return true;
 
   return false;
 }

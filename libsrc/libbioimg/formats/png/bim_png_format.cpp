@@ -184,11 +184,22 @@ bool pngGetImageInfo( FormatHandle *fmtHndl )
     info->samples = 4;
     info->imageMode = IM_RGBA;
   }
- 
+
+  if (bit_depth < 8) {
+      png_color_8p sig_bit;
+      if (png_get_sBIT(par->png_ptr, par->info_ptr, &sig_bit))
+          png_set_shift(par->png_ptr, sig_bit);
+  }
+
+  if (bit_depth == 16) {
+      png_set_swap(par->png_ptr);
+      png_set_expand_16(par->png_ptr);
+  }
+
   //-------------------------------------------------
   // init palette
   //-------------------------------------------------
-  if ( ( color_type == PNG_COLOR_TYPE_GRAY ) ||
+  if ( (color_type == PNG_COLOR_TYPE_GRAY) ||
        ( color_type == PNG_COLOR_TYPE_GRAY_ALPHA ) ||
        ( color_type == PNG_COLOR_TYPE_PALETTE ) ) 
   {
