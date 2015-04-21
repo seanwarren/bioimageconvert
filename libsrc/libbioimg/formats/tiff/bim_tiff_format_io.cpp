@@ -1337,7 +1337,7 @@ int write_tiff_image(FormatHandle *fmtHndl, TiffParams *par, ImageBitmap *img = 
 // Levels and Tiles functions
 //--------------------------------------------------------------------------------------------
 
-int read_tiff_image_level(FormatHandle *fmtHndl, TiffParams *tifParams, uint page, uint level) {
+int read_tiff_image_level(FormatHandle *fmtHndl, TiffParams *tifParams, bim::uint page, bim::uint level) {
     if (!areValidParams(fmtHndl, tifParams)) return 1;
     TIFF *tif = tifParams->tiff;
     PyramidInfo *pyramid = &tifParams->pyramid;
@@ -1381,7 +1381,7 @@ int read_tiff_image_level(FormatHandle *fmtHndl, TiffParams *tifParams, uint pag
     return 0;
 }
 
-int read_tiff_image_tile(FormatHandle *fmtHndl, TiffParams *tifParams, uint page, bim::uint64 xid, bim::uint64 yid, uint level) {
+int read_tiff_image_tile(FormatHandle *fmtHndl, TiffParams *tifParams, bim::uint page, bim::uint64 xid, bim::uint64 yid, bim::uint level) {
     if (!areValidParams(fmtHndl, tifParams)) return 1;
     TIFF *tif = tifParams->tiff;
     PyramidInfo *pyramid = &tifParams->pyramid;

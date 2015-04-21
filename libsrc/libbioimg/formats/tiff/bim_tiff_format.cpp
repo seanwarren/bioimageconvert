@@ -38,8 +38,8 @@ bim::uint tiff_append_metadata (FormatHandle *fmtHndl, TagMap *hash );
 int read_tiff_image(FormatHandle *fmtHndl, TiffParams *tifParams);
 int write_tiff_image(FormatHandle *fmtHndl, TiffParams *tifParams, ImageBitmap *img = NULL, bool subscale = false);
 
-int read_tiff_image_level(FormatHandle *fmtHndl, TiffParams *tifParams, uint page, uint level);
-int read_tiff_image_tile(FormatHandle *fmtHndl, TiffParams *tifParams, uint page, bim::uint64 xid, bim::uint64 yid, uint level);
+int read_tiff_image_level(FormatHandle *fmtHndl, TiffParams *tifParams, bim::uint page, bim::uint level);
+int read_tiff_image_tile(FormatHandle *fmtHndl, TiffParams *tifParams, bim::uint page, bim::uint64 xid, bim::uint64 yid, bim::uint level);
 int ometiff_read_image_level(bim::FormatHandle *fmtHndl, bim::TiffParams *tifParams, bim::uint page, bim::uint level);
 int ometiff_read_image_tile(bim::FormatHandle *fmtHndl, bim::TiffParams *tifParams, bim::uint page, bim::uint64 xid, bim::uint64 yid, bim::uint level);
 
