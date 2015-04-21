@@ -185,6 +185,9 @@ std::string IFD::readTagString (uint16 tag) {
     uint64 size;
     uint16 type;
     this->readTag (tag, size, type, &buf);
+    while (size > 0 && buf[size] == 0) {
+        --size;
+    }
     s.resize( size );
     memcpy( &s[0], buf, size );
     _TIFFfree(buf);
