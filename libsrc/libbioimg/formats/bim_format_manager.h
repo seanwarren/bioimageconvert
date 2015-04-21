@@ -183,7 +183,6 @@ public:
 protected:
   unsigned char *magic_number; // magic number loaded to suit correct format search
   unsigned int max_magic_size; // maximum size needed to establish format
-  unsigned int static_formats;
   ImageInfo info;
 
   // session vars

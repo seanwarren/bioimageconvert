@@ -71,14 +71,11 @@ FormatManager::FormatManager() {
   addNewFormatHeader ( rawGetFormatHeader() );
   addNewFormatHeader ( oleGetFormatHeader() );
   addNewFormatHeader ( dcrawGetFormatHeader() );
-  static_formats = 10;
   #ifdef BIM_FFMPEG_FORMAT
   addNewFormatHeader ( ffMpegGetFormatHeader() );
-  static_formats += 1;
   #endif
   #ifdef BIM_GDCM_FORMAT
   addNewFormatHeader ( dicomGetFormatHeader() );
-  static_formats += 1;
   #endif  
 }
 
@@ -93,8 +90,8 @@ inline FormatManager &FormatManager::operator=( FormatManager fm )
 { 
   unsigned int i;
 
-  if (fm.countInstalledFormats() > static_formats) {
-    for (i=static_formats; i<fm.countInstalledFormats(); i++) {
+  if (fm.countInstalledFormats() > this->countInstalledFormats()) {
+    for (i=this->countInstalledFormats(); i<fm.countInstalledFormats(); i++) {
       this->addNewFormatHeader ( fm.getFormatHeader(i) );
     }
   }
