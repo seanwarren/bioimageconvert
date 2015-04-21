@@ -2881,7 +2881,9 @@ std::map<std::string, ImageModifierProc> Image::create_modifiers() {
     #endif
 
     #ifdef BIM_USE_FILTERS
+    #ifdef BIM_USE_TRANSFORMS
     ops["-filter"] = operation_filter;
+    #endif
     ops["-superpixels"] = operation_superpixels;
     #endif
 
