@@ -59,7 +59,7 @@ struct DisplayColor {
     DisplayColor(): r(-1), g(-1), b(-1) {}
     DisplayColor(int r, int g, int b) { this->r=r; this->g=g; this->b=b; }
     bool isZero() const { return (this->r==0 && this->g==0 && this->b==0); }
-    bool isCustom() const { return (this->r>0 && this->r<255 || this->g>0 && this->g<255 || this->b>0 && this->b<255 ); }
+    bool isCustom() const { return ((this->r>0 && this->r<255) || (this->g>0 && this->g<255) || (this->b>0 && this->b<255)); }
     bool operator==(DisplayColor& c) const { return (this->r==c.r && this->g==c.g && this->b==c.b); }
 };
 
