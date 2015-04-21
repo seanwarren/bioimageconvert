@@ -852,7 +852,7 @@ bim::uint tiffWriteImageProc ( FormatHandle *fmtHndl ) {
   return write_tiff_image(fmtHndl, par); //, fmtHndl->image);
 }
 
-bim::uint tiffReadImageLevelProc(FormatHandle *fmtHndl, uint page, uint level) {
+bim::uint tiffReadImageLevelProc(FormatHandle *fmtHndl, bim::uint page, bim::uint level) {
     if (fmtHndl == NULL) return 1;
     if (fmtHndl->internalParams == NULL) return 1;
     TiffParams *par = (TiffParams *)fmtHndl->internalParams;
@@ -866,7 +866,7 @@ bim::uint tiffReadImageLevelProc(FormatHandle *fmtHndl, uint page, uint level) {
     return 1;
 }
 
-bim::uint tiffReadImageTileProc(FormatHandle *fmtHndl, uint page, bim::uint64 xid, bim::uint64 yid, uint level) {
+bim::uint tiffReadImageTileProc(FormatHandle *fmtHndl, bim::uint page, bim::uint64 xid, bim::uint64 yid, bim::uint level) {
     if (fmtHndl == NULL) return 1;
     if (fmtHndl->internalParams == NULL) return 1;
     TiffParams *par = (TiffParams *)fmtHndl->internalParams;
