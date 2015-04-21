@@ -73,7 +73,7 @@ static boolean dimjpeg_fill_input_buffer(j_decompress_ptr cinfo) {
   else 
     src->bytes_in_buffer = num_read;
 
-  return true;
+  return (boolean)true;
 }
 
 static void dimjpeg_skip_input_data(j_decompress_ptr cinfo, long num_bytes)
@@ -133,7 +133,7 @@ bool jpegGetImageInfo( FormatHandle *fmtHndl ) {
     par->jerr->error_exit = my_error_exit;
 
     if (!setjmp(par->jerr->setjmp_buffer)) {
-        jpeg_read_header(par->cinfo, true);
+        jpeg_read_header(par->cinfo, (boolean)true);
     }
 
     // set some image parameters
@@ -264,7 +264,7 @@ static boolean dimjpeg_empty_output_buffer(j_compress_ptr cinfo)
   dest->next_output_byte = dest->buffer;
   dest->free_in_buffer = max_buf;
 
-  return true;
+  return (boolean)true;
 }
 
 static void dimjpeg_term_destination(j_compress_ptr cinfo)
@@ -348,11 +348,11 @@ static int write_jpeg_image( FormatHandle *fmtHndl )
     int quality = fmtHndl->quality;
     if (quality < 1) quality = 1;
     if (quality > 100) quality = 100;    
-    jpeg_set_quality(&cinfo, quality, true ); // limit to baseline-JPEG values );
+    jpeg_set_quality(&cinfo, quality, (boolean)true); // limit to baseline-JPEG values );
 
     if (fmtHndl->order == 1) jpeg_simple_progression(&cinfo);
 
-    jpeg_start_compress(&cinfo, true);
+    jpeg_start_compress(&cinfo, (boolean)true);
 
     row_pointer[0] = new uchar[cinfo.image_width*cinfo.input_components];
     int w = cinfo.image_width;
