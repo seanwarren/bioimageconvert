@@ -210,6 +210,10 @@ INCLUDEPATH += $$BIM_CORE
 SOURCES += $$BIM_CORE/xstring.cpp $$BIM_CORE/xtypes.cpp \
            $$BIM_CORE/tag_map.cpp $$BIM_CORE/xpointer.cpp $$BIM_CORE/xconf.cpp
 
+HEADERS += $$BIM_CORE/blob_manager.h $$BIM_CORE/tag_map.h \
+           $$BIM_CORE/xconf.h $$BIM_CORE/xpointer.h \
+           $$BIM_CORE/xstring.h $$BIM_CORE/xtypes.h
+
 #Formats API
 SOURCES += $$BIM_FMTS_API/bim_img_format_utils.cpp \
            $$BIM_FMTS_API/bim_buffer.cpp \
@@ -222,6 +226,21 @@ SOURCES += $$BIM_FMTS_API/bim_img_format_utils.cpp \
            $$BIM_FMTS_API/bim_image_pyramid.cpp \
            $$BIM_FMTS_API/bim_image_proxy.cpp \
            $$BIM_FMTS_API/bim_image_stack.cpp
+
+HEADERS += $$BIM_FMTS_API/bim_buffer.h \
+           $$BIM_FMTS_API/bim_histogram.h \
+           $$BIM_FMTS_API/bim_image_5d.h \
+	   $$BIM_FMTS_API/bim_image.h \
+           $$BIM_FMTS_API/bim_image_pyramid.h \
+           $$BIM_FMTS_API/bim_image_stack.h \
+           $$BIM_FMTS_API/bim_img_format_interface.h \
+           $$BIM_FMTS_API/bim_img_format_utils.h \
+	   $$BIM_FMTS_API/bim_metatags.h \
+           $$BIM_FMTS_API/bim_primitives.h \
+	   $$BIM_FMTS_API/bim_qt_utils.h \
+           $$BIM_FMTS_API/resize.h \
+	   $$BIM_FMTS_API/rotate.h \
+           $$BIM_FMTS_API/slic.h
 
 #Formats
 SOURCES += $$BIM_FMTS/bim_format_manager.cpp \
@@ -251,6 +270,43 @@ SOURCES += $$BIM_FMTS/bim_format_manager.cpp \
            $$BIM_FMTS/ole/bim_zvi_format_io.cpp \
            $$BIM_FMTS/ole/zvi.cpp \
            $$BIM_FMTS/dcraw/bim_dcraw_format.cpp
+
+HEADERS += $$BIM_FMTS/dcraw/bim_dcraw_format.h \
+           $$BIM_FMTS/bmp/bim_bmp_format.h \
+           $$BIM_FMTS/bim_exiv_parse.h \
+           $$BIM_FMTS/ole/oib.h $$BIM_FMTS/ole/zvi.h \
+           $$BIM_FMTS/ole/bim_ole_format.h \
+           $$BIM_FMTS/jpeg/bim_jpeg_format.h \
+           $$BIM_FMTS/png/bim_png_format.h \
+           $$BIM_FMTS/raw/bim_raw_format.h \
+           $$BIM_FMTS/tiff/bim_ometiff_format.h \
+           $$BIM_FMTS/tiff/round.h \
+           $$BIM_FMTS/tiff/bim_xtiffio.h \
+           $$BIM_FMTS/tiff/bim_tiff_format.h \
+           $$BIM_FMTS/tiff/bim_tiny_tiff.h \
+           $$BIM_FMTS/tiff/bim_stk_format.h \
+           $$BIM_FMTS/tiff/memio.h \
+           $$BIM_FMTS/tiff/bim_fluoview_format.h \
+           $$BIM_FMTS/tiff/bim_psia_format.h \
+           $$BIM_FMTS/tiff/bim_cz_lsm_format.h \
+           $$BIM_FMTS/ibw/bim_ibw_format.h \
+           $$BIM_FMTS/biorad_pic/bim_biorad_pic_format.h \
+           $$BIM_FMTS/bim_format_manager.h \
+           $$BIM_FMTS/nanoscope/bim_nanoscope_format.h \
+           $$BIM_FMTS/mpeg/parse.h \
+           $$BIM_FMTS/mpeg/FfmpegCommon.h \
+           $$BIM_FMTS/mpeg/IVideo.h \
+           $$BIM_FMTS/mpeg/bim_ffmpeg_format.h \
+           $$BIM_FMTS/mpeg/FfmpegIVideo.h \
+           $$BIM_FMTS/mpeg/registry.h \
+           $$BIM_FMTS/mpeg/matarray.h \
+           $$BIM_FMTS/mpeg/FfmpegOVideo.h \
+           $$BIM_FMTS/mpeg/debug.h \
+           $$BIM_FMTS/mpeg/handle.h \
+           $$BIM_FMTS/mpeg/OVideo.h \
+           $$BIM_FMTS/ome/bim_ome_format.h \
+           $$BIM_FMTS/meta_format_manager.h
+
 
 #---------------------------------------------------------------------
 # Transforms
@@ -283,6 +339,15 @@ libbioimage_transforms {
              $$BIM_TRANSFORMS/wavelet/WaveletLow.cpp \
              $$BIM_TRANSFORMS/wavelet/WaveletMedium.cpp \
              $$BIM_TRANSFORMS/wavelet/wt.cpp
+
+  HEADERS += $$BIM_FMTS/wavelet/DataGrid.h $$BIM_FMTS/wavelet/wt.h \
+             $$BIM_FMTS/wavelet/DataGrid3D.h $$BIM_FMTS/wavelet/WaveletLow.h \
+             $$BIM_FMTS/wavelet/Common.h $$BIM_FMTS/wavelet/convolution.h \
+             $$BIM_FMTS/wavelet/WaveletHigh.h $$BIM_FMTS/wavelet/FilterSet.h \
+             $$BIM_FMTS/wavelet/DataGrid2D.h $$BIM_FMTS/wavelet/Symlet5.h \
+             $$BIM_FMTS/wavelet/Filter.h $$BIM_FMTS/wavelet/Wavelet.h \
+             $$BIM_FMTS/wavelet/WaveletMedium.h $$BIM_FMTS/FuzzyCalc.h \
+             $$BIM_FMTS/chebyshev.h $$BIM_FMTS/radon.h
 }
 
 #---------------------------------------------------------------------
@@ -435,6 +500,10 @@ libraw {
              $$BIM_LIB_RAW/internal/demosaic_packs.cpp \
              $$BIM_LIB_RAW/internal/dcraw_fileio.cpp \
              $$BIM_LIB_RAW/internal/dcraw_common.cpp
+
+  HEADERS += $$BIM_FMTS/internal/libraw_internal_funcs.h \
+             $$BIM_FMTS/internal/var_defines.h \
+             $$BIM_FMTS/internal/defines.h
 }
 
 #---------------------------------------------------------------------
