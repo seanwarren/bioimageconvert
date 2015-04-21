@@ -1,7 +1,7 @@
 ######################################################################
 # Manually generated !!!
 # libBioImage v 1.55 Project file
-# run: 
+# run:
 #   qmake libbioimage.pro - in order to generate Makefile for your platform
 #   make all - to compile the library
 #
@@ -18,7 +18,7 @@
 #   qmake -spec win32-icc libbioimage.pro # to use pure Intel Compiler
 #
 # To generate xcode project file:
-#   qmake -spec macx-xcode libbioimage.pro 
+#   qmake -spec macx-xcode libbioimage.pro
 #
 # To generate Makefile on MacOSX with binary install:
 #   qmake -spec macx-g++ libbioimage.pro
@@ -41,7 +41,8 @@ CONFIG += warn_off
 # static library config
 
 CONFIG += stat_libtiff
-CONFIG += stat_libjpeg
+#CONFIG += stat_libjpeg # pick one or the other
+CONFIG += stat_libjpeg_turbo # pick one or the other
 CONFIG += stat_libpng
 CONFIG += stat_zlib
 CONFIG += ffmpeg
@@ -52,6 +53,9 @@ CONFIG += libraw
 CONFIG += stat_libgeotiff
 CONFIG += stat_proj4
 CONFIG += libbioimage_transforms
+CONFIG += stat_pugixml
+CONFIG += stat_gdcm
+#CONFIG += dyn_gdcm
 
 CONFIG(debug, debug|release) {
    message(Building in DEBUG mode!)
@@ -59,9 +63,11 @@ CONFIG(debug, debug|release) {
 }
 
 macx {
-  QMAKE_CFLAGS_RELEASE += -fPIC -fopenmp -O3 -ftree-vectorize -msse2 -ffast-math -ftree-vectorizer-verbose=0
-  QMAKE_CXXFLAGS_RELEASE += -fPIC -fopenmp -O3 -ftree-vectorize -msse2 -ffast-math -ftree-vectorizer-verbose=0
-  QMAKE_LFLAGS_RELEASE += -fPIC -fopenmp -O3 -ftree-vectorize -msse2 -ffast-math -ftree-vectorizer-verbose=0
+  QMAKE_CFLAGS_RELEASE += -m64 -fPIC -fopenmp -O3 -ftree-vectorize -msse2 -ffast-math -ftree-vectorizer-verbose=0
+  QMAKE_CXXFLAGS_RELEASE += -m64 -fPIC -fopenmp -O3 -ftree-vectorize -msse2 -ffast-math -ftree-vectorizer-verbose=0
+  QMAKE_LFLAGS_RELEASE += -m64 -fPIC -fopenmp -O3 -ftree-vectorize -msse2 -ffast-math -ftree-vectorizer-verbose=0
+
+  QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.7
 } else:unix {
   QMAKE_CFLAGS_DEBUG += -pg -fPIC -ggdb
   QMAKE_CXXFLAGS_DEBUG += -pg -fPIC -ggdb
@@ -71,8 +77,6 @@ macx {
   QMAKE_CXXFLAGS_RELEASE += -fPIC -fopenmp -O3 -ftree-vectorize -msse2 -ffast-math -ftree-vectorizer-verbose=0
   QMAKE_LFLAGS_RELEASE += -fPIC -fopenmp -O3 -ftree-vectorize -msse2 -ffast-math -ftree-vectorizer-verbose=0
 }
-
-QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.6
 
 #---------------------------------------------------------------------
 # configuration paths: editable
@@ -102,7 +106,11 @@ win32 {
 
 
 BIM_LIB_TIF = $$BIM_LSRC/libtiff
-BIM_LIB_JPG = $$BIM_LSRC/libjpeg
+stat_libjpeg_turbo {
+    BIM_LIB_JPG = $$BIM_LSRC/libjpeg-turbo
+} else {
+    BIM_LIB_JPG = $$BIM_LSRC/libjpeg
+}
 BIM_LIB_PNG = $$BIM_LSRC/libpng
 BIM_LIB_Z   = $$BIM_LSRC/zlib
 BIM_LIB_BZ2 = $$BIM_LSRC/bzip2
@@ -123,6 +131,9 @@ BIM_LIB_RAW     = $$BIM_LSRC/libraw
 BIM_LIB_FFT     = $$BIM_LSRC/libfftw/src
 BIM_LIB_GEOTIF  = $$BIM_LSRC/libgeotiff
 BIM_LIB_PROJ4   = $$BIM_LSRC/proj4/src
+BIM_LIB_PUGIXML = $$BIM_LSRC/pugixml/src
+BIM_LIB_GDCM    = $$BIM_LSRC/gdcm
+BIM_FMT_DICOM   = $$BIM_FMTS/dicom
 
 #---------------------------------------------------------------------
 # configuration: automatic
@@ -186,7 +197,7 @@ INCLUDEPATH += $$BIM_GENS
 # libbioimage
 #---------------------------------------------------------------------
 
-DEFINES += BIM_USE_OPENMP 
+DEFINES += BIM_USE_OPENMP
 #DEFINES += BIM_USE_EIGEN
 
 INCLUDEPATH += $$BIM_LIB_BIO
@@ -199,7 +210,7 @@ INCLUDEPATH += $$BIM_CORE
 SOURCES += $$BIM_CORE/xstring.cpp $$BIM_CORE/xtypes.cpp \
            $$BIM_CORE/tag_map.cpp $$BIM_CORE/xpointer.cpp $$BIM_CORE/xconf.cpp
 
-#Formats API 
+#Formats API
 SOURCES += $$BIM_FMTS_API/bim_img_format_utils.cpp \
            $$BIM_FMTS_API/bim_buffer.cpp \
            $$BIM_FMTS_API/bim_histogram.cpp \
@@ -209,9 +220,10 @@ SOURCES += $$BIM_FMTS_API/bim_img_format_utils.cpp \
            $$BIM_FMTS_API/bim_image_transforms.cpp \
            $$BIM_FMTS_API/bim_image_opencv.cpp \
            $$BIM_FMTS_API/bim_image_pyramid.cpp \
+           $$BIM_FMTS_API/bim_image_proxy.cpp \
            $$BIM_FMTS_API/bim_image_stack.cpp
 
-#Formats     
+#Formats
 SOURCES += $$BIM_FMTS/bim_format_manager.cpp \
            $$BIM_FMTS/meta_format_manager.cpp\
            $$BIM_FMTS/bim_exiv_parse.cpp \
@@ -236,25 +248,24 @@ SOURCES += $$BIM_FMTS/bim_format_manager.cpp \
            $$BIM_FMTS/ome/bim_ome_format.cpp\
            $$BIM_FMTS/ole/bim_ole_format.cpp\
            $$BIM_FMTS/ole/bim_oib_format_io.cpp\
-           $$BIM_FMTS/ole/bim_zvi_format_io.cpp\                      
+           $$BIM_FMTS/ole/bim_zvi_format_io.cpp\
            $$BIM_FMTS/ole/zvi.cpp\
            $$BIM_FMTS/dcraw/bim_dcraw_format.cpp
 
-#---------------------------------------------------------------------        
+#---------------------------------------------------------------------
 # Transforms
-#---------------------------------------------------------------------   
+#---------------------------------------------------------------------
 
 DEFINES  += BIM_USE_FILTERS
 
 libbioimage_transforms {
 DEFINES  += BIM_USE_TRANSFORMS
-unix {
-  LIBS += -lfftw3
-}
+
 macx {
-  LIBS -= -lfftw3
   INCLUDEPATH += $$BIM_LIB_FFT/api
   LIBS += $$BIM_LIBS_PLTFM/libfftw3.a
+} else:unix {
+  LIBS += -lfftw3
 }
 
 SOURCES += $$BIM_TRANSFORMS/chebyshev.cpp \
@@ -274,23 +285,32 @@ SOURCES += $$BIM_TRANSFORMS/chebyshev.cpp \
            $$BIM_TRANSFORMS/wavelet/wt.cpp
 }
 
-#---------------------------------------------------------------------        
+#---------------------------------------------------------------------
 # Pole
-#---------------------------------------------------------------------   
+#---------------------------------------------------------------------
 
 D_LIB_POLE = $$BIM_LSRC/pole
 INCLUDEPATH += $$D_LIB_POLE
 SOURCES += $$D_LIB_POLE/pole.cpp
 
-#---------------------------------------------------------------------        
+#---------------------------------------------------------------------
 # Jzon
-#---------------------------------------------------------------------   
+#---------------------------------------------------------------------
 
 D_LIB_JZON = $$BIM_LSRC/jzon
 INCLUDEPATH += $$D_LIB_JZON
 SOURCES += $$D_LIB_JZON/Jzon.cpp
 
-#---------------------------------------------------------------------        
+#---------------------------------------------------------------------
+# Pugixml
+#---------------------------------------------------------------------
+
+stat_pugixml {
+    INCLUDEPATH += $$BIM_LIB_PUGIXML
+    SOURCES += $$BIM_LIB_PUGIXML/pugixml.cpp
+}
+
+#---------------------------------------------------------------------
 # ffmpeg
 #---------------------------------------------------------------------
 
@@ -299,37 +319,111 @@ ffmpeg {
   DEFINES  += BIM_FFMPEG_FORMAT FFMPEG_VIDEO_DISABLE_MATLAB __STDC_CONSTANT_MACROS
   INCLUDEPATH += $$BIM_LIB_FFMPEG/include
   win32:INCLUDEPATH += $$BIM_LIB_FFMPEG/include-win
-  unix:LIBS += -lpthread -lxvidcore -lopenjpeg -lschroedinger-1.0 -ltheora -ltheoraenc -ltheoradec -lbz2
 
   SOURCES += $$BIM_FMT_FFMPEG/debug.cpp $$BIM_FMT_FFMPEG/bim_ffmpeg_format.cpp \
              $$BIM_FMT_FFMPEG/FfmpegCommon.cpp $$BIM_FMT_FFMPEG/FfmpegIVideo.cpp \
              $$BIM_FMT_FFMPEG/FfmpegOVideo.cpp $$BIM_FMT_FFMPEG/registry.cpp
 
+#  win32 {
+#    LIBS += $$BIM_LIBS_PLTFM/avcodec.lib
+#    LIBS += $$BIM_LIBS_PLTFM/avformat.lib
+#    LIBS += $$BIM_LIBS_PLTFM/avutil.lib
+#    LIBS += $$BIM_LIBS_PLTFM/swscale.lib
+#  } else:macx {
+#    LIBS += $$BIM_LIBS_PLTFM/libavformat.a
+#    LIBS += $$BIM_LIBS_PLTFM/libavcodec.a
+#    LIBS += $$BIM_LIBS_PLTFM/libswscale.a
+#    LIBS += $$BIM_LIBS_PLTFM/libavutil.a
+#    LIBS += $$BIM_LIBS_PLTFM/libvpx.a
+#    LIBS += $$BIM_LIBS_PLTFM/libx264.a
+#    LIBS += $$BIM_LIBS_PLTFM/libx264.a
+#    LIBS += $$BIM_LIBS_PLTFM/libvpx.a
+#    LIBS += $$BIM_LIBS_PLTFM/libxvidcore.a
+#    LIBS += $$BIM_LIBS_PLTFM/libogg.a
+#    LIBS += $$BIM_LIBS_PLTFM/libtheora.a
+#    LIBS += $$BIM_LIBS_PLTFM/libtheoraenc.a
+#    LIBS += $$BIM_LIBS_PLTFM/libtheoradec.a
+#    LIBS += -framework CoreFoundation -framework VideoDecodeAcceleration -framework QuartzCore
+#  } else:unix {
+#    LIBS += $$BIM_LIBS_PLTFM/libavformat.a
+#    LIBS += $$BIM_LIBS_PLTFM/libavcodec.a
+#    LIBS += $$BIM_LIBS_PLTFM/libswscale.a
+#    LIBS += $$BIM_LIBS_PLTFM/libavutil.a
+#    LIBS += $$BIM_LIBS_PLTFM/libvpx.a
+#    LIBS += $$BIM_LIBS_PLTFM/libx264.a
+#
+#    LIBS += -lpthread -lxvidcore -lopenjpeg -lschroedinger-1.0 -ltheora -ltheoraenc -ltheoradec -lbz2
+#  }
+
+} # FFMPEG
+
+#---------------------------------------------------------------------
+# GDCM - under linux we only use system dynamic version right now
+#---------------------------------------------------------------------
+
+stat_gdcm {
+  DEFINES += BIM_GDCM_FORMAT
+  SOURCES += $$BIM_FMT_DICOM/bim_dicom_format.cpp
+
   win32 {
-    LIBS += $$BIM_LIBS_PLTFM/avcodec.lib
-    LIBS += $$BIM_LIBS_PLTFM/avformat.lib
-    LIBS += $$BIM_LIBS_PLTFM/avutil.lib
-    LIBS += $$BIM_LIBS_PLTFM/swscale.lib
+    INCLUDEPATH += $$BIM_LIB_GDCM/projects/win64
   } else {
-    LIBS += $$BIM_LIBS_PLTFM/libavformat.a
-    LIBS += $$BIM_LIBS_PLTFM/libavcodec.a
-    LIBS += $$BIM_LIBS_PLTFM/libswscale.a
-    LIBS += $$BIM_LIBS_PLTFM/libavutil.a
-    LIBS += $$BIM_LIBS_PLTFM/libvpx.a
-    LIBS += $$BIM_LIBS_PLTFM/libx264.a
-  }
-  macx {
-    LIBS += $$BIM_LIBS_PLTFM/libx264.a
-    LIBS += $$BIM_LIBS_PLTFM/libvpx.a
-    LIBS += $$BIM_LIBS_PLTFM/libxvidcore.a
-    LIBS += $$BIM_LIBS_PLTFM/libogg.a
-    LIBS += $$BIM_LIBS_PLTFM/libtheora.a
-    LIBS += $$BIM_LIBS_PLTFM/libtheoraenc.a
-    LIBS += $$BIM_LIBS_PLTFM/libtheoradec.a
-    LIBS += -framework CoreFoundation -framework VideoDecodeAcceleration -framework QuartzCore
+    INCLUDEPATH += $$BIM_LIB_GDCM/projects/unix
   }
 
-} # FFMPEG 
+  INCLUDEPATH += $$BIM_LIB_GDCM/Source/Common
+  INCLUDEPATH += $$BIM_LIB_GDCM/Source/DataDictionary
+  INCLUDEPATH += $$BIM_LIB_GDCM/Source/DataStructureAndEncodingDefinition
+  INCLUDEPATH += $$BIM_LIB_GDCM/Source/InformationObjectDefinition
+  INCLUDEPATH += $$BIM_LIB_GDCM/Source/MediaStorageAndFileFormat
+
+#  win32 {
+#    LIBS += $$BIM_LIBS_PLTFM/gdcm/gdcmcharls.lib
+#    LIBS += $$BIM_LIBS_PLTFM/gdcm/gdcmCommon.lib
+#    LIBS += $$BIM_LIBS_PLTFM/gdcm/gdcmDICT.lib
+#    LIBS += $$BIM_LIBS_PLTFM/gdcm/gdcmDSED.lib
+#    LIBS += $$BIM_LIBS_PLTFM/gdcm/gdcmexpat.lib
+#    LIBS += $$BIM_LIBS_PLTFM/gdcm/gdcmgetopt.lib
+#    LIBS += $$BIM_LIBS_PLTFM/gdcm/gdcmIOD.lib
+#    LIBS += $$BIM_LIBS_PLTFM/gdcm/gdcmjpeg12.lib
+#    LIBS += $$BIM_LIBS_PLTFM/gdcm/gdcmjpeg16.lib
+#    LIBS += $$BIM_LIBS_PLTFM/gdcm/gdcmjpeg8.lib
+#    LIBS += $$BIM_LIBS_PLTFM/gdcm/gdcmMEXD.lib
+#    LIBS += $$BIM_LIBS_PLTFM/gdcm/gdcmMSFF.lib
+#    LIBS += $$BIM_LIBS_PLTFM/gdcm/gdcmopenjpeg.lib
+#    LIBS += $$BIM_LIBS_PLTFM/gdcm/gdcmzlib.lib
+#    LIBS += $$BIM_LIBS_PLTFM/gdcm/socketxx.lib
+#  } else {
+#    LIBS += $$BIM_LIBS_PLTFM/gdcm/libgdcmDICT.a
+#    LIBS += $$BIM_LIBS_PLTFM/gdcm/libgdcmMSFF.a
+#    LIBS += $$BIM_LIBS_PLTFM/gdcm/libgdcmCommon.a
+#    LIBS += $$BIM_LIBS_PLTFM/gdcm/libgdcmDSED.a
+#    LIBS += $$BIM_LIBS_PLTFM/gdcm/libgdcmIOD.a
+#    LIBS += $$BIM_LIBS_PLTFM/gdcm/libgdcmcharls.a
+#    LIBS += $$BIM_LIBS_PLTFM/gdcm/libgdcmexpat.a
+#    LIBS += $$BIM_LIBS_PLTFM/gdcm/libgdcmjpeg8.a
+#    LIBS += $$BIM_LIBS_PLTFM/gdcm/libgdcmjpeg12.a
+#    LIBS += $$BIM_LIBS_PLTFM/gdcm/libgdcmjpeg16.a
+#    LIBS += $$BIM_LIBS_PLTFM/gdcm/libgdcmopenjpeg.a
+#    LIBS += $$BIM_LIBS_PLTFM/gdcm/libgdcmzlib.a
+#  }
+
+} # static GDCM
+
+
+dyn_gdcm {
+  DEFINES += BIM_GDCM_FORMAT
+  SOURCES += $$BIM_FMT_DICOM/bim_dicom_format.cpp
+
+  win32 {
+#    LIBS += $$BIM_LIBS_PLTFM/gdcm/gdcmIOD.lib
+  } else:macx {
+#    LIBS += $$BIM_LIBS_PLTFM/gdcm/gdcmIOD.a
+  } else:unix {
+#    LIBS += -lgdcm
+  }
+
+} # System GDCM
 
 #---------------------------------------------------------------------
 # libraw
@@ -347,9 +441,6 @@ libraw {
                $$BIM_LIB_RAW/internal/dcraw_fileio.cpp \
                $$BIM_LIB_RAW/internal/dcraw_common.cpp
 
-} else {
-    #win32:LIBS += $$BIM_LIBS_PLTFM/libraw.lib
-    #unix:LIBS += $$BIM_LIBS_PLTFM/libraw.a
 }
 
 #---------------------------------------------------------------------
@@ -391,9 +482,6 @@ stat_libtiff {
 
     unix:SOURCES  += $$BIM_LIB_TIF/tif_unix.c
     win32:SOURCES += $$BIM_LIB_TIF/tif_win32.c
-} else {
-#      unix:LIBS += -ltiff
-#      win32:LIBS += $$BIM_LIBS_PLTFM/libtiff.lib  
 }
 
 #---------------------------------------------------------------------
@@ -412,7 +500,7 @@ stat_libgeotiff {
                $$BIM_LIB_GEOTIF/geo_trans.c $$BIM_LIB_GEOTIF/geo_write.c
 } else {
       unix:LIBS += -lgeotiff
-      win32:LIBS += $$BIM_LIBS_PLTFM/libgeotiff.lib  
+      win32:LIBS += $$BIM_LIBS_PLTFM/libgeotiff.lib
 }
 
 #---------------------------------------------------------------------
@@ -475,23 +563,23 @@ stat_proj4 {
                 $$BIM_LIB_PROJ4/rtodms.c $$BIM_LIB_PROJ4/vector1.c
 } else {
       unix:LIBS += -lproj4
-      win32:LIBS += $$BIM_LIBS_PLTFM/proj4.lib  
+      win32:LIBS += $$BIM_LIBS_PLTFM/proj4.lib
 }
 
-#---------------------------------------------------------------------        
+#---------------------------------------------------------------------
 # libPng
-#---------------------------------------------------------------------        
+#---------------------------------------------------------------------
 
 stat_libpng {
     INCLUDEPATH += $$BIM_LIB_PNG
-     
+
     # by default disable intel asm code
     unix:DEFINES += PNG_NO_ASSEMBLER_CODE PNG_USE_PNGVCRD
-    
+
     win32:DEFINES -= PNG_NO_ASSEMBLER_CODE PNG_USE_PNGVCRD
     macx:DEFINES -= PNG_NO_ASSEMBLER_CODE PNG_USE_PNGVCRD
     linux-g++-32:DEFINES -= PNG_NO_ASSEMBLER_CODE PNG_USE_PNGVCRD
-    
+
     SOURCES += $$BIM_LIB_PNG/png.c $$BIM_LIB_PNG/pngerror.c $$BIM_LIB_PNG/pngget.c \
                $$BIM_LIB_PNG/pngmem.c $$BIM_LIB_PNG/pngpread.c $$BIM_LIB_PNG/pngread.c \
                $$BIM_LIB_PNG/pngrio.c $$BIM_LIB_PNG/pngrtran.c $$BIM_LIB_PNG/pngrutil.c \
@@ -503,24 +591,24 @@ stat_libpng {
 #      win32:LIBS += $$BIM_LIBS_PLTFM/libpng.lib
 }
 
-  
-#---------------------------------------------------------------------         
+
+#---------------------------------------------------------------------
 # ZLib
 #---------------------------------------------------------------------
 
 stat_zlib {
     INCLUDEPATH += $$BIM_LIB_Z
-    
+
     SOURCES += $$BIM_LIB_Z/adler32.c $$BIM_LIB_Z/compress.c $$BIM_LIB_Z/crc32.c \
                $$BIM_LIB_Z/deflate.c $$BIM_LIB_Z/infback.c \
                $$BIM_LIB_Z/inffast.c $$BIM_LIB_Z/inflate.c $$BIM_LIB_Z/inftrees.c \
                $$BIM_LIB_Z/trees.c $$BIM_LIB_Z/uncompr.c $$BIM_LIB_Z/zutil.c
 } else {
 #    unix:LIBS += -lz
-#    win32:LIBS += $$BIM_LIBS_PLTFM/zlib.lib  
+#    win32:LIBS += $$BIM_LIBS_PLTFM/zlib.lib
 }
 
-#---------------------------------------------------------------------        
+#---------------------------------------------------------------------
 # libjpeg
 #---------------------------------------------------------------------
 
@@ -546,8 +634,30 @@ stat_libjpeg {
 } else {
 #    unix:LIBS += -ljpeg
 #    win32:LIBS += $$BIM_LIBS_PLTFM/libjpeg.lib
-}   
- 
+}
+
+#---------------------------------------------------------------------
+# libjpeg-turbo
+#---------------------------------------------------------------------
+
+stat_libjpeg_turbo {
+    INCLUDEPATH += $$BIM_LIB_JPG
+    #SOURCES += $$BIM_LIB_JPG/jaricom.c $$BIM_LIB_JPG/jcapimin.c $$BIM_LIB_JPG/jcapistd.c
+    win32 {
+        LIBS += $$BIM_LIBS_PLTFM/turbojpeg-static.lib
+    } else {
+        LIBS += $$BIM_LIBS_PLTFM/libjpeg.a
+    }
+}
+
+dyn_libjpeg_turbo {
+    win32 {
+        LIBS += $$BIM_LIBS_PLTFM/turbojpeg-static.lib
+    } else {
+        LIBS += -lturbojpeg
+    }
+}
+
 #---------------------------------------------------------------------
 # bzlib
 #---------------------------------------------------------------------
@@ -558,10 +668,10 @@ stat_bzlib {
              $$BIM_LIB_BZ2/compress.c $$BIM_LIB_BZ2/crctable.c $$BIM_LIB_BZ2/decompress.c $$BIM_LIB_BZ2/huffman.c
 } else {
 #    unix:LIBS += -lbz2
-#    macx:LIBS += -lbz2     
-#    #win32:LIBS += $$BIM_LIBS_PLTFM/libbz2.lib     
+#    macx:LIBS += -lbz2
+#    #win32:LIBS += $$BIM_LIBS_PLTFM/libbz2.lib
 }
-  
+
 #---------------------------------------------------------------------
 # exiv2
 #---------------------------------------------------------------------
@@ -569,7 +679,7 @@ stat_bzlib {
 stat_exiv2 {
     DEFINES += SUPPRESS_WARNINGS
     INCLUDEPATH += $$BIM_LIB_EXIV2
-    INCLUDEPATH += $$BIM_LIB_EXIV2/exiv2  
+    INCLUDEPATH += $$BIM_LIB_EXIV2/exiv2
     SOURCES += $$BIM_LIB_EXIV2/exiv2/asfvideo.cpp $$BIM_LIB_EXIV2/exiv2/basicio.cpp $$BIM_LIB_EXIV2/exiv2/bmpimage.cpp \
         $$BIM_LIB_EXIV2/exiv2/canonmn.cpp $$BIM_LIB_EXIV2/exiv2/convert.cpp $$BIM_LIB_EXIV2/exiv2/cr2image.cpp \
         $$BIM_LIB_EXIV2/exiv2/crwimage.cpp $$BIM_LIB_EXIV2/exiv2/datasets.cpp $$BIM_LIB_EXIV2/exiv2/easyaccess.cpp \
@@ -592,7 +702,7 @@ stat_exiv2 {
 } else {
 #    unix:LIBS += -lexiv2
 #    win32:LIBS += $$BIM_LIBS_PLTFM/libexiv2.lib
-}  
+}
 
 #---------------------------------------------------------------------
 #eigen

@@ -123,6 +123,8 @@ public:
   //--------------------------------------------------------------------------------------
   // begin: session-wide operations
   //--------------------------------------------------------------------------------------
+  bool sessionActive() const { return session_active; }
+
   std::string sessionFilename() const { return sessionFileName; }
   bool  sessionIsReading  (const std::string &fileName="") const;
   bool  sessionIsWriting  (const std::string &fileName="") const;
@@ -137,7 +139,7 @@ public:
 
   // if formatName spesified then forces specific format, used for RAW
   int   sessionStartRead    (const bim::Filename fileName, const char *formatName=NULL);
-  int   sessionStartReadRAW (const bim::Filename fileName, unsigned int header_offset=0, bool big_endian=false);
+  int   sessionStartReadRAW(const bim::Filename fileName, unsigned int header_offset = 0, bool big_endian = false, bool interleaved=false);
   int   sessionStartWrite   (const bim::Filename fileName, const char *formatName, const char *options = NULL);
 
   int   sessionGetFormat ();
@@ -158,6 +160,13 @@ public:
                                   bim::uint roiX, bim::uint roiY, bim::uint roiW, bim::uint roiH, 
                                   bim::uint w, bim::uint h);
   void  sessionReadImageThumb   ( ImageBitmap *bmp, bim::uint w, bim::uint h);
+
+
+  int   sessionReadLevel(ImageBitmap *bmp, bim::uint page, uint level);
+  int   sessionReadLevel(Image &img, bim::uint page, uint level) { return sessionReadLevel(img.imageBitmap(), page, level); }
+
+  int   sessionReadTile(ImageBitmap *bmp, bim::uint page, uint64 xid, uint64 yid, uint level);
+  int   sessionReadTile(Image &img, bim::uint page, uint64 xid, uint64 yid, uint level) { return sessionReadTile(img.imageBitmap(), page, xid, yid, level); }
 
 
   void  sessionSetQuality ( int quality );

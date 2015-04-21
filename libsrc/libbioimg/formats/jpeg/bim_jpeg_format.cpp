@@ -106,7 +106,6 @@ void jpegReleaseFormatProc (FormatHandle *fmtHndl) {
 
 void jpegSetWriteParameters  (FormatHandle *fmtHndl) {
   if (fmtHndl == NULL) return;
-
   fmtHndl->order = 1; // use progressive encoding by default
   fmtHndl->quality = 95;
 
@@ -252,7 +251,7 @@ FormatItem jpegItems[1] = {
 FormatHeader jpegHeader = {
 
   sizeof(FormatHeader),
-  "1.1.0",
+  "1.4.0",
   "DIMIN JPEG CODEC",
   "JPEG-JFIF Compliant CODEC",
   

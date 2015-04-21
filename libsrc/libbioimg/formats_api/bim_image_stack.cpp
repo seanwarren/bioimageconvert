@@ -24,6 +24,7 @@
 #include <meta_format_manager.h>
 #include <xstring.h>
 #include <xtypes.h>
+#include <bim_metatags.h>
 
 using namespace bim;
 
@@ -47,6 +48,11 @@ ImageStack::ImageStack( const char *fileName, unsigned int limit_width, unsigned
 ImageStack::ImageStack( const std::string &fileName, unsigned int limit_width, unsigned int limit_height, int only_channel ) {
   init();
   fromFile(fileName, limit_width, limit_height, only_channel);
+}
+
+ImageStack::ImageStack(const std::vector<xstring> &files, unsigned int number_channels, const xoperations *ops) {
+    init();
+    fromFileList(files, number_channels, ops);
 }
 
 void ImageStack::free() {
@@ -123,7 +129,7 @@ bool ImageStack::positionSet( unsigned int l ) {
 
 //------------------------------------------------------------------------------
 
-bool ImageStack::fromFile( const char *fileName, unsigned int limit_width, unsigned int limit_height, int channel ) {
+bool ImageStack::fromFile(const char *fileName, unsigned int limit_width, unsigned int limit_height, int channel, const xoperations *operations) {
   int res = 0;
   handling_image = true;
   images.clear();
@@ -148,7 +154,13 @@ bool ImageStack::fromFile( const char *fileName, unsigned int limit_width, unsig
 
       // use size limits
       if ( (limit_width>0 || limit_height>0) && (limit_width<img.width() || limit_height<img.height()) )
-        img = img.resample( limit_width, limit_height, Image::szBiCubic, true );
+          img = img.resample( limit_width, limit_height, Image::szBiCubic, true );
+
+      if (operations) {
+          img = img.ensureTypedDepth();
+          img.process(*operations);
+      }
+
       images.push_back( img );
       
       if (page==0) {
@@ -184,6 +196,53 @@ bool ImageStack::toFile( const char *fileName, const char *formatName, const cha
 
   handling_image = false;
   return (res==0);
+}
+
+bool ImageStack::fromFileList(const std::vector<xstring> &files, unsigned int number_channels, const xoperations *operations) {
+    if (files.size() < 2)
+        return this->fromFile(files[0], 0, 0, -1, operations);
+
+    int res = 0;
+    handling_image = true;
+    images.clear();
+    metadata.clear();
+    cur_position = 0;
+
+    int pages = files.size();
+    int page = 0;
+    while (page < pages) {
+        do_progress(page + 1, pages, "Loading stack");
+        if (progress_abort()) break;
+
+        Image img(files[page]);
+        if (img.isEmpty()) break;
+
+        if (number_channels>1) 
+        for (int channel = 0; channel < number_channels; ++channel) {
+            ++page;
+            Image img_c(files[page]);
+            img = img.appendChannels(img_c);
+        }
+
+        if (operations) {
+            img = img.ensureTypedDepth();
+            img.process(*operations);
+        }
+
+        images.push_back(img);
+
+        if (page == 0) {
+            metadata = img.get_metadata();
+            if (number_channels>1) {
+                img.delete_metadata_tag(xstring::xprintf(bim::CHANNEL_COLOR_TEMPLATE.c_str(), 0));
+                img.delete_metadata_tag(xstring::xprintf(bim::CHANNEL_NAME_TEMPLATE.c_str(), 0));
+            }
+        }
+        ++page;
+    }
+
+    handling_image = false;
+    return (res == 0);
 }
 
 bool ImageStack::fromFileManager( MetaFormatManager *m, const std::vector<unsigned int> &pages ) {
@@ -253,6 +312,16 @@ void ImageStack::normalize( int to_bpp, bool planes_independent ) {
 void ImageStack::ensureTypedDepth() {
   for (unsigned int i=0; i<images.size(); ++i)
     images[i] = images[i].ensureTypedDepth();
+}
+
+//------------------------------------------------------------------------------
+
+void ImageStack::process(const xoperations &operations, ImageHistogram *_hist, XConf *c) {
+    XConf cc;
+    if (!c) c = &cc;
+    for (unsigned int i = 0; i < images.size(); ++i) {
+        images[i].process(operations, _hist, &cc);
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -582,7 +651,7 @@ Image ImageStack::textureAtlas() const {
     uint64 ww = w*n, hh = h;
     double ratio = ww / (double)hh;
     // optimize side to be as close to ratio of 1.0
-    for (int r = 2; r < images.size(); r++) {
+    for (int r = 2; r < images.size(); ++r) {
         double ipr = ceil(n / (double)r);
         uint64 aw = w*ipr;
         uint64 ah = h*r;

@@ -372,7 +372,11 @@ int ff_vc1_decode_sequence_header(AVCodecContext *avctx, VC1Context *v, GetBitCo
     if (v->res_sprite) {
         int w = get_bits(gb, 11);
         int h = get_bits(gb, 11);
-        avcodec_set_dimensions(v->s.avctx, w, h);
+        int ret = ff_set_dimensions(v->s.avctx, w, h);
+        if (ret < 0) {
+            av_log(avctx, AV_LOG_ERROR, "Failed to set dimensions %d %d\n", w, h);
+            return ret;
+        }
         skip_bits(gb, 5); //frame rate
         v->res_x8 = get_bits1(gb);
         if (get_bits1(gb)) { // something to do with DC VLC selection
@@ -467,34 +471,33 @@ static int decode_sequence_header_adv(VC1Context *v, GetBitContext *gb)
                       v->s.avctx->width * h,
                       1 << 30);
         }
+        ff_set_sar(v->s.avctx, v->s.avctx->sample_aspect_ratio);
         av_log(v->s.avctx, AV_LOG_DEBUG, "Aspect: %i:%i\n",
                v->s.avctx->sample_aspect_ratio.num,
                v->s.avctx->sample_aspect_ratio.den);
 
         if (get_bits1(gb)) { //framerate stuff
             if (get_bits1(gb)) {
-                v->s.avctx->time_base.num = 32;
-                v->s.avctx->time_base.den = get_bits(gb, 16) + 1;
+                v->s.avctx->framerate.den = 32;
+                v->s.avctx->framerate.num = get_bits(gb, 16) + 1;
             } else {
                 int nr, dr;
                 nr = get_bits(gb, 8);
                 dr = get_bits(gb, 4);
                 if (nr > 0 && nr < 8 && dr > 0 && dr < 3) {
-                    v->s.avctx->time_base.num = ff_vc1_fps_dr[dr - 1];
-                    v->s.avctx->time_base.den = ff_vc1_fps_nr[nr - 1] * 1000;
+                    v->s.avctx->framerate.den = ff_vc1_fps_dr[dr - 1];
+                    v->s.avctx->framerate.num = ff_vc1_fps_nr[nr - 1] * 1000;
                 }
             }
             if (v->broadcast) { // Pulldown may be present
-                v->s.avctx->time_base.den  *= 2;
                 v->s.avctx->ticks_per_frame = 2;
             }
         }
 
         if (get_bits1(gb)) {
-            v->s.avctx->color_primaries = get_bits(gb, 8);
-            v->s.avctx->color_trc       = get_bits(gb, 8);
-            v->s.avctx->colorspace      = get_bits(gb, 8);
-            v->s.avctx->color_range     = AVCOL_RANGE_MPEG;
+            v->color_prim    = get_bits(gb, 8);
+            v->transfer_char = get_bits(gb, 8);
+            v->matrix_coef   = get_bits(gb, 8);
         }
     }
 
@@ -516,6 +519,7 @@ int ff_vc1_decode_entry_point(AVCodecContext *avctx, VC1Context *v, GetBitContex
 {
     int i;
     int w,h;
+    int ret;
 
     av_log(avctx, AV_LOG_DEBUG, "Entry point: %08X\n", show_bits_long(gb, 32));
     v->broken_link    = get_bits1(gb);
@@ -545,7 +549,11 @@ int ff_vc1_decode_entry_point(AVCodecContext *avctx, VC1Context *v, GetBitContex
         w = v->max_coded_width;
         h = v->max_coded_height;
     }
-    avcodec_set_dimensions(avctx, w, h);
+    if ((ret = ff_set_dimensions(avctx, w, h)) < 0) {
+        av_log(avctx, AV_LOG_ERROR, "Failed to set dimensions %d %d\n", w, h);
+        return ret;
+    }
+
     if (v->extended_mv)
         v->extended_dmv = get_bits1(gb);
     if ((v->range_mapy_flag = get_bits1(gb))) {
@@ -859,7 +867,7 @@ int ff_vc1_parse_frame_header_adv(VC1Context *v, GetBitContext* gb)
         v->s.pict_type = (v->fptype & 1) ? AV_PICTURE_TYPE_P : AV_PICTURE_TYPE_I;
         if (v->fptype & 4)
             v->s.pict_type = (v->fptype & 1) ? AV_PICTURE_TYPE_BI : AV_PICTURE_TYPE_B;
-        v->s.current_picture_ptr->f.pict_type = v->s.pict_type;
+        v->s.current_picture_ptr->f->pict_type = v->s.pict_type;
         if (!v->pic_header_flag)
             goto parse_common_info;
     }
@@ -1705,6 +1713,8 @@ av_cold int ff_vc1_init_common(VC1Context *v)
     /* Other defaults */
     v->pq      = -1;
     v->mvrange = 0; /* 7.1.1.18, p80 */
+
+    ff_vc1dsp_init(&v->vc1dsp);
 
     return 0;
 }

@@ -226,6 +226,14 @@ std::deque<std::string> TagMap::iniGetBlock( const std::string &ini, const std::
 }
 
 //******************************************************************************
+
+void TagMap::delete_tag(const std::string &key) {
+    std::map<std::string, std::string>::iterator it = this->find(key);
+    if (it != this->end()) {
+        this->erase(it);
+    }
+}
+
 void TagMap::eraseKeysStaringWith( const std::string &str ) {
   std::map< std::string, std::string >::iterator it = this->begin();
   while (it != this->end()) {
@@ -277,3 +285,16 @@ bool TagMap::fromFile( const std::string &file_name, const std::string &sep ) {
   return true;
 }
 
+bool TagMap::fromString(const std::string &str, const std::string &seplines, const std::string &sepkey) {
+    xstring s = str;
+    std::vector<xstring> lines = s.split(seplines);
+    for (int i = 0; i < lines.size(); ++i) {
+        std::vector<xstring> e = lines[i].split(sepkey);
+        if (e.size()>1) {
+            (*this)[e[0]] = e[1];
+        } else if (e.size()>0) {
+            (*this)[e[0]] = "";
+        }
+    }
+    return true;
+}

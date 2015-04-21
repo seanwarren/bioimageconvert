@@ -585,7 +585,7 @@ static void HorizontalFilter( const Td *psrc, unsigned int w_in, unsigned int /*
                               Td *pdest, unsigned int w_to, unsigned int h_to, unsigned int offset_to,
                               DInterpolationFilter<Tw> &filter_in, const Tw blur )
 {
-  Td TdMin = std::numeric_limits<Td>::min();
+    Td TdMin = bim::lowest<Td>();
   Td TdMax = std::numeric_limits<Td>::max();
   Tw TwEps = std::numeric_limits<Tw>::epsilon();
   Tw x_factor = (Tw) w_to / (Tw) w_in;
@@ -650,7 +650,7 @@ static void VerticalFilter( const Td *psrc, unsigned int /*w_in*/, unsigned int 
                             Td *pdest, unsigned int w_to, unsigned int h_to, unsigned int offset_to,
                             DInterpolationFilter<Tw> &filter_in, const Tw blur )
 {
-  Td TdMin = std::numeric_limits<Td>::min();
+    Td TdMin = bim::lowest<Td>();
   Td TdMax = std::numeric_limits<Td>::max();
   Tw TwEps = std::numeric_limits<Tw>::epsilon();
   Tw y_factor = (Tw) h_to / (Tw) h_in;
@@ -817,7 +817,7 @@ std::vector<Td> ResizeVector( const std::vector<Td> &src, unsigned int new_size,
 
   std::vector<Td> q(new_size);  
 
-  Td TdMin = std::numeric_limits<Td>::min();
+  Td TdMin = bim::lowest<Td>();
   Td TdMax = std::numeric_limits<Td>::max();
   Tw TwEps = std::numeric_limits<Tw>::epsilon();
 

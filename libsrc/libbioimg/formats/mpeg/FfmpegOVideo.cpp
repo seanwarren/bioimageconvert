@@ -873,8 +873,13 @@ namespace VideoIO
     if (getWidth()  <= 0) return NULL;
     if (getHeight() <= 0) return NULL;
     
+    #if LIBAVFORMAT_VERSION_MAJOR >= 56
+    st = avformat_new_stream(oc, NULL);
+    #else
     const int videoStreamIdx = 0;
     st = av_new_stream(oc, videoStreamIdx);
+    #endif
+
     if (!st) return NULL;
 
     c = getCodecFromStream(st);

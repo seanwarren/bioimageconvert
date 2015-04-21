@@ -18,6 +18,10 @@
 #include <cstdlib>
 #include <cstring>
 
+#include <xstring.h>
+#include <tag_map.h>
+#include <bim_metatags.h>
+
 #include "bim_raw_format.h"
 
 // Disables Visual Studio 2005 warnings for deprecated code
@@ -28,17 +32,32 @@
 using namespace bim;
 
 //****************************************************************************
+// Misc
+//****************************************************************************
+
+bim::RawParams::RawParams() {
+    i = initImageInfo();
+    header_offset = 0;
+    big_endian = false;
+    interleaved = false;
+}
+
+bim::RawParams::~RawParams() {
+    // pass
+}
+
+
+//****************************************************************************
 //
 // INTERNAL STRUCTURES
 //
 //****************************************************************************
 
-bool rawGetImageInfo( FormatHandle *fmtHndl )
-{
+bool rawGetImageInfo( FormatHandle *fmtHndl ) {
   if (fmtHndl == NULL) return false;
   if (fmtHndl->internalParams == NULL) return false;
-  RawParams *rawPar = (RawParams *) fmtHndl->internalParams;
-  ImageInfo *info = &rawPar->i;  
+  RawParams *par = (RawParams *) fmtHndl->internalParams;
+  ImageInfo *info = &par->i;  
 
   *info = initImageInfo();
   info->number_pages = 1;
@@ -46,19 +65,18 @@ bool rawGetImageInfo( FormatHandle *fmtHndl )
 
   //fmtHndl->compression - offset
   //fmtHndl->quality - endian (0/1)  
-  rawPar->header_offset = 0;
-  rawPar->big_endian = false;
+  par->header_offset = 0;
+  par->big_endian = false;
 
   if (fmtHndl->stream == NULL) return false;
 
   return true;
 }
 
-bool rawWriteImageInfo( FormatHandle *fmtHndl )
-{
+bool rawWriteImageInfo( FormatHandle *fmtHndl ) {
   if (fmtHndl == NULL) return false;
   if (fmtHndl->internalParams == NULL) return false;
-  RawParams *rawPar = (RawParams *) fmtHndl->internalParams;
+  RawParams *par = (RawParams *) fmtHndl->internalParams;
   
   ImageBitmap *img = fmtHndl->image;
   if (img == NULL) return false;
@@ -78,13 +96,6 @@ bool rawWriteImageInfo( FormatHandle *fmtHndl )
 
   return true;
 }
-
-//****************************************************************************
-//
-// FORMAT DEMANDED FUNTIONS
-//
-//****************************************************************************
-
 
 //----------------------------------------------------------------------------
 // PARAMETERS, INITS
@@ -110,19 +121,19 @@ void rawReleaseFormatProc (FormatHandle *fmtHndl) {
 // OPEN/CLOSE
 //----------------------------------------------------------------------------
 
-static RawParams bim_raw_params;
-
 void rawCloseImageProc (FormatHandle *fmtHndl) {
     if (!fmtHndl) return;
     xclose ( fmtHndl );
+    bim::RawParams *par = (bim::RawParams *) fmtHndl->internalParams;
+    fmtHndl->internalParams = 0;
+    delete par;
 }
 
-bim::uint rawOpenImageProc  (FormatHandle *fmtHndl, ImageIOModes io_mode)
-{
+bim::uint rawOpenImageProc  (FormatHandle *fmtHndl, ImageIOModes io_mode) {
   if (fmtHndl == NULL) return 1;
   if (fmtHndl->internalParams != NULL) rawCloseImageProc (fmtHndl);  
-  //fmtHndl->internalParams = (void *) new RawParams [1];
-  fmtHndl->internalParams = (void *) &bim_raw_params;
+  bim::RawParams *par = new bim::RawParams();
+  fmtHndl->internalParams = (void *)par;
 
   fmtHndl->io_mode = io_mode;
   xopen(fmtHndl);
@@ -140,28 +151,11 @@ bim::uint rawOpenImageProc  (FormatHandle *fmtHndl, ImageIOModes io_mode)
   return 0;
 }
 
-
-bim::uint rawFOpenImageProc (FormatHandle *fmtHndl, char* fileName, ImageIOModes io_mode)
-{
-  fmtHndl->fileName = fileName;
-  return rawOpenImageProc(fmtHndl, io_mode);
-}
-
-bim::uint rawIOpenImageProc (FormatHandle *fmtHndl, char* fileName, 
-                                         BIM_IMAGE_CLASS *image, ImageIOModes io_mode)
-{
-  fmtHndl->fileName = fileName;
-  fmtHndl->image    = image;
-  return rawOpenImageProc(fmtHndl, io_mode);
-}
-
-
 //----------------------------------------------------------------------------
 // INFO for OPEN image
 //----------------------------------------------------------------------------
 
-bim::uint rawGetNumPagesProc ( FormatHandle *fmtHndl )
-{
+bim::uint rawGetNumPagesProc ( FormatHandle *fmtHndl ) {
   if (fmtHndl == NULL) return 0;
   if (fmtHndl->internalParams == NULL) return 0;
 
@@ -169,98 +163,146 @@ bim::uint rawGetNumPagesProc ( FormatHandle *fmtHndl )
 }
 
 
-ImageInfo rawGetImageInfoProc ( FormatHandle *fmtHndl, bim::uint page_num )
-{
+ImageInfo rawGetImageInfoProc ( FormatHandle *fmtHndl, bim::uint page_num ) {
   ImageInfo ii = initImageInfo();
   page_num;
 
   if (fmtHndl == NULL) return ii;
-  RawParams *rawPar = (RawParams *) fmtHndl->internalParams;
+  RawParams *par = (RawParams *) fmtHndl->internalParams;
 
-  return rawPar->i;
+  return par->i;
 }
 
 //----------------------------------------------------------------------------
-// METADATA
+// read
 //----------------------------------------------------------------------------
 
-bim::uint rawAddMetaDataProc (FormatHandle *fmtHndl)
-{
-  fmtHndl=fmtHndl;
-  return 1;
+template <typename T>
+void read_channel(bim::uint64 W, bim::uint64 H, int samples, int sample, const void *in, void *out) {
+    T *raw = (T *)in;
+    T *p = (T *)out;
+    raw += sample;
+    #pragma omp parallel for default(shared)
+    for (bim::int64 x = 0; x < W*H; ++x) {
+        T *pp = p + x;
+        T *rr = raw + x*samples;
+        *pp = *rr;
+    } // for x
 }
 
+static int read_raw_image(FormatHandle *fmtHndl) {
+    if (fmtHndl == NULL) return 1;
+    if (fmtHndl->internalParams == NULL) return 1;
+    RawParams *par = (RawParams *)fmtHndl->internalParams;
+    //ImageInfo *info = &par->i;  
+    ImageBitmap *img = fmtHndl->image;
+    ImageInfo *info = &img->i;
 
-bim::uint rawReadMetaDataProc (FormatHandle *fmtHndl, bim::uint page, int group, int tag, int type)
-{
-  fmtHndl; page; group; tag; type;
-  return 1;
-}
+    //-------------------------------------------------
+    // init the image
+    //-------------------------------------------------
+    info->imageMode = IM_GRAYSCALE;
+    //if ( allocImg( fmtHndl, info, img) != 0 ) return 1;
 
-char* rawReadMetaDataAsTextProc ( FormatHandle *fmtHndl )
-{
-  fmtHndl;
-  return NULL;
-}
+    //-------------------------------------------------
+    // read image data
+    //-------------------------------------------------
+    unsigned int plane_size = getImgSizeInBytes(img);
+    unsigned int cur_plane = fmtHndl->pageNumber;
+    unsigned int header_size = par->header_offset;
 
+    // seek past header size plus number of planes
+    if (xseek(fmtHndl, header_size + plane_size*cur_plane*img->i.samples, SEEK_SET) != 0) return 1;
 
-//----------------------------------------------------------------------------
-// READ/WRITE
-//----------------------------------------------------------------------------
-
-//****************************************************************************
-// READ PROC
-//****************************************************************************
-
-static int read_raw_image(FormatHandle *fmtHndl)
-{
-  if (fmtHndl == NULL) return 1;
-  if (fmtHndl->internalParams == NULL) return 1;
-  RawParams *rawPar = (RawParams *) fmtHndl->internalParams;
-  //ImageInfo *info = &rawPar->i;  
-  ImageBitmap *img = fmtHndl->image;
-  
-  //-------------------------------------------------
-  // init the image
-  //-------------------------------------------------
-  //if ( allocImg( fmtHndl, info, img) != 0 ) return 1;
-
-  //-------------------------------------------------
-  // read image data
-  //-------------------------------------------------
-  unsigned int plane_size  = getImgSizeInBytes( img ); 
-  unsigned int cur_plane   = fmtHndl->pageNumber;
-  unsigned int header_size = rawPar->header_offset; 
-
-  // seek past header size plus number of planes
-  if ( xseek( fmtHndl, header_size + plane_size*cur_plane*img->i.samples, SEEK_SET ) != 0) return 1;
-  
-  for (unsigned int sample=0; sample<img->i.samples; ++sample) {
-    if (xread( fmtHndl, img->bits[sample], 1, plane_size ) != plane_size) return 1;
-
-    // now it has to know whether to swap the data and so on...
-    if ( bim::bigendian != (int)rawPar->big_endian) {
-      if (img->i.depth == 16)
-        swapArrayOfShort((uint16*) img->bits[sample], plane_size/2);
-
-      if (img->i.depth == 32)
-        swapArrayOfLong((uint32*) img->bits[sample], plane_size/4);
+    if (!par->interleaved || img->i.samples==1) {
+        for (unsigned int sample = 0; sample < img->i.samples; ++sample) {
+            if (xread(fmtHndl, img->bits[sample], 1, plane_size) != plane_size) return 1;
+        }
     }
-  }
+    else { // read interleaved data
+        bim::uint64 buffer_sz = plane_size * img->i.samples;
+        std::vector<unsigned char> buffer(buffer_sz);
+        unsigned char *buf = (unsigned char *)&buffer[0];
+        if (xread(fmtHndl, buf, 1, buffer_sz) != buffer_sz) return 1;
 
+        for (int s = 0; s < img->i.samples; ++s) {
+            if (img->i.depth == 8 && img->i.pixelType == FMT_UNSIGNED)
+                read_channel<bim::uint8>(img->i.width, img->i.height, img->i.samples, s, buf, img->bits[s]);
+            else
+            if (img->i.depth == 16 && img->i.pixelType == FMT_UNSIGNED)
+                read_channel<bim::uint16>(img->i.width, img->i.height, img->i.samples, s, buf, img->bits[s]);
+            else
+            if (img->i.depth == 32 && img->i.pixelType == FMT_UNSIGNED)
+                read_channel<bim::uint32>(img->i.width, img->i.height, img->i.samples, s, buf, img->bits[s]);
+            else
+            if (img->i.depth == 64 && img->i.pixelType == FMT_UNSIGNED)
+                read_channel<bim::uint64>(img->i.width, img->i.height, img->i.samples, s, buf, img->bits[s]);
+            else
+            if (img->i.depth == 8 && img->i.pixelType == FMT_SIGNED)
+                read_channel<bim::int8>(img->i.width, img->i.height, img->i.samples, s, buf, img->bits[s]);
+            else
+            if (img->i.depth == 16 && img->i.pixelType == FMT_SIGNED)
+                read_channel<bim::int16>(img->i.width, img->i.height, img->i.samples, s, buf, img->bits[s]);
+            else
+            if (img->i.depth == 32 && img->i.pixelType == FMT_SIGNED)
+                read_channel<bim::int32>(img->i.width, img->i.height, img->i.samples, s, buf, img->bits[s]);
+            else
+            if (img->i.depth == 64 && img->i.pixelType == FMT_SIGNED)
+                read_channel<bim::int64>(img->i.width, img->i.height, img->i.samples, s, buf, img->bits[s]);
+            else
+                //if (img->i.depth == 16 && img->i.pixelType == FMT_FLOAT)
+                //    read_channel<bim::float16>(img->i.width, img->i.height, img->i.samples, s, buf, img->bits[s]);
+                //else
+            if (img->i.depth == 32 && img->i.pixelType == FMT_FLOAT)
+                read_channel<bim::float32>(img->i.width, img->i.height, img->i.samples, s, buf, img->bits[s]);
+            else
+            if (img->i.depth == 64 && img->i.pixelType == FMT_FLOAT)
+                read_channel<bim::float64>(img->i.width, img->i.height, img->i.samples, s, buf, img->bits[s]);
+        } // for sample
+    }
 
-  return 0;
+    // swap endianness
+    if (bim::bigendian != (int)par->big_endian)
+    for (unsigned int sample = 0; sample < img->i.samples; ++sample) {
+        if (img->i.depth == 16)
+            swapArrayOfShort((uint16*)img->bits[sample], plane_size / 2);
+        else if (img->i.depth == 32)
+            swapArrayOfLong((uint32*)img->bits[sample], plane_size / 4);
+        else if (img->i.depth == 64)
+            swapArrayOfDouble((float64*)img->bits[sample], plane_size / 8);
+    }
+
+    return 0;
 }
 
-//****************************************************************************
-// WRITE PROC
-//****************************************************************************
+bim::uint rawReadImageProc(FormatHandle *fmtHndl, bim::uint page) {
+    if (fmtHndl == NULL) return 1;
+    if (fmtHndl->stream == NULL) return 1;
+    fmtHndl->pageNumber = page;
+    return read_raw_image(fmtHndl);
+}
 
-static int write_raw_image(FormatHandle *fmtHndl)
-{
+//----------------------------------------------------------------------------
+// write
+//----------------------------------------------------------------------------
+
+template <typename T>
+void write_channel(bim::uint64 W, bim::uint64 H, int samples, int sample, const void *in, void *out) {
+    T *raw = (T *)in;
+    T *p = (T *)out;
+    raw += sample;
+    #pragma omp parallel for default(shared)
+    for (bim::int64 x = 0; x < W*H; ++x) {
+        T *pp = p + x;
+        T *rr = raw + x*samples;
+        *rr = *pp;
+    } // for x
+}
+
+static int write_raw_image(FormatHandle *fmtHndl) {
   if (fmtHndl == NULL) return 1;
   if (fmtHndl->internalParams == NULL) return 1;
-  RawParams *rawPar = (RawParams *) fmtHndl->internalParams;
+  RawParams *par = (RawParams *) fmtHndl->internalParams;
   ImageBitmap *img = fmtHndl->image;
 
   //-------------------------------------------------
@@ -268,39 +310,129 @@ static int write_raw_image(FormatHandle *fmtHndl)
   //-------------------------------------------------
   unsigned long plane_size = getImgSizeInBytes( img );
   
-  for (unsigned int sample=0; sample<img->i.samples; ++sample)
-    if (xwrite( fmtHndl, img->bits[sample], 1, plane_size ) != plane_size) return 1;
+  if (!par->interleaved || img->i.samples == 1) {
+      std::vector<unsigned char> buffer(plane_size);
+      unsigned char *buf = (unsigned char *)&buffer[0];
+
+      for (unsigned int sample = 0; sample < img->i.samples; ++sample) {
+          memcpy(buf, img->bits[sample], plane_size);
+
+          if (bim::bigendian != (int)par->big_endian) {
+              if (img->i.depth == 16)
+                  swapArrayOfShort((uint16*)buf, plane_size / 2);
+              else if (img->i.depth == 32)
+                  swapArrayOfLong((uint32*)buf, plane_size / 4);
+              else if (img->i.depth == 64)
+                  swapArrayOfDouble((float64*)buf, plane_size / 8);
+          }
+
+          if (xwrite(fmtHndl, buf, 1, plane_size) != plane_size) return 1;
+      }
+  }
+  else {
+      bim::uint64 buffer_sz = plane_size * img->i.samples;
+      std::vector<unsigned char> buffer(buffer_sz);
+      unsigned char *buf = (unsigned char *)&buffer[0];
+
+      for (int s = 0; s < img->i.samples; ++s) {
+          if (img->i.depth == 8 && img->i.pixelType == FMT_UNSIGNED)
+              write_channel<bim::uint8>(img->i.width, img->i.height, img->i.samples, s, buf, img->bits[s]);
+          else
+          if (img->i.depth == 16 && img->i.pixelType == FMT_UNSIGNED)
+              write_channel<bim::uint16>(img->i.width, img->i.height, img->i.samples, s, buf, img->bits[s]);
+          else
+          if (img->i.depth == 32 && img->i.pixelType == FMT_UNSIGNED)
+              write_channel<bim::uint32>(img->i.width, img->i.height, img->i.samples, s, buf, img->bits[s]);
+          else
+          if (img->i.depth == 64 && img->i.pixelType == FMT_UNSIGNED)
+              write_channel<bim::uint64>(img->i.width, img->i.height, img->i.samples, s, buf, img->bits[s]);
+          else
+          if (img->i.depth == 8 && img->i.pixelType == FMT_SIGNED)
+              write_channel<bim::int8>(img->i.width, img->i.height, img->i.samples, s, buf, img->bits[s]);
+          else
+          if (img->i.depth == 16 && img->i.pixelType == FMT_SIGNED)
+              write_channel<bim::int16>(img->i.width, img->i.height, img->i.samples, s, buf, img->bits[s]);
+          else
+          if (img->i.depth == 32 && img->i.pixelType == FMT_SIGNED)
+              write_channel<bim::int32>(img->i.width, img->i.height, img->i.samples, s, buf, img->bits[s]);
+          else
+          if (img->i.depth == 64 && img->i.pixelType == FMT_SIGNED)
+              write_channel<bim::int64>(img->i.width, img->i.height, img->i.samples, s, buf, img->bits[s]);
+          else
+              //if (img->i.depth == 16 && img->i.pixelType == FMT_FLOAT)
+              //    write_channel<bim::float16>(img->i.width, img->i.height, img->i.samples, s, buf, img->bits[s]);
+              //else
+          if (img->i.depth == 32 && img->i.pixelType == FMT_FLOAT)
+              write_channel<bim::float32>(img->i.width, img->i.height, img->i.samples, s, buf, img->bits[s]);
+          else
+          if (img->i.depth == 64 && img->i.pixelType == FMT_FLOAT)
+              write_channel<bim::float64>(img->i.width, img->i.height, img->i.samples, s, buf, img->bits[s]);
+
+          if (bim::bigendian != (int)par->big_endian) {
+              if (img->i.depth == 16)
+                  swapArrayOfShort((uint16*)buf, buffer_sz / 2);
+              else if (img->i.depth == 32)
+                  swapArrayOfLong((uint32*)buf, buffer_sz / 4);
+              else if (img->i.depth == 64)
+                  swapArrayOfDouble((float64*)buf, buffer_sz / 8);
+          }
+
+          if (xwrite(fmtHndl, buf, 1, buffer_sz) != buffer_sz) return 1;
+      } // for sample
+  }
 
   xflush( fmtHndl );
   return 0;
 }
 
-
-bim::uint rawReadImageProc  ( FormatHandle *fmtHndl, bim::uint page )
-{
+bim::uint rawWriteImageProc ( FormatHandle *fmtHndl ) {
   if (fmtHndl == NULL) return 1;
   if (fmtHndl->stream == NULL) return 1;
-
-  fmtHndl->pageNumber = page;
-  return read_raw_image( fmtHndl );
+  //if (fmtHndl->pageNumber <= 1) rawWriteImageInfo( fmtHndl );
+  return write_raw_image( fmtHndl );
 }
 
-bim::uint rawWriteImageProc ( FormatHandle *fmtHndl )
-{
-  if (fmtHndl == NULL) return 1;
-  if (fmtHndl->stream == NULL) return 1;
+//----------------------------------------------------------------------------
+// metadata
+//----------------------------------------------------------------------------
 
-  //if (fmtHndl->pageNumber <= 1) rawWriteImageInfo( fmtHndl );
+bim::uint rawAddMetaDataProc(FormatHandle *fmtHndl) {
+    fmtHndl = fmtHndl;
+    return 1;
+}
 
-  return write_raw_image( fmtHndl );
+bim::uint rawReadMetaDataProc(FormatHandle *fmtHndl, bim::uint page, int group, int tag, int type) {
+    fmtHndl; page; group; tag; type;
+    return 1;
+}
+
+char* rawReadMetaDataAsTextProc(FormatHandle *fmtHndl) {
+    fmtHndl;
+    return NULL;
+}
+
+
+bim::uint raw_append_metadata(FormatHandle *fmtHndl, TagMap *hash) {
+    if (fmtHndl == NULL) return 1;
+    if (fmtHndl->internalParams == NULL) return 1;
+    if (!hash) return 1;
+    RawParams *par = (RawParams *)fmtHndl->internalParams;
+    ImageBitmap *img = fmtHndl->image;
+
+    //-------------------------------------------
+    // channel names
+    //-------------------------------------------
+    for (unsigned int i = 0; i<img->i.samples; ++i) {
+        hash->set_value(xstring::xprintf(bim::CHANNEL_NAME_TEMPLATE.c_str(), i), xstring::xprintf("Channel %d", i));
+    }
+
+    return 0;
 }
 
 
 
 //****************************************************************************
-//
-// EXPORTED FUNCTION
-//
+// EXPORTED
 //****************************************************************************
 
 FormatItem rawItems[1] = {
@@ -321,7 +453,7 @@ FormatItem rawItems[1] = {
 FormatHeader rawHeader = {
 
   sizeof(FormatHeader),
-  "1.0.0",
+  "2.0.0",
   "DIMIN RAW CODEC",
   "RAW CODEC",
   

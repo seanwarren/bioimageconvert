@@ -258,6 +258,12 @@
     <ClCompile Include="..\..\..\libbioimg\formats\tiff\bim_geotiff_parse.cpp">
       <Filter>libbioimg\Formats\Tiff</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\formats\dicom\bim_dicom_format.cpp">
+      <Filter>libbioimg\Formats</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\formats_api\bim_image_proxy.cpp">
+      <Filter>libbioimg\FmtAPI</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\libbioimg\formats\bim_format_manager.h">
@@ -321,6 +327,9 @@
       <Filter>libbioimg\FmtAPI Headers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\formats_api\bim_primitives.h">
+      <Filter>libbioimg\FmtAPI Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\formats_api\bim_image_proxy.h">
       <Filter>libbioimg\FmtAPI Headers</Filter>
     </ClInclude>
   </ItemGroup>

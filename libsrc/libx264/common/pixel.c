@@ -5,7 +5,7 @@
  *
  * Authors: Loren Merritt <lorenm@u.washington.edu>
  *          Laurent Aimar <fenrir@via.ecp.fr>
- *          Jason Garrett-Glaser <darkshikari@gmail.com>
+ *          Fiona Glaser <fiona@x264.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -38,8 +38,9 @@
 #   include "arm/pixel.h"
 #   include "arm/predict.h"
 #endif
-#if ARCH_UltraSPARC
-#   include "sparc/pixel.h"
+#if ARCH_AARCH64
+#   include "aarch64/pixel.h"
+#   include "aarch64/predict.h"
 #endif
 
 
@@ -200,7 +201,7 @@ PIXEL_VAR_C( x264_pixel_var_8x8,    8,  8 )
 #define PIXEL_VAR2_C( name, w, h, shift ) \
 static int name( pixel *pix1, intptr_t i_stride1, pixel *pix2, intptr_t i_stride2, int *ssd ) \
 { \
-    uint32_t var = 0, sum = 0, sqr = 0; \
+    int var = 0, sum = 0, sqr = 0; \
     for( int y = 0; y < h; y++ ) \
     { \
         for( int x = 0; x < w; x++ ) \
@@ -212,8 +213,7 @@ static int name( pixel *pix1, intptr_t i_stride1, pixel *pix2, intptr_t i_stride
         pix1 += i_stride1; \
         pix2 += i_stride2; \
     } \
-    sum = abs(sum); \
-    var = sqr - ((uint64_t)sum * sum >> shift); \
+    var = sqr - ((int64_t)sum * sum >> shift); \
     *ssd = sqr; \
     return var; \
 }
@@ -454,15 +454,6 @@ SAD_X( 8x4 )
 SAD_X( 4x8 )
 SAD_X( 4x4 )
 
-#if !HIGH_BIT_DEPTH
-#if ARCH_UltraSPARC
-SAD_X( 16x16_vis )
-SAD_X( 16x8_vis )
-SAD_X( 8x16_vis )
-SAD_X( 8x8_vis )
-#endif
-#endif // !HIGH_BIT_DEPTH
-
 /****************************************************************************
  * pixel_satd_x4
  * no faster than single satd, but needed for satd to be a drop-in replacement for sad
@@ -509,7 +500,7 @@ SATD_X_DECL7( _xop )
 #endif
 
 #if !HIGH_BIT_DEPTH
-#if HAVE_ARMV6
+#if HAVE_ARMV6 || ARCH_AARCH64
 SATD_X_DECL7( _neon )
 #endif
 #endif // !HIGH_BIT_DEPTH
@@ -533,7 +524,7 @@ INTRA_MBCMP_8x8(sa8d,, _c )
 INTRA_MBCMP_8x8( sad, _mmx2,  _c )
 INTRA_MBCMP_8x8(sa8d, _sse2,  _sse2 )
 #endif
-#if !HIGH_BIT_DEPTH && HAVE_ARMV6
+#if !HIGH_BIT_DEPTH && (HAVE_ARMV6 || ARCH_AARCH64)
 INTRA_MBCMP_8x8( sad, _neon, _neon )
 INTRA_MBCMP_8x8(sa8d, _neon, _neon )
 #endif
@@ -593,12 +584,22 @@ INTRA_MBCMP(satd,  8x16, dc, h,  v, c, _xop, _mmx2 )
 #endif
 #endif
 #if !HIGH_BIT_DEPTH && HAVE_ARMV6
-INTRA_MBCMP( sad,  4x4,   v, h, dc,  , _neon, _c )
-INTRA_MBCMP(satd,  4x4,   v, h, dc,  , _neon, _c )
+INTRA_MBCMP( sad,  4x4,   v, h, dc,  , _neon, _armv6 )
+INTRA_MBCMP(satd,  4x4,   v, h, dc,  , _neon, _armv6 )
 INTRA_MBCMP( sad,  8x8,  dc, h,  v, c, _neon, _neon )
 INTRA_MBCMP(satd,  8x8,  dc, h,  v, c, _neon, _neon )
 INTRA_MBCMP( sad,  8x16, dc, h,  v, c, _neon, _c )
 INTRA_MBCMP(satd,  8x16, dc, h,  v, c, _neon, _c )
+INTRA_MBCMP( sad, 16x16,  v, h, dc,  , _neon, _neon )
+INTRA_MBCMP(satd, 16x16,  v, h, dc,  , _neon, _neon )
+#endif
+#if !HIGH_BIT_DEPTH && ARCH_AARCH64
+INTRA_MBCMP( sad,  4x4,   v, h, dc,  , _neon, _neon )
+INTRA_MBCMP(satd,  4x4,   v, h, dc,  , _neon, _neon )
+INTRA_MBCMP( sad,  8x8,  dc, h,  v, c, _neon, _neon )
+INTRA_MBCMP(satd,  8x8,  dc, h,  v, c, _neon, _neon )
+INTRA_MBCMP( sad,  8x16, dc, h,  v, c, _neon, _neon )
+INTRA_MBCMP(satd,  8x16, dc, h,  v, c, _neon, _neon )
 INTRA_MBCMP( sad, 16x16,  v, h, dc,  , _neon, _neon )
 INTRA_MBCMP(satd, 16x16,  v, h, dc,  , _neon, _neon )
 #endif
@@ -1021,8 +1022,16 @@ void x264_pixel_init( int cpu, x264_pixel_function_t *pixf )
     }
     if( cpu&X264_CPU_XOP )
     {
+        INIT5( sad_x3, _xop );
+        INIT5( sad_x4, _xop );
+        pixf->ssd_nv12_core    = x264_pixel_ssd_nv12_core_xop;
+        pixf->var[PIXEL_16x16] = x264_pixel_var_16x16_xop;
+        pixf->var[PIXEL_8x8]   = x264_pixel_var_8x8_xop;
         pixf->vsad = x264_pixel_vsad_xop;
         pixf->asd8 = x264_pixel_asd8_xop;
+#if ARCH_X86_64
+        pixf->sa8d_satd[PIXEL_16x16] = x264_pixel_sa8d_satd_16x16_xop;
+#endif
     }
     if( cpu&X264_CPU_AVX2 )
     {
@@ -1031,6 +1040,7 @@ void x264_pixel_init( int cpu, x264_pixel_function_t *pixf )
         INIT2_NAME( sad_aligned, sad, _avx2 );
         INIT2( sad_x3, _avx2 );
         INIT2( sad_x4, _avx2 );
+        pixf->var[PIXEL_16x16] = x264_pixel_var_16x16_avx2;
         pixf->vsad = x264_pixel_vsad_avx2;
         pixf->ssd_nv12_core = x264_pixel_ssd_nv12_core_avx2;
         pixf->intra_sad_x3_8x8 = x264_intra_sad_x3_8x8_avx2;
@@ -1308,6 +1318,7 @@ void x264_pixel_init( int cpu, x264_pixel_function_t *pixf )
         pixf->sa8d[PIXEL_16x16]= x264_pixel_sa8d_16x16_xop;
         pixf->sa8d[PIXEL_8x8]  = x264_pixel_sa8d_8x8_xop;
         pixf->intra_satd_x3_8x16c = x264_intra_satd_x3_8x16c_xop;
+        pixf->ssd_nv12_core    = x264_pixel_ssd_nv12_core_xop;
         pixf->var[PIXEL_16x16] = x264_pixel_var_16x16_xop;
         pixf->var[PIXEL_8x16]  = x264_pixel_var_8x16_xop;
         pixf->var[PIXEL_8x8]   = x264_pixel_var_8x8_xop;
@@ -1394,6 +1405,50 @@ void x264_pixel_init( int cpu, x264_pixel_function_t *pixf )
         }
     }
 #endif
+
+#if ARCH_AARCH64
+    if( cpu&X264_CPU_NEON )
+    {
+        INIT8( sad, _neon );
+        // AArch64 has no distinct instructions for aligned load/store
+        INIT8_NAME( sad_aligned, sad, _neon );
+        INIT7( sad_x3, _neon );
+        INIT7( sad_x4, _neon );
+        INIT8( ssd, _neon );
+        INIT8( satd, _neon );
+        INIT7( satd_x3, _neon );
+        INIT7( satd_x4, _neon );
+        INIT4( hadamard_ac, _neon );
+
+        pixf->sa8d[PIXEL_8x8]   = x264_pixel_sa8d_8x8_neon;
+        pixf->sa8d[PIXEL_16x16] = x264_pixel_sa8d_16x16_neon;
+        pixf->sa8d_satd[PIXEL_16x16] = x264_pixel_sa8d_satd_16x16_neon;
+
+        pixf->var[PIXEL_8x8]    = x264_pixel_var_8x8_neon;
+        pixf->var[PIXEL_8x16]   = x264_pixel_var_8x16_neon;
+        pixf->var[PIXEL_16x16]  = x264_pixel_var_16x16_neon;
+        pixf->var2[PIXEL_8x8]   = x264_pixel_var2_8x8_neon;
+        pixf->var2[PIXEL_8x16]  = x264_pixel_var2_8x16_neon;
+        pixf->vsad = x264_pixel_vsad_neon;
+        pixf->asd8 = x264_pixel_asd8_neon;
+
+        pixf->intra_sad_x3_4x4    = x264_intra_sad_x3_4x4_neon;
+        pixf->intra_satd_x3_4x4   = x264_intra_satd_x3_4x4_neon;
+        pixf->intra_sad_x3_8x8    = x264_intra_sad_x3_8x8_neon;
+        pixf->intra_sa8d_x3_8x8   = x264_intra_sa8d_x3_8x8_neon;
+        pixf->intra_sad_x3_8x8c   = x264_intra_sad_x3_8x8c_neon;
+        pixf->intra_satd_x3_8x8c  = x264_intra_satd_x3_8x8c_neon;
+        pixf->intra_sad_x3_8x16c  = x264_intra_sad_x3_8x16c_neon;
+        pixf->intra_satd_x3_8x16c = x264_intra_satd_x3_8x16c_neon;
+        pixf->intra_sad_x3_16x16  = x264_intra_sad_x3_16x16_neon;
+        pixf->intra_satd_x3_16x16 = x264_intra_satd_x3_16x16_neon;
+
+        pixf->ssd_nv12_core     = x264_pixel_ssd_nv12_core_neon;
+        pixf->ssim_4x4x2_core   = x264_pixel_ssim_4x4x2_core_neon;
+        pixf->ssim_end4         = x264_pixel_ssim_end4_neon;
+    }
+#endif // ARCH_AARCH64
+
 #endif // HIGH_BIT_DEPTH
 #if HAVE_ALTIVEC
     if( cpu&X264_CPU_ALTIVEC )
@@ -1401,13 +1456,6 @@ void x264_pixel_init( int cpu, x264_pixel_function_t *pixf )
         x264_pixel_altivec_init( pixf );
     }
 #endif
-#if !HIGH_BIT_DEPTH
-#if ARCH_UltraSPARC
-    INIT4( sad, _vis );
-    INIT4( sad_x3, _vis );
-    INIT4( sad_x4, _vis );
-#endif
-#endif // !HIGH_BIT_DEPTH
 
     pixf->ads[PIXEL_8x16] =
     pixf->ads[PIXEL_8x4] =

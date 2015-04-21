@@ -28,6 +28,8 @@ public:
   TagMap( const TagMap& _Right ): std::map<std::string, std::string>(_Right) {}
   TagMap( const std::map<std::string, std::string>& _Right ): std::map<std::string, std::string>(_Right) {}
 
+  TagMap(const std::string &str, const std::string &seplines = ",", const std::string &sepkey = " ") { this->fromString(str, seplines, sepkey); }
+
   template<class InputIterator>
   TagMap( InputIterator _First,
            InputIterator _Last ): std::map<std::string, std::string>(_First, _Last) {}
@@ -64,8 +66,11 @@ public:
   void append_tag( const std::string &key, const double &value );
   void append_tag( const std::string &key, const float &value );
 
-  void eraseKeysStaringWith( const std::string &str );
+  void delete_tag( const std::string &key );
+  void erase_tag(const std::string &key) { this->delete_tag(key); };
 
+  void eraseKeysStaringWith( const std::string &str );
+  
   // set tags from another hashtable using a prefix for a tag name
   void set_values( const std::map<std::string, std::string> &tags, const std::string &prefix="" );
 
@@ -82,6 +87,8 @@ public:
   // I/O
   bool toFile( const std::string &file_name, const std::string &sep=": " ) const;
   bool fromFile( const std::string &file_name, const std::string &sep=": " );
+
+  bool fromString(const std::string &str, const std::string &seplines = ",", const std::string &sepkey = " ");
 
 private:
   static std::string readline( const std::string &str, int &pos );

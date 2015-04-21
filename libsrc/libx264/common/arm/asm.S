@@ -28,6 +28,16 @@
 
 .syntax unified
 
+#if   HAVE_NEON
+        .arch           armv7-a
+#elif HAVE_ARMV6T2
+        .arch           armv6t2
+#elif HAVE_ARMV6
+        .arch           armv6
+#endif
+
+.fpu neon
+
 #ifdef PREFIX
 #   define EXTERN_ASM _
 #else
@@ -40,32 +50,49 @@
 #   define ELF @
 #endif
 
-        .macro require8, val=1
+#if HAVE_AS_FUNC
+#   define FUNC
+#else
+#   define FUNC @
+#endif
+
+.macro require8, val=1
 ELF     .eabi_attribute 24, \val
-        .endm
+.endm
 
-        .macro preserve8, val=1
+.macro preserve8, val=1
 ELF     .eabi_attribute 25, \val
-        .endm
+.endm
 
-        .macro function name
-        .global EXTERN_ASM\name
+.macro function name, export=1
+    .macro endfunc
+ELF     .size   \name, . - \name
+FUNC    .endfunc
+        .purgem endfunc
+    .endm
         .align  2
+.if \export == 1
+        .global EXTERN_ASM\name
+ELF     .hidden EXTERN_ASM\name
+ELF     .type   EXTERN_ASM\name, %function
+FUNC    .func   EXTERN_ASM\name
 EXTERN_ASM\name:
+.else
 ELF     .hidden \name
 ELF     .type   \name, %function
-        .func   \name
+FUNC    .func   \name
 \name:
-        .endm
+.endif
+.endm
 
-        .macro movrel rd, val
+.macro movrel rd, val
 #if HAVE_ARMV6T2 && !defined(PIC)
         movw            \rd, #:lower16:\val
         movt            \rd, #:upper16:\val
 #else
         ldr             \rd, =\val
 #endif
-        .endm
+.endm
 
 .macro movconst rd, val
 #if HAVE_ARMV6T2
@@ -77,6 +104,10 @@ ELF     .type   \name, %function
     ldr         \rd, =\val
 #endif
 .endm
+
+#define GLUE(a, b) a ## b
+#define JOIN(a, b) GLUE(a, b)
+#define X(s) JOIN(EXTERN_ASM, s)
 
 #define FENC_STRIDE 16
 #define FDEC_STRIDE 32

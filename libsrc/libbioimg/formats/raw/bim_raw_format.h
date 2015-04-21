@@ -26,11 +26,16 @@ bim::FormatHeader* rawGetFormatHeader(void);
 
 namespace bim {
 
-typedef struct RawParams {
-  ImageInfo i;
-  unsigned int header_offset;
-  bool big_endian;
-} RawParams;
+class RawParams {
+public:
+    RawParams();
+    ~RawParams();
+
+    ImageInfo i;
+    unsigned int header_offset;
+    bool big_endian;
+    bool interleaved;
+};
 
 } // namespace bim
 

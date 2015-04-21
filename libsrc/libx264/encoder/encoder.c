@@ -5,7 +5,7 @@
  *
  * Authors: Laurent Aimar <fenrir@via.ecp.fr>
  *          Loren Merritt <lorenm@u.washington.edu>
- *          Jason Garrett-Glaser <darkshikari@gmail.com>
+ *          Fiona Glaser <fiona@x264.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,6 +32,9 @@
 #include "ratecontrol.h"
 #include "macroblock.h"
 #include "me.h"
+#if HAVE_INTEL_DISPATCHER
+#include "extras/intel_dispatcher.h"
+#endif
 
 //#define DEBUG_MB_TYPE
 
@@ -97,11 +100,14 @@ static void x264_frame_dump( x264_t *h )
         int cw = h->param.i_width>>1;
         int ch = h->param.i_height>>CHROMA_V_SHIFT;
         pixel *planeu = x264_malloc( (cw*ch*2+32)*sizeof(pixel) );
-        pixel *planev = planeu + cw*ch + 16;
-        h->mc.plane_copy_deinterleave( planeu, cw, planev, cw, h->fdec->plane[1], h->fdec->i_stride[1], cw, ch );
-        fwrite( planeu, 1, cw*ch*sizeof(pixel), f );
-        fwrite( planev, 1, cw*ch*sizeof(pixel), f );
-        x264_free( planeu );
+        if( planeu )
+        {
+            pixel *planev = planeu + cw*ch + 16;
+            h->mc.plane_copy_deinterleave( planeu, cw, planev, cw, h->fdec->plane[1], h->fdec->i_stride[1], cw, ch );
+            fwrite( planeu, 1, cw*ch*sizeof(pixel), f );
+            fwrite( planev, 1, cw*ch*sizeof(pixel), f );
+            x264_free( planeu );
+        }
     }
     fclose( f );
 }
@@ -412,6 +418,12 @@ static void x264_encoder_thread_init( x264_t *h )
 
 static int x264_validate_parameters( x264_t *h, int b_open )
 {
+    if( !h->param.pf_log )
+    {
+        x264_log( NULL, X264_LOG_ERROR, "pf_log not set! did you forget to call x264_param_default?\n" );
+        return -1;
+    }
+
 #if HAVE_MMX
     if( b_open )
     {
@@ -818,6 +830,8 @@ static int x264_validate_parameters( x264_t *h, int b_open )
         /* 8x8dct is not useful without RD in CAVLC lossless */
         if( !h->param.b_cabac && h->param.analyse.i_subpel_refine < 6 )
             h->param.analyse.b_transform_8x8 = 0;
+        h->param.analyse.inter &= ~X264_ANALYSE_I8x8;
+        h->param.analyse.intra &= ~X264_ANALYSE_I8x8;
     }
     if( h->param.rc.i_rc_method == X264_RC_CQP )
     {
@@ -1039,7 +1053,7 @@ static int x264_validate_parameters( x264_t *h, int b_open )
         h->param.analyse.intra &= ~X264_ANALYSE_I8x8;
     }
     h->param.analyse.i_trellis = x264_clip3( h->param.analyse.i_trellis, 0, 2 );
-    h->param.rc.i_aq_mode = x264_clip3( h->param.rc.i_aq_mode, 0, 2 );
+    h->param.rc.i_aq_mode = x264_clip3( h->param.rc.i_aq_mode, 0, 3 );
     h->param.rc.f_aq_strength = x264_clip3f( h->param.rc.f_aq_strength, 0, 3 );
     if( h->param.rc.f_aq_strength == 0 )
         h->param.rc.i_aq_mode = 0;
@@ -1379,6 +1393,10 @@ x264_t *x264_encoder_open( x264_param_t *param )
     if( param->param_free )
         param->param_free( param );
 
+#if HAVE_INTEL_DISPATCHER
+    x264_intel_dispatcher_override();
+#endif
+
     if( x264_threading_init() )
     {
         x264_log( h, X264_LOG_ERROR, "unable to initialize threading\n" );
@@ -1403,7 +1421,11 @@ x264_t *x264_encoder_open( x264_param_t *param )
     /* Init x264_t */
     h->i_frame = -1;
     h->i_frame_num = 0;
-    h->i_idr_pic_id = 0;
+
+    if( h->param.i_avcintra_class )
+        h->i_idr_pic_id = 5;
+    else
+        h->i_idr_pic_id = 0;
 
     if( (uint64_t)h->param.i_timebase_den * 2 > UINT32_MAX )
     {
@@ -2154,6 +2176,31 @@ static inline void x264_reference_build_list( x264_t *h, int i_poc )
             h->fref[1][h->i_ref[1]++] = h->frames.reference[i];
     }
 
+    if( h->sh.i_mmco_remove_from_end )
+    {
+        /* Order ref0 for MMCO remove */
+        do
+        {
+            b_ok = 1;
+            for( int i = 0; i < h->i_ref[0] - 1; i++ )
+            {
+                if( h->fref[0][i]->i_frame < h->fref[0][i+1]->i_frame )
+                {
+                    XCHG( x264_frame_t*, h->fref[0][i], h->fref[0][i+1] );
+                    b_ok = 0;
+                    break;
+                }
+            }
+        } while( !b_ok );
+
+        for( int i = h->i_ref[0]-1; i >= h->i_ref[0] - h->sh.i_mmco_remove_from_end; i-- )
+        {
+            int diff = h->i_frame_num - h->fref[0][i]->i_frame_num;
+            h->sh.mmco[h->sh.i_mmco_command_count].i_poc = h->fref[0][i]->i_poc;
+            h->sh.mmco[h->sh.i_mmco_command_count++].i_difference_of_pic_nums = diff;
+        }
+    }
+
     /* Order reference lists by distance from the current frame. */
     for( int list = 0; list < 2; list++ )
     {
@@ -2175,14 +2222,6 @@ static inline void x264_reference_build_list( x264_t *h, int i_poc )
             }
         } while( !b_ok );
     }
-
-    if( h->sh.i_mmco_remove_from_end )
-        for( int i = h->i_ref[0]-1; i >= h->i_ref[0] - h->sh.i_mmco_remove_from_end; i-- )
-        {
-            int diff = h->i_frame_num - h->fref[0][i]->i_frame_num;
-            h->sh.mmco[h->sh.i_mmco_command_count].i_poc = h->fref[0][i]->i_poc;
-            h->sh.mmco[h->sh.i_mmco_command_count++].i_difference_of_pic_nums = diff;
-        }
 
     x264_reference_check_reorder( h );
 
@@ -2438,7 +2477,24 @@ static inline void x264_slice_init( x264_t *h, int i_nal_type, int i_global_qp )
         x264_slice_header_init( h, &h->sh, h->sps, h->pps, h->i_idr_pic_id, h->i_frame_num, i_global_qp );
 
         /* alternate id */
-        h->i_idr_pic_id ^= 1;
+        if( h->param.i_avcintra_class )
+        {
+            switch( h->i_idr_pic_id )
+            {
+                case 5:
+                    h->i_idr_pic_id = 3;
+                    break;
+                case 3:
+                    h->i_idr_pic_id = 4;
+                    break;
+                case 4:
+                default:
+                    h->i_idr_pic_id = 5;
+                    break;
+            }
+        }
+        else
+            h->i_idr_pic_id ^= 1;
     }
     else
     {
@@ -3539,15 +3595,15 @@ int     x264_encoder_encode( x264_t *h,
                 return -1;
             overhead += h->out.nal[h->out.i_nal-1].i_payload + SEI_OVERHEAD;
         }
+    }
 
-        if( h->param.i_frame_packing >= 0 )
-        {
-            x264_nal_start( h, NAL_SEI, NAL_PRIORITY_DISPOSABLE );
-            x264_sei_frame_packing_write( h, &h->out.bs );
-            if( x264_nal_end( h ) )
-                return -1;
-            overhead += h->out.nal[h->out.i_nal-1].i_payload + SEI_OVERHEAD;
-        }
+    if( h->param.i_frame_packing >= 0 && (h->fenc->b_keyframe || h->param.i_frame_packing == 5) )
+    {
+        x264_nal_start( h, NAL_SEI, NAL_PRIORITY_DISPOSABLE );
+        x264_sei_frame_packing_write( h, &h->out.bs );
+        if( x264_nal_end( h ) )
+            return -1;
+        overhead += h->out.nal[h->out.i_nal-1].i_payload + SEI_OVERHEAD;
     }
 
     /* generate sei pic timing */

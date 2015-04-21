@@ -40,8 +40,8 @@
 #include "libavutil/internal.h"
 #include "libavutil/libm.h"
 #include "avcodec.h"
+#include "bswapdsp.h"
 #include "get_bits.h"
-#include "dsputil.h"
 #include "fft.h"
 #include "internal.h"
 #include "sinewin.h"
@@ -95,8 +95,8 @@ typedef struct {
     float sqrt_tab[30];
     GetBitContext gb;
 
-    DSPContext dsp;
-    AVFloatDSPContext fdsp;
+    BswapDSPContext bdsp;
+    AVFloatDSPContext *fdsp;
     FFTContext fft;
     DECLARE_ALIGNED(32, FFTComplex, samples)[COEFFS / 2];
     float *out_samples;
@@ -180,6 +180,14 @@ static av_cold int imc_decode_init(AVCodecContext *avctx)
     IMCContext *q = avctx->priv_data;
     double r1, r2;
 
+    if (avctx->codec_id == AV_CODEC_ID_IAC && avctx->sample_rate > 96000) {
+        av_log(avctx, AV_LOG_ERROR,
+               "Strange sample rate of %i, file likely corrupt or "
+               "needing a new table derivation method.\n",
+               avctx->sample_rate);
+        return AVERROR_PATCHWELCOME;
+    }
+
     if (avctx->codec_id == AV_CODEC_ID_IMC)
         avctx->channels = 1;
 
@@ -247,8 +255,14 @@ static av_cold int imc_decode_init(AVCodecContext *avctx)
         av_log(avctx, AV_LOG_INFO, "FFT init failed\n");
         return ret;
     }
-    ff_dsputil_init(&q->dsp, avctx);
-    avpriv_float_dsp_init(&q->fdsp, avctx->flags & CODEC_FLAG_BITEXACT);
+    ff_bswapdsp_init(&q->bdsp);
+    q->fdsp = avpriv_float_dsp_alloc(avctx->flags & CODEC_FLAG_BITEXACT);
+    if (!q->fdsp) {
+        ff_fft_end(&q->fft);
+
+        return AVERROR(ENOMEM);
+    }
+
     avctx->sample_fmt     = AV_SAMPLE_FMT_FLTP;
     avctx->channel_layout = avctx->channels == 1 ? AV_CH_LAYOUT_MONO
                                                  : AV_CH_LAYOUT_STEREO;
@@ -879,14 +893,14 @@ static int imc_decode_block(AVCodecContext *avctx, IMCContext *q, int ch)
 
     flag = get_bits1(&q->gb);
     if (stream_format_code & 0x1)
-        imc_decode_level_coefficients_raw(q, chctx->levlCoeffBuf,
-                                          chctx->flcoeffs1, chctx->flcoeffs2);
-    else if (stream_format_code & 0x1)
         imc_read_level_coeffs_raw(q, stream_format_code, chctx->levlCoeffBuf);
     else
         imc_read_level_coeffs(q, stream_format_code, chctx->levlCoeffBuf);
 
-    if (stream_format_code & 0x4)
+    if (stream_format_code & 0x1)
+        imc_decode_level_coefficients_raw(q, chctx->levlCoeffBuf,
+                                          chctx->flcoeffs1, chctx->flcoeffs2);
+    else if (stream_format_code & 0x4)
         imc_decode_level_coefficients(q, chctx->levlCoeffBuf,
                                       chctx->flcoeffs1, chctx->flcoeffs2);
     else
@@ -1010,7 +1024,7 @@ static int imc_decode_frame(AVCodecContext *avctx, void *data,
 
     IMCContext *q = avctx->priv_data;
 
-    LOCAL_ALIGNED_16(uint16_t, buf16, [IMC_BLOCK_SIZE / 2]);
+    LOCAL_ALIGNED_16(uint16_t, buf16, [IMC_BLOCK_SIZE / 2 + FF_INPUT_BUFFER_PADDING_SIZE/2]);
 
     if (buf_size < IMC_BLOCK_SIZE * avctx->channels) {
         av_log(avctx, AV_LOG_ERROR, "frame too small!\n");
@@ -1025,7 +1039,7 @@ static int imc_decode_frame(AVCodecContext *avctx, void *data,
     for (i = 0; i < avctx->channels; i++) {
         q->out_samples = (float *)frame->extended_data[i];
 
-        q->dsp.bswap16_buf(buf16, (const uint16_t*)buf, IMC_BLOCK_SIZE / 2);
+        q->bdsp.bswap16_buf(buf16, (const uint16_t *) buf, IMC_BLOCK_SIZE / 2);
 
         init_get_bits(&q->gb, (const uint8_t*)buf16, IMC_BLOCK_SIZE * 8);
 
@@ -1036,7 +1050,7 @@ static int imc_decode_frame(AVCodecContext *avctx, void *data,
     }
 
     if (avctx->channels == 2) {
-        q->fdsp.butterflies_float((float *)frame->extended_data[0],
+        q->fdsp->butterflies_float((float *)frame->extended_data[0],
                                   (float *)frame->extended_data[1], COEFFS);
     }
 
@@ -1045,12 +1059,12 @@ static int imc_decode_frame(AVCodecContext *avctx, void *data,
     return IMC_BLOCK_SIZE * avctx->channels;
 }
 
-
 static av_cold int imc_decode_close(AVCodecContext * avctx)
 {
     IMCContext *q = avctx->priv_data;
 
     ff_fft_end(&q->fft);
+    av_freep(&q->fdsp);
 
     return 0;
 }

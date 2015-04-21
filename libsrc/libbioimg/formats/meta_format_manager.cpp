@@ -194,127 +194,147 @@ void MetaFormatManager::sessionWriteSetOMEXML( const std::string &omexml ) {
   meta_data_text = omexml;
 }
 
-void MetaFormatManager::sessionParseMetaData ( bim::uint page ) {
-  if (got_meta_for_session == page) return;
+void MetaFormatManager::sessionParseMetaData(bim::uint page) {
+    if (got_meta_for_session == page) return;
 
     channel_names.clear();
     display_lut.clear();
     metadata.clear();
 
-  tagList = sessionReadMetaData(page, -1, -1, -1);
-  got_meta_for_session = page;
+    tagList = sessionReadMetaData(page, -1, -1, -1);
+    got_meta_for_session = page;
 
-  char *meta_char = sessionGetTextMetaData();
-  if (meta_char) {
-    meta_data_text = meta_char;
-    delete meta_char;
-  }
+    char *meta_char = sessionGetTextMetaData();
+    if (meta_char) {
+        meta_data_text = meta_char;
+        delete meta_char;
+    }
 
-  { // parsing stuff from read image
+    { // parsing stuff from read image
 
-      display_lut.resize((int) bim::NumberDisplayChannels);
-      for (int i=0; i<(int) bim::NumberDisplayChannels; ++i) display_lut[i] = -1;
+        display_lut.resize((int)bim::NumberDisplayChannels);
+        for (int i = 0; i < (int)bim::NumberDisplayChannels; ++i) display_lut[i] = -1;
 
-      if (info.samples == 1)
-        for (int i=0; i<3; ++i) 
-          display_lut[i] = 0;
-      else
-        for (int i=0; i<bim::min<int>((int) bim::NumberDisplayChannels, info.samples); ++i) 
-          display_lut[i] = i;
+        if (info.samples == 1)
+        for (int i = 0; i < 3; ++i)
+            display_lut[i] = 0;
+        else
+        for (int i = 0; i < bim::min<int>((int)bim::NumberDisplayChannels, info.samples); ++i)
+            display_lut[i] = i;
 
-      switch ( info.resUnits ) {
+        switch (info.resUnits) {
         case RES_um:
-          pixel_size[0] = info.xRes;
-          pixel_size[1] = info.xRes;
-          pixel_size[2] = 0;
-          pixel_size[3] = 0;
-          break;
+            pixel_size[0] = info.xRes;
+            pixel_size[1] = info.xRes;
+            pixel_size[2] = 0;
+            pixel_size[3] = 0;
+            break;
 
         case RES_nm:
-          pixel_size[0] = info.xRes / 1000.0;
-          pixel_size[1] = info.xRes / 1000.0;
-          pixel_size[2] = 0;
-          pixel_size[3] = 0;
-          break;
+            pixel_size[0] = info.xRes / 1000.0;
+            pixel_size[1] = info.xRes / 1000.0;
+            pixel_size[2] = 0;
+            pixel_size[3] = 0;
+            break;
 
         case RES_mm:
-          pixel_size[0] = info.xRes * 1000.0;
-          pixel_size[1] = info.xRes * 1000.0;
-          pixel_size[2] = 0;
-          pixel_size[3] = 0;
-          break;
+            pixel_size[0] = info.xRes * 1000.0;
+            pixel_size[1] = info.xRes * 1000.0;
+            pixel_size[2] = 0;
+            pixel_size[3] = 0;
+            break;
 
         default:
-          pixel_size[0] = 0;
-          pixel_size[1] = 0;
-          pixel_size[2] = 0;
-          pixel_size[3] = 0;
-      }
-  }
+            pixel_size[0] = 0;
+            pixel_size[1] = 0;
+            pixel_size[2] = 0;
+            pixel_size[3] = 0;
+        }
+    }
 
-  // API v1.7: first check if format has appand metadata function, if yes, run
-  if (session_active && sessionFormatIndex>=0 && sessionFormatIndex<formatList.size()) {
-    FormatHeader *selectedFmt = formatList.at( sessionFormatIndex );
-    if (selectedFmt->appendMetaDataProc)
-      selectedFmt->appendMetaDataProc ( &sessionHandle, &metadata );
-  }
+    // API v1.7: first check if format has appand metadata function, if yes, run
+    if (session_active && sessionFormatIndex >= 0 && sessionFormatIndex < formatList.size()) {
+        FormatHeader *selectedFmt = formatList.at(sessionFormatIndex);
+        if (selectedFmt->appendMetaDataProc)
+            selectedFmt->appendMetaDataProc(&sessionHandle, &metadata);
+    }
 
-  // hack towards new system: in case the format loaded all data directly into the map, refresh static values
-  fill_static_metadata_from_map();
+    // hack towards new system: in case the format loaded all data directly into the map, refresh static values
+    fill_static_metadata_from_map();
 
-  // All following will only be inserted if tags do not exist
+    // All following will only be inserted if tags do not exist
 
-  appendMetadata( bim::IMAGE_FORMAT, this->sessionGetFormatName() );
-  if ( this->imaging_time != "0000-00-00 00:00:00" )   
-    appendMetadata( bim::IMAGE_DATE_TIME, this->imaging_time );
-  
-  if ( this->pixel_size[0] > 0 ) {
-    appendMetadata( bim::PIXEL_RESOLUTION_X, this->pixel_size[0] );
-    appendMetadata( bim::PIXEL_RESOLUTION_UNIT_X, bim::PIXEL_RESOLUTION_UNIT_MICRONS );
-  }
+    appendMetadata(bim::IMAGE_FORMAT, this->sessionGetFormatName());
+    if (this->imaging_time != "0000-00-00 00:00:00")
+        appendMetadata(bim::IMAGE_DATE_TIME, this->imaging_time);
 
-  if ( this->pixel_size[1] > 0 ) {
-    appendMetadata( bim::PIXEL_RESOLUTION_Y, this->pixel_size[1] );
-    appendMetadata( bim::PIXEL_RESOLUTION_UNIT_Y, bim::PIXEL_RESOLUTION_UNIT_MICRONS );
-  }
+    if (this->pixel_size[0] > 0) {
+        appendMetadata(bim::PIXEL_RESOLUTION_X, this->pixel_size[0]);
+        appendMetadata(bim::PIXEL_RESOLUTION_UNIT_X, bim::PIXEL_RESOLUTION_UNIT_MICRONS);
+    }
 
-  if ( this->pixel_size[2] > 0 ) {
-    appendMetadata( bim::PIXEL_RESOLUTION_Z, this->pixel_size[2] );
-    appendMetadata( bim::PIXEL_RESOLUTION_UNIT_Z, bim::PIXEL_RESOLUTION_UNIT_MICRONS );
-  }
+    if (this->pixel_size[1] > 0) {
+        appendMetadata(bim::PIXEL_RESOLUTION_Y, this->pixel_size[1]);
+        appendMetadata(bim::PIXEL_RESOLUTION_UNIT_Y, bim::PIXEL_RESOLUTION_UNIT_MICRONS);
+    }
 
-  if ( this->pixel_size[3] > 0 ) {
-    appendMetadata( bim::PIXEL_RESOLUTION_T, this->pixel_size[3] );
-    appendMetadata( bim::PIXEL_RESOLUTION_UNIT_T, bim::PIXEL_RESOLUTION_UNIT_SECONDS );
-  }
+    if (this->pixel_size[2] > 0) {
+        appendMetadata(bim::PIXEL_RESOLUTION_Z, this->pixel_size[2]);
+        appendMetadata(bim::PIXEL_RESOLUTION_UNIT_Z, bim::PIXEL_RESOLUTION_UNIT_MICRONS);
+    }
 
-  // -------------------------------------------------------
-  // Image info
+    if (this->pixel_size[3] > 0) {
+        appendMetadata(bim::PIXEL_RESOLUTION_T, this->pixel_size[3]);
+        appendMetadata(bim::PIXEL_RESOLUTION_UNIT_T, bim::PIXEL_RESOLUTION_UNIT_SECONDS);
+    }
 
-  appendMetadata( bim::IMAGE_NUM_X, (int) info.width );
-  appendMetadata( bim::IMAGE_NUM_Y, (int) info.height );
-  appendMetadata( bim::IMAGE_NUM_Z, (int) info.number_z );
-  appendMetadata( bim::IMAGE_NUM_T, (int) info.number_t );
-  appendMetadata( bim::IMAGE_NUM_C, (int) info.samples );
-  appendMetadata( bim::IMAGE_NUM_P, (int) info.number_pages );
-  appendMetadata( bim::PIXEL_DEPTH, (int) info.depth );
-  appendMetadata( bim::PIXEL_FORMAT, pixel_format_strings[info.pixelType] );
+    // -------------------------------------------------------
+    // Image info
 
-  for (unsigned int i=0; i<channel_names.size(); ++i) {
-    xstring tag_name;
-    tag_name.sprintf( bim::CHANNEL_NAME_TEMPLATE.c_str(), i );
-    appendMetadata( tag_name.c_str(), channel_names[i].c_str() );
-  }
+    appendMetadata(bim::IMAGE_NUM_X, (int)info.width);
+    appendMetadata(bim::IMAGE_NUM_Y, (int)info.height);
+    appendMetadata(bim::IMAGE_NUM_Z, (int)info.number_z);
+    appendMetadata(bim::IMAGE_NUM_T, (int)info.number_t);
+    appendMetadata(bim::IMAGE_NUM_C, (int)info.samples);
+    appendMetadata(bim::IMAGE_NUM_P, (int)info.number_pages);
+    appendMetadata(bim::PIXEL_DEPTH, (int)info.depth);
+    appendMetadata(bim::PIXEL_FORMAT, pixel_format_strings[info.pixelType]);
+    appendMetadata(bim::RAW_ENDIAN, (bim::bigendian) ? "big" : "little");
 
-  for (int i=0; i<(int)bim::min<size_t>(display_lut.size(), display_channel_tag_names.size()); ++i)
-    appendMetadata( display_channel_tag_names[i], display_lut[i] );
+    appendMetadata(bim::IMAGE_NUM_RES_L, (int)info.number_levels);
+    if (info.tileWidth > 0 && info.tileHeight > 0) {
+        appendMetadata(bim::TILE_NUM_X, (int)info.tileWidth);
+        appendMetadata(bim::TILE_NUM_Y, (int)info.tileHeight);
+    }
 
-  if (info.samples == 1)
-      appendMetadata( xstring::xprintf(bim::CHANNEL_COLOR_TEMPLATE.c_str(), 0), "255,255,255" );
-  else
-    for (int i=0; i<(int)bim::min<size_t>(info.samples, channel_colors_default.size()); ++i)
-        appendMetadata( xstring::xprintf(bim::CHANNEL_COLOR_TEMPLATE.c_str(), i), 
-                        xstring::xprintf("%d,%d,%d", channel_colors_default[i].r, channel_colors_default[i].g, channel_colors_default[i].b) );
+    const char *dimNames[6] = { "none", "X", "Y", "C", "Z", "T" };
+    xstring dimensions;
+    try {
+        if (info.number_dims >= BIM_MAX_DIMS) info.number_dims = BIM_MAX_DIMS - 1;
+        for (unsigned int i = 0; i < info.number_dims; ++i) {
+            dimensions += xstring::xprintf("%s", dimNames[info.dimensions[i].dim]);
+        }
+    }
+    catch (...) {
+    }
+    appendMetadata(bim::IMAGE_DIMENSIONS, dimensions);
+
+
+    for (unsigned int i = 0; i < channel_names.size(); ++i) {
+        xstring tag_name;
+        tag_name.sprintf(bim::CHANNEL_NAME_TEMPLATE.c_str(), i);
+        appendMetadata(tag_name.c_str(), channel_names[i].c_str());
+    }
+
+    for (int i = 0; i < (int)bim::min<size_t>(display_lut.size(), display_channel_tag_names.size()); ++i)
+        appendMetadata(display_channel_tag_names[i], display_lut[i]);
+
+    if (info.samples == 1)
+        appendMetadata(xstring::xprintf(bim::CHANNEL_COLOR_TEMPLATE.c_str(), 0), "255,255,255");
+    else
+    for (int i = 0; i < (int)bim::min<size_t>(info.samples, channel_colors_default.size()); ++i)
+        appendMetadata(xstring::xprintf(bim::CHANNEL_COLOR_TEMPLATE.c_str(), i),
+        xstring::xprintf("%d,%d,%d", channel_colors_default[i].r, channel_colors_default[i].g, channel_colors_default[i].b));
 }
 
 double MetaFormatManager::getPixelSizeX()

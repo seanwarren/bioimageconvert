@@ -537,11 +537,11 @@ typedef ImageInfo (*GetImageInfoProc) (FormatHandle *fmtHndl, uint page_num);
 typedef uint (*ReadImageProc)  (FormatHandle *fmtHndl, uint page);
 typedef uint (*WriteImageProc) (FormatHandle *fmtHndl);
 
-typedef uint (*ReadImageTileProc)    (FormatHandle *fmtHndl, uint64 tileId);
-typedef uint (*WriteImageTileProc)   (FormatHandle *fmtHndl, uint64 tileId);
+typedef uint(*ReadImageTileProc)    (FormatHandle *fmtHndl, uint page, uint64 xid, uint64 yid, uint level); // v2.0, modified 
+typedef uint(*WriteImageTileProc)   (FormatHandle *fmtHndl, uint page, uint64 xid, uint64 yid, uint level); // v2.0, modified 
 
-typedef uint (*ReadImageLineProc)    (FormatHandle *fmtHndl, uint64 y);
-typedef uint (*WriteImageLineProc)   (FormatHandle *fmtHndl, uint64 y);
+typedef uint(*ReadImageLevelProc)    (FormatHandle *fmtHndl, uint page, uint level); // v2.0, redesignated
+typedef uint(*WriteImageLevelProc)   (FormatHandle *fmtHndl, uint page, uint level); // v2.0, redesignated
 
 // difference with preview is that if there's a thumbnail in the image file
 // then it will be upscaled/downscaled to meet w and h...
@@ -617,10 +617,10 @@ typedef struct FormatHeader {
   // read/write
   ReadImageProc           readImageProc; 
   WriteImageProc          writeImageProc;
-  ReadImageTileProc       readImageTileProc;
-  WriteImageTileProc      writeImageTileProc;
-  ReadImageLineProc       readImageLineProc;
-  WriteImageLineProc      writeImageLineProc;
+  ReadImageTileProc       readImageTileProc; // v2.0, modified
+  WriteImageTileProc      writeImageTileProc; // v2.0, modified
+  ReadImageLevelProc      readImageLevelProc; // v2.0, redesignated
+  WriteImageLevelProc     writeImageLevelProc; // v2.0, redesignated
   ReadImageThumbProc      readImageThumbProc;
   WriteImageThumbProc     writeImageThumbProc;
   ReadImagePreviewProc    readImagePreviewProc;

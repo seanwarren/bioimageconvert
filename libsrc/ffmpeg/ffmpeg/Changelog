@@ -1,6 +1,128 @@
 Entries are sorted chronologically from oldest to youngest within each release,
 releases are sorted from youngest to oldest.
 
+version 2.5.3:
+- vp9: fix parser return values in error case
+- ffmpeg: Clear error message array at init.
+- avcodec/dvdsubdec: fix accessing dangling pointers
+- avcodec/dvdsubdec: error on bitmaps with size 0
+- cmdutils: Use 64bit for file size/offset related variable in cmdutils_read_file()
+- mov: Fix negative size calculation in mov_read_default().
+- avformat/mov: fix integer overflow in mov_read_udta_string()
+- mov: Fix overflow and error handling in read_tfra().
+- mov: Avoid overflow with mov_metadata_raw()
+- avcodec/dvdsubdec: fix out of bounds accesses
+- avfilter/vf_sab: fix filtering tiny images
+- avformat/flvdec: Increase string array size
+- avformat/flvdec: do not inject dts=0 metadata packets which failed to be parsed into a new data stream
+- avformat/cdxl: Fix integer overflow of image_size
+- libavformat: Build hevc.o when building the RTP muxer
+
+version 2.5.2:
+- avcodec/indeo3: ensure offsets are non negative
+- avcodec/h264: Check *log2_weight_denom
+- avcodec/hevc_ps: Check diff_cu_qp_delta_depth
+- avcodec/h264: Clear delayed_pic on deallocation
+- avcodec/hevc: clear filter_slice_edges() on allocation
+- avcodec/dcadec: Check that the added xch channel isnt already there
+- avcodec/indeo3: use signed variables to avoid underflow
+- swscale: increase yuv2rgb table headroom
+- avformat/mov: fix integer overflow of size
+- avformat/mov: check atom nesting depth
+- avcodec/utvideodec: Fix handling of slice_height=0
+- avcodec/xface: correct the XFACE_MAX_* values
+- avcodec/vmdvideo: Check len before using it in method 3
+- configure: create the tests directory like the doc directory
+- mmvideo: check frame dimensions
+- jvdec: check frame dimensions
+
+version 2.5.1:
+- lavu/frame: fix malloc error path in av_frame_copy_props()
+- avformat/aviobuf: Check that avio_seek() target is non negative
+- swresample/soxr_resample: fix error handling
+- avformat/flvdec: fix potential use of uninitialized variables
+- avformat/crypto: fix key vs iv typo
+- configure: use use_pkg_config() instead of check_pkg_config() for libsmbclient
+- avcodec/ppc/vp3dsp_altivec: POWER LE support to vp3_idct_add_altivec()
+- avformat/matroskadec: fix handling of recursive SeekHead elements
+- doc/examples/filtering_video: fix frame rate
+- avcodec/mpegaudiodec_template: only allocate fdsp when its used
+- doc/examples/transcoding: check encoder before using it
+- update MAINTAINERS file
+- POWER LE support in put_vp8_epel_h_altivec_core() put_vp8_epel_v_altivec_core() put_vp8_pixels16_altivec()
+- POWER LE support in vc1_inv_trans_8x4_altivec()
+
+version 2.5:
+- HEVC/H.265 RTP payload format (draft v6) packetizer
+- SUP/PGS subtitle demuxer
+- ffprobe -show_pixel_formats option
+- CAST128 symmetric block cipher, ECB mode
+- STL subtitle demuxer and decoder
+- libutvideo YUV 4:2:2 10bit support
+- XCB-based screen-grabber
+- UDP-Lite support (RFC 3828)
+- xBR scaling filter
+- AVFoundation screen capturing support
+- ffserver supports codec private options
+- creating DASH compatible fragmented MP4, MPEG-DASH segmenting muxer
+- WebP muxer with animated WebP support
+- zygoaudio decoding support
+- APNG decoder and demuxer
+- postproc visualization support
+
+
+version 2.4:
+- Icecast protocol
+- ported lenscorrection filter from frei0r filter
+- large optimizations in dctdnoiz to make it usable
+- ICY metadata are now requested by default with the HTTP protocol
+- support for using metadata in stream specifiers in fftools
+- LZMA compression support in TIFF decoder
+- support for H.261 RTP payload format (RFC 4587)
+- HEVC/H.265 RTP payload format (draft v6) depacketizer
+- added codecview filter to visualize information exported by some codecs
+- Matroska 3D support thorugh side data
+- HTML generation using texi2html is deprecated in favor of makeinfo/texi2any
+- silenceremove filter
+
+
+version 2.3:
+- AC3 fixed-point decoding
+- shuffleplanes filter
+- subfile protocol
+- Phantom Cine demuxer
+- replaygain data export
+- VP7 video decoder
+- Alias PIX image encoder and decoder
+- Improvements to the BRender PIX image decoder
+- Improvements to the XBM decoder
+- QTKit input device
+- improvements to OpenEXR image decoder
+- support decoding 16-bit RLE SGI images
+- GDI screen grabbing for Windows
+- alternative rendition support for HTTP Live Streaming
+- AVFoundation input device
+- Direct Stream Digital (DSD) decoder
+- Magic Lantern Video (MLV) demuxer
+- On2 AVC (Audio for Video) decoder
+- support for decoding through DXVA2 in ffmpeg
+- libbs2b-based stereo-to-binaural audio filter
+- libx264 reference frames count limiting depending on level
+- native Opus decoder
+- display matrix export and rotation API
+- WebVTT encoder
+- showcqt multimedia filter
+- zoompan filter
+- signalstats filter
+- hqx filter (hq2x, hq3x, hq4x)
+- flanger filter
+- Image format auto-detection
+- LRC demuxer and muxer
+- Samba protocol (via libsmbclient)
+- WebM DASH Manifest muxer
+- libfribidi support in drawtext
+
+
 version 2.2:
 
 - HNM version 4 demuxer and video decoder
@@ -29,6 +151,7 @@ version 2.2:
 - libx265 encoder
 - dejudder filter
 - Autodetect VDA like all other hardware accelerations
+- aliases and defaults for Ogg subtypes (opus, spx)
 
 
 version 2.1:
@@ -216,7 +339,7 @@ version 1.1:
 - JSON captions for TED talks decoding support
 - SOX Resampler support in libswresample
 - aselect filter
-- SGI RLE 8-bit decoder
+- SGI RLE 8-bit / Silicon Graphics RLE 8-bit video decoder
 - Silicon Graphics Motion Video Compressor 1 & 2 decoder
 - Silicon Graphics Movie demuxer
 - apad filter
@@ -260,7 +383,9 @@ version 1.0:
 - RTMPE protocol support
 - RTMPTE protocol support
 - showwaves and showspectrum filter
-- LucasArts SMUSH playback support
+- LucasArts SMUSH SANM playback support
+- LucasArts SMUSH VIMA audio decoder (ADPCM)
+- LucasArts SMUSH demuxer
 - SAMI, RealText and SubViewer demuxers and decoders
 - Heart Of Darkness PAF playback support
 - iec61883 device
@@ -384,6 +509,7 @@ version 0.10:
 - ffwavesynth decoder
 - aviocat tool
 - ffeval tool
+- support encoding and decoding 4-channel SGI images
 
 
 version 0.9:

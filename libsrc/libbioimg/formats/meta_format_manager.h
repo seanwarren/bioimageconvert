@@ -73,6 +73,12 @@ public:
   inline int         get_metadata_tag_int( const std::string &key, const int &def ) const { return metadata.get_value_int( key, def ); }
   inline double      get_metadata_tag_double( const std::string &key, const double &def ) const { return metadata.get_value_double( key, def ); }
 
+  void               delete_metadata_tag(const std::string &key) { metadata.delete_tag(key); }
+  
+  void               set_metadata_tag(const std::string &key, const int &v) { metadata.set_value(key, v); }
+  void               set_metadata_tag(const std::string &key, const double &v) { metadata.set_value(key, v); }
+  void               set_metadata_tag(const std::string &key, const std::string &v) { metadata.set_value(key, v); }
+
 private:
   int           got_meta_for_session;
   TagList  *tagList;

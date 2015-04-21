@@ -821,7 +821,7 @@ FormatItem pngItems[1] = {
 FormatHeader pngHeader = {
 
   sizeof(FormatHeader),
-  "1.0.0",
+  "1.6.16",
   "DIMIN PNG CODEC",
   "PNG CODEC",
   

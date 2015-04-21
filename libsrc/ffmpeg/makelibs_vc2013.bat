@@ -51,10 +51,11 @@ rem @goto CreateLibs
 echo.
 rem this is not yet enough, file producesd should be stripped and appended with: EXPORTS
 rem dumpbin /exports avcodec-52.dll > avcodec-52.def
-lib /nologo /machine:%LIBMACHINE% /def:avutil-52.def /name:avutil-52.dll
-lib /nologo /machine:%LIBMACHINE% /def:avformat-55.def /name:avformat-55.dll
-lib /nologo /machine:%LIBMACHINE% /def:avcodec-55.def /name:avcodec-55.dll
-lib /nologo /machine:%LIBMACHINE% /def:swscale-2.def /name:swscale-2.dll
+lib /nologo /machine:%LIBMACHINE% /def:avcodec-56.def /name:avcodec-56.dll
+lib /nologo /machine:%LIBMACHINE% /def:avformat-56.def /name:avformat-56.dll
+lib /nologo /machine:%LIBMACHINE% /def:avutil-54.def /name:avutil-54.dll
+lib /nologo /machine:%LIBMACHINE% /def:swresample-1.def /name:swresample-1.dll
+lib /nologo /machine:%LIBMACHINE% /def:swscale-3.def /name:swscale-3.dll
 del *.exp
 
 rem copy *.dll ..\..\..\libs\vc2008

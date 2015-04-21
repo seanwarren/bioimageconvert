@@ -54,6 +54,7 @@ using namespace bim;
 #define BIM_FORMAT_FFMPEG_FLV        12
 #define BIM_FORMAT_FFMPEG_H264       13
 #define BIM_FORMAT_FFMPEG_WEBM       14
+#define BIM_FORMAT_FFMPEG_H265       15
 
 
 //****************************************************************************
@@ -87,6 +88,7 @@ std::vector< std::string > init_formats_write() {
     v.push_back( "flv" );        // 12 "FLV",
     v.push_back( "mp4" );        // 13 "H264",
     v.push_back( "webm" );       // 14 "WebM",
+    v.push_back( "mp4" );        // 15 "H265",
     return v;
 }
 
@@ -107,6 +109,7 @@ std::vector< std::string > init_formats_fourcc() {
     v.push_back( "" );     // 12 "Flash video",
     v.push_back( "" );     // 13 "H264",
     v.push_back( "" );     // 14 "WebM",
+    v.push_back( "" );     // 15 "H265",
     return v;
 }
 
@@ -128,7 +131,8 @@ std::vector< AVCodecID > init_encoder_ids() {
     v.push_back( AV_CODEC_ID_NONE );  //v.push_back( CODEC_ID_DVVIDEO );    // 11 "DV video format",
     v.push_back( AV_CODEC_ID_NONE );  //v.push_back( CODEC_ID_FLV1 );       // 12 "Flash Video",
     v.push_back( AV_CODEC_ID_H264 );  // 13 "MPEG4 H264",
-    v.push_back( AV_CODEC_ID_NONE );  // 14 "WebM VP8",
+    v.push_back( AV_CODEC_ID_NONE );  // 14 "WebM default VP8 or VP9
+    v.push_back( AV_CODEC_ID_H265 );  // 15 "MPEG4 H265",
     return v;
 }
 
@@ -154,6 +158,7 @@ std::map< std::string, int > init_formats() {
     v.insert( std::make_pair( "flv", 12 ) );
     v.insert( std::make_pair( "h264", 13 ) );
     v.insert( std::make_pair( "webm", 14 ) );
+    v.insert( std::make_pair( "h265", 15 ) );
     return v;
 }
 
@@ -175,6 +180,7 @@ std::vector<int> init_bitrate_scaler() {
     v.push_back(10);   // 12 "Flash Video"
     v.push_back(100);  // 13 "MPEG4 H264"
     v.push_back(10);   // 14 "WebM VP8"
+    v.push_back(100);  // 15 "MPEG4 H265"
     return v;
 }
 
@@ -196,6 +202,7 @@ std::vector<int> init_default_bitrates() {
     v.push_back(0);    // 12 "Flash Video"
     v.push_back(1000000);  // 13 "MPEG4 H264"
     v.push_back(0);   // 14 "WebM VP8"
+    v.push_back(1000000);  // 15 "MPEG4 H265"
     return v;
 }
 
@@ -203,6 +210,7 @@ std::map< int, float > init_fps_overrides() {
     std::map<int, float > v;
     v.insert(std::make_pair(7, 0.0));
     v.insert(std::make_pair(13, 0.0));
+    v.insert(std::make_pair(15, 0.0));
     return v;
 }
 
@@ -610,14 +618,16 @@ int write_ffmpeg_image(FormatHandle *fmtHndl) {
     par->ff_out.setup( kvm );    
     //par->ff_out.open( filename ); // dima: open is done in setup
     if (!par->ff_out.isOpen()) return 1;
-    par->frame_sizes_set = true;
-  }
 
-  // finalize opening file and init raw frame
-  try {
-    par->ff_out.initFromRawFrame( (int) info->width, (int) info->height, 3 );
-  } catch (...) {
-    return 1;
+    // finalize opening file and init raw frame
+    try {
+        par->ff_out.initFromRawFrame((int)info->width, (int)info->height, 3);
+    }
+    catch (...) {
+        return 1;
+    }
+
+    par->frame_sizes_set = true;
   }
 
   AVFrame *frame = par->ff_out.rawFrame();
@@ -692,7 +702,7 @@ bim::uint ffmpeg_append_metadata (FormatHandle *fmtHndl, TagMap *hash ) {
 //
 //****************************************************************************
 
-#define BIM_FFMPEG_NUM_FORMATS 15
+#define BIM_FFMPEG_NUM_FORMATS 16
 
 FormatItem ffMpegItems[BIM_FFMPEG_NUM_FORMATS] = {
   {
@@ -860,13 +870,24 @@ FormatItem ffMpegItems[BIM_FFMPEG_NUM_FORMATS] = {
       1, //canWriteMultiPage;   // 0 - NO, 1 - YES
       //TDivFormatConstrains constrains ( w, h, pages, minsampl, maxsampl, minbitsampl, maxbitsampl, noLut )
     { 0, 0, 0, 3, 3, 8, 8, 1 }  
+  }, {
+    "H265",            // short name, no spaces
+      "MPEG4 AVC H.265", // Long format name
+      "mp4",        // pipe "|" separated supported extension list
+      1, //canRead;      // 0 - NO, 1 - YES
+      1, //canWrite;     // 0 - NO, 1 - YES
+      0, //canReadMeta;  // 0 - NO, 1 - YES
+      0, //canWriteMeta; // 0 - NO, 1 - YES
+      1, //canWriteMultiPage;   // 0 - NO, 1 - YES
+      //TDivFormatConstrains constrains ( w, h, pages, minsampl, maxsampl, minbitsampl, maxbitsampl, noLut )
+    { 0, 0, 0, 3, 3, 8, 8, 1 } 
   }                
 };
 
 FormatHeader ffMpegHeader = {
 
   sizeof(FormatHeader),
-  "2.2.1",
+  "2.5.3",
   "FFMPEG",
   "FFMPEG codecs",
 

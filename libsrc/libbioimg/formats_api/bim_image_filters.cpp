@@ -141,4 +141,18 @@ Image Image::superpixels( bim::uint64 regionSize, float regularization ) const {
     return out;
 }
 
+Image operation_superpixels(Image &img, const bim::xstring &arguments, const xoperations &operations, ImageHistogram *hist, XConf *c) {
+    int superpixels = 0;
+    float superpixels_regularization = 0.0;
+    std::vector<double> vals = arguments.splitDouble(",", 0.0);
+    if (vals.size()>0)
+        superpixels = (int)vals[0];
+    if (vals.size()>1)
+        superpixels_regularization = vals[1];
+
+    if (superpixels > 0)
+        return img.superpixels(superpixels, superpixels_regularization);
+    return img;
+};
+
 #endif //BIM_USE_FILTERS

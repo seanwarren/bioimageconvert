@@ -5,7 +5,7 @@
  *
  * Authors: Loren Merritt <lorenm@u.washington.edu>
  *          Laurent Aimar <fenrir@via.ecp.fr>
- *          Jason Garrett-Glaser <darkshikari@gmail.com>
+ *          Fiona Glaser <fiona@x264.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -67,8 +67,8 @@ const x264_cpu_name_t x264_cpu_names[] =
     {"AVX",         AVX},
     {"XOP",         AVX|X264_CPU_XOP},
     {"FMA4",        AVX|X264_CPU_FMA4},
-    {"AVX2",        AVX|X264_CPU_AVX2},
     {"FMA3",        AVX|X264_CPU_FMA3},
+    {"AVX2",        AVX|X264_CPU_FMA3|X264_CPU_AVX2},
 #undef AVX
 #undef SSE2
 #undef MMX2
@@ -89,6 +89,9 @@ const x264_cpu_name_t x264_cpu_names[] =
     {"ARMv6",           X264_CPU_ARMV6},
     {"NEON",            X264_CPU_NEON},
     {"FastNeonMRC",     X264_CPU_FAST_NEON_MRC},
+#elif ARCH_AARCH64
+    {"ARMv8",           X264_CPU_ARMV8},
+    {"NEON",            X264_CPU_NEON},
 #endif
     {"", 0},
 };
@@ -338,6 +341,9 @@ uint32_t x264_cpu_detect( void )
 
 uint32_t x264_cpu_detect( void )
 {
+#ifdef __NO_FPRS__
+    return 0;
+#else
     static void (*oldsig)( int );
 
     oldsig = signal( SIGILL, sigill_handler );
@@ -357,6 +363,7 @@ uint32_t x264_cpu_detect( void )
     signal( SIGILL, oldsig );
 
     return X264_CPU_ALTIVEC;
+#endif
 }
 #endif
 
@@ -403,6 +410,13 @@ uint32_t x264_cpu_detect( void )
     // TODO: write dual issue test? currently it's A8 (dual issue) vs. A9 (fast mrc)
 #endif
     return flags;
+}
+
+#elif ARCH_AARCH64
+
+uint32_t x264_cpu_detect( void )
+{
+    return X264_CPU_ARMV8 | X264_CPU_NEON;
 }
 
 #else

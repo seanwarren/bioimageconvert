@@ -326,6 +326,17 @@ void geotiff_append_metadata (FormatHandle *fmtHndl, TagMap *hash ) {
 
   TiffParams *par = (TiffParams *)fmtHndl->internalParams;
   if (!par->tiff) return;
+  
+  // skip if no geotiff tags are present
+  if (par->ifds.isValid()) {
+      if (!par->ifds.tagPresentInFirstIFD(TIFFTAG_GEOPIXELSCALE) &&
+          !par->ifds.tagPresentInFirstIFD(TIFFTAG_INTERGRAPH_MATRIX) &&
+          !par->ifds.tagPresentInFirstIFD(TIFFTAG_GEOTIEPOINTS) &&
+          !par->ifds.tagPresentInFirstIFD(TIFFTAG_GEOTRANSMATRIX) &&
+          !par->ifds.tagPresentInFirstIFD(TIFFTAG_GEOKEYDIRECTORY) &&
+          !par->ifds.tagPresentInFirstIFD(TIFFTAG_GEODOUBLEPARAMS) &&
+          !par->ifds.tagPresentInFirstIFD(TIFFTAG_GEOASCIIPARAMS)) return;
+  }
 
   // use GeoTIFF to read metadata
   try {

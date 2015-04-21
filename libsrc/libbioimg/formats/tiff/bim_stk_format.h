@@ -26,7 +26,8 @@ namespace bim {
 #define BIM_STK_CalibrationUnits       6
 #define BIM_STK_Name                   7
 #define BIM_STK_ThreshState            8
-#define BIM_STK_ThreshStateRed         10
+#define BIM_STK_ThreshStateRed         9
+//#define BIM_STK_ThreshStateRed        10
 #define BIM_STK_ThreshStateGreen       11
 #define BIM_STK_ThreshStateBlue        12
 #define BIM_STK_ThreshStateLo          13
@@ -62,11 +63,34 @@ namespace bim {
 #define BIM_STK_GammaRed               43
 #define BIM_STK_GammaGreen             44
 #define BIM_STK_GammaBlue              45
+#define BIM_STK_CameraBin              46
+#define BIM_STK_NewLUT                 47
+#define BIM_STK_PlaneProperty          49
+/*
+#define BIM_STK_ImagePropertyEx        48
+#define BIM_STK_UserLutTable           50
+#define BIM_STK_RedAutoScaleInfo       51
+#define BIM_STK_RedAutoScaleLoInfo     52
+#define BIM_STK_RedAutoScaleHiInfo     53
+#define BIM_STK_RedMinScaleInfo        54
+#define BIM_STK_RedMaxScaleInfo        55
+#define BIM_STK_GreenAutoScaleInfo     56
+#define BIM_STK_GreenAutoScaleLoInfo   57
+#define BIM_STK_GreenAutoScaleHiInfo   58
+#define BIM_STK_GreenMinScaleInfo      59
+#define BIM_STK_GreenMaxScaleInfo      60
+#define BIM_STK_BlueAutoScaleInfo      61
+#define BIM_STK_BlueAutoScaleLoInfo    62
+#define BIM_STK_BlueAutoScaleHiInfo    63
+#define BIM_STK_BlueMinScaleInfo       64
+#define BIM_STK_BlueMaxScaleInfo       65
+#define BIM_STK_OverlayPlaneColor      66
+*/
 
-static int stk_tag_sizes_long[46] = 
-{ 
+static int stk_tag_sizes_long[67] =
+{
    1, 1, 1, 1,
-   2, 2, 
+   2, 2,
    1, // contains the size of following string in bytes
    1, // contains the size of following string in bytes
    1, 1, 1, 1,
@@ -74,21 +98,29 @@ static int stk_tag_sizes_long[46] =
    2, 1, 1, 1,
    2, 2, 2, 2,
    1, // contains the size of following string in bytes
-   1, 1, 
+   1, 1,
    4, // 4*N longs
    4, // 4*N longs
    1, 1, 1, 1, 1, 1, 1,
    1, // N longs
    2, 2,
-   2, // 2*N longs 
+   2, // 2*N longs
    1, // N longs
-   1, 1, 1, 1
+   1, 1, 1, 1,
+   2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 };
 
 typedef struct StkRational {
   int32 num;
   int32 den;
 } StkRational;
+
+typedef struct StkPlaneProperty {
+  int8 type;
+  char *Key;
+  char *Value;
+  StkRational rational;
+} StkPlaneProperty;
 
 // each dynamic array here is f size N
 typedef struct StkMetaData {
@@ -121,7 +153,30 @@ typedef struct StkMetaData {
   int32 grayMax[2];
   char *grayUnitName;
   int32 StandardLUT;
-  //int32 wavelength; // discard it, don't read, the UIC3 value should be used
+  int32 UIC1wavelength; // discard it, don't read, the UIC3 value should be used
+  int32 CameraBin[2];
+  int32 NewLUT;
+/*
+  int32 ImagePropertyEx;
+  int32 UserLutTable;
+  int32 RedAutoScaleInfo;
+  int32 RedAutoScaleLoInfo;
+  int32 RedAutoScaleHiInfo;
+  int32 RedMinScaleInfo;
+  int32 RedMaxScaleInfo;
+  int32 GreenAutoScaleInfo;
+  int32 GreenAutoScaleLoInfo;
+  int32 GreenAutoScaleHiInfo;
+  int32 GreenMinScaleInfo;
+  int32 GreenMaxScaleInfo;
+  int32 BlueAutoScaleInfo;
+  int32 BlueAutoScaleLoInfo;
+  int32 BlueAutoScaleHiInfo;
+  int32 BlueMinScaleInfo;
+  int32 BlueMaxScaleInfo;
+  int32 OverlayPlaneColor;
+*/
+  std::vector<StkPlaneProperty> PlaneProperties;
   
   // begin: Used internally by MetaMorph
   int32 OverlayMask;

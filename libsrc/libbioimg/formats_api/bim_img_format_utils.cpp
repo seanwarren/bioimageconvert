@@ -40,6 +40,7 @@
 #include <cstring>
 
 #include <xstring.h>
+#include <bim_metatags.h>
 
 // Disables Visual Studio 2005 warnings for deprecated code
 #if ( defined(_MSC_VER) && (_MSC_VER >= 1400) )
@@ -507,6 +508,13 @@ std::string bim::getImageInfoText(ImageInfo *info) {
     inftext += xstring::xprintf("resUnits: %d\n",  info->resUnits );
     inftext += xstring::xprintf("xRes: %f\n",      info->xRes );
     inftext += xstring::xprintf("yRes: %f\n",      info->yRes );
+
+    inftext += xstring::xprintf("%s: %d\n", bim::IMAGE_NUM_RES_L.c_str(), info->number_levels);
+
+    if (info->tileWidth > 0 && info->tileHeight > 0) {
+        inftext += xstring::xprintf("%s: %d\n", bim::TILE_NUM_X.c_str(), info->tileWidth);
+        inftext += xstring::xprintf("%s: %d\n", bim::TILE_NUM_Y.c_str(), info->tileHeight);
+    }
 
     inftext += "dimensions:";
     try {

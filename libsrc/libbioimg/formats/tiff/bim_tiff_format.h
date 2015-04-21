@@ -92,6 +92,28 @@ typedef enum {
   tstAndor      = 8
 } BIM_TiffSubType;
 
+class PyramidInfo {
+public:
+    static const int min_level_size = 128;
+
+    enum Format {
+        pyrFmtNone = 0,
+        pyrFmtSubDirs = 1,
+        pyrFmtTopDirs = 2
+    };
+
+
+public:
+    PyramidInfo();
+    Format format;
+    unsigned int number_levels;
+    std::vector<double> scales;
+    std::vector<bim::uint64> directory_offsets;
+public:
+    void init();
+    void addLevel(const double &scale, const bim::uint64 &offset = 0);
+};
+
 class TiffParams {
 public:
   TiffParams();
@@ -101,6 +123,7 @@ public:
   TIFF  *tiff;
   BIM_TiffSubType subType;
   TinyTiff::Tiff ifds;
+  PyramidInfo pyramid;
 
   StkInfo stkInfo;
   psiaInfoHeader psiaInfo;

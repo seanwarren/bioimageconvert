@@ -13,7 +13,17 @@
 #ifndef BIM_PRIMITIVES
 #define BIM_PRIMITIVES
 
+#include "xtypes.h"
+
 #include <algorithm>
+
+#ifdef max
+#undef max
+#endif
+
+#ifdef min
+#undef min
+#endif
 
 namespace bim {
 

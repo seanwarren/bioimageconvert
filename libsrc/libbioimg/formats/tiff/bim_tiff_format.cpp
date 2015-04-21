@@ -36,7 +36,12 @@ bim::uint read_tiff_metadata (FormatHandle *fmtHndl, TiffParams *tifParams, int 
 char* read_text_tiff_metadata ( FormatHandle *fmtHndl, TiffParams *tifParams );
 bim::uint tiff_append_metadata (FormatHandle *fmtHndl, TagMap *hash );
 int read_tiff_image(FormatHandle *fmtHndl, TiffParams *tifParams);
-int write_tiff_image(FormatHandle *fmtHndl, TiffParams *tifParams);
+int write_tiff_image(FormatHandle *fmtHndl, TiffParams *tifParams, ImageBitmap *img = NULL, bool subscale = false);
+
+int read_tiff_image_level(FormatHandle *fmtHndl, TiffParams *tifParams, uint page, uint level);
+int read_tiff_image_tile(FormatHandle *fmtHndl, TiffParams *tifParams, uint page, bim::uint64 xid, bim::uint64 yid, uint level);
+int ometiff_read_image_level(bim::FormatHandle *fmtHndl, bim::TiffParams *tifParams, bim::uint page, bim::uint level);
+int ometiff_read_image_tile(bim::FormatHandle *fmtHndl, bim::TiffParams *tifParams, bim::uint page, bim::uint64 xid, bim::uint64 yid, bim::uint level);
 
 bool omeTiffIsValid(bim::TiffParams *par);
 bool isValidTiffFluoview(bim::TiffParams *par);
@@ -69,6 +74,29 @@ TiffParams::TiffParams() {
   this->tiff = NULL;
   this->subType = tstGeneric;
 }
+
+// ----------------------------------------------------
+// TIFF Pyramid
+
+PyramidInfo::PyramidInfo() {
+    this->init();
+}
+
+void PyramidInfo::init() {
+    this->format = pyrFmtNone;
+    this->number_levels = 1;
+    this->scales.resize(1, 1.0);
+    this->directory_offsets.resize(1, 0);
+}
+
+void PyramidInfo::addLevel(const double &scale, const bim::uint64 &offset) {
+    ++this->number_levels;
+    this->scales.resize(this->number_levels);
+    this->scales[this->number_levels - 1] = scale;
+    this->directory_offsets.resize(this->number_levels);
+    this->directory_offsets[this->number_levels - 1] = offset;
+}
+
 
 //****************************************************************************
 // STATIC FUNCTIONS THAT MIGHT BE PROVIDED BY HOST AND CALLING STUBS FOR THEM
@@ -186,13 +214,14 @@ static void tiff_unmap(thandle_t /*handle*/, tiff_data_t /*data*/, tiff_offs_t /
 // UTILITARY FUNCTIONS
 //----------------------------------------------------------------------------
 
-unsigned int tiffGetNumberOfPages( TiffParams *tiffpar ) {
+unsigned int tiffGetNumberOfPages( TiffParams *par ) {
     unsigned int i=0;
-    TIFF *tif = tiffpar->tiff;
+    TIFF *tif = par->tiff;
     if (tif == NULL) return i;
+    ImageInfo *info = &par->info;
   
     // if STK then get number of pages in special way
-    if (tiffpar->subType == tstStk) {
+    if (par->subType == tstStk) {
     return stkGetNumPlanes( tif );
     }
 
@@ -206,9 +235,10 @@ unsigned int tiffGetNumberOfPages( TiffParams *tiffpar ) {
     i++;
     return i;
     */
-    
+
     // uses patched libtiff 4.0.3, tiff function returns uint16 which might not be enough
-    return TIFFNumberOfDirectories(tif);
+    unsigned int pages = TIFFNumberOfDirectories(tif);
+    return pages;
 }
 
 void tiffReadResolution( TIFF *tif, bim::uint &units, double &xRes, double &yRes) {
@@ -249,6 +279,83 @@ bim::uint getTiffMode( TIFF *tif)
   if (samplesperpixel > 1) return IM_MULTI;
     
   return IM_GRAYSCALE;
+}
+
+void detectTiffPyramid(TiffParams *tiffParams) {
+    if (tiffParams == NULL) return;
+    TIFF *tif = tiffParams->tiff;
+    if (!tif) return;
+    ImageInfo *info = &tiffParams->info;
+    PyramidInfo *pyramid = &tiffParams->pyramid;
+
+    pyramid->init();
+    bim::uint32 sub_file_type = 10000;
+    bim::uint64 current_dir = TIFFCurrentDirectory(tif);
+    bim::uint32 width = 0, w = 0;
+    TIFFGetField(tif, TIFFTAG_IMAGEWIDTH, &width);
+
+    //----------------------------------------------------------------
+    // Adobe Photoshop SubIFD pyramidal version
+    //----------------------------------------------------------------
+    bim::uint16 subIFDsCount = 0;
+    bim::uint64* _subIFDs = NULL;
+    TIFFGetField(tif, TIFFTAG_SUBFILETYPE, &sub_file_type);
+    TIFFGetField(tif, TIFFTAG_SUBIFD, &subIFDsCount, &_subIFDs);
+    if (sub_file_type == 0 && _subIFDs && subIFDsCount > 0) {
+        // copy _subIFDs before it's reallocated by TIFFSetSubDirectory
+        std::vector<bim::uint64> subIFDs(subIFDsCount, 0);
+        if (_subIFDs) memcpy(&subIFDs[0], _subIFDs, subIFDsCount*sizeof(bim::uint64));
+
+        int i = 0;
+        bim::uint64 subdiroffset = subIFDs[i];
+        while (TIFFSetSubDirectory(tif, subdiroffset) > 0) {
+            if (TIFFGetField(tif, TIFFTAG_SUBFILETYPE, &sub_file_type) != 1) break;
+            if (sub_file_type != FILETYPE_REDUCEDIMAGE) break;
+            if (TIFFGetField(tif, TIFFTAG_IMAGEWIDTH, &w) == 0) break;
+            double scale = (double)w / (double)width;
+            pyramid->addLevel(scale, subdiroffset);
+            ++i;
+            // proper way to navigate subifds is by nextdiroffsets, photoshop uses this
+            subdiroffset = tif->tif_nextdiroff;
+            // libtiff and others write subdiroffsets in TIFFTAG_SUBIFD and do not set nextdiroffsets, fix for this
+            if (subdiroffset == 0 && subIFDsCount > i) {
+                subdiroffset = subIFDs[i];
+            }
+        }
+        if (pyramid->number_levels > 1) {
+            pyramid->format = PyramidInfo::pyrFmtSubDirs;
+        }
+    }
+
+    //----------------------------------------------------------------
+    // ImageMagick multi-page pyramidal version
+    // the first directory is not guaranteed to have subfile type
+    //----------------------------------------------------------------
+    if (pyramid->number_levels < 2) {
+        TIFFSetDirectory(tif, current_dir);
+        if (tif->tif_nextdiroff > 0) {
+            bim::uint64 subdiroffset = tif->tif_nextdiroff;
+            while (TIFFSetSubDirectory(tif, subdiroffset) > 0) {
+                if (TIFFGetField(tif, TIFFTAG_SUBFILETYPE, &sub_file_type) != 1) break;
+                if (sub_file_type != FILETYPE_REDUCEDIMAGE) break;
+                if (TIFFGetField(tif, TIFFTAG_IMAGEWIDTH, &w) == 0) break;
+                double scale = (double)w / (double)width;
+                pyramid->addLevel(scale, subdiroffset);
+                subdiroffset = tif->tif_nextdiroff;
+            }
+        }
+        if (pyramid->number_levels > 1) {
+            pyramid->format = PyramidInfo::pyrFmtTopDirs; // imagemagick style multi-page pyramid
+        }
+    }
+
+    //----------------------------------------------------------------
+    // finish
+    //----------------------------------------------------------------
+    
+    // return to parent directory
+    TIFFSetDirectory(tif, current_dir);
+    info->number_levels = pyramid->number_levels;
 }
 
 void initPageInfo(TiffParams *tiffParams) {
@@ -325,6 +432,7 @@ void initPageInfo(TiffParams *tiffParams) {
 
   info->imageMode = getTiffMode( tif );
   tiffReadResolution( tif, info->resUnits, info->xRes, info->yRes);
+  detectTiffPyramid(tiffParams);
 }
 
 void getCurrentPageInfo(TiffParams *tiffParams) {
@@ -421,51 +529,55 @@ void getCurrentPageInfo(TiffParams *tiffParams) {
     omeTiffGetCurrentPageInfo(tiffParams);
 }
 
-void getImageInfo(TiffParams *tiffParams) {
-  if (tiffParams == NULL) return;
-  TIFF *tif = tiffParams->tiff;
-  ImageInfo *info = &tiffParams->info;
+void getImageInfo(TiffParams *par) {
+  if (par == NULL) return;
+  TIFF *tif = par->tiff;
+  ImageInfo *info = &par->info;
   if (!tif) return;
 
   info->ver = sizeof(ImageInfo);
   
-  initPageInfo( tiffParams );
+  initPageInfo( par );
 
   // read to which tiff sub type image pertence
-  tiffParams->subType = tstGeneric;
-  if (tif->tif_flags&TIFF_BIGTIFF) tiffParams->subType = tstBigTiff;
+  par->subType = tstGeneric;
+  if (tif->tif_flags&TIFF_BIGTIFF) par->subType = tstBigTiff;
 
-  if (stkIsTiffValid( tiffParams )) {
-    tiffParams->subType = tstStk;
-    stkGetInfo( tiffParams );
+  if (stkIsTiffValid( par )) {
+    par->subType = tstStk;
+    stkGetInfo( par );
   } else
-  if (psiaIsTiffValid( tiffParams )) {
-    tiffParams->subType = tstPsia;
-    psiaGetInfo ( tiffParams );
+  if (psiaIsTiffValid( par )) {
+    par->subType = tstPsia;
+    psiaGetInfo ( par );
   } else
-  if (isValidTiffFluoview(tiffParams)) {
-    tiffParams->subType = tstFluoview;
-    fluoviewGetInfo ( tiffParams );
+  if (isValidTiffFluoview(par)) {
+    par->subType = tstFluoview;
+    fluoviewGetInfo ( par );
   } else
-  if (isValidTiffAndor(tiffParams)) {
-    tiffParams->subType = tstAndor;
-    fluoviewGetInfo ( tiffParams );
+  if (isValidTiffAndor(par)) {
+    par->subType = tstAndor;
+    fluoviewGetInfo ( par );
   } else
-  if (lsmIsTiffValid( tiffParams )) {
+  if (lsmIsTiffValid( par )) {
     // lsm has thumbnails for each image, discard those
-    tiffParams->subType = tstCzLsm;
-    lsmGetInfo ( tiffParams );
+    par->subType = tstCzLsm;
+    lsmGetInfo ( par );
   } else
-  if (omeTiffIsValid(tiffParams)) {
-    tiffParams->subType = tstOmeTiff;
-    if (tif->tif_flags&TIFF_BIGTIFF) tiffParams->subType = tstOmeBigTiff;
-    omeTiffGetInfo ( tiffParams );
+  if (omeTiffIsValid(par)) {
+    par->subType = tstOmeTiff;
+    if (tif->tif_flags&TIFF_BIGTIFF) par->subType = tstOmeBigTiff;
+    omeTiffGetInfo ( par );
   } else {
       // the generic TIFF case
-      info->number_pages = tiffGetNumberOfPages( tiffParams ); // dima: takes a while to read
+      info->number_pages = tiffGetNumberOfPages( par ); // dima: takes a while to read
+      PyramidInfo *pyramid = &par->pyramid;
+      if (info->number_levels>1 && pyramid->format == PyramidInfo::pyrFmtTopDirs) {
+          info->number_pages -= (info->number_levels - 1);
+      }
   }
 
-  getCurrentPageInfo( tiffParams );
+  getCurrentPageInfo( par );
 }
 
 //----------------------------------------------------------------------------
@@ -515,25 +627,40 @@ void tiffReleaseFormatProc (FormatHandle *fmtHndl) {
 //----------------------------------------------------------------------------
 void tiffSetWriteParameters (FormatHandle *fmtHndl) {
   if (fmtHndl == NULL) return;
+  TiffParams *par = (TiffParams *) fmtHndl->internalParams;
   fmtHndl->compression = COMPRESSION_LZW;
-
+  par->info.tileWidth = par->info.tileHeight = 0;
   if (!fmtHndl->options) return;
+
   xstring str = fmtHndl->options;
   std::vector<xstring> options = str.split( " " );
   if (options.size() < 1) return;
   
   int i = -1;
   while (i<(int)options.size()-1) {
-    i++;
+    ++i;
 
     if ( options[i]=="compression" && options.size()-i>0 ) {
-      i++;
+      ++i;
       if (options[i] == "none") fmtHndl->compression = COMPRESSION_NONE;
       if (options[i] == "fax") fmtHndl->compression = COMPRESSION_CCITTFAX4;
       if (options[i] == "lzw") fmtHndl->compression = COMPRESSION_LZW;
       if (options[i] == "packbits") fmtHndl->compression = COMPRESSION_PACKBITS;
       continue;
     }
+
+    if (options[i] == "tiles" && options.size() - i>0) {
+        par->info.tileWidth = par->info.tileHeight = options[++i].toInt(0);
+        continue;
+    }
+
+    if (options[i] == "pyramid" && options.size() - i>0) {
+        xstring pf = options[++i];
+        if (pf == "subdirs") par->pyramid.format = PyramidInfo::pyrFmtSubDirs;
+        if (pf == "topdirs") par->pyramid.format = PyramidInfo::pyrFmtTopDirs;
+        continue;
+    }
+
   } // while
 }
 
@@ -654,7 +781,7 @@ ImageInfo tiffGetImageInfoProc ( FormatHandle *fmtHndl, bim::uint page_num ) {
   fmtHndl->pageNumber = page_num;
   fmtHndl->subFormat = tiffpar->subType;
 
-  unsigned int currentDir = TIFFCurrentDirectory(tif);
+  bim::uint64 currentDir = TIFFCurrentDirectory(tif);
 
   // now must read correct page and set image parameters
   if (fmtHndl->pageNumber!=0 && currentDir != fmtHndl->pageNumber) {
@@ -720,11 +847,38 @@ bim::uint tiffReadImageProc  ( FormatHandle *fmtHndl, bim::uint page )
 bim::uint tiffWriteImageProc ( FormatHandle *fmtHndl ) {
   if (fmtHndl == NULL) return 1;
   if (fmtHndl->internalParams == NULL) return 1;
-  TiffParams *tiffpar = (TiffParams *) fmtHndl->internalParams;
-  if (tiffpar->tiff == NULL) return 1;
-  return write_tiff_image(fmtHndl, tiffpar);
+  TiffParams *par = (TiffParams *) fmtHndl->internalParams;
+  if (par->tiff == NULL) return 1;
+  return write_tiff_image(fmtHndl, par); //, fmtHndl->image);
 }
 
+bim::uint tiffReadImageLevelProc(FormatHandle *fmtHndl, uint page, uint level) {
+    if (fmtHndl == NULL) return 1;
+    if (fmtHndl->internalParams == NULL) return 1;
+    TiffParams *par = (TiffParams *)fmtHndl->internalParams;
+    if (par->tiff == NULL) return 1;
+
+    if (par->subType == tstOmeTiff || par->subType == tstOmeBigTiff) {
+        return ometiff_read_image_level(fmtHndl, par, page, level);
+    } else if (par->subType == tstGeneric || par->subType == tstBigTiff) {
+        return read_tiff_image_level(fmtHndl, par, page, level);
+    }
+    return 1;
+}
+
+bim::uint tiffReadImageTileProc(FormatHandle *fmtHndl, uint page, bim::uint64 xid, bim::uint64 yid, uint level) {
+    if (fmtHndl == NULL) return 1;
+    if (fmtHndl->internalParams == NULL) return 1;
+    TiffParams *par = (TiffParams *)fmtHndl->internalParams;
+    if (par->tiff == NULL) return 1;
+
+    if (par->subType == tstOmeTiff || par->subType == tstOmeBigTiff) {
+        return ometiff_read_image_tile(fmtHndl, par, page, xid, yid, level);
+    } else if (par->subType == tstGeneric || par->subType == tstBigTiff) {
+        return read_tiff_image_tile(fmtHndl, par, page, xid, yid, level);
+    }
+    return 1;
+}
 
 //****************************************************************************
 //
@@ -881,9 +1035,9 @@ FormatHeader tiffHeader = {
   // read/write
   tiffReadImageProc, //ReadImageProc 
   tiffWriteImageProc, //WriteImageProc
-  NULL, //ReadImageTileProc
+  tiffReadImageTileProc, //ReadImageTileProc
   NULL, //WriteImageTileProc
-  NULL, //ReadImageLineProc
+  tiffReadImageLevelProc, //ReadImageLevelProc
   NULL, //WriteImageLineProc
   NULL, //ReadImageThumbProc
   NULL, //WriteImageThumbProc

@@ -24,6 +24,7 @@
 namespace bim {
 
 class MetaFormatManager;
+class xstring;
 
 //------------------------------------------------------------------------------
 // ImageStack
@@ -40,6 +41,7 @@ class ImageStack {
     ImageStack();
     ImageStack( const char *fileName, unsigned int limit_width=0, unsigned int limit_height=0, int only_channel=-1 );
     ImageStack( const std::string &fileName, unsigned int limit_width=0, unsigned int limit_height=0, int only_channel=-1 );
+    ImageStack(const std::vector<xstring> &files, unsigned int number_channels = 0, const xoperations *ops = 0);
     ~ImageStack();
 
     void        free();
@@ -88,9 +90,13 @@ class ImageStack {
 
     // I/O
 
-    virtual bool fromFile( const char *fileName, unsigned int limit_width=0, unsigned int limit_height=0, int channel=-1 );
-    bool fromFile( const std::string &fileName, unsigned int limit_width=0, unsigned int limit_height=0, int channel=-1 ) 
-    { return fromFile( fileName.c_str(), limit_width, limit_height, channel ); }
+    virtual bool fromFile(const char *fileName, unsigned int limit_width = 0, unsigned int limit_height = 0, int channel = -1, const xoperations *ops = 0);
+    bool fromFile(const std::string &fileName, unsigned int limit_width = 0, unsigned int limit_height = 0, int channel = -1, const xoperations *ops = 0) {
+        return fromFile(fileName.c_str(), limit_width, limit_height, channel, ops);
+    }
+
+    // use number_channels>0 if channels are stored as separate files
+    bool fromFileList(const std::vector<xstring> &files, unsigned int number_channels = 0, const xoperations *ops = 0);
 
     bool fromFileManager( MetaFormatManager *m, const std::vector<unsigned int> &pages );
 
@@ -107,6 +113,12 @@ class ImageStack {
     void resize( uint w, uint h=0, uint d=0, Image::ResizeMethod method = Image::szNearestNeighbor, bool keep_aspect_ratio = false );
 
     void ROI( uint x, uint y, uint z, uint w, uint h, uint d );
+
+    //--------------------------------------------------------------------------    
+    // process all images based on command line arguments or a string
+    //--------------------------------------------------------------------------
+
+    void process(const xoperations &operations, ImageHistogram *hist = 0, XConf *c = 0);
 
     // only available values now are +90, -90 and 180
     void rotate( double deg );

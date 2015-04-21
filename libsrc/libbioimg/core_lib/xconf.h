@@ -23,6 +23,25 @@
 namespace bim {
 
 //--------------------------------------------------------------------------------------
+// xoperations - a list of pairs of strings: operation,arguments 
+//--------------------------------------------------------------------------------------
+
+typedef std::pair<xstring, xstring> xoperation;
+
+class xoperations : public std::vector<xoperation> {
+public:
+    // constructors
+    explicit xoperations() : std::vector<xoperation>() {}
+
+    bool contains(const xstring &operation) const;
+    xstring arguments(const xstring &operation) const;
+
+    xoperations left(const xstring &operation) const;
+    xoperations right(const xstring &operation) const;
+};
+
+
+//--------------------------------------------------------------------------------------
 // XConf
 //--------------------------------------------------------------------------------------
 
@@ -44,6 +63,7 @@ public:
 public:
     xstring usage() const;
     void print( const std::string &s, int verbose_level = 1 ) const;
+    void error(const std::string &s) const;
 
     void timerStart() { this->timer = clock(); }
     inline clock_t timerElapsed() const { return clock() - timer; }
@@ -65,6 +85,9 @@ public:
   int     getValueInt( const std::string &key, int def=0 ) const;
   double  getValueDouble( const std::string &key, double def=0.0 ) const;
 
+  xoperations getOperations() const { return this->operations; }
+
+
 protected: 
     // defines unique argument names and a number of values in each, 0 - no vals, -1 - comma separated list of values 
     std::map<xstring, int> arguments_defs;
@@ -75,6 +98,7 @@ protected:
 
     // after the processing the arguments will have all arguments
     std::map<xstring, std::vector<xstring> > arguments;
+    xoperations operations;
 
 protected: 
     virtual void init();

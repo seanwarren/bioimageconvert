@@ -201,7 +201,7 @@ static av_cold int XAVS_close(AVCodecContext *avctx)
     XavsContext *x4 = avctx->priv_data;
 
     av_freep(&avctx->extradata);
-    av_free(x4->sei);
+    av_freep(&x4->sei);
     av_freep(&x4->pts_buffer);
 
     if (x4->enc)
@@ -353,7 +353,7 @@ static av_cold int XAVS_init(AVCodecContext *avctx)
     if (!x4->enc)
         return -1;
 
-    if (!(x4->pts_buffer = av_mallocz((avctx->max_b_frames+1) * sizeof(*x4->pts_buffer))))
+    if (!(x4->pts_buffer = av_mallocz_array((avctx->max_b_frames+1), sizeof(*x4->pts_buffer))))
         return AVERROR(ENOMEM);
 
     avctx->coded_frame = av_frame_alloc();

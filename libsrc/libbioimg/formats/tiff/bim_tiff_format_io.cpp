@@ -17,6 +17,7 @@
 
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
 #include <cmath>
 #include <limits>
 
@@ -24,6 +25,7 @@
 #include <tag_map.h>
 #include <bim_metatags.h>
 #include <bim_exiv_parse.h>
+#include <bim_image.h>
 
 #include "xtiffio.h"
 #include "bim_tiny_tiff.h"
@@ -31,6 +33,13 @@
 #include "memio.h"
 #include "bim_geotiff_parse.h"
 
+#ifdef max
+#undef max
+#endif
+
+#ifdef min
+#undef min
+#endif
 
 // Disables Visual Studio 2005 warnings for deprecated code
 #if ( defined(_MSC_VER) && (_MSC_VER >= 1400) )
@@ -39,7 +48,7 @@
 
 bim::uint append_metadata_omeTiff (bim::FormatHandle *fmtHndl, bim::TagMap *hash );
 bim::uint omeTiffReadPlane( bim::FormatHandle *fmtHndl, bim::TiffParams *par, int plane );
-int omeTiffWritePlane(bim::FormatHandle *fmtHndl, bim::TiffParams *tifParams);
+int omeTiffWritePlane(bim::FormatHandle *fmtHndl, bim::TiffParams *par, bim::ImageBitmap *img = NULL, bool subscale = false);
 
 using namespace bim;
 
@@ -334,16 +343,16 @@ bim::uint read_one_tag (FormatHandle *fmtHndl, TiffParams *tifParams, bim::uint1
   //if (fmtHndl->pageNumber >= tifParams->ifds.count()) { fmtHndl->pageNumber = 0; }
   TIFF *tif = tifParams->tiff;
 
-  uchar *buf=NULL; bim::uint16 buf_type; bim::uint64 buf_size;
+  bim::uchar *buf=NULL; bim::uint16 buf_type; bim::uint64 buf_size;
 
   if ( (tifParams->subType == tstStk) && (tag == 33629) ) {// stk 33629 got custom size 6*N
     buf_type = TAG_LONG;
     bim::uint64 count = ifd->tagCount(tag);
     buf_size = ( count * 6 ) * TinyTiff::tag_size_bytes[buf_type];
-    ifd->readTagCustom(tag, buf_size, buf_type, (uchar **) &buf);
+    ifd->readTagCustom(tag, buf_size, buf_type, (bim::uchar **) &buf);
   }
   else
-    ifd->readTag(tag, buf_size, buf_type, (uchar **) &buf);
+    ifd->readTag(tag, buf_size, buf_type, (bim::uchar **) &buf);
 
 
 
@@ -435,7 +444,7 @@ void read_text_tag(TinyTiff::IFD *ifd, bim::uint tag, MemIOBuf *outIOBuf, const 
 
     bim::uint64 buf_size;
     bim::uint16 buf_type;  
-    uchar *buf = NULL;
+    bim::uchar *buf = NULL;
     write_title_text(text, outIOBuf);
     ifd->readTag (tag, buf_size, buf_type, &buf);
     change_0_to_n ((char *) buf, (long) buf_size);
@@ -447,7 +456,7 @@ void read_text_tag(TinyTiff::IFD *ifd, bim::uint tag, MemIOBuf *outIOBuf) {
     if (!ifd->tagPresent(tag)) return;
     bim::uint64 buf_size;
     bim::uint16 buf_type;  
-    uchar *buf = NULL;
+    bim::uchar *buf = NULL;
   
     ifd->readTag (tag, buf_size, buf_type, &buf);
     change_0_to_n ((char *) buf, (long) buf_size);
@@ -462,6 +471,20 @@ char* read_text_tiff_metadata ( FormatHandle *fmtHndl, TiffParams *tifParams ) {
 //----------------------------------------------------------------------------
 // New METADATA
 //----------------------------------------------------------------------------
+
+void pyramid_append_metadata(FormatHandle *fmtHndl, TagMap *hash) {
+    if (fmtHndl == NULL) return;
+    if (isCustomReading(fmtHndl)) return;
+    if (!hash) return;
+    TiffParams *par = (TiffParams *)fmtHndl->internalParams;
+    PyramidInfo *pyramid = &par->pyramid;
+    
+    hash->set_value(bim::IMAGE_NUM_RES_L, pyramid->number_levels);
+    if (pyramid->number_levels > 1)
+    for (int i = 0; i < pyramid->number_levels; ++i) {
+        hash->set_value(bim::IMAGE_RES_L_SCALES, xstring::join(pyramid->scales, ","));
+    }
+}
 
 bim::uint append_metadata_generic_tiff (FormatHandle *fmtHndl, TagMap *hash ) {
   if (fmtHndl == NULL) return 1;
@@ -495,6 +518,8 @@ bim::uint append_metadata_generic_tiff (FormatHandle *fmtHndl, TagMap *hash ) {
 
   // use GeoTIFF to read metadata
   geotiff_append_metadata(fmtHndl, hash);
+
+  pyramid_append_metadata(fmtHndl, hash);
 
   return 0;
 }
@@ -664,7 +689,7 @@ int read_scanline_tiff(TIFF *tif, ImageBitmap *img, FormatHandle *fmtHndl) {
 
     if ( (planarConfig == PLANARCONFIG_SEPARATE) || (img->i.samples == 1) ) {
         for (bim::uint sample=0; sample<img->i.samples; sample++) {
-            uchar *p = (uchar *) img->bits[sample];
+            bim::uchar *p = (bim::uchar *) img->bits[sample];
             for(bim::uint y=0; y<img->i.height; y++) {
                 xprogress( fmtHndl, y*(sample+1), img->i.height*img->i.samples, "Reading TIFF" );
                 if ( xtestAbort( fmtHndl ) == 1) break;  
@@ -673,7 +698,7 @@ int read_scanline_tiff(TIFF *tif, ImageBitmap *img, FormatHandle *fmtHndl) {
             } // for y
         }  // for sample
     } else { // if image contain several samples in one same plane ex: RGBRGBRGB...
-        uchar *buf = (uchar *) _TIFFmalloc( TIFFScanlineSize ( tif ) );
+        bim::uchar *buf = (bim::uchar *) _TIFFmalloc( TIFFScanlineSize ( tif ) );
         for (bim::uint y=0; y<img->i.height; y++) {
 
             xprogress( fmtHndl, y, img->i.height, "Reading TIFF" );
@@ -686,7 +711,7 @@ int read_scanline_tiff(TIFF *tif, ImageBitmap *img, FormatHandle *fmtHndl) {
             // process YCrCb, etc data
 
             for (bim::uint sample=0; sample<img->i.samples; ++sample) {
-                uchar *p = (uchar *) img->bits[sample] + (lineSize * y);
+                bim::uchar *p = (bim::uchar *) img->bits[sample] + (lineSize * y);
                 write_line_segment(p, buf, img, sample, img->i.width);
             }  // for sample
 
@@ -702,74 +727,58 @@ int read_scanline_tiff(TIFF *tif, ImageBitmap *img, FormatHandle *fmtHndl) {
 //****************************************************************************
 
 int read_tiled_tiff(TIFF *tif, ImageBitmap *img, FormatHandle *fmtHndl) {
-  if (!tif || !img) return 1;
+    if (!tif || !img) return 1;
+    if (!TIFFIsTiled(tif)) return 1;
 
-  // if tiff is not tiled get out and never come back :-)
-  if( !TIFFIsTiled(tif) ) return 1;
+    bim::uint lineSize = getLineSizeInBytes(img);
+    bim::uint bpp = ceil((double)img->i.depth / 8.0);
+    bim::uint16 planarConfig;
+    bim::uint32 columns, rows;
+    bim::uint16 photometric = PHOTOMETRIC_MINISWHITE;
+    TIFFGetField(tif, TIFFTAG_PLANARCONFIG, &planarConfig);
+    TIFFGetField(tif, TIFFTAG_TILEWIDTH, &columns);
+    TIFFGetField(tif, TIFFTAG_TILELENGTH, &rows);
+    TIFFGetField(tif, TIFFTAG_PHOTOMETRIC, &photometric);
 
-  bim::uint lineSize = getLineSizeInBytes( img );
-  bim::uint bpp = ceil( (double) img->i.depth / 8.0 );
-  bim::uint16 planarConfig;
-  bim::uint32 columns, rows;
-  bim::uint16 photometric = PHOTOMETRIC_MINISWHITE;
-  TIFFGetField(tif, TIFFTAG_PLANARCONFIG, &planarConfig);
-  TIFFGetField(tif, TIFFTAG_TILEWIDTH,  &columns);
-  TIFFGetField(tif, TIFFTAG_TILELENGTH, &rows);
-  TIFFGetField(tif, TIFFTAG_PHOTOMETRIC, &photometric);
+    std::vector<bim::uchar> buffer(TIFFTileSize(tif));
+    bim::uchar *buf = &buffer[0];
 
-  uchar *tile_buf = (uchar*) _TIFFmalloc( TIFFTileSize(tif) );
-  if (!tile_buf) return 1;
+    for (bim::uint y = 0; y < img->i.height; y += rows) {
+        xprogress(fmtHndl, y, img->i.height, "Reading tiled TIFF");
+        if (xtestAbort(fmtHndl) == 1) break;
 
-  for (bim::uint y=0; y<img->i.height; y+=rows) {
-    //if (y > img->i.height) break;
+        bim::uint tile_height = (img->i.height - y >= rows) ? rows : (bim::uint) img->i.height - y;
+        for (bim::uint x = 0; x < (bim::uint)img->i.width; x += columns) {
+            bim::uint tile_width = (img->i.width - x < columns) ? (bim::uint) img->i.width - x : (bim::uint) columns;
 
-    // the tile height may vary 
-    bim::uint tileH = (img->i.height-y >= rows) ? rows : (bim::uint) img->i.height-y;
+            if ((planarConfig == PLANARCONFIG_SEPARATE) || (img->i.samples == 1)) {
+                for (bim::uint sample = 0; sample < img->i.samples; sample++) {
+                    if (TIFFReadTile(tif, buf, x, y, 0, sample) < 0) break;
 
-    xprogress( fmtHndl, y, img->i.height, "Reading TIFF" );
-    if ( xtestAbort( fmtHndl ) == 1) break; 
+                    // now put tile into the image 
+                    for (bim::uint yi = 0; yi < tile_height; yi++) {
+                        bim::uchar *p = (bim::uchar *) img->bits[sample] + (lineSize * (y + yi));
+                        _TIFFmemcpy(p + (x*bpp), buf + (yi*columns*bpp), tile_width*bpp);
+                    }
+                }  // for sample
+            } else { // if image contains several samples in one same plane ex: RGBRGBRGB...
+                if (TIFFReadTile(tif, buf, x, y, 0, 0) < 0) break;
+                // process YCrCb, etc data
 
-    bim::uint tileW = columns;
-    for (bim::uint x=0; x<(bim::uint)img->i.width; x+=columns) {
-  
-      // the tile size is now treated by libtiff guys the
-      // way that the size stay on unchanged      
-      bim::uint tW = (img->i.width-x < columns) ? (bim::uint) img->i.width-x : (bim::uint) tileW;
-      //if (img->i.width-x < columns) tW = (bim::uint32) img->i.width-x; else tW = (bim::uint32) tileW;
+                for (bim::uint sample = 0; sample < img->i.samples; sample++) {
+                    // now put tile into the image 
+                    #pragma omp parallel for default(shared) 
+                    for (bim::int64 yi = 0; yi < tile_height; yi++) {
+                        bim::uchar *p = (bim::uchar *) img->bits[sample] + (lineSize * (y + yi));
+                        write_line_segment(p + (x*bpp), buf + (yi*columns*img->i.samples*bpp), img, sample, tile_width);
+                    }
+                }  // for sample
+            } // if not separate planes
 
+        } // for x
+    } // for y
 
-      if ( (planarConfig == PLANARCONFIG_SEPARATE) || (img->i.samples == 1) ) {
-        for (bim::uint sample=0; sample<img->i.samples; sample++) {
-          if (!TIFFReadTile(tif, tile_buf, x, y, 0, sample)) break;
- 
-          // now put tile into the image 
-          for(bim::uint yi = 0; yi < tileH; yi++) {
-              uchar *p = (uchar *) img->bits[sample] + (lineSize * (y+yi));
-              _TIFFmemcpy(p+(x*bpp), tile_buf+(yi*tileW*bpp), tW);
-          }
-        }  // for sample
-
-      } // if planar
-      else { // if image contains several samples in one same plane ex: RGBRGBRGB...
-        if (!TIFFReadTile(tif, tile_buf, x, y, 0, 0)) break;
-        // process YCrCb, etc data
-
-        for (bim::uint sample=0; sample<img->i.samples; sample++) {
-          // now put tile into the image 
-          #pragma omp parallel for default(shared) 
-          for(bim::int64 yi = 0; yi < tileH; yi++) {
-            uchar *p = (uchar *) img->bits[sample] + (lineSize * (y+yi));
-            write_line_segment(p+(x*bpp), tile_buf+(yi*tileW*img->i.samples*bpp), img, sample, tW);
-          }
-        }  // for sample
-      } // if not separate planes
-
-    } // for x
-  } // for y
-
-  _TIFFfree(tile_buf);
-
-  return 0;
+    return 0;
 }
 
 
@@ -880,28 +889,216 @@ int read_tiff_image(FormatHandle *fmtHndl, TiffParams *tifParams) {
 // TIFF WRITER
 //****************************************************************************
 
-int write_tiff_image(FormatHandle *fmtHndl, TiffParams *tifParams) {
-  if (!areValidParams(fmtHndl, tifParams)) return 1;
+int write_striped_tiff(TIFF *out, ImageBitmap *img, FormatHandle *fmtHndl) {
+    bim::uint32 width = (bim::uint32) img->i.width;
+    bim::uint32 height = (bim::uint32) img->i.height;
+    bim::uint16 bitspersample = img->i.depth;
+    bim::uint16 samplesperpixel = img->i.samples;
+    bim::uint16 planarConfig = PLANARCONFIG_SEPARATE;
+    if (samplesperpixel == 3 && bitspersample == 8) {
+        planarConfig = PLANARCONFIG_CONTIG;
+    }
 
-  if (tifParams->subType == tstOmeTiff || tifParams->subType == tstOmeBigTiff)
-    return omeTiffWritePlane( fmtHndl, tifParams);
+    // if separate planes or only one sample
+    if ((planarConfig == PLANARCONFIG_SEPARATE) || (samplesperpixel == 1)) {
+        bim::uint sample;
+        bim::uint line_size = getLineSizeInBytes(img);
 
-  TIFF *out = tifParams->tiff;
-  ImageBitmap *img = fmtHndl->image;
+        for (sample = 0; sample<img->i.samples; sample++) {
+            bim::uchar *bits = (bim::uchar *)img->bits[sample];
+            for (bim::uint32 y = 0; y <height; y++) {
+                xprogress(fmtHndl, y*(sample + 1), height*img->i.samples, "Writing TIFF");
+                if (xtestAbort(fmtHndl) == 1) break;
+
+                TIFFWriteScanline(out, bits, y, sample);
+                bits += line_size;
+            } // for y
+        } // for samples
+
+    } else { // interleaved 8bit RGB image
+        bim::uint Bpp = (unsigned int)ceil(((double)bitspersample) / 8.0);
+        std::vector<bim::uchar> buf(width * 3 * Bpp);
+        bim::uchar *buffer = &buf[0];
+
+        for (register bim::uint y = 0; y < height; y++) {
+            xprogress(fmtHndl, y, height, "Writing TIFF");
+            if (xtestAbort(fmtHndl) == 1) break;
+
+            bim::uchar *bufIn0 = ((bim::uchar *)img->bits[0]) + y*width*Bpp;
+            bim::uchar *bufIn1 = ((bim::uchar *)img->bits[1]) + y*width*Bpp;
+            bim::uchar *bufIn2 = ((bim::uchar *)img->bits[2]) + y*width*Bpp;
+            bim::uchar *p = (bim::uchar *)buffer;
+            for (register bim::uint x = 0; x<width; x++) {
+                p[0] = *(bufIn0 + x);
+                p[1] = *(bufIn1 + x);
+                p[2] = *(bufIn2 + x);
+                p += 3;
+            }
+            TIFFWriteScanline(out, buffer, y, 0);
+        }
+    }
+    return 0;
+}
+
+int write_tiled_tiff(TIFF *tif, ImageBitmap *img, FormatHandle *fmtHndl) {
+    TiffParams *par = (TiffParams *)fmtHndl->internalParams;
+
+    bim::uint64 width = (bim::uint64) img->i.width;
+    bim::uint64 height = (bim::uint64) img->i.height;
+    bim::uint16 bitspersample = img->i.depth;
+    bim::uint16 samplesperpixel = img->i.samples;
+    bim::uint16 planarConfig = PLANARCONFIG_SEPARATE;
+    if (samplesperpixel == 3 && bitspersample == 8) {
+        planarConfig = PLANARCONFIG_CONTIG;
+    }
+    bim::uint32 columns = par->info.tileWidth;
+    bim::uint32 rows = par->info.tileHeight;
+    bim::uint bpp = ceil((double)img->i.depth / 8.0);
+
+    TIFFSetField(tif, TIFFTAG_TILEWIDTH, columns);
+    TIFFSetField(tif, TIFFTAG_TILELENGTH, rows);
+    
+    std::vector<bim::uint8> buffer(TIFFTileSize(tif));
+    bim::uint8 *buf = &buffer[0];
+
+    for (bim::uint y = 0; y<img->i.height; y += rows) {
+        xprogress(fmtHndl, y, img->i.height, "Writing tiled TIFF");
+        if (xtestAbort(fmtHndl) == 1) break;
+
+        for (bim::uint x = 0; x<(bim::uint)img->i.width; x += columns) {
+            bim::uint tile_width = (width - x >= columns) ? columns : (bim::uint) width - x;
+            bim::uint tile_height = (height - y >= rows) ? rows : (bim::uint) height - y;
+
+            // libtiff tiles will always have columns hight with empty pixels
+            // we need to copy only the usable portion
+            if ((planarConfig == PLANARCONFIG_SEPARATE) || (img->i.samples == 1)) { // if planar
+                for (bim::uint sample = 0; sample < img->i.samples; ++sample) {
+                    #pragma omp parallel for default(shared) 
+                    for (bim::int64 i = 0; i < tile_height; ++i) {
+                        bim::uint8 *to = buf + i*bpp*columns; // buf + sample*bpp + i*bpp*columns;
+                        bim::uint8 *from = ((bim::uint8 *)img->bits[sample]) + (y+i)*bpp*width + x*bpp;
+                        memcpy(to, from, tile_width*bpp);
+                    }
+                    if (TIFFWriteTile(tif, buf, x, y, 0, sample) < 0) break;
+                }  // for sample
+            }  else { // if image contains interleaved samples: RGBRGBRGB...
+                int step = bpp * img->i.samples;
+                for (bim::uint sample = 0; sample < img->i.samples; ++sample) {
+                    #pragma omp parallel for default(shared) 
+                    for (bim::int64 i = 0; i < tile_height; ++i) {
+                        bim::uint8 *to = buf + sample*bpp + i*step*columns;
+                        bim::uint8 *from = ((bim::uint8 *)img->bits[sample]) + (y+i)*bpp*width + x*bpp;
+                        for (bim::int64 x = 0; x < tile_width; ++x) {
+                            memcpy(to, from, bpp);
+                            from += bpp;
+                            to += step;
+                        }
+                    }
+                }  // for sample
+                if (TIFFWriteTile(tif, buf, x, y, 0, 0) < 0) break;
+            } // if not separate planes
+        } // for x
+    } // for y
+
+    return 0;
+}
+
+int tiff_update_subifd_next_pointer(TIFF* tif, bim::uint64 dir_offset, bim::uint64 to_offset) {
+    static const char module[] = "tiff_update_subifd_next_pointer";
+
+    if (!(tif->tif_flags&TIFF_BIGTIFF)) {
+        bim::uint32 m = to_offset;
+        if (tif->tif_flags & TIFF_SWAB)
+            TIFFSwabLong(&m);
+
+        bim::uint16 dircount = 0;
+        if (!SeekOK(tif, dir_offset) ||
+            !ReadOK(tif, &dircount, 2)) {
+            TIFFErrorExt(tif->tif_clientdata, module,
+                "Error fetching directory count");
+            return false;
+        }
+        if (tif->tif_flags & TIFF_SWAB)
+            TIFFSwabShort(&dircount);
+
+        bim::uint32 nextnextdir;
+        TIFFSeekFile(tif, dir_offset + 2 + dircount * 12, SEEK_SET);
+        if (!ReadOK(tif, &nextnextdir, 4)) {
+            TIFFErrorExt(tif->tif_clientdata, module,
+                "Error fetching directory link");
+            return false;
+        }
+        if (tif->tif_flags & TIFF_SWAB)
+            TIFFSwabLong(&nextnextdir);
+
+        if (nextnextdir == 0) {
+            TIFFSeekFile(tif, dir_offset + 2 + dircount * 12, SEEK_SET);
+            if (!WriteOK(tif, &m, 4)) {
+                TIFFErrorExt(tif->tif_clientdata, module,
+                    "Error writing directory link");
+                return false;
+            }
+        }
+    } else {
+        bim::uint64 m = to_offset;
+        if (tif->tif_flags & TIFF_SWAB)
+            TIFFSwabLong8(&m);
+
+        bim::uint64 dircount;
+        if (!SeekOK(tif, dir_offset) ||
+            !ReadOK(tif, &dircount, 8)) {
+            TIFFErrorExt(tif->tif_clientdata, module,
+                "Error fetching directory count");
+            return false;
+        }
+        if (tif->tif_flags & TIFF_SWAB)
+            TIFFSwabLong8(&dircount);
+        if (dircount>0xFFFF) {
+            TIFFErrorExt(tif->tif_clientdata, module,
+                "Sanity check on tag count failed, likely corrupt TIFF");
+            return false;
+        }
+
+        bim::uint64 nextnextdir;
+        TIFFSeekFile(tif, dir_offset + 8 + dircount * 20, SEEK_SET);
+        if (!ReadOK(tif, &nextnextdir, 8)) {
+            TIFFErrorExt(tif->tif_clientdata, module,
+                "Error fetching directory link");
+            return false;
+        }
+        if (tif->tif_flags & TIFF_SWAB)
+            TIFFSwabLong8(&nextnextdir);
+        if (nextnextdir == 0) {
+            TIFFSeekFile(tif, dir_offset + 8 + dircount * 20, SEEK_SET);
+            if (!WriteOK(tif, &m, 8)) {
+                TIFFErrorExt(tif->tif_clientdata, module,
+                    "Error writing directory link");
+                return false;
+            }
+        }
+    }
+
+    return true;
+}
+
+int write_tiff_image(FormatHandle *fmtHndl, TiffParams *par, ImageBitmap *img = NULL, bool subscale = false) {
+  if (!areValidParams(fmtHndl, par)) return 1;
+
+  if (par->subType == tstOmeTiff || par->subType == tstOmeBigTiff)
+      return omeTiffWritePlane( fmtHndl, par);
+
+  TIFF *out = par->tiff;
+  if (!img) img = fmtHndl->image;
  
-  bim::uint32 height;
-  bim::uint32 width;
+  bim::uint32 width = (bim::uint32) img->i.width;
+  bim::uint32 height = (bim::uint32) img->i.height;
   bim::uint32 rowsperstrip = (bim::uint32) -1;
-  bim::uint16 bitspersample;
-  bim::uint16 samplesperpixel;
+  bim::uint16 bitspersample = img->i.depth;
+  bim::uint16 samplesperpixel = img->i.samples;
   bim::uint16 photometric = PHOTOMETRIC_MINISBLACK;
   bim::uint16 compression;
   bim::uint16 planarConfig;
 
-  width = (bim::uint32) img->i.width;
-  height = (bim::uint32) img->i.height;
-  bitspersample = img->i.depth;
-  samplesperpixel = img->i.samples;
   if (img->i.imageMode == IM_RGB)   photometric = PHOTOMETRIC_RGB;
   if (img->i.imageMode == IM_MULTI) photometric = PHOTOMETRIC_RGB;
   if (samplesperpixel >= 2)         photometric = PHOTOMETRIC_RGB;
@@ -929,32 +1126,40 @@ int write_tiff_image(FormatHandle *fmtHndl, TiffParams *tifParams) {
 
 
   // set planar config
-  planarConfig = PLANARCONFIG_SEPARATE;	// separated planes 
+  planarConfig = PLANARCONFIG_SEPARATE;
   if (samplesperpixel==3 && bitspersample==8)
-    planarConfig = PLANARCONFIG_CONTIG;
+      planarConfig = PLANARCONFIG_CONTIG;
+  TIFFSetField(out, TIFFTAG_PLANARCONFIG, planarConfig);
 
-  /*
-  if (img->i.imageMode == IM_MULTI)
-    planarConfig = PLANARCONFIG_SEPARATE;	// separated planes 
-  else
-    planarConfig = PLANARCONFIG_CONTIG;	// mixed planes
-
-  // now more tests for plane configuration
-  if (samplesperpixel > 3) planarConfig = PLANARCONFIG_SEPARATE;
-  if ( (samplesperpixel == 1) || (samplesperpixel == 3) ) 
-    planarConfig = PLANARCONFIG_CONTIG;
-  */
- 
-  TIFFSetField(out, TIFFTAG_PLANARCONFIG, planarConfig);	// separated planes
-
-
-  TIFFSetField(out, TIFFTAG_SOFTWARE, "DIMIN TIFF WRAPPER <www.dimin.net>");
+  TIFFSetField(out, TIFFTAG_SOFTWARE, "libbioimage");
 
   //if( TIFFGetField( out, TIFFTAG_DOCUMENTNAME, &pszText ) )
   //if( TIFFGetField( out, TIFFTAG_IMAGEDESCRIPTION, &pszText ) )
   //if( TIFFGetField( out, TIFFTAG_DATETIME, &pszText ) )
 
+  //------------------------------------------------------------------------------  
+  // resolution pyramid
+  //------------------------------------------------------------------------------  
 
+  bim::int64 sz = bim::max<bim::int64>(width, height);
+  if (!subscale && par->pyramid.format != PyramidInfo::pyrFmtNone && sz<PyramidInfo::min_level_size){
+      par->pyramid.format = PyramidInfo::pyrFmtNone;
+  }
+
+  if (par->info.tileWidth > 0 && par->pyramid.format != PyramidInfo::pyrFmtNone) {
+      TIFFSetField(out, TIFFTAG_SUBFILETYPE, subscale ? FILETYPE_REDUCEDIMAGE : 0);
+
+      if (!subscale) {
+          par->pyramid.directory_offsets.resize(0);
+          bim::int64 num_levels = ceil(bim::log2<double>(sz)) - ceil(bim::log2<double>(PyramidInfo::min_level_size)) + 1;
+          if (par->pyramid.format == PyramidInfo::pyrFmtSubDirs) {
+              // if pyramid levels are to be written into SUBIFDs, write the tag and indicate to libtiff how many subifds are coming
+              bim::uint16 num_sub_ifds = num_levels - 1; // number of pyramidal levels - 1
+              std::vector<bim::uint64> offsets_sub_ifds(num_levels - 1, 0UL);
+              TIFFSetField(out, TIFFTAG_SUBIFD, num_sub_ifds, &offsets_sub_ifds[0]);
+          }
+      }
+  }
 
   //------------------------------------------------------------------------------  
   // compression
@@ -987,13 +1192,13 @@ int write_tiff_image(FormatHandle *fmtHndl, TiffParams *tifParams) {
   switch ( compression ) {
     case COMPRESSION_JPEG:
     {
-      TIFFSetField( out, TIFFTAG_ROWSPERSTRIP, strip_size+(16-(strip_size % 16)) );
+      //TIFFSetField( out, TIFFTAG_ROWSPERSTRIP, strip_size+(16-(strip_size % 16)) );
       break;
     }
 
     case COMPRESSION_ADOBE_DEFLATE:
     {
-      TIFFSetField( out, TIFFTAG_ROWSPERSTRIP, height );
+      //TIFFSetField( out, TIFFTAG_ROWSPERSTRIP, height );
       if ( (photometric == PHOTOMETRIC_RGB) ||
            ((photometric == PHOTOMETRIC_MINISBLACK) && (bitspersample >= 8)) )
         TIFFSetField( out, TIFFTAG_PREDICTOR, 2 );
@@ -1003,13 +1208,13 @@ int write_tiff_image(FormatHandle *fmtHndl, TiffParams *tifParams) {
 
     case COMPRESSION_CCITTFAX4:
     {
-      TIFFSetField( out, TIFFTAG_ROWSPERSTRIP, height );
+      //TIFFSetField( out, TIFFTAG_ROWSPERSTRIP, height );
       break;
     }
 
     case COMPRESSION_LZW:
     {
-      TIFFSetField( out, TIFFTAG_ROWSPERSTRIP, strip_size );
+      //TIFFSetField( out, TIFFTAG_ROWSPERSTRIP, strip_size );
       if (planarConfig == PLANARCONFIG_SEPARATE)
          TIFFSetField( out, TIFFTAG_PREDICTOR, PREDICTOR_NONE );
       else
@@ -1018,7 +1223,7 @@ int write_tiff_image(FormatHandle *fmtHndl, TiffParams *tifParams) {
     }
     default:
     {
-      TIFFSetField( out, TIFFTAG_ROWSPERSTRIP, strip_size );
+      //TIFFSetField( out, TIFFTAG_ROWSPERSTRIP, strip_size );
       break;
     }
   }
@@ -1068,93 +1273,195 @@ int write_tiff_image(FormatHandle *fmtHndl, TiffParams *tifParams) {
     TIFFSetField(out, TIFFTAG_COLORMAP, palr, palg, palb);
   }
 
-
   //------------------------------------------------------------------------------
   // writing meta data
   //------------------------------------------------------------------------------
-
-  write_tiff_metadata (fmtHndl, tifParams);
-  //TIFFFlush(out); // error in doing this, due to additional checks to the libtiff 4.0.0
-
+  if (!subscale) {
+      write_tiff_metadata(fmtHndl, par);
+  }
 
   //------------------------------------------------------------------------------
   // writing image
   //------------------------------------------------------------------------------
-
-  // if separate palnes or only one sample
-  if ( (planarConfig == PLANARCONFIG_SEPARATE) || (samplesperpixel == 1) ) {
-    bim::uint sample;
-    bim::uint line_size = getLineSizeInBytes( img );
-
-    for (sample=0; sample<img->i.samples; sample++) {
-      uchar *bits = (uchar *) img->bits[sample];
-      for (bim::uint32 y = 0; y <height; y++) {
-        xprogress( fmtHndl, y*(sample+1), height*img->i.samples, "Writing TIFF" );
-        if ( xtestAbort( fmtHndl ) == 1) break;  
-
-        TIFFWriteScanline(out, bits, y, sample);
-        bits += line_size;
-      } // for y
-    } // for samples
-
-  } // if separate planes
-  else
-  { // if xRGB image
-    bim::uint Bpp = (unsigned int) ceil( ((double) bitspersample) / 8.0 );
-    uchar *buffer = (uchar *) _TIFFmalloc(width * 3 * Bpp);
-    register bim::uint x, y;
-    uchar *black_line = (uchar *) _TIFFmalloc(width * Bpp);
-    memset( black_line, 0, width * Bpp );
-    
-    for (y = 0; y < height; y++) {
-      xprogress( fmtHndl, y, height, "Writing TIFF" );
-      if ( xtestAbort( fmtHndl ) == 1) break;  
-
-      uchar *bufIn0 = ((uchar *) img->bits[0]) + y*width*Bpp;
-      uchar *bufIn1 = ((uchar *) img->bits[1]) + y*width*Bpp;
-      uchar *bufIn2 = NULL;
-      if (samplesperpixel > 2)
-        bufIn2 = ((uchar *) img->bits[2]) + y*width*Bpp;
-      else
-        bufIn2 = black_line;
-
-      if (img->i.depth <= 8) { // 8 bits
-        uchar *p  = (uchar *) buffer;
-        
-        for (x=0; x<width; x++) {
-          p[0] = *(bufIn0 + x);
-          p[1] = *(bufIn1 + x);
-          p[2] = *(bufIn2 + x);
-          p += 3;
-        }
-
-      } // if 8 bit
-      else  { // 16 bits
-        bim::uint16 *p  = (bim::uint16 *) buffer;
-        bim::uint16 *p0 = (bim::uint16 *) bufIn0;   
-        bim::uint16 *p1 = (bim::uint16 *) bufIn1; 
-        bim::uint16 *p2 = (bim::uint16 *) bufIn2;
-      
-        for (x=0; x<width; x++) {
-          p[0] = *(p0 + x);
-          p[1] = *(p1 + x);
-          p[2] = *(p2 + x);
-          p += 3;
-        }
-      } // if 16 bit
-
-      // write the scanline to disc
-      TIFFWriteScanline(out, buffer, y, 0);
-    }
-
-    _TIFFfree(buffer);
-    _TIFFfree(black_line);
+  
+  if (par->info.tileWidth < 1 || par->pyramid.format == PyramidInfo::pyrFmtNone) {
+      write_striped_tiff(out, img, fmtHndl);
+  } else {
+      write_tiled_tiff(out, img, fmtHndl);
   }
 
+  // correct libtiff writing of subifds by linking sibling ifds through nextifd offset
+  if (subscale && par->pyramid.format == PyramidInfo::pyrFmtSubDirs) {
+      bim::uint64 dir_offset = (TIFFSeekFile(out, 0, SEEK_END) + 1) &~1;
+      par->pyramid.directory_offsets.push_back(dir_offset);
+  }
+
+  //------------------------------------------------------------------------------
+  // finish directory
+  //------------------------------------------------------------------------------
   TIFFWriteDirectory( out );
-  TIFFFlushData(out);
-  TIFFFlush(out);
+
+
+  //------------------------------------------------------------------------------
+  // writing pyramid levels
+  //------------------------------------------------------------------------------
+
+  if (!subscale && par->info.tileWidth >0 && par->pyramid.format != PyramidInfo::pyrFmtNone) {
+      bim::Image image(img);
+      int i = 0;
+      while (bim::max<unsigned int>(image.width(), image.height()) > PyramidInfo::min_level_size) {
+          image = image.downSampleBy2x();
+          if (write_tiff_image(fmtHndl, par, image.imageBitmap(), true) != 0) break;
+          ++i;
+      }
+
+      // correct libtiff writing of subifds by linking sibling ifds through nextifd offset
+      if (par->pyramid.format == PyramidInfo::pyrFmtSubDirs)
+      for (int i = 0; i < par->pyramid.directory_offsets.size() - 1; ++i) {
+          if (!tiff_update_subifd_next_pointer(out, par->pyramid.directory_offsets[i], par->pyramid.directory_offsets[i + 1])) break;
+      }
+  }
+
+  //------------------------------------------------------------------------------
+  // finish file
+  //------------------------------------------------------------------------------
+  if (!subscale) {
+      TIFFFlushData(out);
+      TIFFFlush(out);
+  }
 
   return 0;
+}
+
+//--------------------------------------------------------------------------------------------
+// Levels and Tiles functions
+//--------------------------------------------------------------------------------------------
+
+int read_tiff_image_level(FormatHandle *fmtHndl, TiffParams *tifParams, uint page, uint level) {
+    if (!areValidParams(fmtHndl, tifParams)) return 1;
+    TIFF *tif = tifParams->tiff;
+    PyramidInfo *pyramid = &tifParams->pyramid;
+    ImageBitmap *img = fmtHndl->image;
+
+    // set correct level
+    if (pyramid->number_levels > 0 && pyramid->number_levels <= level) return 1;
+    bim::uint64 current_dir = TIFFCurrentDirectory(tif);
+    bim::uint64 subdiroffset = pyramid->directory_offsets[level];
+    if (TIFFSetSubDirectory(tif, subdiroffset) == 0) return 1;
+
+    // set tile parameters
+    bim::uint32 height = 0;
+    bim::uint32 width = 0;
+    bim::uint16 planarConfig;
+    bim::uint32 columns, rows;
+    bim::uint16 photometric = PHOTOMETRIC_MINISWHITE;
+    bim::uint16 bitspersample = 1;
+    bim::uint16 samplesperpixel = 1;
+    TIFFGetField(tif, TIFFTAG_IMAGEWIDTH, &width);
+    TIFFGetField(tif, TIFFTAG_IMAGELENGTH, &height);
+    TIFFGetField(tif, TIFFTAG_PLANARCONFIG, &planarConfig);
+    TIFFGetField(tif, TIFFTAG_PHOTOMETRIC, &photometric);
+    TIFFGetField(tif, TIFFTAG_SAMPLESPERPIXEL, &samplesperpixel);
+    TIFFGetField(tif, TIFFTAG_BITSPERSAMPLE, &bitspersample);
+
+    img->i.samples = samplesperpixel;
+    img->i.depth = bitspersample;
+    img->i.width = width;
+    img->i.height = height;
+    bim::uint bpp = ceil((double)img->i.depth / 8.0);
+    if (allocImg(fmtHndl, &img->i, img) != 0) return 1;
+
+    if (!TIFFIsTiled(tif))
+        read_scanline_tiff(tif, img, fmtHndl);
+    else
+        read_tiled_tiff(tif, img, fmtHndl);
+
+    processPhotometric(img, tifParams, photometric);
+    TIFFSetDirectory(tif, current_dir);
+    return 0;
+}
+
+int read_tiff_image_tile(FormatHandle *fmtHndl, TiffParams *tifParams, uint page, bim::uint64 xid, bim::uint64 yid, uint level) {
+    if (!areValidParams(fmtHndl, tifParams)) return 1;
+    TIFF *tif = tifParams->tiff;
+    PyramidInfo *pyramid = &tifParams->pyramid;
+    ImageBitmap *img = fmtHndl->image;
+
+    //if (!TIFFIsTiled(tif)) return read_tiff_image(fmtHndl, tifParams);
+    if (!TIFFIsTiled(tif)) return 1;
+
+    // set correct level
+    if (pyramid->number_levels > 0 && pyramid->number_levels <= level) return 1;
+    bim::uint64 current_dir = TIFFCurrentDirectory(tif);
+    bim::uint64 subdiroffset = pyramid->directory_offsets[level];
+    if (current_dir != subdiroffset && TIFFSetSubDirectory(tif, subdiroffset) == 0) return 1;
+
+    // set tile parameters
+    bim::uint32 height = 0;
+    bim::uint32 width = 0;
+    bim::uint16 planarConfig;
+    bim::uint32 columns, rows;
+    bim::uint16 photometric = PHOTOMETRIC_MINISWHITE;
+    bim::uint16 bitspersample = 1;
+    bim::uint16 samplesperpixel = 1;
+
+    TIFFGetField(tif, TIFFTAG_IMAGEWIDTH, &width);
+    TIFFGetField(tif, TIFFTAG_IMAGELENGTH, &height);
+    TIFFGetField(tif, TIFFTAG_TILEWIDTH, &columns);
+    TIFFGetField(tif, TIFFTAG_TILELENGTH, &rows);
+    TIFFGetField(tif, TIFFTAG_PLANARCONFIG, &planarConfig);
+    TIFFGetField(tif, TIFFTAG_PHOTOMETRIC, &photometric);
+    TIFFGetField(tif, TIFFTAG_SAMPLESPERPIXEL, &samplesperpixel);
+    TIFFGetField(tif, TIFFTAG_BITSPERSAMPLE, &bitspersample);
+
+    // tile sizes may be smaller at the border
+    bim::uint64 x = xid * columns;
+    bim::uint64 y = yid * rows;
+    bim::uint tile_width = (width - x >= columns) ? columns : (bim::uint) width - x;
+    bim::uint tile_height = (height - y >= rows) ? rows : (bim::uint) height - y;
+
+    img->i.samples = samplesperpixel;
+    img->i.depth = bitspersample;
+    img->i.width = tile_width;
+    img->i.height = tile_height;
+    bim::uint bpp = ceil((double)img->i.depth / 8.0);
+    if (allocImg(fmtHndl, &img->i, img) != 0) return 1;
+
+    std::vector<bim::uint8> buffer(TIFFTileSize(tif));
+    bim::uint8 *buf = &buffer[0];
+
+    // libtiff tiles will always have columns hight with empty pixels
+    // we need to copy only the usable portion
+    if ((planarConfig == PLANARCONFIG_SEPARATE) || (img->i.samples == 1)) { // if planar
+        for (bim::uint sample = 0; sample < img->i.samples; sample++) {
+            if (TIFFReadTile(tif, buf, x, y, 0, sample) < 0) break;
+            #pragma omp parallel for default(shared) 
+            for (bim::int64 y = 0; y < tile_height; ++y) {
+                bim::uint8 *from = buf + y*bpp*columns;
+                bim::uint8 *to = ((bim::uint8 *)img->bits[sample]) + y*bpp*tile_width;
+                memcpy(to, from, bpp*tile_width);
+            }
+        }  // for sample
+    } else { // if image contains interleaved samples: RGBRGBRGB...
+        if (TIFFReadTile(tif, buf, x, y, 0, 0) > 0) {
+            int step = bpp * img->i.samples;
+            for (bim::uint sample = 0; sample < img->i.samples; sample++) {
+                #pragma omp parallel for default(shared) 
+                for (bim::int64 y = 0; y < tile_height; ++y) {
+                    bim::uint8 *from = buf + sample*bpp + y*step*columns;
+                    bim::uint8 *to = ((bim::uint8 *)img->bits[sample]) + y*bpp*tile_width;
+                    for (bim::int64 x = 0; x < tile_width; ++x) {
+                        memcpy(to, from, bpp);
+                        to += bpp;
+                        from += step;
+                    }
+                }
+            }  // for sample
+        }
+    } // if not separate planes
+
+    processPhotometric(img, tifParams, photometric);
+    TIFFSetDirectory(tif, current_dir);
+    return 0;
 }
 

@@ -14,11 +14,15 @@
 #ifdef BIM_USE_TRANSFORMS
 #pragma message("bim::Image: Transforms")
 
+#include "xtypes.h"
 #include "bim_image.h"
 
 #include <algorithm>
 #include <limits>
 #include <cstring>
+
+#include <xstring.h>
+#include <bim_metatags.h>
 
 #include <fftw3.h>
 #include "../transforms/FuzzyCalc.h"
@@ -29,6 +33,13 @@
 
 using namespace bim;
 
+#ifdef max
+#undef max
+#endif
+
+#ifdef min
+#undef min
+#endif
 
 //------------------------------------------------------------------------------------
 // Transforms
@@ -239,6 +250,19 @@ Image Image::transform( Image::TransformMethod type ) const {
     return Image();  
 }
 
+
+Image operation_transform(Image &img, const bim::xstring &arguments, const xoperations &operations, ImageHistogram *hist, XConf *c) {
+    Image::TransformMethod transform = Image::tmNone;
+    if (arguments.toLowerCase() == "chebyshev") transform = Image::tmChebyshev;
+    if (arguments.toLowerCase() == "fft")       transform = Image::tmFFT;
+    if (arguments.toLowerCase() == "radon")     transform = Image::tmRadon;
+    if (arguments.toLowerCase() == "wavelet")   transform = Image::tmWavelet;
+
+    if (transform != Image::tmcNone)
+        return img.transform(transform);
+    return img;
+};
+
 //------------------------------------------------------------------------------------
 // 3c Color Transforms 
 //------------------------------------------------------------------------------------
@@ -396,8 +420,8 @@ bool converter_3c( const Image &in, Image &out, F func ) {
     bim::uint64 h = (bim::uint64) in.height();
 
     double tmax  = (double) std::numeric_limits<T>::max();
-    double tmin  = (double) std::numeric_limits<T>::min();
-    double range = (double) std::numeric_limits<T>::max() - std::numeric_limits<T>::min();
+    double tmin = (double) bim::lowest<T>();
+    double range = (double) std::numeric_limits<T>::max() - bim::lowest<T>();
 
     #pragma omp parallel for default(shared)
     for (int y=0; y<h; ++y ) {
@@ -470,5 +494,287 @@ Image Image::transform_color( Image::TransformColorMethod type ) const {
     }
     return out;
 }
+
+Image operation_transform_color(Image &img, const bim::xstring &arguments, const xoperations &operations, ImageHistogram *hist, XConf *c) {
+    Image::TransformColorMethod transform_color = Image::tmcNone;
+    if (arguments.toLowerCase() == "rgb2hsv") transform_color = Image::tmcRGB2HSV;
+    if (arguments.toLowerCase() == "hsv2rgb") transform_color = Image::tmcHSV2RGB;
+
+    if (transform_color != Image::tmcNone)
+        return img.transform_color(transform_color);
+    return img;
+};
+
+Image operation_filter(Image &img, const bim::xstring &arguments, const xoperations &operations, ImageHistogram *hist, XConf *c) {
+    if (arguments.toLowerCase() == "edge")
+        return img.filter_edge();
+    else if (arguments.toLowerCase() == "wndchrmcolor")
+        return img.transform_color(Image::tmcRGB2WndChrmColor);
+    else if (arguments.toLowerCase() == "otsu")
+        return img.filter_edge();
+    return img;
+};
+
+//------------------------------------------------------------------------------------
+// Hounsfield Units - used for CT (CAT) data
+// provided conversion maps from device dependent to HU (device independent) scale
+// typically this conversion will only make sense for 1 sample per pixel images with signed 16 bit pixels or floating point
+// most devices use slope == 1.0 and intercept == -1024.0
+//------------------------------------------------------------------------------------
+
+template <typename T, typename Tw>
+bool converter_hounsfield(const Image &in, Image &out, const Tw &slope, const Tw &intercept) {
+    if (in.width() != out.width())   return false;
+    if (in.height() != out.height())  return false;
+    if (in.samples() != out.samples()) return false;
+    if (in.depth() != out.depth())   return false;
+
+    bim::uint64 w = (bim::uint64) in.width();
+    bim::uint64 h = (bim::uint64) in.height();
+    double tmax = (double)std::numeric_limits<T>::max();
+    double tmin = (double)bim::lowest<T>();
+
+    for (int s = 0; s < in.samples(); ++s) {
+        #pragma omp parallel for default(shared)
+        for (bim::int64 y = 0; y < h; ++y) {
+            T *src = (T *)in.scanLine(s, y);
+            T *dst = (T *)out.scanLine(s, y);
+            for (unsigned int x = 0; x < w; ++x) {
+                //dst[x] = (T)((Tw)src[x] * slope + intercept);
+                dst[x] = bim::trim<T, Tw>(src[x] * slope + intercept, tmin, tmax);
+            }
+        }
+    }
+    return true;
+}
+
+Image Image::transform_hounsfield(const double &slope, const double &intercept ) const {
+    Image out;
+
+    if (this->pixelType() == FMT_SIGNED || this->pixelType() == FMT_FLOAT) {
+        out = this->deepCopy();
+    } else {
+        // convert to signed data type keeping image depth, typically this should be 16 bit per sample
+        out = this->convertToDepth(32, Lut::ltTypecast, FMT_FLOAT);
+    }
+
+    if (out.depth() == 8 && out.pixelType() == FMT_SIGNED)
+        converter_hounsfield<bim::int8, double>(out, out, slope, intercept);
+    else
+    if (out.depth() == 16 && out.pixelType() == FMT_SIGNED)
+        converter_hounsfield<bim::int16, double>(out, out, slope, intercept);
+    else
+    if (out.depth() == 32 && out.pixelType() == FMT_SIGNED)
+        converter_hounsfield<bim::int32, double>(out, out, slope, intercept);
+    else
+    if (out.depth() == 64 && out.pixelType() == FMT_SIGNED)
+        converter_hounsfield<bim::int64, double>(out, out, slope, intercept);
+    else
+    if (out.depth() == 32 && out.pixelType() == FMT_FLOAT)
+        converter_hounsfield<bim::float32, double>(out, out, slope, intercept);
+    else
+    if (out.depth() == 64 && out.pixelType() == FMT_FLOAT)
+        converter_hounsfield<bim::float64, double>(out, out, slope, intercept);
+    
+    return out;
+}
+
+// mutable version of same operation, more memory efficient, only valid for float and signed images
+bool Image::transform_hounsfield_inplace(const double &slope, const double &intercept) {
+    if (this->pixelType() == FMT_UNSIGNED) return false;
+    if (this->depth() < 16) return false;
+
+    if (this->depth() == 16 && this->pixelType() == FMT_SIGNED)
+        converter_hounsfield<bim::int16, double>(*this, *this, slope, intercept);
+    else
+    if (this->depth() == 32 && this->pixelType() == FMT_SIGNED)
+        converter_hounsfield<bim::int32, double>(*this, *this, slope, intercept);
+    else
+    if (this->depth() == 64 && this->pixelType() == FMT_SIGNED)
+        converter_hounsfield<bim::int64, double>(*this, *this, slope, intercept);
+    else
+    if (this->depth() == 32 && this->pixelType() == FMT_FLOAT)
+        converter_hounsfield<bim::float32, double>(*this, *this, slope, intercept);
+    else
+    if (this->depth() == 64 && this->pixelType() == FMT_FLOAT)
+        converter_hounsfield<bim::float64, double>(*this, *this, slope, intercept);
+
+    return true;
+}
+
+//-----------------------------------------------------------------------------------
+// enhance_hounsfield
+//-----------------------------------------------------------------------------------
+
+template <typename T>
+bool enhancer_hounsfield(const Image &in, const T &min_val, const T &max_val, const T &min_set, const T &max_set) {
+    bim::uint64 w = (bim::uint64) in.width();
+    bim::uint64 h = (bim::uint64) in.height();
+
+    for (int s = 0; s < in.samples(); ++s) {
+        #pragma omp parallel for default(shared)
+        for (bim::int64 y = 0; y < h; ++y) {
+            T *src = (T *)in.scanLine(s, y);
+            for (unsigned int x = 0; x < w; ++x) {
+                if (src[x] < min_val) src[x] = min_set;
+                if (src[x] > max_val) src[x] = max_set;
+            }
+        }
+    }
+    return true;
+}
+
+Image compute_hounsfield(const Image &in, int depth, DataFormat pxtype, const double &minv, const double &maxv, const double &maxs) {
+    Image img = in.deepCopy();
+
+    if (in.depth() == 8 && in.pixelType() == FMT_SIGNED)
+        enhancer_hounsfield<bim::int8>(img, minv, maxv, minv, maxs);
+    else
+    if (in.depth() == 16 && in.pixelType() == FMT_SIGNED)
+        enhancer_hounsfield<bim::int16>(img, minv, maxv, minv, maxs);
+    else
+    if (in.depth() == 32 && in.pixelType() == FMT_SIGNED)
+        enhancer_hounsfield<bim::int32>(img, minv, maxv, minv, maxs);
+    else
+    if (in.depth() == 64 && in.pixelType() == FMT_SIGNED)
+        enhancer_hounsfield<bim::int64>(img, minv, maxv, minv, maxs);
+    else
+    if (in.depth() == 32 && in.pixelType() == FMT_FLOAT)
+        enhancer_hounsfield<bim::float32>(img, minv, maxv, minv, maxs);
+    else
+    if (in.depth() == 64 && in.pixelType() == FMT_FLOAT)
+        enhancer_hounsfield<bim::float64>(img, minv, maxv, minv, maxs);
+
+    if (depth == img.depth() && pxtype == img.pixelType())
+        return img;
+    return img.convertToDepth(depth, Lut::ltLinearDataRange, pxtype, Histogram::cmSeparate);
+}
+
+// typical enhancement of CT images using Hounsfield scale, where pixels are normalized using
+// min and max computed from window center and window width given in Hounsfield Units
+// image MUST be previously converted to HU using transform_hounsfield or transform_hounsfield_inplace
+// Typical values of center/width:
+//    HeadSFT:          40 / 80  head soft tissue
+//    Brain             30 / 110
+//    NeckSFT :         60 / 300
+//    Bone :            400 / 2000 
+//    Temporal bones:   400 / 4000  (bones of the scull)
+//    Bone body:        350 / 2500 
+//    Soft Tissue :     40 / 500
+//    SoftTissue(PEDS): 40 / 400   just soft tissue CT (pediatric )
+//    Mediastinum:      400/1800
+//    Bronchial:        -180 / 2600
+//    Lung :            -350 / 2000
+//    Lung 2:           -700 / 1200
+//    Abdomen           -20 / 400
+//    Liver:            60 / 180
+//    Liver W/O:        40 / 150 without contrast
+//    Liver W/C:        100 / 150 with contrast
+//    P Fossa :         30 / 180
+//    CSpineSFT w/o :   40 / 250   Cervical spine without contrast
+//    TLSpineSFT w/o:   40 / 500   Thoracic and Lumbar spine
+//    INFARCT :         40 / 60
+//    OBLIQUE MIP :     200 / 700
+//    MYELOGRAM W/L:    60 / 650
+Image Image::enhance_hounsfield(int depth, DataFormat pxtype, const double &wnd_center, const double &wnd_width, bool empty_outside_range) const {
+    double minv = wnd_center - (wnd_width/2.0);
+    double maxv = wnd_center + (wnd_width/2.0);
+    double maxs = empty_outside_range ? minv : maxv;
+    return compute_hounsfield(*this, depth, pxtype, minv, maxv, maxs);
+}
+
+// produces multi channel image with different ranges as separate channels
+// image MUST be previously converted to HU using transform_hounsfield or transform_hounsfield_inplace
+// defined 5 channels:
+//   1 : -inf to -100 : Lungs
+//   2 : -100 to -50  : Fat
+//   3 : -50  to 50   : Brain
+//   4 :  50  to 250  : Organs
+//   5 :  250 to inf  : Bones
+Image Image::multi_hounsfield() const {
+    // Lungs
+    Image img = compute_hounsfield(*this, 8, FMT_UNSIGNED, -1300, -100, -1300);
+    // Fat
+    img = img.appendChannels(compute_hounsfield(*this, 8, FMT_UNSIGNED, -150, -25, -150));
+    // Brain
+    img = img.appendChannels(compute_hounsfield(*this, 8, FMT_UNSIGNED, -30, 90, -30));
+    // Organs
+    img = img.appendChannels(compute_hounsfield(*this, 8, FMT_UNSIGNED, 50, 250, 50));
+    // Bones
+    img = img.appendChannels(compute_hounsfield(*this, 8, FMT_UNSIGNED, 200, 2000, 2000));
+
+    TagMap meta = img.get_metadata();
+    
+    meta.set_value(bim::xstring::xprintf(bim::CHANNEL_COLOR_TEMPLATE.c_str(), 0), "255,255,255");
+    meta.set_value(bim::xstring::xprintf(bim::CHANNEL_NAME_TEMPLATE.c_str(), 0), "Lungs");
+
+    meta.set_value(bim::xstring::xprintf(bim::CHANNEL_COLOR_TEMPLATE.c_str(), 0), "0,255,255");
+    meta.set_value(bim::xstring::xprintf(bim::CHANNEL_NAME_TEMPLATE.c_str(), 0), "Fat");
+
+    meta.set_value(bim::xstring::xprintf(bim::CHANNEL_COLOR_TEMPLATE.c_str(), 0), "0,255,0");
+    meta.set_value(bim::xstring::xprintf(bim::CHANNEL_NAME_TEMPLATE.c_str(), 0), "Brain");
+
+    meta.set_value(bim::xstring::xprintf(bim::CHANNEL_COLOR_TEMPLATE.c_str(), 0), "255,0,0");
+    meta.set_value(bim::xstring::xprintf(bim::CHANNEL_NAME_TEMPLATE.c_str(), 0), "Organs");
+
+    meta.set_value(bim::xstring::xprintf(bim::CHANNEL_COLOR_TEMPLATE.c_str(), 0), "255,255,0");
+    meta.set_value(bim::xstring::xprintf(bim::CHANNEL_NAME_TEMPLATE.c_str(), 0), "Bones");
+
+    img.set_metadata(meta);
+    return img;
+}
+
+Image operation_hounsfield(Image &img, const bim::xstring &arguments, const xoperations &operations, ImageHistogram *hist, XConf *c) {
+    std::vector<xstring> strl = arguments.split(",");
+    if (strl.size() < 2) {
+        c->print("Number of arguments for -hounsfield is less then 2, skipping hounsfield...", 2);
+        return img;
+    }
+    int depth = strl[0].toInt(0);
+    DataFormat pf = FMT_UNSIGNED;
+    if (strl[1].toLowerCase() == "s") pf = FMT_SIGNED;
+    if (strl[1].toLowerCase() == "f") pf = FMT_FLOAT;
+    double wnd_center = 0.0;
+    double wnd_width = 0.0;
+    if (strl.size() >= 4) {
+        wnd_center = strl[2].toDouble(0.0);
+        wnd_width = strl[3].toDouble(0.0);
+    }
+    if (strl.size() < 4 || wnd_width == 0) {
+        // if window center and width were not provided, read from metadata
+        wnd_center = img.get_metadata_tag_double("DICOM/Window Center (0028,1050)", 0.0);
+        wnd_width = img.get_metadata_tag_double("DICOM/Window Width (0028,1051)", 0.0);
+    }
+    if (wnd_width == 0) {
+        c->print("Window center and width were not provied and could not be red from metadata, skipping hounsfield...", 2);
+        return img;
+    }
+
+    double slope = 1.0;
+    double intercept = -1024.0;
+    if (strl.size() > 5) {
+        // if slope and intercept provided in the command line
+        slope = strl[4].toDouble(1.0);
+        intercept = strl[5].toDouble(-1024.0);
+    }
+    else {
+        // try to read from the metadata
+        if (img.get_metadata_tag("DICOM/Rescale Type (0028,1054)", "") == "HU") {
+            slope = img.get_metadata_tag_double("DICOM/Rescale Slope (0028,1053)", 1.0);
+            intercept = img.get_metadata_tag_double("DICOM/Rescale Intercept (0028,1052)", -1024.0);
+        }
+    }
+
+    if (depth != 8 && depth != 16 && depth != 32 && depth != 64) {
+        std::cout << xstring::xprintf("Hounsfield output depth (%s bpp) is not supported, skipping...\n", depth);
+        return img;
+    }
+
+    if (!img.transform_hounsfield_inplace(slope, intercept)) {
+        img = img.transform_hounsfield(slope, intercept);
+    }
+    return img.enhance_hounsfield(depth, pf, wnd_center, wnd_width);
+    //img = img.multi_hounsfield();
+};
 
 #endif //BIM_USE_TRANSFORMS

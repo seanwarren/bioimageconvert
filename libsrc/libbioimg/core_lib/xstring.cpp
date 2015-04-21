@@ -14,6 +14,7 @@
 #include <cstdarg>
 #include <cstdio>
 #include <cstring>
+#include <cstdarg>
 
 #include <sstream>
 #include <algorithm>
@@ -26,7 +27,7 @@
 #include <codecvt>
 #endif
 
-const int MAX_STR_SIZE = 1024;
+const int MAX_STR_SIZE = 1024*100;
 
 #if ( defined(_MSC_VER) && (_MSC_VER >= 1400) )
   #define HAVE_SECURE_C
@@ -65,18 +66,26 @@ xstring xstring::xprintf(const char *fmt, ...) {
 }
 
 xstring &xstring::sprintf( const char *format, va_list ap ) {
-  xstring result;
-  char cbuf[MAX_STR_SIZE];
+    std::vector<char> cbuf(MAX_STR_SIZE);
+    #ifdef HAVE_SECURE_C  
+    int w = vsprintf_s((char *)&cbuf[0], MAX_STR_SIZE, format, ap);
+    #else
+    //vsprintf((char *) cbuf, format, ap);
+    int w = vsnprintf((char *) &cbuf[0], MAX_STR_SIZE, format, ap);
+    #endif
+    if (w > MAX_STR_SIZE) {
+        cbuf.resize(w);
+        #ifdef HAVE_SECURE_C  
+        vsprintf_s((char *)&cbuf[0], w, format, ap);
+        #else
+        //vsprintf((char *) cbuf, format, ap);
+        vsnprintf((char *)&cbuf[0], w, format, ap);
+        #endif
+    }
 
-#ifdef HAVE_SECURE_C  
-  vsprintf_s((char *) cbuf, MAX_STR_SIZE, format, ap);
-#else
-  vsprintf((char *) cbuf, format, ap);
-#endif
-  result += cbuf;
-
-  *this = result;
-  return *this;
+    xstring result = &cbuf[0];
+    *this = result;
+    return *this;
 }
 
 //******************************************************************************
@@ -121,6 +130,13 @@ xstring &xstring::strip(const xstring &chars) {
   return *this;
 }
 
+bool is_zero(int i) { return i == 0; }
+
+xstring &xstring::erase_zeros() {
+    this->erase(std::remove_if(this->begin(), this->end(), is_zero), this->end() );
+    return *this;
+}
+
 //******************************************************************************
 
 template<typename RT, typename T, typename Trait, typename Alloc>
@@ -137,12 +153,20 @@ RT ss_atoi( const std::basic_string<T, Trait, Alloc>& the_string, RT def ) {
   return num;
 }
 
-int xstring::toInt( int def ) {
+int xstring::toInt(int def) const {
   return ss_atoi<int>(*this, def);
 }
 
-double xstring::toDouble( double def ) {
+double xstring::toDouble(double def) const {
   return ss_atoi<double>(*this, def);
+}
+
+// converts from either numeric 0 or 1 or from textual 'true' or 'false'
+bool xstring::toBool(bool def) const {
+    if (this->toLowerCase() == "true") return true;
+    if (this->toLowerCase() == "false") return false;
+    if (this->toInt(0) == 0) return false;
+    return true;
 }
 
 //******************************************************************************
@@ -215,15 +239,43 @@ std::vector<double> xstring::splitDouble( const xstring &separator, const double
     return v2;
 }
 
+//******************************************************************************
+
+xstring xstring::join(std::vector<xstring> v, const xstring &separator) {
+    if (v.size() == 0) return "";
+    xstring s(v[0]);
+    for (int i = 1; i < v.size(); ++i) {
+        s += separator;
+        s += v[i];
+    }
+    return s;
+}
+
+xstring xstring::join(std::vector<int> v, const xstring &separator) {
+    std::vector<xstring> vv(v.size());
+    for (int i = 0; i < v.size(); ++i) {
+        vv[i] = xstring::xprintf("%d", v[i]);
+    }
+    return xstring::join(vv, separator);
+}
+
+xstring xstring::join(std::vector<double> v, const xstring &separator) {
+    std::vector<xstring> vv(v.size());
+    for (int i = 0; i < v.size(); ++i) {
+        vv[i] = xstring::xprintf("%f", v[i]);
+    }
+    return xstring::join(vv, separator);
+}
+
 
 //******************************************************************************
-std::string xstring::toLowerCase() {
+std::string xstring::toLowerCase() const {
   std::string s = *this;
   std::transform(s.begin(), s.end(), s.begin(), tolower);
   return s;
 }
 
-std::string xstring::toUpperCase() {
+std::string xstring::toUpperCase() const {
   std::string s = *this;
   std::transform(s.begin(), s.end(), s.begin(), toupper);
   return s;

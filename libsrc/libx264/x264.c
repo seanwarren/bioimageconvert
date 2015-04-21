@@ -6,7 +6,7 @@
  * Authors: Loren Merritt <lorenm@u.washington.edu>
  *          Laurent Aimar <fenrir@via.ecp.fr>
  *          Steven Walters <kemuri9@gmail.com>
- *          Jason Garrett-Glaser <darkshikari@gmail.com>
+ *          Fiona Glaser <fiona@x264.com>
  *          Kieran Kunhya <kieran@kunhya.com>
  *          Henrik Gramner <henrik@gramner.com>
  *
@@ -320,6 +320,8 @@ static void print_version_info( void )
     printf( "intel: %.2f (%d)\n", __INTEL_COMPILER / 100.f, __INTEL_COMPILER_BUILD_DATE );
 #elif defined(__GNUC__)
     printf( "gcc: " __VERSION__ "\n" );
+#elif defined(_MSC_FULL_VER)
+    printf( "msvc: %.2f (%u)\n", _MSC_VER / 100.f, _MSC_FULL_VER );
 #else
     printf( "using an unknown compiler\n" );
 #endif
@@ -724,7 +726,8 @@ static void help( x264_param_t *defaults, int longhelp )
     H2( "      --aq-mode <integer>     AQ method [%d]\n"
         "                                  - 0: Disabled\n"
         "                                  - 1: Variance AQ (complexity mask)\n"
-        "                                  - 2: Auto-variance AQ (experimental)\n", defaults->rc.i_aq_mode );
+        "                                  - 2: Auto-variance AQ\n"
+        "                                  - 3: Auto-variance AQ with bias to dark scenes\n", defaults->rc.i_aq_mode );
     H1( "      --aq-strength <float>   Reduces blocking and blurring in flat and\n"
         "                              textured areas. [%.1f]\n", defaults->rc.f_aq_strength );
     H1( "\n" );

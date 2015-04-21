@@ -23,6 +23,52 @@
 using namespace bim;
 
 //--------------------------------------------------------------------------------------
+// xoperations - a list of pairs of strings: operation,arguments 
+// slow but working
+//--------------------------------------------------------------------------------------
+
+bool xoperations::contains(const xstring &operation) const {
+    xoperations::const_iterator it = this->begin();
+    while (it != this->end()) {
+        if (it->first == operation) return true;
+        ++it;
+    }
+    return false;
+}
+
+xstring xoperations::arguments(const xstring &operation) const {
+    xoperations::const_iterator it = this->begin();
+    while (it != this->end()) {
+        if (it->first == operation) return it->second;
+        ++it;
+    }
+    return "";
+}
+
+xoperations xoperations::left(const xstring &operation) const {
+    xoperations left;
+    xoperations::const_iterator it = this->begin();
+    while (it != this->end()) {
+        if (it->first == operation) break;
+        left.push_back( *it );
+        ++it;
+    }
+    return left;
+}
+
+xoperations xoperations::right(const xstring &operation) const {
+    xoperations right;
+    xoperations::const_reverse_iterator it = this->rbegin();
+    while (it != this->rend()) {
+        if (it->first == operation) break;
+        right.insert(right.begin(), *it);
+        ++it;
+    }
+
+    return right;
+}
+
+//--------------------------------------------------------------------------------------
 // XConf
 //--------------------------------------------------------------------------------------
 
@@ -81,7 +127,7 @@ int XConf::readParams( int argc, char** argv ) {
 
     std::map< xstring, std::vector<xstring> >::iterator in_it = arguments.find( key ); 
     if ( in_it == arguments.end() ) {
-      arguments.insert( make_pair( key, strs ) );
+      arguments.insert( make_pair( key, strs ) ); // in case keys are not repeating
       in_it = arguments.find( key ); 
     }
 
@@ -97,6 +143,7 @@ int XConf::readParams( int argc, char** argv ) {
       strs.push_back( argv[i] );
     }
 
+    operations.push_back(make_pair(key, strs.size()>0 ? strs[0] : "")); // in case keys are ordered and may be repeating
     for (int x=0; x<strs.size(); x++)  
       in_it->second.push_back( strs[x] );
 
@@ -109,9 +156,12 @@ int XConf::readParams( int argc, char** argv ) {
 
 void XConf::print( const std::string &s, int verbose_level ) const {
     if (this->verbose>=verbose_level)
-        printf("%s\n", s.c_str() );  
+        std::cout << s << std::endl;
 }
 
+void XConf::error(const std::string &s) const {
+    std::cerr << s << std::endl;
+}
 void XConf::printElapsed(const std::string &s, int verbose_level) const {
     clock_t t = timerElapsed();
     print(xstring::xprintf("%s %f seconds", s.c_str(), (float)t / CLOCKS_PER_SEC), verbose_level);

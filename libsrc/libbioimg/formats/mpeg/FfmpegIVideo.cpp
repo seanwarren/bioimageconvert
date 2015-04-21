@@ -300,9 +300,15 @@ namespace VideoIO
       
       // Retrieve stream information
       PRINTINFO("finding stream info...");
-      FfRecoverableCheckMsg(av_find_stream_info(pFormatCtx),
+      #if LIBAVFORMAT_VERSION_MAJOR >= 56
+      FfRecoverableCheckMsg(avformat_find_stream_info(pFormatCtx, NULL),
                             "Could not find the stream info for \"" << 
                             fname << "\".");
+      #else
+      FfRecoverableCheckMsg(av_find_stream_info(pFormatCtx),
+          "Could not find the stream info for \"" <<
+          fname << "\".");
+      #endif
   
       // Dump information about file onto standard error
 #ifdef PRINT_VERBOSES      
@@ -467,7 +473,11 @@ namespace VideoIO
     // Close the video file
     if (pFormatCtx != NULL) { 
       PRINTINFO("About to free pFormatCtx");
-      av_close_input_file(pFormatCtx); 
+      #if LIBAVFORMAT_VERSION_MAJOR >= 56
+      avformat_close_input(&pFormatCtx);
+      #else
+      av_close_input_file(pFormatCtx);
+      #endif
       pFormatCtx = NULL; 
     }
   

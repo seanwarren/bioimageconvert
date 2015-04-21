@@ -41,12 +41,16 @@
 #include <cstring>
 
 #include "xtypes.h"
+#include "xconf.h"
 #include "bim_image.h"
 #include "bim_img_format_utils.h"
 #include "bim_buffer.h"
 #include "bim_histogram.h"
 #include "bim_image_pyramid.h"
 #include "bim_image_5d.h"
+#include "bim_image_proxy.h"
+#include "bim_metatags.h"
+#include "bim_primitives.h"
 
 //#include <blob_manager.h>
 
@@ -61,7 +65,12 @@
 
 using namespace bim;
 
+//------------------------------------------------------------------------------------
+// Image defs
+//------------------------------------------------------------------------------------
+
 std::vector<ImgRefs*> Image::refs;
+const Image::map_modifiers Image::modifiers = Image::create_modifiers();
 
 Image::Image() {
   bmp = NULL;
@@ -152,6 +161,21 @@ void Image::connectToMemory( ImageBitmap *b ) {
 
   bmp = &refs.at(ref_id)->bmp;
   refs.at(ref_id)->refs++;
+}
+
+void Image::connectToUnmanagedMemory(ImageBitmap *b) {
+    disconnectFromMemory();
+
+    int ref_id = getRefId(b);
+    if (ref_id == -1) {
+        ImgRefs *new_ref = new ImgRefs;
+        new_ref->bmp = *b;
+        refs.push_back(new_ref);
+        ref_id = refs.size() - 1;
+    }
+
+    bmp = &refs.at(ref_id)->bmp;
+    refs.at(ref_id)->refs+=2;
 }
 
 void Image::connectToNewMemory() {
@@ -339,11 +363,73 @@ Image Image::convertToDepth( int depth, Lut::LutType method, DataFormat pxt, His
   return img;
 }
 
+Image operation_stretch(Image &img, const bim::xstring &arguments, const xoperations &operations, ImageHistogram *hist, XConf *c) {
+    return img.convertToDepth(img.depth(), Lut::ltLinearDataRange, FMT_UNDEFINED, Histogram::cmSeparate, hist);
+};
+
+Image operation_depth(Image &img, const bim::xstring &arguments, const xoperations &operations, ImageHistogram *hist, XConf *c) {
+    Lut::LutType lut_method = Lut::ltLinearFullRange;
+    DataFormat out_pixel_format = FMT_UNSIGNED;
+    Histogram::ChannelMode chan_mode = Histogram::cmSeparate;
+    double gamma = 1.0;
+    double minv = 0, maxv = 0;
+    std::vector<xstring> strl = arguments.split(",");
+    int out_depth = strl[0].toInt(0);
+    if (strl.size()>1) {
+        if (strl[1].toLowerCase() == "f") lut_method = Lut::ltLinearFullRange;
+        if (strl[1].toLowerCase() == "d") lut_method = Lut::ltLinearDataRange;
+        if (strl[1].toLowerCase() == "t") lut_method = Lut::ltLinearDataTolerance;
+        if (strl[1].toLowerCase() == "e") lut_method = Lut::ltEqualize;
+        if (strl[1].toLowerCase() == "c") lut_method = Lut::ltTypecast;
+        if (strl[1].toLowerCase() == "n") lut_method = Lut::ltFloat01;
+        if (strl[1].toLowerCase() == "g") lut_method = Lut::ltGamma;
+        if (strl[1].toLowerCase() == "l") lut_method = Lut::ltMinMaxGamma;
+    }
+    if (strl.size()>2) {
+        if (strl[2].toLowerCase() == "u") out_pixel_format = FMT_UNSIGNED;
+        if (strl[2].toLowerCase() == "s") out_pixel_format = FMT_SIGNED;
+        if (strl[2].toLowerCase() == "f") out_pixel_format = FMT_FLOAT;
+    }
+    if (strl.size()>3) {
+        if (strl[3].toLowerCase() == "cs") chan_mode = Histogram::cmSeparate;
+        if (strl[3].toLowerCase() == "cc") chan_mode = Histogram::cmCombined;
+    }
+    if (strl.size()>5) {
+        gamma = strl[3].toDouble(1.0);
+        maxv = strl[4].toDouble(0.0);
+        minv = strl[5].toDouble(0.0);
+    }
+
+
+    if (out_depth != 8 && out_depth != 16 && out_depth != 32 && out_depth != 64) {
+        std::cout << xstring::xprintf("Output depth (%s bpp) is not supported! Ignored!\n", out_depth);
+        return img;
+    }
+
+    if (lut_method == Lut::ltGamma) {
+        return img.convertToDepth(out_depth, lut_method, out_pixel_format, chan_mode, hist, (void*)&gamma);
+    }
+    else if (lut_method == Lut::ltMinMaxGamma) {
+        bim::min_max_gamma_args args;
+        args.gamma = gamma;
+        args.maxv = maxv;
+        args.minv = minv;
+        return img.convertToDepth(out_depth, lut_method, out_pixel_format, chan_mode, hist, (void*)&args);
+    }
+    else {
+        return img.convertToDepth(out_depth, lut_method, out_pixel_format, chan_mode, hist);
+    }
+};
+
 Image Image::normalize( int to_bpp, ImageHistogram *hist ) const {
   if (bmp==NULL) return Image();
   if (bmp->i.depth==to_bpp) return *this;
   return convertToDepth( to_bpp, Lut::ltLinearDataRange, FMT_UNSIGNED, Histogram::cmSeparate, hist );
 }
+
+Image operation_norm(Image &img, const bim::xstring &arguments, const xoperations &operations, ImageHistogram *hist, XConf *c) {
+    return img.normalize(8, hist);
+};
 
 Image Image::ROI( bim::uint64 x, bim::uint64 y, bim::uint64 w, bim::uint64 h ) const {
 
@@ -378,6 +464,57 @@ Image Image::ROI( bim::uint64 x, bim::uint64 y, bim::uint64 w, bim::uint64 h ) c
   img.metadata = this->metadata;
   return img;
 }
+
+Image operation_roi(Image &img, const bim::xstring &arguments, const xoperations &operations, ImageHistogram *hist, XConf *c) {
+    std::vector< bim::Rectangle<int> > rois;
+    std::vector<xstring> strs = arguments.split(";");
+    for (unsigned int i = 0; i<strs.size(); ++i) {
+        std::vector<int> ints = strs[i].splitInt(",", -1);
+        int x1 = ints.size()>0 ? ints[0] : -1;
+        int y1 = ints.size()>1 ? ints[1] : -1;
+        int x2 = ints.size()>2 ? ints[2] : -1;
+        int y2 = ints.size()>3 ? ints[3] : -1;
+        if (x1 >= 0 || x2 >= 0 || y1 >= 0 || y2 >= 0)
+            rois.push_back(bim::Rectangle<int>(bim::Point<int>(x1, y1), bim::Point<int>(x2, y2)));
+    }
+
+    if (rois.size() < 0 || rois[0] < 0) return img;
+
+    xstring template_filename = operations.arguments("-template");
+    xstring o_fmt = operations.arguments("-t").toLowerCase();
+    xstring options = operations.arguments("-options");
+
+    for (int i = rois.size() - 1; i >= 0; --i) {
+        bim::Rectangle<int> r = rois[i];
+
+        // it's allowed to specify only one of the sizes, the other one will be computed
+        if (r.p1.x == -1) r.p1.x = 0;
+        if (r.p1.y == -1) r.p1.y = 0;
+        if (r.p2.x == -1) r.p2.x = (int)img.width() - 1;
+        if (r.p2.y == -1) r.p2.y = (int)img.height() - 1;
+
+        if (r.p1.x >= r.p2.x || r.p1.y >= r.p2.y) {
+            std::cout << "ROI parameters are invalid, ignored!\n";
+            return img;
+        }
+
+        if (i == 0) {
+            img = img.ROI(r.p1.x, r.p1.y, r.width(), r.height());
+        }
+        else {
+            std::map<std::string, std::string> vars;
+            vars["x1"] = xstring::xprintf("%d", r.p1.x);
+            vars["y1"] = xstring::xprintf("%d", r.p1.y);
+            vars["x2"] = xstring::xprintf("%d", r.p2.x);
+            vars["y2"] = xstring::xprintf("%d", r.p2.y);
+            xstring fn = template_filename.processTemplate(vars);
+
+            Image o = img.ROI(r.p1.x, r.p1.y, r.width(), r.height());
+            o.toFile(fn, o_fmt, options);
+        }
+    }
+    return img;
+};
 
 void Image::setROI( bim::uint64 x, bim::uint64 y, const Image &img ) {
     bim::uint64 w = img.width();
@@ -506,6 +643,25 @@ bool Image::fromFile( const char *fileName, int page ) {
   fm.sessionEnd();
 
   return res;
+}
+
+bool Image::fromPyramidFile(const std::string &fileName, int page, int level, int tilex, int tiley, int tilesize) {
+    this->free();
+    if (bmp == NULL) return false;
+    
+    ImageProxy ip(fileName);
+    if (!ip.isReady()) return false;
+
+    if (tilex < 0 && level < 1) {
+        ip.read(*this, page);
+    } else if (tilex<0 && level>0) {
+        ip.readLevel(*this, page, level);
+    } else {
+        if (tilesize < 1) return false;
+        ip.readTile(*this, page, tilex, tiley, level, tilesize);
+    }
+
+    return true;
 }
 
 bool Image::toFile( const char *fileName, const char *formatName, const char *options ) {
@@ -932,6 +1088,58 @@ Image Image::resize( bim::uint w, bim::uint h, ResizeMethod method, bool keep_as
 }
 
 
+Image op_resize_resample(Image &img, const bim::xstring &arguments, const xoperations &operations, ImageHistogram *hist, XConf *c, const bim::xstring &operation) {
+    std::vector<xstring> strl = arguments.split(",");
+
+    unsigned int w = 0, h = 0;
+    if (strl.size() >= 2) {
+        w = strl[0].toInt(0);
+        h = strl[1].toInt(0);
+    }
+
+    Image::ResizeMethod resize_method = Image::szNearestNeighbor;
+    if (strl.size()>2) {
+        if (strl[2].toLowerCase() == "nn") resize_method = Image::szNearestNeighbor;
+        if (strl[2].toLowerCase() == "bl") resize_method = Image::szBiLinear;
+        if (strl[2].toLowerCase() == "bc") resize_method = Image::szBiCubic;
+    }
+
+    bool resize_preserve_aspect_ratio = false;
+    bool resize_no_upsample = false;
+    if (strl.size()>3) {
+        if (strl[3].toLowerCase() == "ar") resize_preserve_aspect_ratio = true;
+        if (strl[3].toLowerCase() == "mx") { resize_preserve_aspect_ratio = true; resize_no_upsample = true; }
+        if (strl[3].toLowerCase() == "noup") { resize_preserve_aspect_ratio = true; resize_no_upsample = true; }
+    }
+
+    if (w <= 0 && h <= 0) return img;
+    if (resize_no_upsample && img.width() <= w && img.height() <= h ) return img;
+    if (w <= 0 || h <= 0) resize_preserve_aspect_ratio = false;
+
+    if (resize_preserve_aspect_ratio)
+    if ((img.width() / (float)w) >= (img.height() / (float)h)) h = 0; else w = 0;
+
+    // it's allowed to specify only one of the sizes, the other one will be computed
+    if (w == 0)
+        w = bim::round<unsigned int>(img.width() / (img.height() / (float)h));
+    if (h == 0)
+        h = bim::round<unsigned int>(img.height() / (img.width() / (float)w));
+
+    if (operation == "-resize")
+        return img.resize(w, h, resize_method);
+    else
+        return img.resample(w, h, resize_method);
+};
+
+Image operation_resize(Image &img, const bim::xstring &arguments, const xoperations &operations, ImageHistogram *hist, XConf *c) {
+    return op_resize_resample(img, arguments, operations, hist, c, "-resize");
+};
+
+Image operation_resample(Image &img, const bim::xstring &arguments, const xoperations &operations, ImageHistogram *hist, XConf *c) {
+    return op_resize_resample(img, arguments, operations, hist, c, "-resample");
+};
+
+
 //------------------------------------------------------------------------------------
 // Rotation
 //------------------------------------------------------------------------------------
@@ -1084,6 +1292,30 @@ Image Image::flip() const {
     img.metadata = this->metadata;
     return img;
 }
+
+Image operation_rotate(Image &img, const bim::xstring &arguments, const xoperations &operations, ImageHistogram *hist, XConf *c) {
+    if (arguments.toLowerCase() == "guess") {
+        return img.rotate_guess();
+    }
+    else if (arguments.toDouble(0) != 0) {
+        double rotate_angle = arguments.toDouble(0);
+        if (rotate_angle != 0 && rotate_angle != 90 && rotate_angle != -90 && rotate_angle != 180) {
+            std::cout << "This rotation angle value is not yet supported...\n";
+            return img;
+        }
+
+        return img.rotate(rotate_angle);
+    }
+    return img;
+};
+
+Image operation_mirror(Image &img, const bim::xstring &arguments, const xoperations &operations, ImageHistogram *hist, XConf *c) {
+    return img.mirror();
+};
+
+Image operation_flip(Image &img, const bim::xstring &arguments, const xoperations &operations, ImageHistogram *hist, XConf *c) {
+    return img.flip();
+};
 
 //------------------------------------------------------------------------------------
 // Pixel Arithmetic
@@ -1396,6 +1628,10 @@ Image Image::negative() const {
   return img;
 }
 
+Image operation_negative(Image &img, const bim::xstring &arguments, const xoperations &operations, ImageHistogram *hist, XConf *c) {
+    return img.negative();
+};
+
 //------------------------------------------------------------------------------------
 // Trim
 //------------------------------------------------------------------------------------
@@ -1449,7 +1685,7 @@ void Image::trim(double min_v, double max_v) const {
 
 template <typename T>
 void image_color_levels ( void *pdest, void *psrc, unsigned int &w, double val_min, double val_max, double gamma ) {
-    double out_min = std::numeric_limits<T>::is_integer?std::numeric_limits<T>::min():-std::numeric_limits<T>::max();
+    double out_min = bim::lowest<T>();
     double out_max = std::numeric_limits<T>::max();
     double out_range = out_max - out_min + 1;
 
@@ -1508,6 +1744,19 @@ void Image::color_levels( const double &val_min, const double &val_max, const do
     } // sample
 }
 
+Image operation_levels(Image &img, const bim::xstring &arguments, const xoperations &operations, ImageHistogram *hist, XConf *c) {
+    double gamma = 1;
+    double minv = 0, maxv = 0;
+    std::vector<double> strl = arguments.splitDouble(",");
+    if (strl.size()>0) minv = strl[0];
+    if (strl.size()>1) maxv = strl[1];
+    if (strl.size()>2) gamma = strl[2];
+
+    img.color_levels(minv, maxv, gamma);
+    return img;
+};
+
+
 //------------------------------------------------------------------------------------
 // color_levels
 //------------------------------------------------------------------------------------
@@ -1561,6 +1810,18 @@ void Image::color_brightness_contrast( const int &brightness, const int &contras
 
     } // sample
 }
+
+Image operation_brightnesscontrast(Image &img, const bim::xstring &arguments, const xoperations &operations, ImageHistogram *hist, XConf *c) {
+    int brightness = 0;
+    int contrast = 0;
+    std::vector<int> strl = arguments.splitInt(",");
+    if (strl.size()>0) brightness = strl[0];
+    if (strl.size()>1) contrast = strl[1];
+
+    if (brightness != 0.0 || contrast != 0.0)
+        img.color_brightness_contrast(brightness, contrast);
+    return img;
+};
 
 //------------------------------------------------------------------------------------
 // pixel_counter
@@ -1686,7 +1947,7 @@ void operation_threshold ( void *p, const bim::uint64 &w, const threshold_args &
     double th = args.th;
     T *src = (T*) p;
     T max_val = std::numeric_limits<T>::max();
-    T min_val = std::numeric_limits<T>::is_integer?std::numeric_limits<T>::min():-std::numeric_limits<T>::max();
+    T min_val = bim::lowest<T>();
 
     if (args.method == Image::ttLower) {
         #pragma omp parallel for default(shared)
@@ -1740,9 +2001,43 @@ bool Image::operationThreshold( const double &th, const Image::ThresholdTypes &m
     return false;
 }
 
+Image operation_threshold(Image &img, const bim::xstring &arguments, const xoperations &operations, ImageHistogram *hist, XConf *c) {
+    std::vector<xstring> strl = arguments.split(",");
+    double threshold = strl[0].toDouble(0);
+    Image::ThresholdTypes threshold_operation = Image::ttNone;
+    if (strl.size()>1) {
+        if (strl[1].toLowerCase() == "lower") threshold_operation = Image::ttLower;
+        if (strl[1].toLowerCase() == "upper") threshold_operation = Image::ttUpper;
+        if (strl[1].toLowerCase() == "both")  threshold_operation = Image::ttBoth;
+    }
+
+    if (threshold_operation != Image::ttNone)
+        img.operationThreshold(threshold, threshold_operation);
+    return img;
+};
+
 //------------------------------------------------------------------------------------
 // Channel fusion
 //------------------------------------------------------------------------------------
+
+std::vector<bim::DisplayColor> init_fusion_from_meta(const Image &img) {
+    std::vector<bim::DisplayColor> out_weighted_fuse_channels;
+    std::vector<bim::DisplayColor> channel_colors_default = bim::defaultChannelColors();
+    bim::TagMap m = img.get_metadata();
+    for (bim::uint i = 0; i<img.samples(); ++i) {
+        xstring key = xstring::xprintf(bim::CHANNEL_COLOR_TEMPLATE.c_str(), i);
+        if (m.hasKey(key)) {
+            xstring t = m.get_value(key, "");
+            std::vector<int> cmp = t.splitInt(",");
+            cmp.resize(3, 0);
+            out_weighted_fuse_channels.push_back(bim::DisplayColor(cmp[0], cmp[1], cmp[2]));
+        }
+        else if (i<channel_colors_default.size()) {
+            out_weighted_fuse_channels.push_back(channel_colors_default[i]);
+        }
+    }
+    return out_weighted_fuse_channels;
+}
 
 void optimize_channel_map(std::set<int> *v, const Image &img) {
   std::set<int> s;
@@ -1885,7 +2180,7 @@ void norm_cpy ( Image *img, const Image &srci, double sh, double mu ) {
         T *src = (T*) srci.scanLine(sample, y);
         To *dest = (To*) img->scanLine(sample, y); 
         for (unsigned int x=0; x<srci.width(); ++x)
-            dest[x] = bim::trim<To, double>( (src[x]+sh)*mu, std::numeric_limits<To>::min(), std::numeric_limits<To>::max() );
+            dest[x] = bim::trim<To, double>( (src[x]+sh)*mu, bim::lowest<T>(), std::numeric_limits<To>::max() );
     } // y
   } // sample
 }
@@ -1952,7 +2247,7 @@ void fuse_channels_weights ( Image *img, int sample, const Image &srci, const st
             dest[x] = (To) line[x];
     } else if (method == Image::fmAverage) {
         for (unsigned int x=0; x<srci.width(); ++x)
-            dest[x] = bim::trim<To, double>( ((line[x]/weight_sum)+shift)*mult, std::numeric_limits<To>::min(), std::numeric_limits<To>::max() );
+            dest[x] = bim::trim<To, double>(((line[x] / weight_sum) + shift)*mult, bim::lowest<T>(), std::numeric_limits<To>::max());
     }
 
   } // y
@@ -2112,6 +2407,94 @@ Image Image::fuseToRGB(const std::vector<bim::DisplayColor> &mapping, Image::Fus
     return fuse( map, method, hist );
 }
 
+Image operation_fusegrey(Image &img, const bim::xstring &arguments, const xoperations &operations, ImageHistogram *hist, XConf *c) {
+    hist->clear(); // dima: should properly modify instead of clearing
+    return img.fuseToGrayscale();
+};
+
+Image operation_fusergb(Image &img, const bim::xstring &arguments, const xoperations &operations, ImageHistogram *hist, XConf *c) {
+    Image::FuseMethod fuse_method = Image::fmAverage;
+    if (operations.arguments("-fusemethod").toLowerCase() == "m") fuse_method = Image::fmMax; // dima: should be moved into command args
+
+    std::vector<xstring> ch = arguments.split(";");
+    // trim trailing empty channels
+    for (int c = ch.size() - 1; c >= 0; --c) {
+        if (ch[c] == "") ch.resize(c); else break;
+    }
+    std::vector<bim::DisplayColor> out_weighted_fuse_channels;
+    for (int c = 0; c<ch.size(); ++c) {
+        std::vector<int> cmp = ch[c].splitInt(",");
+        cmp.resize(3, 0);
+        out_weighted_fuse_channels.push_back(bim::DisplayColor(cmp[0], cmp[1], cmp[2]));
+    }
+
+    img = img.fuseToRGB(out_weighted_fuse_channels, fuse_method, hist);
+    hist->clear(); // dima: should properly modify instead of clearing
+    return img;
+};
+
+Image operation_fusemeta(Image &img, const bim::xstring &arguments, const xoperations &operations, ImageHistogram *hist, XConf *c) {
+    Image::FuseMethod fuse_method = Image::fmAverage;
+    if (operations.arguments("-fusemethod").toLowerCase() == "m") fuse_method = Image::fmMax; // dima: should be moved into command args
+
+    std::vector<bim::DisplayColor> out_weighted_fuse_channels = init_fusion_from_meta(img);
+    img = img.fuseToRGB(out_weighted_fuse_channels, fuse_method, hist);
+    hist->clear(); // dima: should properly modify instead of clearing
+    return img;
+};
+
+Image operation_fuse(Image &img, const bim::xstring &arguments, const xoperations &operations, ImageHistogram *hist, XConf *c) {
+    Image::FuseMethod fuse_method = Image::fmAverage;
+    if (operations.arguments("-fusemethod").toLowerCase() == "m") fuse_method = Image::fmMax; // dima: should be moved into command args
+
+    std::vector< std::set<int> > out_fuse_channels;
+    std::vector<xstring> fc = arguments.split(",");
+    for (int i = 0; i<fc.size(); ++i) {
+        std::vector<xstring> ss = fc[i].split("+");
+        std::set<int> s;
+        for (int p = 0; p<ss.size(); ++p)
+            s.insert(ss[p].toInt() - 1);
+        out_fuse_channels.push_back(s);
+    }
+
+    if (out_fuse_channels.size() > 0) {
+        img = img.fuse(out_fuse_channels);
+        hist->clear(); // dima: should properly modify instead of clearing
+    }
+    return img;
+}
+
+Image operation_fuse6(Image &img, const bim::xstring &arguments, const xoperations &operations, ImageHistogram *hist, XConf *c) {
+    Image::FuseMethod fuse_method = Image::fmAverage;
+    if (operations.arguments("-fusemethod").toLowerCase() == "m") fuse_method = Image::fmMax; // dima: should be moved into command args
+
+    std::vector<int> ch = arguments.splitInt(",");
+    ch.resize(7, 0);
+    std::set<int> rv, gv, bv;
+    rv.insert(ch[0] - 1);
+    rv.insert(ch[3] - 1);
+    rv.insert(ch[4] - 1);
+    rv.insert(ch[6] - 1);
+    gv.insert(ch[1] - 1);
+    gv.insert(ch[3] - 1);
+    gv.insert(ch[5] - 1);
+    gv.insert(ch[6] - 1);
+    bv.insert(ch[2] - 1);
+    bv.insert(ch[4] - 1);
+    bv.insert(ch[5] - 1);
+    bv.insert(ch[6] - 1);
+
+    std::vector< std::set<int> > out_fuse_channels;
+    out_fuse_channels.push_back(rv);
+    out_fuse_channels.push_back(gv);
+    out_fuse_channels.push_back(bv);
+
+    if (out_fuse_channels.size() > 0) {
+        img = img.fuse(out_fuse_channels);
+        hist->clear(); // dima: should properly modify instead of clearing
+    }
+    return img;
+}
 
 //------------------------------------------------------------------------------------
 //Append channels
@@ -2158,7 +2541,7 @@ Image Image::appendChannels( const Image &i2 ) const {
 //Append channels
 //------------------------------------------------------------------------------------
 
-void Image::updateGeometry( const unsigned int &z, const unsigned int &t ) {
+void Image::updateGeometry(const unsigned int &z, const unsigned int &t, const unsigned int &c) {
   if (bmp==NULL) return; 
   if (z>0) {
     bmp->i.number_z = z;
@@ -2168,6 +2551,11 @@ void Image::updateGeometry( const unsigned int &z, const unsigned int &t ) {
   if (t>0) {
     bmp->i.number_t = t;
     metadata.set_value( "image_num_t", t );
+  }
+
+  if (c>1) {
+      bmp->i.samples = c;
+      metadata.set_value("image_num_c", c);
   }
 }
 
@@ -2198,7 +2586,7 @@ void deinterlace_operation( Image *img, const Image::DeinterlaceMethod &method )
     bim::uint64 w = img->width();
     bim::uint64 h = img->height();
     bim::uint64 s = img->samples();
-
+    int offset = 1;
     for (unsigned int sample=0; sample<s; ++sample ) {
         #pragma omp parallel for default(shared)
         for (bim::int64 y=0; y<(bim::int64)h-2; y+=2 ) {
@@ -2206,18 +2594,23 @@ void deinterlace_operation( Image *img, const Image::DeinterlaceMethod &method )
             T *src2 = (T*) img->scanLine( sample, y+1 );
             T *src3 = (T*) img->scanLine( sample, y+2 );
 
-            if (method == Image::deOdd)
-            for (unsigned int x=0; x<w; ++x) {
-                src2[x] = src1[x]; 
+            if (method == Image::deOdd) {
+                for (unsigned int x = 0; x < w; ++x) {
+                    src2[x] = src1[x];
+                }
+            } else if (method == Image::deEven) {
+                for (unsigned int x = 0; x < w; ++x) {
+                    src1[x] = src2[x];
+                }
+            } else if (method == Image::deAverage) {
+                for (unsigned int x = 0; x < w; ++x) {
+                    src2[x] = (src1[x] + src3[x]) / 2;
+                }
+            } else if (method == Image::deOffset) {
+                for (unsigned int x = 0; x<w-offset; ++x) {
+                    src1[x] = src1[x+offset];
+                }
             }
-            else if (method == Image::deEven)
-            for (unsigned int x=0; x<w; ++x) {
-                src1[x] = src2[x]; 
-            } 
-            else if (method == Image::deAverage)
-            for (unsigned int x=0; x<w; ++x) {
-                src2[x] = (src1[x]+src3[x])/2; 
-            } 
         }
     } // sample
 }
@@ -2248,6 +2641,17 @@ void Image::deinterlace( const DeinterlaceMethod &method ) {
   if (bmp->i.depth == 64 && bmp->i.pixelType==FMT_FLOAT)
      deinterlace_operation<float64> ( this, method );
 }
+
+Image operation_deinterlace(Image &img, const bim::xstring &arguments, const xoperations &operations, ImageHistogram *hist, XConf *c) {
+    Image::DeinterlaceMethod deinterlace_method = Image::deAverage;
+    if (arguments.toLowerCase() == "odd") deinterlace_method = Image::deOdd;
+    if (arguments.toLowerCase() == "even") deinterlace_method = Image::deEven;
+    if (arguments.toLowerCase() == "avg") deinterlace_method = Image::deAverage;
+    if (arguments.toLowerCase() == "offset") deinterlace_method = Image::deOffset;
+
+    img.deinterlace(deinterlace_method);
+    return img;
+};
 
 #ifdef BIM_USE_EIGEN
 
@@ -2409,6 +2813,101 @@ Image get_otsu( const Image *in ) {
   return Image();
 }
 
+//------------------------------------------------------------------------------
+// process based on a set of operations
+// currently not 100% of operations are supported
+//------------------------------------------------------------------------------
+
+#ifdef BIM_USE_TRANSFORMS
+Image operation_enhancemeta(Image &img, const bim::xstring &arguments, const xoperations &operations, ImageHistogram *hist, XConf *c) {
+    //if (this->get_metadata_tag("DICOM/Rescale Type (0028,1054)", "") != "HU") continue;
+
+    // read window center and width from the metadata
+    xstring modality = img.get_metadata_tag("DICOM/Modality (0008,0060)", "");
+    double wnd_center = img.get_metadata_tag_double("DICOM/Window Center (0028,1050)", 0.0);
+    double wnd_width = img.get_metadata_tag_double("DICOM/Window Width (0028,1051)", 0.0);
+    double slope = img.get_metadata_tag_double("DICOM/Rescale Slope (0028,1053)", 1.0);
+    double intercept = img.get_metadata_tag_double("DICOM/Rescale Intercept (0028,1052)", -1024.0);
+    if (modality != "CT" || wnd_width == 0) return img;
+
+    int depth = img.depth();
+    DataFormat pf = img.pixelType();
+    if (depth < 16 || pf == FMT_UNSIGNED) return img;
+
+    if (!img.transform_hounsfield_inplace(slope, intercept)) {
+        img = img.transform_hounsfield(slope, intercept);
+    }
+    return img.enhance_hounsfield(depth, pf, wnd_center, wnd_width);
+};
+#endif
+
+#ifdef BIM_USE_TRANSFORMS
+Image operation_filter(Image &img, const bim::xstring &arguments, const xoperations &operations, ImageHistogram *hist, XConf *c);
+Image operation_transform_color(Image &img, const bim::xstring &arguments, const xoperations &operations, ImageHistogram *hist, XConf *c);
+Image operation_transform(Image &img, const bim::xstring &arguments, const xoperations &operations, ImageHistogram *hist, XConf *c);
+Image operation_hounsfield(Image &img, const bim::xstring &arguments, const xoperations &operations, ImageHistogram *hist, XConf *c);
+#endif
+#ifdef BIM_USE_FILTERS
+Image operation_superpixels(Image &img, const bim::xstring &arguments, const xoperations &operations, ImageHistogram *hist, XConf *c);
+#endif
+
+std::map<std::string, ImageModifierProc> Image::create_modifiers() {
+    std::map<std::string, ImageModifierProc> ops;
+    ops["-stretch"] = operation_stretch;
+    ops["-levels"] = operation_levels;
+    ops["-brightnesscontrast"] = operation_brightnesscontrast;
+    ops["-depth"] = operation_depth;
+    ops["-norm"] = operation_norm;
+    ops["-fusegrey"] = operation_fusegrey;
+    ops["-fusergb"] = operation_fusergb;
+    ops["-fusemeta"] = operation_fusemeta;
+    ops["-fuse"] = operation_fuse;
+    ops["-fuse6"] = operation_fuse6;
+    ops["-deinterlace"] = operation_deinterlace;
+    ops["-roi"] = operation_roi;
+    ops["-resize"] = operation_resize;
+    ops["-resample"] = operation_resample;
+    ops["-rotate"] = operation_rotate;
+    ops["-mirror"] = operation_mirror;
+    ops["-flip"] = operation_flip;
+    ops["-negative"] = operation_stretch;
+    ops["-threshold"] = operation_stretch;
+
+    #ifdef BIM_USE_TRANSFORMS
+    ops["-transform_color"] = operation_transform_color;
+    ops["-transform"] = operation_transform;
+    ops["-hounsfield"] = operation_hounsfield;
+    ops["-enhancemeta"] = operation_enhancemeta;
+    #endif
+
+    #ifdef BIM_USE_FILTERS
+    ops["-filter"] = operation_filter;
+    ops["-superpixels"] = operation_superpixels;
+    #endif
+
+    return ops;
+}
+
+void Image::process(const xoperations &operations, ImageHistogram *_hist, XConf *c) {
+    ImageHistogram hist;
+    if (!_hist) hist.fromImage(*this); else hist = *_hist;
+    XConf cc;
+    if (!c) c = &cc;
+
+    for (xoperations::const_iterator it = operations.begin(); it != operations.end(); ++it) {
+        std::string operation = it->first;
+        bim::xstring arguments = it->second;
+        map_modifiers::const_iterator fit = modifiers.find(operation);
+        if (fit != modifiers.end()) {
+            c->print(xstring::xprintf("About to run %s", operation.c_str()), 2);
+            c->timerStart();
+            ImageModifierProc f = (*fit).second;
+            *this = (*f)(*this, arguments, operations, &hist, &cc);
+            c->printElapsed(xstring::xprintf("%s ran in: ", operation.c_str()), 2);
+        }
+    }
+}
+
 //*****************************************************************************
 //  ImageHistogram
 //*****************************************************************************
@@ -2457,7 +2956,6 @@ void ImageHistogram::fromImage( const Image &img, const Image *mask ) {
           histograms[c] = histograms[0];
   }
 }
-
 
 //------------------------------------------------------------------------------
 // I/O

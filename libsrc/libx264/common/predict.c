@@ -5,7 +5,7 @@
  *
  * Authors: Laurent Aimar <fenrir@via.ecp.fr>
  *          Loren Merritt <lorenm@u.washington.edu>
- *          Jason Garrett-Glaser <darkshikari@gmail.com>
+ *          Fiona Glaser <fiona@x264.com>
  *          Henrik Gramner <henrik@gramner.com>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -39,6 +39,9 @@
 #endif
 #if ARCH_ARM
 #   include "arm/predict.h"
+#endif
+#if ARCH_AARCH64
+#   include "aarch64/predict.h"
 #endif
 
 /****************************************************************************
@@ -899,6 +902,10 @@ void x264_predict_16x16_init( int cpu, x264_predict_t pf[7] )
 #if HAVE_ARMV6
     x264_predict_16x16_init_arm( cpu, pf );
 #endif
+
+#if ARCH_AARCH64
+    x264_predict_16x16_init_aarch64( cpu, pf );
+#endif
 }
 
 void x264_predict_8x8c_init( int cpu, x264_predict_t pf[7] )
@@ -923,6 +930,10 @@ void x264_predict_8x8c_init( int cpu, x264_predict_t pf[7] )
 #if HAVE_ARMV6
     x264_predict_8x8c_init_arm( cpu, pf );
 #endif
+
+#if ARCH_AARCH64
+    x264_predict_8x8c_init_aarch64( cpu, pf );
+#endif
 }
 
 void x264_predict_8x16c_init( int cpu, x264_predict_t pf[7] )
@@ -937,6 +948,10 @@ void x264_predict_8x16c_init( int cpu, x264_predict_t pf[7] )
 
 #if HAVE_MMX
     x264_predict_8x16c_init_mmx( cpu, pf );
+#endif
+
+#if ARCH_AARCH64
+    x264_predict_8x16c_init_aarch64( cpu, pf );
 #endif
 }
 
@@ -963,6 +978,10 @@ void x264_predict_8x8_init( int cpu, x264_predict8x8_t pf[12], x264_predict_8x8_
 #if HAVE_ARMV6
     x264_predict_8x8_init_arm( cpu, pf, predict_filter );
 #endif
+
+#if ARCH_AARCH64
+    x264_predict_8x8_init_aarch64( cpu, pf, predict_filter );
+#endif
 }
 
 void x264_predict_4x4_init( int cpu, x264_predict_t pf[12] )
@@ -986,6 +1005,10 @@ void x264_predict_4x4_init( int cpu, x264_predict_t pf[12] )
 
 #if HAVE_ARMV6
     x264_predict_4x4_init_arm( cpu, pf );
+#endif
+
+#if ARCH_AARCH64
+    x264_predict_4x4_init_aarch64( cpu, pf );
 #endif
 }
 

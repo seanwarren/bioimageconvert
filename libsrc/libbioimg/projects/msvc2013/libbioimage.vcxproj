@@ -96,8 +96,8 @@
     </Midl>
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\..\..\libbioimg;..\..\..\libbioimg\formats;..\..\..\libbioimg\formats_api;..\..\..\libbioimg\core_lib;..\..\..\libjpeg;..\..\..\libpng;..\..\..\libtiff;..\..\..\zlib;..\..\..\ffmpeg\include;..\..\..\ffmpeg\include-win;..\..\..\libraw;..\..\..\pole;..\..\..\exiv2;..\..\..\libgeotiff;..\..\..\eigen;..\..\..\jzon;..\..\..\libfftw\src\api;..\..\..\opencv\build\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;_CONSOLE;__STDC_CONSTANT_MACROS;TIF_PLATFORM_CONSOLE;BIM_FFMPEG_FORMAT;FFMPEG_VIDEO_DISABLE_MATLAB;LIBRAW_BUILDLIB;LIBRAW_NODLL;USE_JPEG;BIM_USE_EIGEN;BIM_USE_OPENMP;BIM_USE_OPENCV;BIM_USE_TRANSFORMS;BIM_USE_FILTERS;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\..\..\libbioimg;..\..\..\libbioimg\formats;..\..\..\libbioimg\formats_api;..\..\..\libbioimg\core_lib;..\..\..\libjpeg-turbo;..\..\..\libpng;..\..\..\libtiff;..\..\..\zlib;..\..\..\ffmpeg\include;..\..\..\ffmpeg\include-win;..\..\..\libraw;..\..\..\pole;..\..\..\exiv2;..\..\..\libgeotiff;..\..\..\eigen;..\..\..\jzon;..\..\..\pugixml\src;..\..\..\libfftw\src\api;..\..\..\gdcm\Source\Common;..\..\..\gdcm\Source\DataDictionary;..\..\..\gdcm\Source\DataStructureAndEncodingDefinition;..\..\..\gdcm\Source\InformationObjectDefinition;..\..\..\gdcm\Source\MediaStorageAndFileFormat;..\..\..\gdcm\projects\msvc2013\Source\Common;..\..\..\gdcm\projects\msvc2013\Source\InformationObjectDefinition;..\..\..\opencv\build\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_CONSOLE;__STDC_CONSTANT_MACROS;TIF_PLATFORM_CONSOLE;BIM_FFMPEG_FORMAT;FFMPEG_VIDEO_DISABLE_MATLAB;LIBRAW_BUILDLIB;LIBRAW_NODLL;USE_JPEG;BIM_USE_EIGEN;BIM_USE_OPENMP;BIM_USE_OPENCV;BIM_USE_TRANSFORMS;BIM_USE_FILTERS;BIM_GDCM_FORMAT;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <PrecompiledHeader>
@@ -142,8 +142,8 @@
     </Midl>
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\..\..\libbioimg;..\..\..\libbioimg\formats;..\..\..\libbioimg\formats_api;..\..\..\libbioimg\core_lib;..\..\..\libjpeg;..\..\..\libpng;..\..\..\libtiff;..\..\..\zlib;..\..\..\ffmpeg\include;..\..\..\ffmpeg\include-win;..\..\..\libraw;..\..\..\pole;..\..\..\exiv2;..\..\..\libgeotiff;..\..\..\eigen;..\..\..\jzon;..\..\..\libfftw\src\api;..\..\..\opencv\build\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;_CONSOLE;__STDC_CONSTANT_MACROS;TIF_PLATFORM_CONSOLE;BIM_FFMPEG_FORMAT;FFMPEG_VIDEO_DISABLE_MATLAB;LIBRAW_BUILDLIB;LIBRAW_NODLL;USE_JPEG;BIM_USE_EIGEN;BIM_USE_OPENMP;BIM_USE_OPENCV;BIM_USE_TRANSFORMS;BIM_USE_FILTERS;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\..\..\libbioimg;..\..\..\libbioimg\formats;..\..\..\libbioimg\formats_api;..\..\..\libbioimg\core_lib;..\..\..\libjpeg-turbo;..\..\..\libpng;..\..\..\libtiff;..\..\..\zlib;..\..\..\ffmpeg\include;..\..\..\ffmpeg\include-win;..\..\..\libraw;..\..\..\pole;..\..\..\exiv2;..\..\..\libgeotiff;..\..\..\eigen;..\..\..\jzon;..\..\..\pugixml\src;..\..\..\libfftw\src\api;..\..\..\gdcm\Source\Common;..\..\..\gdcm\Source\DataDictionary;..\..\..\gdcm\Source\DataStructureAndEncodingDefinition;..\..\..\gdcm\Source\InformationObjectDefinition;..\..\..\gdcm\Source\MediaStorageAndFileFormat;..\..\..\gdcm\projects\msvc2013\Source\Common;..\..\..\gdcm\projects\msvc2013\Source\InformationObjectDefinition;..\..\..\opencv\build\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_CONSOLE;__STDC_CONSTANT_MACROS;TIF_PLATFORM_CONSOLE;BIM_FFMPEG_FORMAT;FFMPEG_VIDEO_DISABLE_MATLAB;LIBRAW_BUILDLIB;LIBRAW_NODLL;USE_JPEG;BIM_USE_EIGEN;BIM_USE_OPENMP;BIM_USE_OPENCV;BIM_USE_TRANSFORMS;BIM_USE_FILTERS;BIM_GDCM_FORMAT;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
@@ -194,8 +194,8 @@
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <OmitFramePointers>true</OmitFramePointers>
       <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
-      <AdditionalIncludeDirectories>..\..\..\libbioimg;..\..\..\libbioimg\formats;..\..\..\libbioimg\formats_api;..\..\..\libbioimg\core_lib;..\..\..\libjpeg;..\..\..\libpng;..\..\..\libtiff;..\..\..\zlib;..\..\..\ffmpeg\include;..\..\..\ffmpeg\include-win;..\..\..\libraw;..\..\..\pole;..\..\..\exiv2;..\..\..\libgeotiff;..\..\..\eigen;..\..\..\jzon;..\..\..\libfftw\src\api;..\..\..\opencv\build\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;_CONSOLE;__STDC_CONSTANT_MACROS;TIF_PLATFORM_CONSOLE;BIM_FFMPEG_FORMAT;FFMPEG_VIDEO_DISABLE_MATLAB;LIBRAW_BUILDLIB;LIBRAW_NODLL;USE_JPEG;BIM_USE_EIGEN;BIM_USE_OPENMP;BIM_USE_OPENCV;BIM_USE_TRANSFORMS;BIM_USE_FILTERS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\..\..\libbioimg;..\..\..\libbioimg\formats;..\..\..\libbioimg\formats_api;..\..\..\libbioimg\core_lib;..\..\..\libjpeg-turbo;..\..\..\libpng;..\..\..\libtiff;..\..\..\zlib;..\..\..\ffmpeg\include;..\..\..\ffmpeg\include-win;..\..\..\libraw;..\..\..\pole;..\..\..\exiv2;..\..\..\libgeotiff;..\..\..\eigen;..\..\..\jzon;..\..\..\pugixml\src;..\..\..\libfftw\src\api;..\..\..\gdcm\Source\Common;..\..\..\gdcm\Source\DataDictionary;..\..\..\gdcm\Source\DataStructureAndEncodingDefinition;..\..\..\gdcm\Source\InformationObjectDefinition;..\..\..\gdcm\Source\MediaStorageAndFileFormat;..\..\..\gdcm\projects\msvc2013\Source\Common;..\..\..\gdcm\projects\msvc2013\Source\InformationObjectDefinition;..\..\..\opencv\build\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_CONSOLE;__STDC_CONSTANT_MACROS;TIF_PLATFORM_CONSOLE;BIM_FFMPEG_FORMAT;FFMPEG_VIDEO_DISABLE_MATLAB;LIBRAW_BUILDLIB;LIBRAW_NODLL;USE_JPEG;BIM_USE_EIGEN;BIM_USE_OPENMP;BIM_USE_OPENCV;BIM_USE_TRANSFORMS;BIM_USE_FILTERS;BIM_GDCM_FORMAT;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -244,8 +244,8 @@
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <OmitFramePointers>true</OmitFramePointers>
       <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
-      <AdditionalIncludeDirectories>..\..\..\libbioimg;..\..\..\libbioimg\formats;..\..\..\libbioimg\formats_api;..\..\..\libbioimg\core_lib;..\..\..\libjpeg;..\..\..\libpng;..\..\..\libtiff;..\..\..\zlib;..\..\..\ffmpeg\include;..\..\..\ffmpeg\include-win;..\..\..\libraw;..\..\..\pole;..\..\..\exiv2;..\..\..\libgeotiff;..\..\..\eigen;..\..\..\jzon;..\..\..\libfftw\src\api;..\..\..\opencv\build\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;_CONSOLE;__STDC_CONSTANT_MACROS;TIF_PLATFORM_CONSOLE;BIM_FFMPEG_FORMAT;FFMPEG_VIDEO_DISABLE_MATLAB;LIBRAW_BUILDLIB;LIBRAW_NODLL;USE_JPEG;BIM_USE_EIGEN;BIM_USE_OPENMP;BIM_USE_OPENCV;BIM_USE_TRANSFORMS;BIM_USE_FILTERS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\..\..\libbioimg;..\..\..\libbioimg\formats;..\..\..\libbioimg\formats_api;..\..\..\libbioimg\core_lib;..\..\..\libjpeg-turbo;..\..\..\libpng;..\..\..\libtiff;..\..\..\zlib;..\..\..\ffmpeg\include;..\..\..\ffmpeg\include-win;..\..\..\libraw;..\..\..\pole;..\..\..\exiv2;..\..\..\libgeotiff;..\..\..\eigen;..\..\..\jzon;..\..\..\pugixml\src;..\..\..\libfftw\src\api;..\..\..\gdcm\Source\Common;..\..\..\gdcm\Source\DataDictionary;..\..\..\gdcm\Source\DataStructureAndEncodingDefinition;..\..\..\gdcm\Source\InformationObjectDefinition;..\..\..\gdcm\Source\MediaStorageAndFileFormat;..\..\..\gdcm\projects\msvc2013\Source\Common;..\..\..\gdcm\projects\msvc2013\Source\InformationObjectDefinition;..\..\..\opencv\build\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_CONSOLE;__STDC_CONSTANT_MACROS;TIF_PLATFORM_CONSOLE;BIM_FFMPEG_FORMAT;FFMPEG_VIDEO_DISABLE_MATLAB;LIBRAW_BUILDLIB;LIBRAW_NODLL;USE_JPEG;BIM_USE_EIGEN;BIM_USE_OPENMP;BIM_USE_OPENCV;BIM_USE_TRANSFORMS;BIM_USE_FILTERS;BIM_GDCM_FORMAT;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -325,10 +325,11 @@
     <ClCompile Include="..\..\..\libbioimg\formats\tiff\bim_tiff_format.cpp" />
     <ClCompile Include="..\..\..\libbioimg\formats\tiff\xtiff.c" />
     <ClCompile Include="..\..\..\libbioimg\formats\tiff\memio.c" />
-    <ClCompile Include="..\..\..\libbioimg\formats\tiff\bim_geotiff_parse.cpp" />    
+    <ClCompile Include="..\..\..\libbioimg\formats\tiff\bim_geotiff_parse.cpp" />
     <ClCompile Include="..\..\..\libbioimg\formats\ole\bim_ole_format.cpp" />
     <ClCompile Include="..\..\..\libbioimg\formats\ole\zvi.cpp" />
     <ClCompile Include="..\..\..\pole\pole.cpp" />
+    <ClCompile Include="..\..\formats\dicom\bim_dicom_format.cpp" />
     <ClCompile Include="..\..\formats\ole\bim_oib_format_io.cpp" />
     <ClCompile Include="..\..\formats\ole\bim_zvi_format_io.cpp" />
     <ClCompile Include="..\..\formats\tiff\bim_cz_lsm_format_io.cpp" />
@@ -343,6 +344,7 @@
     <ClCompile Include="..\..\formats_api\bim_image_itk.cpp" />
     <ClCompile Include="..\..\formats_api\bim_image_numpy.cpp" />
     <ClCompile Include="..\..\formats_api\bim_image_opencv.cpp" />
+    <ClCompile Include="..\..\formats_api\bim_image_proxy.cpp" />
     <ClCompile Include="..\..\formats_api\bim_image_qt.cpp" />
     <ClCompile Include="..\..\formats_api\bim_image_transforms.cpp" />
     <ClCompile Include="..\..\formats_api\bim_image_win.cpp" />
@@ -383,6 +385,7 @@
     <ClInclude Include="..\..\..\libbioimg\formats_api\rotate.h" />
     <ClInclude Include="..\..\..\pole\pole.h" />
     <ClInclude Include="..\..\formats_api\bim_image_5d.h" />
+    <ClInclude Include="..\..\formats_api\bim_image_proxy.h" />
     <ClInclude Include="..\..\formats_api\bim_primitives.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

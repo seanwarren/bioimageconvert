@@ -5,7 +5,7 @@
  *
  * Authors: Laurent Aimar <fenrir@via.ecp.fr>
  *          Loren Merritt <lorenm@u.washington.edu>
- *          Jason Garrett-Glaser <darkshikari@gmail.com>
+ *          Fiona Glaser <fiona@x264.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,8 +28,8 @@
 #ifndef X264_X264_H
 #define X264_X264_H
 
-#if !defined(_STDINT_H) && !defined(_STDINT_H_) && !defined(_STDINT_H_INCLUDED) &&\
-    !defined(_INTTYPES_H) && !defined(_INTTYPES_H_)
+#if !defined(_STDINT_H) && !defined(_STDINT_H_) && !defined(_STDINT_H_INCLUDED) && !defined(_STDINT) &&\
+    !defined(_INTTYPES_H) && !defined(_INTTYPES_H_) && !defined(_INTTYPES)
 # ifdef _MSC_VER
 #  pragma message("You must include stdint.h or inttypes.h before x264.h")
 # else
@@ -41,7 +41,7 @@
 
 #include "x264_config.h"
 
-#define X264_BUILD 142
+#define X264_BUILD 144
 
 /* Application developers planning to link against a shared library version of
  * libx264 from a Microsoft Visual Studio or similar development environment
@@ -129,8 +129,8 @@ typedef struct
 #define X264_CPU_AVX             0x0000400  /* AVX support: requires OS support even if YMM registers aren't used. */
 #define X264_CPU_XOP             0x0000800  /* AMD XOP */
 #define X264_CPU_FMA4            0x0001000  /* AMD FMA4 */
-#define X264_CPU_AVX2            0x0002000  /* AVX2 */
-#define X264_CPU_FMA3            0x0004000  /* Intel FMA3 */
+#define X264_CPU_FMA3            0x0002000  /* FMA3 */
+#define X264_CPU_AVX2            0x0004000  /* AVX2 */
 #define X264_CPU_BMI1            0x0008000  /* BMI1 */
 #define X264_CPU_BMI2            0x0010000  /* BMI2 */
 /* x86 modifiers */
@@ -152,10 +152,11 @@ typedef struct
 /* PowerPC */
 #define X264_CPU_ALTIVEC         0x0000001
 
-/* ARM */
+/* ARM and AArch64 */
 #define X264_CPU_ARMV6           0x0000001
 #define X264_CPU_NEON            0x0000002  /* ARM NEON */
 #define X264_CPU_FAST_NEON_MRC   0x0000004  /* Transfer from NEON to ARM register is fast (Cortex-A9) */
+#define X264_CPU_ARMV8           0x0000008
 
 /* Analyse flags */
 #define X264_ANALYSE_I4x4       0x0001  /* Analyse i4x4 */
@@ -182,6 +183,7 @@ typedef struct
 #define X264_AQ_NONE                 0
 #define X264_AQ_VARIANCE             1
 #define X264_AQ_AUTOVARIANCE         2
+#define X264_AQ_AUTOVARIANCE_BIASED  3
 #define X264_B_ADAPT_NONE            0
 #define X264_B_ADAPT_FAST            1
 #define X264_B_ADAPT_TRELLIS         2

@@ -14,8 +14,11 @@
         
 *******************************************************************************/
 
+#include <iostream>
+
 #include "bim_format_manager.h"
 #include "xstring.h"
+
 
 // Disables Visual Studio 2005 warnings for deprecated code
 #if ( defined(_MSC_VER) && (_MSC_VER >= 1400) )
@@ -37,6 +40,9 @@
 #endif
 #include "ole/bim_ole_format.h"
 #include "dcraw/bim_dcraw_format.h"
+#ifdef BIM_GDCM_FORMAT
+#include "dicom/bim_dicom_format.h"
+#endif
 
 using namespace bim;
 
@@ -70,6 +76,10 @@ FormatManager::FormatManager() {
   addNewFormatHeader ( ffMpegGetFormatHeader() );
   static_formats += 1;
   #endif
+  #ifdef BIM_GDCM_FORMAT
+  addNewFormatHeader ( dicomGetFormatHeader() );
+  static_formats += 1;
+  #endif  
 }
 
 
@@ -243,26 +253,23 @@ void FormatManager::getNeededFormatByFileExt(const bim::Filename fileName, int &
   fileName;
 }
 
-void FormatManager::printAllFormats()
-{
+void FormatManager::printAllFormats() {
   unsigned int i, s;
 
-  for (i=0; i<formatList.size(); i++)
-  {
-    printf("Format %d: ""%s"" ver: %s\n", i, formatList.at(i)->name, formatList.at(i)->version );
-    for (s=0; s<formatList.at(i)->supportedFormats.count; s++)
-    {
-      printf("  %d: %s [", s, formatList.at(i)->supportedFormats.item[s].formatNameShort);
+  for (i=0; i<formatList.size(); i++) {
+    std::cout << xstring::xprintf("Format %d: ""%s"" ver: %s\n", i, formatList.at(i)->name, formatList.at(i)->version );
+    for (s=0; s<formatList.at(i)->supportedFormats.count; s++) {
+        std::cout << xstring::xprintf("  %d: %s [", s, formatList.at(i)->supportedFormats.item[s].formatNameShort);
 
-      if ( formatList.at(i)->supportedFormats.item[s].canRead )  printf("R ");
-      if ( formatList.at(i)->supportedFormats.item[s].canWrite ) printf("W ");
-      if ( formatList.at(i)->supportedFormats.item[s].canReadMeta ) printf("RM ");
-      if ( formatList.at(i)->supportedFormats.item[s].canWriteMeta ) printf("WM ");
-      if ( formatList.at(i)->supportedFormats.item[s].canWriteMultiPage ) printf("WMP ");
+        if (formatList.at(i)->supportedFormats.item[s].canRead)  std::cout << xstring::xprintf("R ");
+        if (formatList.at(i)->supportedFormats.item[s].canWrite) std::cout << xstring::xprintf("W ");
+        if (formatList.at(i)->supportedFormats.item[s].canReadMeta) std::cout << xstring::xprintf("RM ");
+        if (formatList.at(i)->supportedFormats.item[s].canWriteMeta) std::cout << xstring::xprintf("WM ");
+        if (formatList.at(i)->supportedFormats.item[s].canWriteMultiPage) std::cout << xstring::xprintf("WMP ");
 
-      printf("] <%s>\n", formatList.at(i)->supportedFormats.item[s].extensions);
+        std::cout << xstring::xprintf("] <%s>\n", formatList.at(i)->supportedFormats.item[s].extensions);
     }
-    printf("\n");
+    std::cout << xstring::xprintf("\n");
   }
 }
 
@@ -270,37 +277,37 @@ void FormatManager::printAllFormatsXML() {
   unsigned int i, s;
 
   for (i=0; i<formatList.size(); i++) {
-    printf("<format index=\"%d\" name=\"%s\" version=\"%s\" >\n", i, formatList.at(i)->name, formatList.at(i)->version );
+      std::cout << xstring::xprintf("<format index=\"%d\" name=\"%s\" version=\"%s\" >\n", i, formatList.at(i)->name, formatList.at(i)->version);
 
     for (s=0; s<formatList.at(i)->supportedFormats.count; s++) {
-      printf("  <codec index=\"%d\" name=\"%s\" >\n", s, formatList.at(i)->supportedFormats.item[s].formatNameShort);
+        std::cout << xstring::xprintf("  <codec index=\"%d\" name=\"%s\" >\n", s, formatList.at(i)->supportedFormats.item[s].formatNameShort);
       
       if ( formatList.at(i)->supportedFormats.item[s].canRead )  
-        printf("    <tag name=\"support\" value=\"reading\" />\n");
+          std::cout << xstring::xprintf("    <tag name=\"support\" value=\"reading\" />\n");
 
       if ( formatList.at(i)->supportedFormats.item[s].canWrite )
-        printf("    <tag name=\"support\" value=\"writing\" />\n");
+          std::cout << xstring::xprintf("    <tag name=\"support\" value=\"writing\" />\n");
 
       if ( formatList.at(i)->supportedFormats.item[s].canReadMeta )
-        printf("    <tag name=\"support\" value=\"reading metadata\" />\n");
+          std::cout << xstring::xprintf("    <tag name=\"support\" value=\"reading metadata\" />\n");
 
       if ( formatList.at(i)->supportedFormats.item[s].canWriteMeta )
-        printf("    <tag name=\"support\" value=\"writing metadata\" />\n");
+          std::cout << xstring::xprintf("    <tag name=\"support\" value=\"writing metadata\" />\n");
 
       if ( formatList.at(i)->supportedFormats.item[s].canWriteMultiPage )
-        printf("    <tag name=\"support\" value=\"writing multiple pages\" />\n");
+          std::cout << xstring::xprintf("    <tag name=\"support\" value=\"writing multiple pages\" />\n");
 
-      printf("    <tag name=\"extensions\" value=\"%s\" />\n", formatList.at(i)->supportedFormats.item[s].extensions);
-      printf("    <tag name=\"fullname\" value=\"%s\" />\n", formatList.at(i)->supportedFormats.item[s].formatNameLong);
-      printf("    <tag name=\"min-samples-per-pixel\" value=\"%d\" />\n", formatList.at(i)->supportedFormats.item[s].constrains.minSamplesPerPixel);
-      printf("    <tag name=\"max-samples-per-pixel\" value=\"%d\" />\n", formatList.at(i)->supportedFormats.item[s].constrains.maxSamplesPerPixel);
-      printf("    <tag name=\"min-bits-per-sample\" value=\"%d\" />\n", formatList.at(i)->supportedFormats.item[s].constrains.minBitsPerSample);
-      printf("    <tag name=\"max-bits-per-sample\" value=\"%d\" />\n", formatList.at(i)->supportedFormats.item[s].constrains.maxBitsPerSample);
+      std::cout << xstring::xprintf("    <tag name=\"extensions\" value=\"%s\" />\n", formatList.at(i)->supportedFormats.item[s].extensions);
+      std::cout << xstring::xprintf("    <tag name=\"fullname\" value=\"%s\" />\n", formatList.at(i)->supportedFormats.item[s].formatNameLong);
+      std::cout << xstring::xprintf("    <tag name=\"min-samples-per-pixel\" value=\"%d\" />\n", formatList.at(i)->supportedFormats.item[s].constrains.minSamplesPerPixel);
+      std::cout << xstring::xprintf("    <tag name=\"max-samples-per-pixel\" value=\"%d\" />\n", formatList.at(i)->supportedFormats.item[s].constrains.maxSamplesPerPixel);
+      std::cout << xstring::xprintf("    <tag name=\"min-bits-per-sample\" value=\"%d\" />\n", formatList.at(i)->supportedFormats.item[s].constrains.minBitsPerSample);
+      std::cout << xstring::xprintf("    <tag name=\"max-bits-per-sample\" value=\"%d\" />\n", formatList.at(i)->supportedFormats.item[s].constrains.maxBitsPerSample);
 
 
-      printf("  </codec>\n");
+      std::cout << xstring::xprintf("  </codec>\n");
     }
-    printf("</format>\n");
+    std::cout << xstring::xprintf("</format>\n");
   }
 }
 
@@ -334,7 +341,7 @@ std::string FormatManager::getAllFormatsHTML() {
 
 void FormatManager::printAllFormatsHTML() {
   std::string str = getAllFormatsHTML();
-  printf( str.c_str() );
+  std::cout << str;
 }
 
 std::string FormatManager::getAllExtensions() {
@@ -878,12 +885,13 @@ int FormatManager::sessionStartRead  (const bim::Filename fileName, const char *
   return sessionStartRead ( NULL, NULL, NULL, NULL, NULL, NULL, NULL, fileName, formatName );
 }
 
-int FormatManager::sessionStartReadRAW  (const bim::Filename fileName, unsigned int header_offset, bool big_endian) {
+int FormatManager::sessionStartReadRAW(const bim::Filename fileName, unsigned int header_offset, bool big_endian, bool interleaved) {
   int res = sessionStartRead(fileName, "RAW");
   if (res == 0) {
     RawParams *rp = (RawParams *) sessionHandle.internalParams;
     rp->header_offset = header_offset;
     rp->big_endian = big_endian;
+    rp->interleaved = interleaved;
   }
   return res;
 }
@@ -1028,6 +1036,31 @@ int FormatManager::sessionWriteImage ( ImageBitmap *bmp, bim::uint page) {
   sessionHandle.pageNumber = page;
   return selectedFmt->writeImageProc ( &sessionHandle );
 }
+
+
+
+int FormatManager::sessionReadLevel(ImageBitmap *bmp, bim::uint page, uint level) {
+    if (session_active != true) return 1;
+    FormatHeader *selectedFmt = formatList.at(sessionFormatIndex);
+    if (!selectedFmt->readImageLevelProc) return 1;
+    sessionHandle.image = bmp;
+    int r = selectedFmt->readImageLevelProc(&sessionHandle, page, level);
+    sessionHandle.image = NULL;
+    return r;
+}
+
+int FormatManager::sessionReadTile(ImageBitmap *bmp, bim::uint page, bim::uint64 xid, bim::uint64 yid, bim::uint level) {
+    if (session_active != true) return 1;
+    FormatHeader *selectedFmt = formatList.at(sessionFormatIndex);
+    if (!selectedFmt->readImageTileProc) return 1;
+    sessionHandle.image = bmp;
+    int r = selectedFmt->readImageTileProc(&sessionHandle, page, xid, yid, level);
+    sessionHandle.image = NULL;
+    return r;
+}
+
+
+
 
 
 void  FormatManager::sessionReadImagePreview ( ImageBitmap *bmp, 

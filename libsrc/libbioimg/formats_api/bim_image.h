@@ -44,6 +44,7 @@
 #include "bim_histogram.h"
 
 #include "tag_map.h"
+#include "xconf.h"
 
 #define BIM_USE_IMAGEMANAGER
 
@@ -83,6 +84,13 @@ namespace bim {
 
 class ImageHistogram;
 class ImageLut;
+class Image;
+
+//------------------------------------------------------------------------------------
+// aux
+//------------------------------------------------------------------------------------
+
+typedef Image(*ImageModifierProc) (Image &img, const bim::xstring &arguments, const xoperations &operations, ImageHistogram *hist, XConf *c);
 
 //------------------------------------------------------------------------------
 // Image
@@ -114,7 +122,8 @@ class Image {
     enum DeinterlaceMethod { 
       deOdd=0, 
       deEven=1, 
-      deAverage=2
+      deAverage=2,
+      deOffset=3
     };
 
     enum FuseMethod { 
@@ -144,6 +153,10 @@ class Image {
     Image(const char *fileName, int page=0);
     Image(const std::string &fileName, int page=0);
     #endif //BIM_USE_IMAGEMANAGER
+
+    // special function to create image class from an existing bitmap without managing its memory
+    // it will not delete the bitmap when destroyed
+    Image(ImageBitmap *b) { connectToUnmanagedMemory(b); }
 
     #ifdef BIM_USE_QT
     Image(const QImage &qimg);
@@ -203,7 +216,7 @@ class Image {
     inline uint64     numT()      const { return bmp==NULL ? 0 : bmp->i.number_t; }
     inline uint64     numZ()      const { return bmp==NULL ? 0 : bmp->i.number_z; }
 
-    void updateGeometry( const unsigned int &z=0, const unsigned int &t=0 );
+    void updateGeometry(const unsigned int &z = 0, const unsigned int &t = 0, const unsigned int &c = 0);
     void updateResolution( const double r[4] );
     void updateResolution( const std::vector< double > &r ) { updateResolution( &r[0] ); } 
 
@@ -278,6 +291,7 @@ class Image {
     bool fromFile( const char *fileName, int page=0 );
     bool fromFile( const std::string &fileName, int page=0 ) { 
       return fromFile( fileName.c_str(), page ); }
+    bool fromPyramidFile(const std::string &fileName, int page=0, int level = 0, int tilex = -1, int tiley = -1, int tilesize = 0);
 
     bool toFile( const char *fileName, const char *formatName, const char *options=NULL );
     bool toFile( const std::string &fileName, const std::string &formatName ) {
@@ -295,8 +309,15 @@ class Image {
     int         get_metadata_tag_int( const std::string &key, const int &def ) const { return metadata.get_value_int( key, def ); }
     double      get_metadata_tag_double( const std::string &key, const double &def ) const { return metadata.get_value_double( key, def ); }
 
+    void        delete_metadata_tag(const std::string &key) { metadata.delete_tag(key); }
 
     void        set_metadata( const TagMap &md ) { metadata = md; }
+
+    //--------------------------------------------------------------------------    
+    // process an image based on command line arguments or a string
+    //--------------------------------------------------------------------------
+
+    void process(const xoperations &operations, ImageHistogram *hist=0, XConf *c=0);
 
     //--------------------------------------------------------------------------    
     // some operations
@@ -436,6 +457,55 @@ class Image {
     };
     Image transform( TransformMethod type ) const;
 
+    // Hounsfield Units - used for CT (CAT) data
+    // provided conversion maps from device dependent to HU (device independent) scale
+    // typically this conversion will only make sense for 1 sample per pixel images with signed 16 bit pixels or floating point
+    // most devices use slope == 1.0 and intercept == -1024.0
+    Image transform_hounsfield(const double &slope=1.0, const double &intercept=-1024.0) const;
+    
+    // mutable version of same operation, more memory efficient, only valid for float and signed images
+    bool transform_hounsfield_inplace(const double &slope, const double &intercept);
+
+    // typical enhancement of CT images using Hounsfield scale, where pixels are normalized using
+    // min and max computed from window center and window width given in Hounsfield Units
+    // image MUST be previously converted to HU using transform_hounsfield or transform_hounsfield_inplace
+    // Typical values of center/width:
+    //    HeadSFT:          40 / 80  head soft tissue
+    //    Brain             30 / 110
+    //    NeckSFT :         60 / 300
+    //    Bone :            400 / 2000 
+    //    Temporal bones:   400 / 4000  (bones of the scull)
+    //    Bone body:        350 / 2500 
+    //    Soft Tissue :     40 / 500
+    //    SoftTissue(PEDS): 40 / 400   just soft tissue CT (pediatric )
+    //    Mediastinum:      400/1800
+    //    Bronchial:        -180 / 2600
+    //    Lung :            -350 / 2000
+    //    Lung 2:           -700 / 1200
+    //    Abdomen           -20 / 400
+    //    Liver:            60 / 180
+    //    Liver W/O:        40 / 150 without contrast
+    //    Liver W/C:        100 / 150 with contrast
+    //    P Fossa :         30 / 180
+    //    CSpineSFT w/o :   40 / 250   Cervical spine without contrast
+    //    TLSpineSFT w/o:   40 / 500   Thoracic and Lumbar spine
+    //    INFARCT :         40 / 60
+    //    OBLIQUE MIP :     200 / 700
+    //    MYELOGRAM W/L:    60 / 650
+    Image enhance_hounsfield(int depth, DataFormat pxtype, const double &wnd_center, const double &wnd_width, bool empty_outside_range = false ) const;
+
+    // Experimental !!!
+    // produces multi channel image with different ranges as separate channels
+    // image MUST be previously converted to HU using transform_hounsfield or transform_hounsfield_inplace
+    // defined 5 channels:
+    //   1 : -inf to -100 : Lungs
+    //   2 : -100 to -50  : Fat
+    //   3 : -50  to 50   : Brain
+    //   4 :  50  to 250  : Organs
+    //   5 :  250 to inf  : Bones
+    Image multi_hounsfield() const;
+
+
     #endif //BIM_USE_TRANSFORMS
 
     //--------------------------------------------------------------------------    
@@ -483,6 +553,11 @@ class Image {
     Image fuseToGrayscale() const;
     Image fuseToRGB(const std::vector<bim::DisplayColor> &mapping, FuseMethod method=fmAverage, ImageHistogram *hist=0) const;
 
+  public:
+      // special function to create image class from an existing bitmap without managing its memory
+      // it will not delete the bitmap when destroyed
+      void connectToUnmanagedMemory(ImageBitmap *b);
+
   private:
     // pointer to a shared bitmap
     ImageBitmap *bmp;
@@ -504,6 +579,10 @@ class Image {
     void connectToNewMemory();
     void disconnectFromMemory();
 
+  private:
+      typedef std::map<std::string, ImageModifierProc> map_modifiers;
+      static map_modifiers create_modifiers();
+      static const map_modifiers modifiers;
 };
 
 //------------------------------------------------------------------------------

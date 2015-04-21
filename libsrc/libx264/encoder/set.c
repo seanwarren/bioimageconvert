@@ -543,7 +543,8 @@ void x264_pps_write( bs_t *s, x264_sps_t *sps, x264_pps_t *pps )
 void x264_sei_recovery_point_write( x264_t *h, bs_t *s, int recovery_frame_cnt )
 {
     bs_t q;
-    uint8_t tmp_buf[100];
+    ALIGNED_4( uint8_t tmp_buf[100] );
+    M32( tmp_buf ) = 0; // shut up gcc
     bs_init( &q, tmp_buf, 100 );
 
     bs_realign( &q );
@@ -595,7 +596,8 @@ void x264_sei_buffering_period_write( x264_t *h, bs_t *s )
 {
     x264_sps_t *sps = h->sps;
     bs_t q;
-    uint8_t tmp_buf[100];
+    ALIGNED_4( uint8_t tmp_buf[100] );
+    M32( tmp_buf ) = 0; // shut up gcc
     bs_init( &q, tmp_buf, 100 );
 
     bs_realign( &q );
@@ -617,7 +619,8 @@ void x264_sei_pic_timing_write( x264_t *h, bs_t *s )
 {
     x264_sps_t *sps = h->sps;
     bs_t q;
-    uint8_t tmp_buf[100];
+    ALIGNED_4( uint8_t tmp_buf[100] );
+    M32( tmp_buf ) = 0; // shut up gcc
     bs_init( &q, tmp_buf, 100 );
 
     bs_realign( &q );
@@ -648,7 +651,8 @@ void x264_sei_frame_packing_write( x264_t *h, bs_t *s )
 {
     int quincunx_sampling_flag = h->param.i_frame_packing == 0;
     bs_t q;
-    uint8_t tmp_buf[100];
+    ALIGNED_4( uint8_t tmp_buf[100] );
+    M32( tmp_buf ) = 0; // shut up gcc
     bs_init( &q, tmp_buf, 100 );
 
     bs_realign( &q );
@@ -675,7 +679,9 @@ void x264_sei_frame_packing_write( x264_t *h, bs_t *s )
         bs_write( &q, 4, 0 );                     // frame1_grid_position_y
     }
     bs_write( &q, 8, 0 );                         // frame_packing_arrangement_reserved_byte
-    bs_write_ue( &q, 1 );                         // frame_packing_arrangement_repetition_period
+    // "frame_packing_arrangement_repetition_period equal to 1 specifies that the frame packing arrangement SEI message persists in output"
+    // for (i_frame_packing == 5) this will undermine current_frame_is_frame0_flag which must alternate every view sequence
+    bs_write_ue( &q, h->param.i_frame_packing != 5 ); // frame_packing_arrangement_repetition_period
     bs_write1( &q, 0 );                           // frame_packing_arrangement_extension_flag
 
     bs_align_10( &q );
@@ -699,7 +705,8 @@ void x264_sei_dec_ref_pic_marking_write( x264_t *h, bs_t *s )
 {
     x264_slice_header_t *sh = &h->sh_backup;
     bs_t q;
-    uint8_t tmp_buf[100];
+    ALIGNED_4( uint8_t tmp_buf[100] );
+    M32( tmp_buf ) = 0; // shut up gcc
     bs_init( &q, tmp_buf, 100 );
 
     bs_realign( &q );
@@ -740,11 +747,15 @@ int x264_sei_avcintra_umid_write( x264_t *h, bs_t *s )
     data[20] = 0x13;
     /* These bytes appear to be some sort of frame/seconds counter in certain applications,
      * but others jump around, so leave them as zero for now */
-    data[21] = data[22] = 0;
-
+    data[22] = data[23] = data[25] = data[26] = 0;
     data[28] = 0x14;
+    data[30] = data[31] = data[33] = data[34] = 0;
     data[36] = 0x60;
     data[41] = 0x22; /* Believed to be some sort of end of basic UMID identifier */
+    data[60] = 0x62;
+    data[62] = data[63] = data[65] = data[66] = 0;
+    data[68] = 0x63;
+    data[70] = data[71] = data[73] = data[74] = 0;
 
     x264_sei_write( &h->out.bs, data, len, SEI_USER_DATA_UNREGISTERED );
 

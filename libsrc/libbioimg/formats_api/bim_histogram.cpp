@@ -76,10 +76,10 @@ void Histogram::newData( const unsigned int &bpp, void *data, const unsigned int
 
 template <typename T> 
 void Histogram::init_stats() {
-  d.value_min = std::numeric_limits<T>::min();
-  d.value_max = std::numeric_limits<T>::max();
-  reversed_min_max = false;
-  recompute_shift_scale();
+    d.value_min = bim::lowest<T>();
+    d.value_max = bim::highest<T>();
+    reversed_min_max = false;
+    recompute_shift_scale();
 }
 
 void Histogram::initStats() {
@@ -112,9 +112,9 @@ void Histogram::update_data_stats( T *data, const unsigned int &num_data_points,
   if (!data) return;
   if (num_data_points==0) return;
   if (!reversed_min_max) {
-    d.value_min = std::numeric_limits<T>::max();
-    d.value_max = std::numeric_limits<T>::min();
-    reversed_min_max = true;
+      d.value_min = bim::highest<T>();
+      d.value_max = bim::lowest<T>();
+      reversed_min_max = true;
   }
 
   T *p = (T *) data;  
@@ -140,8 +140,8 @@ void Histogram::update_data_stats( T *data, const unsigned int &num_data_points,
 template <typename T>
 void Histogram::get_data_stats( T *data, const unsigned int &num_data_points, unsigned char *mask ) {
   init_stats<T>();
-  d.value_min = std::numeric_limits<T>::max();
-  d.value_max = std::numeric_limits<T>::min();
+  d.value_min = bim::highest<T>();
+  d.value_max = bim::lowest<T>();
   reversed_min_max = true;
   update_data_stats(data, num_data_points, mask);
 }
@@ -831,7 +831,7 @@ template void bim::linear_gamma_generator<unsigned char>( const Histogram &in, s
 template void bim::linear_gamma_generator<unsigned int>( const Histogram &in, std::vector<unsigned int> &lut, unsigned int out_phys_range, void *args );
 template void bim::linear_gamma_generator<double>( const Histogram &in, std::vector<double> &lut, unsigned int out_phys_range, void *args );
 
-
+// this does not really work for signed ints liek int16, fix needed
 template <typename Tl>
 void bim::linear_min_max_gamma_generator( const Histogram &in, std::vector<Tl> &lut, unsigned int out_phys_range, void *args ) {
     bim::min_max_gamma_args arg = * (bim::min_max_gamma_args *) args;

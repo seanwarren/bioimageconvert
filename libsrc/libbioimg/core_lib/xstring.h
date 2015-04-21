@@ -63,15 +63,18 @@ public:
   xstring &lstrip(const xstring &chars); // strips leading chars
   xstring &strip(const xstring &chars); // strips leading and trailing chars
 
+  xstring &erase_zeros(); // removes all 0 chars from the string
+
   xstring &removeSpacesLeft()  { return lstrip(" "); }
   xstring &removeSpacesRight() { return rstrip(" "); }
   xstring &removeSpacesBoth()  { return strip(" "); }
 
-  int    toInt( int def = 0 );
-  double toDouble( double def = 0.0 );
+  bool   toBool(bool def = false) const; // converts from either numeric 0 or 1 or from textual 'true' or 'false'
+  int    toInt( int def = 0 ) const;
+  double toDouble(double def = 0.0) const;
 
-  std::string toLowerCase();
-  std::string toUpperCase();
+  std::string toLowerCase() const;
+  std::string toUpperCase() const;
 
   bool operator==(const xstring &s) const;
   bool operator==(const char *s) const;
@@ -88,9 +91,9 @@ public:
   std::vector<int>     splitInt( const xstring &separator, const int &def=0 ) const;
   std::vector<double>  splitDouble( const xstring &separator, const double &def=0.0 ) const;
 
-  //static xstring join(std::vector<xstring> v, const xstring &separator);
-  //static xstring join(std::vector<int> v,     const xstring &separator);
-  //static xstring join(std::vector<double> v,  const xstring &separator);
+  static xstring join(std::vector<xstring> v, const xstring &separator);
+  static xstring join(std::vector<int> v,     const xstring &separator);
+  static xstring join(std::vector<double> v,  const xstring &separator);
 
   xstring left(std::string::size_type pos) const;
   xstring left(const xstring &sub) const;

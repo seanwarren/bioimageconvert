@@ -4,7 +4,7 @@
  * Copyright (C) 2005-2014 x264 project
  *
  * Authors: Loren Merritt <lorenm@u.washington.edu>
- *          Jason Garrett-Glaser <darkshikari@gmail.com>
+ *          Fiona Glaser <fiona@x264.com>
  *          Christian Heine <sennindemokrit@gmx.net>
  *          Henrik Gramner <henrik@gramner.com>
  *
@@ -36,6 +36,9 @@
 #endif
 #if ARCH_ARM
 #   include "arm/quant.h"
+#endif
+#if ARCH_AARCH64
+#   include "aarch64/quant.h"
 #endif
 
 #define QUANT_ONE( coef, mf, f ) \
@@ -555,9 +558,6 @@ void x264_quant_init( x264_t *h, int cpu, x264_quant_function_t *pf )
     if( cpu&X264_CPU_MMX )
     {
 #if ARCH_X86
-        pf->quant_4x4 = x264_quant_4x4_mmx;
-        pf->quant_4x4x4 = x264_quant_4x4x4_mmx;
-        pf->quant_8x8 = x264_quant_8x8_mmx;
         pf->dequant_4x4 = x264_dequant_4x4_mmx;
         pf->dequant_4x4_dc = x264_dequant_4x4dc_mmx2;
         pf->dequant_8x8 = x264_dequant_8x8_mmx;
@@ -574,6 +574,8 @@ void x264_quant_init( x264_t *h, int cpu, x264_quant_function_t *pf )
     {
         pf->quant_2x2_dc = x264_quant_2x2_dc_mmx2;
 #if ARCH_X86
+        pf->quant_4x4 = x264_quant_4x4_mmx2;
+        pf->quant_8x8 = x264_quant_8x8_mmx2;
         pf->quant_4x4_dc = x264_quant_4x4_dc_mmx2;
         pf->decimate_score15 = x264_decimate_score15_mmx2;
         pf->decimate_score16 = x264_decimate_score16_mmx2;
@@ -712,7 +714,8 @@ void x264_quant_init( x264_t *h, int cpu, x264_quant_function_t *pf )
 #endif // HAVE_MMX
 
 #if HAVE_ALTIVEC
-    if( cpu&X264_CPU_ALTIVEC ) {
+    if( cpu&X264_CPU_ALTIVEC )
+    {
         pf->quant_2x2_dc = x264_quant_2x2_dc_altivec;
         pf->quant_4x4_dc = x264_quant_4x4_dc_altivec;
         pf->quant_4x4 = x264_quant_4x4_altivec;
@@ -725,8 +728,12 @@ void x264_quant_init( x264_t *h, int cpu, x264_quant_function_t *pf )
 
 #if HAVE_ARMV6
     if( cpu&X264_CPU_ARMV6 )
+    {
         pf->coeff_last4 = x264_coeff_last4_arm;
-
+        pf->coeff_last8 = x264_coeff_last8_arm;
+    }
+#endif
+#if HAVE_ARMV6 || ARCH_AARCH64
     if( cpu&X264_CPU_NEON )
     {
         pf->quant_2x2_dc   = x264_quant_2x2_dc_neon;
@@ -740,6 +747,24 @@ void x264_quant_init( x264_t *h, int cpu, x264_quant_function_t *pf )
         pf->coeff_last[ DCT_LUMA_AC] = x264_coeff_last15_neon;
         pf->coeff_last[DCT_LUMA_4x4] = x264_coeff_last16_neon;
         pf->coeff_last[DCT_LUMA_8x8] = x264_coeff_last64_neon;
+    }
+#endif
+#if ARCH_AARCH64
+    if( cpu&X264_CPU_ARMV8 )
+    {
+        pf->coeff_last4 = x264_coeff_last4_aarch64;
+        pf->coeff_last8 = x264_coeff_last8_aarch64;
+        pf->coeff_level_run4 = x264_coeff_level_run4_aarch64;
+    }
+    if( cpu&X264_CPU_NEON )
+    {
+        pf->coeff_level_run8 = x264_coeff_level_run8_neon;
+        pf->coeff_level_run[  DCT_LUMA_AC] = x264_coeff_level_run15_neon;
+        pf->coeff_level_run[ DCT_LUMA_4x4] = x264_coeff_level_run16_neon;
+        pf->decimate_score15 = x264_decimate_score15_neon;
+        pf->decimate_score16 = x264_decimate_score16_neon;
+        pf->decimate_score64 = x264_decimate_score64_neon;
+        pf->denoise_dct = x264_denoise_dct_neon;
     }
 #endif
 #endif // HIGH_BIT_DEPTH

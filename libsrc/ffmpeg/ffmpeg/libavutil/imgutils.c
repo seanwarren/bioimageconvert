@@ -27,7 +27,9 @@
 #include "internal.h"
 #include "intreadwrite.h"
 #include "log.h"
+#include "mathematics.h"
 #include "pixdesc.h"
+#include "rational.h"
 
 void av_image_fill_max_pixsteps(int max_pixsteps[4], int max_pixstep_comps[4],
                                 const AVPixFmtDescriptor *pixdesc)
@@ -181,7 +183,7 @@ int avpriv_set_systematic_pal2(uint32_t pal[256], enum AVPixelFormat pix_fmt)
         default:
             return AVERROR(EINVAL);
         }
-        pal[i] = b + (g<<8) + (r<<16) + (0xFFU<<24);
+        pal[i] = b + (g << 8) + (r << 16) + (0xFFU << 24);
     }
 
     return 0;
@@ -236,6 +238,27 @@ int av_image_check_size(unsigned int w, unsigned int h, int log_offset, void *lo
         return 0;
 
     av_log(&imgutils, AV_LOG_ERROR, "Picture size %ux%u is invalid\n", w, h);
+    return AVERROR(EINVAL);
+}
+
+int av_image_check_sar(unsigned int w, unsigned int h, AVRational sar)
+{
+    int64_t scaled_dim;
+
+    if (!sar.den)
+        return AVERROR(EINVAL);
+
+    if (!sar.num || sar.num == sar.den)
+        return 0;
+
+    if (sar.num < sar.den)
+        scaled_dim = av_rescale_rnd(w, sar.num, sar.den, AV_ROUND_ZERO);
+    else
+        scaled_dim = av_rescale_rnd(h, sar.den, sar.num, AV_ROUND_ZERO);
+
+    if (scaled_dim > 0)
+        return 0;
+
     return AVERROR(EINVAL);
 }
 
@@ -307,9 +330,6 @@ int av_image_fill_arrays(uint8_t *dst_data[4], int dst_linesize[4],
 
     for (i = 0; i < 4; i++)
         dst_linesize[i] = FFALIGN(dst_linesize[i], align);
-
-    if ((ret = av_image_fill_pointers(dst_data, pix_fmt, width, NULL, dst_linesize)) < 0)
-        return ret;
 
     return av_image_fill_pointers(dst_data, pix_fmt, height, (uint8_t *)src, dst_linesize);
 }

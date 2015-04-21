@@ -20,6 +20,8 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cmath>
+#include <iostream>
+#include <sstream>
 
 #include <string>
 
@@ -133,6 +135,7 @@ void StkInfo::init() {
   this->metaData.grayMax[0]             = 0;
   this->metaData.grayMax[1]             = 1;
   this->metaData.StandardLUT            = 0;
+  this->metaData.UIC1wavelength         = 0;
   this->metaData.OverlayMask            = 0;
   this->metaData.OverlayCompress        = 0;
   this->metaData.Overlay                = 0;
@@ -148,6 +151,29 @@ void StkInfo::init() {
   this->metaData.GammaRed               = 0;
   this->metaData.GammaGreen             = 0;
   this->metaData.GammaBlue              = 0;
+  this->metaData.CameraBin[0]           = 0;
+  this->metaData.CameraBin[1]           = 0;
+  this->metaData.NewLUT                 = 0;
+/*
+  this->metaData.ImagePropertyEx        = 0;
+  this->metaData.UserLutTable           = 0;
+  this->metaData.RedAutoScaleInfo       = 0;
+  this->metaData.RedAutoScaleLoInfo     = 0;
+  this->metaData.RedAutoScaleHiInfo     = 0;
+  this->metaData.RedMinScaleInfo        = 0;
+  this->metaData.RedMaxScaleInfo        = 0;
+  this->metaData.GreenAutoScaleInfo     = 0;
+  this->metaData.GreenAutoScaleLoInfo   = 0;
+  this->metaData.GreenAutoScaleHiInfo   = 0;
+  this->metaData.GreenMinScaleInfo      = 0;
+  this->metaData.GreenMaxScaleInfo      = 0;
+  this->metaData.BlueAutoScaleInfo      = 0;
+  this->metaData.BlueAutoScaleLoInfo    = 0;
+  this->metaData.BlueAutoScaleHiInfo    = 0;
+  this->metaData.BlueMinScaleInfo       = 0;
+  this->metaData.BlueMaxScaleInfo       = 0;
+  this->metaData.OverlayPlaneColor      = 0;
+*/
 }
 
 void StkInfo::clearOffsets() {
@@ -366,9 +392,9 @@ bool stkAreValidParams(TiffParams *tiffParams) {
 }
 
 bim::int32 stkGetNumPlanes(TIFF *tif) {
-  double *d_list = NULL;
+  double     *d_list = NULL;
   bim::int32 *l_list = NULL;
-  bim::int16   d_list_count[4];
+  bim::int16  d_list_count[4];
   int res[4] = {0,0,0,0};
 
   if (tif == 0) return 0;
@@ -376,9 +402,11 @@ bim::int32 stkGetNumPlanes(TIFF *tif) {
   res[0] = TIFFGetField(tif, TIFFTAG_STK_UIC2, &d_list_count[0], &d_list);
   res[1] = TIFFGetField(tif, TIFFTAG_STK_UIC3, &d_list_count[1], &d_list);
   res[2] = TIFFGetField(tif, TIFFTAG_STK_UIC4, &d_list_count[2], &l_list);
-  res[3] = TIFFGetField(tif, TIFFTAG_STK_UIC1, &d_list_count[3], &l_list);
+  // Mario Emmenlauer, 2015.03.25:
+  // The value of the UIC1 tag was not reliable for some images, ignored:
+  //res[3] = TIFFGetField(tif, TIFFTAG_STK_UIC1, &d_list_count[3], &l_list);
 
-  // if tag 33629 exists then the file is valid STAK file
+  // if tag 33629 exists then the file is valid STK file
   if (res[0] == 1) return d_list_count[0];
   if (res[1] == 1) return d_list_count[1];
   if (res[2] == 1) return d_list_count[2];
@@ -744,6 +772,9 @@ void stkParseIDEntry(bim::int32 *pair, bim::int32 offset, TiffParams *tiffParams
   if (pair[0] == BIM_STK_StandardLUT)
     stkInfo->metaData.StandardLUT = pair[1];
 
+  if (pair[0] == BIM_STK_wavelength)
+    stkInfo->metaData.UIC1wavelength = pair[1];
+
   if (pair[0] == BIM_STK_AutoScaleLoInfo)
     ifd->readBufNoAlloc( (toff_t) pair[1], (bim::uint64) 2*sizeof( bim::int32 ), TAG_LONG, (uchar *) stkInfo->metaData.AutoScaleLoInfo);
 
@@ -762,12 +793,139 @@ void stkParseIDEntry(bim::int32 *pair, bim::int32 offset, TiffParams *tiffParams
   if (pair[0] == BIM_STK_GammaBlue)
     ifd->readBufNoAlloc( (toff_t) pair[1], (bim::uint64) sizeof( bim::int32 ), TAG_LONG, (uchar *) &stkInfo->metaData.GammaBlue);
 
+  if (pair[0] == BIM_STK_CameraBin)
+    ifd->readBufNoAlloc( (toff_t) pair[1], (bim::uint64) 2*sizeof( bim::int32 ), TAG_LONG, (uchar *) &stkInfo->metaData.CameraBin);
+
+  if (pair[0] == BIM_STK_NewLUT)
+    stkInfo->metaData.NewLUT = pair[1];
+
+  if (pair[0] == BIM_STK_PlaneProperty) {
+      toff_t readpos = pair[1];
+
+      bim::int8 prop_key_str_len = 0;
+      readpos += 4;
+      ifd->readBufNoAlloc((toff_t)readpos, (bim::uint64) sizeof(bim::int8), TAG_BYTE, (uchar *)&prop_key_str_len);
+
+      char* prop_key_str = new char[(size_t)(prop_key_str_len + 1)];
+      readpos += 1;
+      ifd->readBufNoAlloc((toff_t)readpos, (bim::uint64) prop_key_str_len, TAG_BYTE, (uchar *)prop_key_str);
+      prop_key_str[(size_t)prop_key_str_len] = '\0';
+
+      #ifdef DEBUG
+      std::cerr << "property key is '" << prop_key_str << "'" << std::endl;
+      #endif
+
+      bim::int8 prop_key_type = 0;
+      readpos += prop_key_str_len + 4;
+      ifd->readBufNoAlloc((toff_t)readpos, (bim::uint64) sizeof(bim::int8), TAG_BYTE, (uchar *)&prop_key_type);
+      #ifdef DEBUG
+      std::cerr << "property type is '" << (int)prop_key_type << "'." << std::endl;
+      #endif
+
+      readpos += 1;
+      if (prop_key_type == 1) {
+          StkRational rational;
+          ifd->readBufNoAlloc((toff_t)readpos, (bim::uint64) 2 * sizeof(bim::int32), TAG_BYTE, (uchar *)&rational);
+
+          StkPlaneProperty PlaneProperty;
+          PlaneProperty.type = prop_key_type;
+          PlaneProperty.Key = prop_key_str;
+          PlaneProperty.rational = rational;
+          stkInfo->metaData.PlaneProperties.push_back(PlaneProperty);
+      }
+      else if (prop_key_type == 2) {
+          bim::int8 prop_val_str_len = 0;
+          ifd->readBufNoAlloc((toff_t)readpos, (bim::uint64) sizeof(bim::int8), TAG_BYTE, (uchar *)&prop_val_str_len);
+
+          if (prop_val_str_len == 0) {
+              readpos += 4;
+              ifd->readBufNoAlloc((toff_t)readpos, (bim::uint64) sizeof(bim::int8), TAG_BYTE, (uchar *)&prop_val_str_len);
+          }
+
+          char* prop_val_str = new char[(size_t)(prop_val_str_len + 1)];
+          readpos += 1;
+          ifd->readBufNoAlloc((toff_t)readpos, (bim::uint64) prop_val_str_len, TAG_BYTE, (uchar *)prop_val_str);
+          prop_val_str[(size_t)prop_val_str_len] = '\0';
+
+          #ifdef DEBUG
+          std::cerr << "property value is '" << prop_val_str << "'" << std::endl;
+          #endif
+
+          StkPlaneProperty PlaneProperty;
+          PlaneProperty.type = prop_key_type;
+          PlaneProperty.Key = prop_key_str;
+          PlaneProperty.Value = prop_val_str;
+          stkInfo->metaData.PlaneProperties.push_back(PlaneProperty);
+      }
+      else {
+          std::cerr << "stkParseIDEntry(): Could not parse property type '" << prop_key_type << "' for property '" << prop_key_str << "'." << std::endl;
+      }
+  }
+
+/*
+  if (pair[0] == BIM_STK_ImagePropertyEx)
+    stkInfo->metaData.ImagePropertyEx = pair[1];
+
+  if (pair[0] == BIM_STK_UserLutTable)
+    stkInfo->metaData.UserLutTable = pair[1];
+
+  if (pair[0] == BIM_STK_RedAutoScaleInfo)
+    stkInfo->metaData.RedAutoScaleInfo = pair[1];
+
+  if (pair[0] == BIM_STK_RedAutoScaleLoInfo)
+    stkInfo->metaData.RedAutoScaleLoInfo = pair[1];
+
+  if (pair[0] == BIM_STK_RedAutoScaleHiInfo)
+    stkInfo->metaData.RedAutoScaleHiInfo = pair[1];
+
+  if (pair[0] == BIM_STK_RedMinScaleInfo)
+    stkInfo->metaData.RedMinScaleInfo = pair[1];
+
+  if (pair[0] == BIM_STK_RedMaxScaleInfo)
+    stkInfo->metaData.RedMaxScaleInfo = pair[1];
+
+  if (pair[0] == BIM_STK_GreenAutoScaleInfo)
+    stkInfo->metaData.GreenAutoScaleInfo = pair[1];
+
+  if (pair[0] == BIM_STK_GreenAutoScaleLoInfo)
+    stkInfo->metaData.GreenAutoScaleLoInfo = pair[1];
+
+  if (pair[0] == BIM_STK_GreenAutoScaleHiInfo)
+    stkInfo->metaData.GreenAutoScaleHiInfo = pair[1];
+
+  if (pair[0] == BIM_STK_GreenMinScaleInfo)
+    stkInfo->metaData.GreenMinScaleInfo = pair[1];
+
+  if (pair[0] == BIM_STK_GreenMaxScaleInfo)
+    stkInfo->metaData.GreenMaxScaleInfo = pair[1];
+
+  if (pair[0] == BIM_STK_BlueAutoScaleInfo)
+    stkInfo->metaData.BlueAutoScaleInfo = pair[1];
+
+  if (pair[0] == BIM_STK_BlueAutoScaleLoInfo)
+    stkInfo->metaData.BlueAutoScaleLoInfo = pair[1];
+
+  if (pair[0] == BIM_STK_BlueAutoScaleHiInfo)
+    stkInfo->metaData.BlueAutoScaleHiInfo = pair[1];
+
+  if (pair[0] == BIM_STK_BlueMinScaleInfo)
+    stkInfo->metaData.BlueMinScaleInfo = pair[1];
+
+  if (pair[0] == BIM_STK_BlueMaxScaleInfo)
+    stkInfo->metaData.BlueMaxScaleInfo = pair[1];
+
+  if (pair[0] == BIM_STK_OverlayPlaneColor)
+    stkInfo->metaData.OverlayPlaneColor = pair[1];
+*/
+
+
+
   bim::int32 N = stkInfo->metaData.N;
 
-  /*
+
   std::vector<unsigned char> buffer;
 
-  // only teh first page value can be red here
+  // only the first page value can be red here
   if (pair[0] == BIM_STK_StagePosition) {
     int buf_size = N*4*sizeof(bim::uint32);
     if (buffer.size() < buf_size) buffer.resize(buf_size);
@@ -795,7 +953,7 @@ void stkParseIDEntry(bim::int32 *pair, bim::int32 offset, TiffParams *tiffParams
       } // for i
     } // if read tiff buf
   } // BIM_STK_CameraChipOffset
-  */
+
   
   if (pair[0] == BIM_STK_AbsoluteZ)
     ifd->readBufNoAlloc( (toff_t) pair[1], (bim::uint64) N*2*sizeof( bim::int32 ), TAG_LONG, (uchar *) stkInfo->metaData.AbsoluteZ);
@@ -1203,7 +1361,7 @@ bim::uint append_metadata_stk (FormatHandle *fmtHndl, TagMap *hash ) {
   appendValues( stk->CameraChipOffsetX, stk->N, bim::CAMERA_SENSOR_X, hash );
   appendValues( stk->CameraChipOffsetY, stk->N, bim::CAMERA_SENSOR_Y, hash );
 
-  if (info->number_z>1 && stk->AbsoluteZValid && stk->AbsoluteZValid[0]) 
+  if (info->number_z>0 && stk->AbsoluteZValid && stk->AbsoluteZValid[0]) 
     appendValues( stk->AbsoluteZ, stk->N, bim::STAGE_POSITION_Z, hash );
 
   //------------------------------------------------------------
@@ -1241,6 +1399,7 @@ bim::uint append_metadata_stk (FormatHandle *fmtHndl, TagMap *hash ) {
   hash->append_tag( bim::CUSTOM_TAGS_PREFIX+"grayMax", xstring::xprintf("%d/%d", stk->grayMax[0], stk->grayMax[1]) );
   if (stk->grayUnitName) hash->append_tag( bim::CUSTOM_TAGS_PREFIX+"grayUnitName", stk->grayUnitName );
   hash->append_tag( bim::CUSTOM_TAGS_PREFIX+"StandardLUT", (const int) stk->StandardLUT );
+  if (stk->UIC1wavelength > 0) hash->append_tag(bim::CUSTOM_TAGS_PREFIX + "Wavelength", (const int)stk->UIC1wavelength);
 
   hash->append_tag( bim::CUSTOM_TAGS_PREFIX+"AutoScaleLoInfo", xstring::xprintf("%d/%d", stk->AutoScaleLoInfo[0], stk->AutoScaleLoInfo[1]) );
   hash->append_tag( bim::CUSTOM_TAGS_PREFIX+"AutoScaleHiInfo", xstring::xprintf("%d/%d", stk->AutoScaleHiInfo[0], stk->AutoScaleHiInfo[1]) );
@@ -1249,6 +1408,43 @@ bim::uint append_metadata_stk (FormatHandle *fmtHndl, TagMap *hash ) {
   hash->append_tag( bim::CUSTOM_TAGS_PREFIX+"GammaGreen", (const int) stk->GammaGreen );
   hash->append_tag( bim::CUSTOM_TAGS_PREFIX+"GammaBlue", (const int) stk->GammaBlue );
   
+
+  hash->append_tag( bim::CUSTOM_TAGS_PREFIX+"CameraBin", xstring::xprintf("%dx%d", stk->CameraBin[0], stk->CameraBin[1]) );
+  hash->append_tag( bim::CUSTOM_TAGS_PREFIX+"NewLUT", (const int) stk->NewLUT );
+/*
+  hash->append_tag( bim::CUSTOM_TAGS_PREFIX+"ImagePropertyEx", (const int) stk->ImagePropertyEx );
+  hash->append_tag( bim::CUSTOM_TAGS_PREFIX+"UserLutTable", (const int) stk->UserLutTable );
+  hash->append_tag( bim::CUSTOM_TAGS_PREFIX+"RedAutoScaleInfo", (const int) stk->RedAutoScaleInfo );
+  hash->append_tag( bim::CUSTOM_TAGS_PREFIX+"RedAutoScaleLoInfo", (const int) stk->RedAutoScaleLoInfo );
+  hash->append_tag( bim::CUSTOM_TAGS_PREFIX+"RedAutoScaleHiInfo", (const int) stk->RedAutoScaleHiInfo );
+  hash->append_tag( bim::CUSTOM_TAGS_PREFIX+"RedMinScaleInfo", (const int) stk->RedMinScaleInfo );
+  hash->append_tag( bim::CUSTOM_TAGS_PREFIX+"RedMaxScaleInfo", (const int) stk->RedMaxScaleInfo );
+  hash->append_tag( bim::CUSTOM_TAGS_PREFIX+"GreenAutoScaleInfo", (const int) stk->GreenAutoScaleInfo );
+  hash->append_tag( bim::CUSTOM_TAGS_PREFIX+"GreenAutoScaleLoInfo", (const int) stk->GreenAutoScaleLoInfo );
+  hash->append_tag( bim::CUSTOM_TAGS_PREFIX+"GreenAutoScaleHiInfo", (const int) stk->GreenAutoScaleHiInfo );
+  hash->append_tag( bim::CUSTOM_TAGS_PREFIX+"GreenMinScaleInfo", (const int) stk->GreenMinScaleInfo );
+  hash->append_tag( bim::CUSTOM_TAGS_PREFIX+"GreenMaxScaleInfo", (const int) stk->GreenMaxScaleInfo );
+  hash->append_tag( bim::CUSTOM_TAGS_PREFIX+"BlueAutoScaleInfo", (const int) stk->BlueAutoScaleInfo );
+  hash->append_tag( bim::CUSTOM_TAGS_PREFIX+"BlueAutoScaleLoInfo", (const int) stk->BlueAutoScaleLoInfo );
+  hash->append_tag( bim::CUSTOM_TAGS_PREFIX+"BlueAutoScaleHiInfo", (const int) stk->BlueAutoScaleHiInfo );
+  hash->append_tag( bim::CUSTOM_TAGS_PREFIX+"BlueMinScaleInfo", (const int) stk->BlueMinScaleInfo );
+  hash->append_tag( bim::CUSTOM_TAGS_PREFIX+"BlueMaxScaleInfo", (const int) stk->BlueMaxScaleInfo );
+  hash->append_tag( bim::CUSTOM_TAGS_PREFIX+"OverlayPlaneColor", (const int) stk->OverlayPlaneColor );
+*/
+
+  for (size_t vIdx = 0; vIdx < stk->PlaneProperties.size(); ++vIdx) {
+    std::string key = std::string("Channel #0 ") + stk->PlaneProperties[vIdx].Key;
+    std::string value;
+    if (stk->PlaneProperties[vIdx].type == 1) {
+      std::ostringstream tmpstr;
+      tmpstr << (double)stk->PlaneProperties[vIdx].rational.num / (double)stk->PlaneProperties[vIdx].rational.den;
+      value = tmpstr.str();
+    } else {
+      value = stk->PlaneProperties[vIdx].Value;
+    }
+    hash->append_tag(bim::CUSTOM_TAGS_PREFIX + key, value);
+  }
+
   /*
   // begin: Used internally by MetaMorph
   bim::int32 OverlayMask;

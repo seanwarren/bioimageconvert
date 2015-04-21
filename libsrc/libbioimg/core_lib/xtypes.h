@@ -219,6 +219,17 @@ unsigned int minix(const T *a, unsigned int size) {
 //------------------------------------------------------------------------------
 
 template <typename T>
+inline T highest() {
+    return std::numeric_limits<T>::max();
+}
+
+template <typename T>
+inline T lowest() {
+    return std::numeric_limits<T>::is_integer ? std::numeric_limits<T>::min() : -std::numeric_limits<T>::max();
+    //return std::numeric_limits<T>::lowest(); // c++11 version
+}
+
+template <typename T>
 inline T trim(T v, T min_v=std::numeric_limits<T>::is_integer?std::numeric_limits<T>::min():-std::numeric_limits<T>::max(), T max_v=std::numeric_limits<T>::max()) {
   if (v < min_v) return min_v;
   if (v > max_v) return max_v;
@@ -231,23 +242,6 @@ inline To trim( Ti val, To min=std::numeric_limits<To>::is_integer?std::numeric_
   if (val > max) return max;
   return (To) val;
 }
-
-/*
-// c++11 version
-template <typename T>
-inline T trim(T v, T min_v=std::numeric_limits<T>::lowest(), T max_v=std::numeric_limits<T>::max()) {
-  if (v < min_v) return min_v;
-  if (v > max_v) return max_v;
-  return v;
-}
-
-template <typename To, typename Ti>
-inline To trim( Ti val, To min=std::numeric_limits<To>::lowest(), To max=std::numeric_limits<To>::max() ) {
-  if (val < min) return min;
-  if (val > max) return max;
-  return (To) val;
-}
-*/
 
 //------------------------------------------------------------------------------
 // little math

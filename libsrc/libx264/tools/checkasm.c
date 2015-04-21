@@ -5,7 +5,7 @@
  *
  * Authors: Loren Merritt <lorenm@u.washington.edu>
  *          Laurent Aimar <fenrir@via.ecp.fr>
- *          Jason Garrett-Glaser <darkshikari@gmail.com>
+ *          Fiona Glaser <fiona@x264.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -90,11 +90,17 @@ static inline uint32_t read_time(void)
 {
     uint32_t a = 0;
 #if HAVE_X86_INLINE_ASM
-    asm volatile( "rdtsc" :"=a"(a) ::"edx" );
+    asm volatile( "lfence \n"
+                  "rdtsc  \n"
+                  : "=a"(a) :: "edx", "memory" );
 #elif ARCH_PPC
-    asm volatile( "mftb %0" : "=r" (a) );
+    asm volatile( "mftb %0" : "=r"(a) :: "memory" );
 #elif ARCH_ARM     // ARMv7 only
-    asm volatile( "mrc p15, 0, %0, c9, c13, 0" : "=r"(a) );
+    asm volatile( "mrc p15, 0, %0, c9, c13, 0" : "=r"(a) :: "memory" );
+#elif ARCH_AARCH64
+    uint64_t b = 0;
+    asm volatile( "mrs %0, pmccntr_el0" : "=r"(b) :: "memory" );
+    a = b;
 #endif
     return a;
 }
@@ -165,12 +171,12 @@ static void print_bench(void)
                 continue;
             printf( "%s_%s%s: %"PRId64"\n", benchs[i].name,
 #if HAVE_MMX
-                    b->cpu&X264_CPU_AVX2 && b->cpu&X264_CPU_FMA3 ? "avx2_fma3" :
                     b->cpu&X264_CPU_AVX2 ? "avx2" :
                     b->cpu&X264_CPU_FMA3 ? "fma3" :
                     b->cpu&X264_CPU_FMA4 ? "fma4" :
                     b->cpu&X264_CPU_XOP ? "xop" :
                     b->cpu&X264_CPU_AVX ? "avx" :
+                    b->cpu&X264_CPU_SSE42 ? "sse42" :
                     b->cpu&X264_CPU_SSE4 ? "sse4" :
                     b->cpu&X264_CPU_SSSE3 ? "ssse3" :
                     b->cpu&X264_CPU_SSE3 ? "sse3" :
@@ -184,6 +190,9 @@ static void print_bench(void)
 #elif ARCH_ARM
                     b->cpu&X264_CPU_NEON ? "neon" :
                     b->cpu&X264_CPU_ARMV6 ? "armv6" :
+#elif ARCH_AARCH64
+                    b->cpu&X264_CPU_NEON ? "neon" :
+                    b->cpu&X264_CPU_ARMV8 ? "armv8" :
 #endif
                     "c",
 #if HAVE_MMX
@@ -728,11 +737,14 @@ static int check_pixel( int cpu_ref, int cpu_new )
             fprintf( stderr, "ssim: %.7f != %.7f [FAILED]\n", res_c, res_a );
         }
         set_func_name( "ssim_core" );
-        call_c2( pixel_c.ssim_4x4x2_core,   pbuf1+2, (intptr_t)32, pbuf2+2, (intptr_t)32, sums );
-        call_a2( pixel_asm.ssim_4x4x2_core, pbuf1+2, (intptr_t)32, pbuf2+2, (intptr_t)32, sums );
+        call_c( pixel_c.ssim_4x4x2_core,   pbuf1+2, (intptr_t)32, pbuf2+2, (intptr_t)32, sums );
+        call_a( pixel_asm.ssim_4x4x2_core, pbuf1+2, (intptr_t)32, pbuf2+2, (intptr_t)32, sums );
         set_func_name( "ssim_end" );
         call_c2( pixel_c.ssim_end4,   sums, sums, 4 );
         call_a2( pixel_asm.ssim_end4, sums, sums, 4 );
+        /* check incorrect assumptions that 32-bit ints are zero-extended to 64-bit */
+        call_c1( pixel_c.ssim_end4,   sums, sums, 3 );
+        call_a1( pixel_asm.ssim_end4, sums, sums, 3 );
         report( "ssim :" );
     }
 
@@ -1097,6 +1109,7 @@ static int check_dct( int cpu_ref, int cpu_new )
         TEST_ZIGZAG_SCAN( scan_8x8, level1, level2, dct8[0], 8 );
         TEST_ZIGZAG_SCAN( scan_4x4, level1, level2, dct1[0], 4 );
         TEST_ZIGZAG_SUB( sub_4x4, level1, level2, 16 );
+        TEST_ZIGZAG_SUB( sub_8x8, level1, level2, 64 );
         TEST_ZIGZAG_SUBAC( sub_4x4ac, level1, level2 );
         report( interlace ? "zigzag_field :" : "zigzag_frame :" );
     }
@@ -1487,7 +1500,7 @@ static int check_mc( int cpu_ref, int cpu_new )
     if( mc_a.plane_copy_deinterleave_v210 != mc_ref.plane_copy_deinterleave_v210 )
     {
         set_func_name( "plane_copy_deinterleave_v210" );
-        used_asm = 1;
+        ok = 1; used_asm = 1;
         for( int i = 0; i < sizeof(plane_specs)/sizeof(*plane_specs); i++ )
         {
             int w = (plane_specs[i].w + 1) >> 1;
@@ -1508,8 +1521,8 @@ static int check_mc( int cpu_ref, int cpu_new )
                     break;
                 }
         }
+        report( "v210 :" );
     }
-    report( "v210 :" );
 
     if( mc_a.hpel_filter != mc_ref.hpel_filter )
     {
@@ -2302,12 +2315,16 @@ static int check_intra( int cpu_ref, int cpu_new )
             {\
                 fprintf( stderr, #name "[%d] :  [FAILED]\n", dir );\
                 ok = 0;\
-                for( int k = -1; k < 16; k++ )\
-                    printf( "%2x ", edge[16+k] );\
-                printf( "\n" );\
+                if( ip_c.name == (void *)ip_c.predict_8x8 )\
+                {\
+                    for( int k = -1; k < 16; k++ )\
+                        printf( "%2x ", edge[16+k] );\
+                    printf( "\n" );\
+                }\
                 for( int j = 0; j < h; j++ )\
                 {\
-                    printf( "%2x ", edge[14-j] );\
+                    if( ip_c.name == (void *)ip_c.predict_8x8 )\
+                        printf( "%2x ", edge[14-j] );\
                     for( int k = 0; k < w; k++ )\
                         printf( "%2x ", pbuf4[48+k+j*FDEC_STRIDE] );\
                     printf( "\n" );\
@@ -2315,7 +2332,8 @@ static int check_intra( int cpu_ref, int cpu_new )
                 printf( "\n" );\
                 for( int j = 0; j < h; j++ )\
                 {\
-                    printf( "   " );\
+                    if( ip_c.name == (void *)ip_c.predict_8x8 )\
+                        printf( "   " );\
                     for( int k = 0; k < w; k++ )\
                         printf( "%2x ", pbuf3[48+k+j*FDEC_STRIDE] );\
                     printf( "\n" );\
@@ -2418,6 +2436,8 @@ static void run_cabac_terminal_##cpu( x264_t *h, uint8_t *dst )\
 }
 DECL_CABAC(c)
 #if HAVE_MMX
+DECL_CABAC(asm)
+#elif defined(ARCH_AARCH64)
 DECL_CABAC(asm)
 #else
 #define run_cabac_decision_asm run_cabac_decision_c
@@ -2624,8 +2644,9 @@ static int check_all_flags( void )
 {
     int ret = 0;
     int cpu0 = 0, cpu1 = 0;
+    uint32_t cpu_detect = x264_cpu_detect();
 #if HAVE_MMX
-    if( x264_cpu_detect() & X264_CPU_MMX2 )
+    if( cpu_detect & X264_CPU_MMX2 )
     {
         ret |= add_flags( &cpu0, &cpu1, X264_CPU_MMX | X264_CPU_MMX2, "MMX" );
         ret |= add_flags( &cpu0, &cpu1, X264_CPU_CACHELINE_64, "MMX Cache64" );
@@ -2634,17 +2655,17 @@ static int check_all_flags( void )
         ret |= add_flags( &cpu0, &cpu1, X264_CPU_CACHELINE_32, "MMX Cache32" );
         cpu1 &= ~X264_CPU_CACHELINE_32;
 #endif
-        if( x264_cpu_detect() & X264_CPU_LZCNT )
+        if( cpu_detect & X264_CPU_LZCNT )
         {
-            ret |= add_flags( &cpu0, &cpu1, X264_CPU_LZCNT, "MMX_LZCNT" );
+            ret |= add_flags( &cpu0, &cpu1, X264_CPU_LZCNT, "MMX LZCNT" );
             cpu1 &= ~X264_CPU_LZCNT;
         }
         ret |= add_flags( &cpu0, &cpu1, X264_CPU_SLOW_CTZ, "MMX SlowCTZ" );
         cpu1 &= ~X264_CPU_SLOW_CTZ;
     }
-    if( x264_cpu_detect() & X264_CPU_SSE )
+    if( cpu_detect & X264_CPU_SSE )
         ret |= add_flags( &cpu0, &cpu1, X264_CPU_SSE, "SSE" );
-    if( x264_cpu_detect() & X264_CPU_SSE2 )
+    if( cpu_detect & X264_CPU_SSE2 )
     {
         ret |= add_flags( &cpu0, &cpu1, X264_CPU_SSE2 | X264_CPU_SSE2_IS_SLOW, "SSE2Slow" );
         ret |= add_flags( &cpu0, &cpu1, X264_CPU_SSE2_IS_FAST, "SSE2Fast" );
@@ -2654,18 +2675,18 @@ static int check_all_flags( void )
         cpu1 &= ~X264_CPU_SLOW_SHUFFLE;
         ret |= add_flags( &cpu0, &cpu1, X264_CPU_SLOW_CTZ, "SSE2 SlowCTZ" );
         cpu1 &= ~X264_CPU_SLOW_CTZ;
+        if( cpu_detect & X264_CPU_LZCNT )
+        {
+            ret |= add_flags( &cpu0, &cpu1, X264_CPU_LZCNT, "SSE2 LZCNT" );
+            cpu1 &= ~X264_CPU_LZCNT;
+        }
     }
-    if( x264_cpu_detect() & X264_CPU_LZCNT )
-    {
-        ret |= add_flags( &cpu0, &cpu1, X264_CPU_LZCNT, "SSE_LZCNT" );
-        cpu1 &= ~X264_CPU_LZCNT;
-    }
-    if( x264_cpu_detect() & X264_CPU_SSE3 )
+    if( cpu_detect & X264_CPU_SSE3 )
     {
         ret |= add_flags( &cpu0, &cpu1, X264_CPU_SSE3 | X264_CPU_CACHELINE_64, "SSE3" );
         cpu1 &= ~X264_CPU_CACHELINE_64;
     }
-    if( x264_cpu_detect() & X264_CPU_SSSE3 )
+    if( cpu_detect & X264_CPU_SSSE3 )
     {
         ret |= add_flags( &cpu0, &cpu1, X264_CPU_SSSE3, "SSSE3" );
         ret |= add_flags( &cpu0, &cpu1, X264_CPU_CACHELINE_64, "SSSE3 Cache64" );
@@ -2678,55 +2699,67 @@ static int check_all_flags( void )
         ret |= add_flags( &cpu0, &cpu1, X264_CPU_CACHELINE_64, "SSSE3 Cache64 SlowAtom" );
         cpu1 &= ~X264_CPU_CACHELINE_64;
         cpu1 &= ~X264_CPU_SLOW_ATOM;
+        if( cpu_detect & X264_CPU_LZCNT )
+        {
+            ret |= add_flags( &cpu0, &cpu1, X264_CPU_LZCNT, "SSSE3 LZCNT" );
+            cpu1 &= ~X264_CPU_LZCNT;
+        }
     }
-    if( x264_cpu_detect() & X264_CPU_SSE4 )
+    if( cpu_detect & X264_CPU_SSE4 )
         ret |= add_flags( &cpu0, &cpu1, X264_CPU_SSE4, "SSE4" );
-    if( x264_cpu_detect() & X264_CPU_AVX )
+    if( cpu_detect & X264_CPU_SSE42 )
+        ret |= add_flags( &cpu0, &cpu1, X264_CPU_SSE42, "SSE4.2" );
+    if( cpu_detect & X264_CPU_AVX )
         ret |= add_flags( &cpu0, &cpu1, X264_CPU_AVX, "AVX" );
-    if( x264_cpu_detect() & X264_CPU_XOP )
+    if( cpu_detect & X264_CPU_XOP )
         ret |= add_flags( &cpu0, &cpu1, X264_CPU_XOP, "XOP" );
-    if( x264_cpu_detect() & X264_CPU_FMA4 )
+    if( cpu_detect & X264_CPU_FMA4 )
     {
         ret |= add_flags( &cpu0, &cpu1, X264_CPU_FMA4, "FMA4" );
         cpu1 &= ~X264_CPU_FMA4;
     }
-    if( x264_cpu_detect() & X264_CPU_BMI1 )
-    {
-        ret |= add_flags( &cpu0, &cpu1, X264_CPU_BMI1, "BMI1" );
-        cpu1 &= ~X264_CPU_BMI1;
-    }
-    if( x264_cpu_detect() & X264_CPU_AVX2 )
-    {
-        ret |= add_flags( &cpu0, &cpu1, X264_CPU_AVX2, "AVX2" );
-        if( x264_cpu_detect() & X264_CPU_LZCNT )
-        {
-            ret |= add_flags( &cpu0, &cpu1, X264_CPU_LZCNT, "AVX2_LZCNT" );
-            cpu1 &= ~X264_CPU_LZCNT;
-        }
-    }
-    if( x264_cpu_detect() & X264_CPU_BMI2 )
-    {
-        ret |= add_flags( &cpu0, &cpu1, X264_CPU_BMI1|X264_CPU_BMI2, "BMI2" );
-        cpu1 &= ~(X264_CPU_BMI1|X264_CPU_BMI2);
-    }
-    if( x264_cpu_detect() & X264_CPU_FMA3 )
+    if( cpu_detect & X264_CPU_FMA3 )
     {
         ret |= add_flags( &cpu0, &cpu1, X264_CPU_FMA3, "FMA3" );
         cpu1 &= ~X264_CPU_FMA3;
     }
+    if( cpu_detect & X264_CPU_AVX2 )
+    {
+        ret |= add_flags( &cpu0, &cpu1, X264_CPU_FMA3 | X264_CPU_AVX2, "AVX2" );
+        if( cpu_detect & X264_CPU_LZCNT )
+        {
+            ret |= add_flags( &cpu0, &cpu1, X264_CPU_LZCNT, "AVX2 LZCNT" );
+            cpu1 &= ~X264_CPU_LZCNT;
+        }
+    }
+    if( cpu_detect & X264_CPU_BMI1 )
+    {
+        ret |= add_flags( &cpu0, &cpu1, X264_CPU_BMI1, "BMI1" );
+        cpu1 &= ~X264_CPU_BMI1;
+    }
+    if( cpu_detect & X264_CPU_BMI2 )
+    {
+        ret |= add_flags( &cpu0, &cpu1, X264_CPU_BMI1|X264_CPU_BMI2, "BMI2" );
+        cpu1 &= ~(X264_CPU_BMI1|X264_CPU_BMI2);
+    }
 #elif ARCH_PPC
-    if( x264_cpu_detect() & X264_CPU_ALTIVEC )
+    if( cpu_detect & X264_CPU_ALTIVEC )
     {
         fprintf( stderr, "x264: ALTIVEC against C\n" );
         ret = check_all_funcs( 0, X264_CPU_ALTIVEC );
     }
 #elif ARCH_ARM
-    if( x264_cpu_detect() & X264_CPU_ARMV6 )
+    if( cpu_detect & X264_CPU_ARMV6 )
         ret |= add_flags( &cpu0, &cpu1, X264_CPU_ARMV6, "ARMv6" );
-    if( x264_cpu_detect() & X264_CPU_NEON )
+    if( cpu_detect & X264_CPU_NEON )
         ret |= add_flags( &cpu0, &cpu1, X264_CPU_NEON, "NEON" );
-    if( x264_cpu_detect() & X264_CPU_FAST_NEON_MRC )
+    if( cpu_detect & X264_CPU_FAST_NEON_MRC )
         ret |= add_flags( &cpu0, &cpu1, X264_CPU_FAST_NEON_MRC, "Fast NEON MRC" );
+#elif ARCH_AARCH64
+    if( cpu_detect & X264_CPU_ARMV8 )
+        ret |= add_flags( &cpu0, &cpu1, X264_CPU_ARMV8, "ARMv8" );
+    if( cpu_detect & X264_CPU_NEON )
+        ret |= add_flags( &cpu0, &cpu1, X264_CPU_NEON, "NEON" );
 #endif
     return ret;
 }
@@ -2737,7 +2770,7 @@ int main(int argc, char *argv[])
 
     if( argc > 1 && !strncmp( argv[1], "--bench", 7 ) )
     {
-#if !ARCH_X86 && !ARCH_X86_64 && !ARCH_PPC && !ARCH_ARM
+#if !ARCH_X86 && !ARCH_X86_64 && !ARCH_PPC && !ARCH_ARM && !ARCH_AARCH64
         fprintf( stderr, "no --bench for your cpu until you port rdtsc\n" );
         return 1;
 #endif

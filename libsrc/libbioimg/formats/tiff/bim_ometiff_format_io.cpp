@@ -19,16 +19,24 @@
 #include <fstream>
 
 #include <Jzon.h>
+#include <pugixml.hpp>
 
 #include <xstring.h>
 #include <tag_map.h>
 #include <bim_metatags.h>
+#include <bim_image.h>
 
 #include "xtiffio.h"
 #include "bim_tiny_tiff.h"
 #include "bim_tiff_format.h"
 
 unsigned int tiffGetNumberOfPages( bim::TiffParams *par );
+int tiff_update_subifd_next_pointer(TIFF* tif, bim::uint64 dir_offset, bim::uint64 to_offset);
+void detectTiffPyramid(bim::TiffParams *tiffParams);
+int read_tiff_image_level(bim::FormatHandle *fmtHndl, bim::TiffParams *tifParams, bim::uint page, bim::uint level);
+int read_tiff_image_tile(bim::FormatHandle *fmtHndl, bim::TiffParams *tifParams, bim::uint page, bim::uint64 xid, bim::uint64 yid, bim::uint level);
+void pyramid_append_metadata(bim::FormatHandle *fmtHndl, bim::TagMap *hash);
+
 
 //----------------------------------------------------------------------------
 // OME-TIFF MISC FUNCTIONS
@@ -269,6 +277,47 @@ bim::uint64 computeTiffDirectoryNoChannels( bim::FormatHandle *fmtHndl, int page
   return dirNum;
 }
 
+bool ometiff_read_striped(TIFF *tif, bim::ImageBitmap *img, bim::FormatHandle *fmtHndl, const unsigned int &sample) {
+    bim::uint lineSize = getLineSizeInBytes(img);
+    bim::uchar *p = (bim::uchar *) img->bits[sample];
+    for (register bim::uint64 y = 0; y < img->i.height; y++) {
+        xprogress(fmtHndl, y*(sample + 1), img->i.height*img->i.samples, "Reading OME-TIFF");
+        if (xtestAbort(fmtHndl) == 1) return false;
+        if (TIFFReadScanline(tif, p, y, 0) < 0) return false;
+        p += lineSize;
+    } // for y
+    return true;
+}
+
+bool ometiff_read_tiled(TIFF *tif, bim::ImageBitmap *img, bim::FormatHandle *fmtHndl, const int &sample) {
+    if (!tif || !img) return false;
+
+    bim::uint lineSize = getLineSizeInBytes(img);
+    bim::uint bpp = ceil((double)img->i.depth / 8.0);
+    bim::uint32 columns, rows;
+    TIFFGetField(tif, TIFFTAG_TILEWIDTH, &columns);
+    TIFFGetField(tif, TIFFTAG_TILELENGTH, &rows);
+
+    std::vector<bim::uchar> buffer(TIFFTileSize(tif));
+    bim::uchar *buf = &buffer[0];
+
+    for (bim::uint y = 0; y<img->i.height; y += rows) {
+        xprogress(fmtHndl, y, img->i.height, "Reading TIFF");
+        if (xtestAbort(fmtHndl) == 1) return false;
+
+        bim::uint tile_height = (img->i.height - y >= rows) ? rows : (bim::uint) img->i.height - y;
+        for (bim::uint x = 0; x<(bim::uint)img->i.width; x += columns) {
+            bim::uint tile_width = (img->i.width - x < columns) ? (bim::uint) img->i.width - x : (bim::uint) columns;
+            if (TIFFReadTile(tif, buf, x, y, 0, 0) < 0) return false;
+            for (bim::uint yi = 0; yi < tile_height; yi++) {
+                bim::uchar *p = (bim::uchar *) img->bits[sample] + (lineSize * (y + yi));
+                _TIFFmemcpy(p + (x*bpp), buf + (yi*columns*bpp), tile_width*bpp);
+            }
+        } // for x
+    } // for y
+    return true;
+}
+
 
 bim::uint omeTiffReadPlane( bim::FormatHandle *fmtHndl, bim::TiffParams *par, int plane ) {
   if (!par) return 1;
@@ -301,8 +350,6 @@ bim::uint omeTiffReadPlane( bim::FormatHandle *fmtHndl, bim::TiffParams *par, in
   TIFFGetField(tif, TIFFTAG_BITSPERSAMPLE, &bitspersample);
   TIFFGetField(tif, TIFFTAG_SAMPLEFORMAT, &sampleformat);
 
-  if( TIFFIsTiled(tif) ) return 1;
-
   if (samplesperpixel > 1) {
     tiff_page = computeTiffDirectoryNoChannels( fmtHndl, fmtHndl->pageNumber, 0 );
     TIFFSetDirectory( tif, (bim::uint16) tiff_page );
@@ -310,50 +357,216 @@ bim::uint omeTiffReadPlane( bim::FormatHandle *fmtHndl, bim::TiffParams *par, in
   }
 
   if (img->i.depth != bitspersample || img->i.width != width || img->i.height != height) {
-    //info->samples = ome->ch;
-    info->depth = bitspersample;
-    info->width = width;
-    info->height = height;
-    info->pixelType = bim::FMT_UNSIGNED;
-    if (sampleformat == SAMPLEFORMAT_INT)
-      info->pixelType = bim::FMT_SIGNED;
-    else
-    if (sampleformat == SAMPLEFORMAT_IEEEFP)
-      info->pixelType = bim::FMT_FLOAT;
+      //info->samples = ome->ch;
+      info->depth = bitspersample;
+      info->width = width;
+      info->height = height;
+      info->pixelType = bim::FMT_UNSIGNED;
+      if (sampleformat == SAMPLEFORMAT_INT)
+          info->pixelType = bim::FMT_SIGNED;
+      else if (sampleformat == SAMPLEFORMAT_IEEEFP)
+          info->pixelType = bim::FMT_FLOAT;
 
-    if ( allocImg( fmtHndl, info, img) != 0 ) return 1;
+      if (allocImg(fmtHndl, info, img) != 0) return 1;
   }
 
 
   //--------------------------------------------------------------------
   // read data
   //--------------------------------------------------------------------
-  bim::uint lineSize = getLineSizeInBytes( img );
-  for (unsigned int sample=0; sample<(unsigned int)info->samples; ++sample) {
-
-    tiff_page = computeTiffDirectory( fmtHndl, fmtHndl->pageNumber, sample );
-    TIFFSetDirectory( tif, (bim::uint16) tiff_page );
-
-    // small safeguard
-    TIFFGetField(tif, TIFFTAG_IMAGEWIDTH, &width);
-    TIFFGetField(tif, TIFFTAG_IMAGELENGTH, &height);
-    TIFFGetField(tif, TIFFTAG_BITSPERSAMPLE, &bitspersample);
-    if (img->i.depth != bitspersample || img->i.width != width || img->i.height != height) continue;
-
-    bim::uchar *p = (bim::uchar *) img->bits[ sample ];
-    register bim::uint y = 0;
-
-    for(y=0; y<img->i.height; y++) {
-      xprogress( fmtHndl, y*(sample+1), img->i.height*img->i.samples, "Reading OME-TIFF" );
-      if ( xtestAbort( fmtHndl ) == 1) break;  
-      TIFFReadScanline(tif, p, y, 0);
-      p += lineSize;
-    } // for y
+  for (unsigned int sample = 0; sample < (unsigned int)info->samples; ++sample) {
+      tiff_page = computeTiffDirectory(fmtHndl, fmtHndl->pageNumber, sample);
+      TIFFSetDirectory(tif, (bim::uint16) tiff_page);
+      if (!TIFFIsTiled(tif)) {
+          if (!ometiff_read_striped(tif, img, fmtHndl, sample)) return 1;
+      } else {
+          if (!ometiff_read_tiled(tif, img, fmtHndl, sample)) return 1;
+      }
   }  // for sample
 
   //TIFFSetDirectory(tif, fmtHndl->pageNumber);
   return 0;
 }
+
+
+//--------------------------------------------------------------------------------------------
+// Levels and Tiles functions
+//--------------------------------------------------------------------------------------------
+
+int ometiff_read_image_level(bim::FormatHandle *fmtHndl, bim::TiffParams *par, bim::uint page, bim::uint level) {
+    if (!par) return 1;
+    if (!par->tiff) return 1;
+    if (par->subType != bim::tstOmeTiff && par->subType != bim::tstOmeBigTiff) return 1;
+    TIFF *tif = par->tiff;
+    if (!tif) return 1;
+
+    bim::ImageInfo *info = &par->info;
+    bim::OMETiffInfo *ome = &par->omeTiffInfo;
+    bim::PyramidInfo *pyramid = &par->pyramid;
+    bim::ImageBitmap *img = fmtHndl->image;
+
+    
+    //-------------------------------------------------------------------- 
+    // detect levels
+    //-------------------------------------------------------------------- 
+
+    bim::uint64 tiff_page = computeTiffDirectory(fmtHndl, fmtHndl->pageNumber, 0);
+    TIFFSetDirectory(tif, (bim::uint16) tiff_page);
+    detectTiffPyramid(par);
+    if (pyramid->number_levels > 0 && pyramid->number_levels <= level) return 1;
+    bim::uint64 subdiroffset = pyramid->directory_offsets[level];
+    if (TIFFSetSubDirectory(tif, subdiroffset) == 0) return 1;
+
+    //--------------------------------------------------------------------  
+    // read image parameters
+    //--------------------------------------------------------------------
+
+    bim::uint16 bitspersample = 1;
+    bim::uint32 height = 0;
+    bim::uint32 width = 0;
+    bim::uint16 samplesperpixel = 1;
+    bim::uint16 sampleformat = 1;
+
+    TIFFGetField(tif, TIFFTAG_IMAGEWIDTH, &width);
+    TIFFGetField(tif, TIFFTAG_IMAGELENGTH, &height);
+    TIFFGetField(tif, TIFFTAG_SAMPLESPERPIXEL, &samplesperpixel);
+    TIFFGetField(tif, TIFFTAG_BITSPERSAMPLE, &bitspersample);
+    TIFFGetField(tif, TIFFTAG_SAMPLEFORMAT, &sampleformat);
+
+    // fix for ome-tiff files with all channels within one image
+    if (samplesperpixel > 1) {
+        tiff_page = computeTiffDirectoryNoChannels(fmtHndl, fmtHndl->pageNumber, 0);
+        TIFFSetDirectory(tif, (bim::uint16) tiff_page);
+        detectTiffPyramid(par);
+        return read_tiff_image_level(fmtHndl, par, page, level);
+    }
+
+    if (img->i.depth != bitspersample || img->i.width != width || img->i.height != height) {
+        //info->samples = ome->channels;
+        info->depth = bitspersample;
+        info->width = width;
+        info->height = height;
+        info->pixelType = bim::FMT_UNSIGNED;
+        if (sampleformat == SAMPLEFORMAT_INT)
+            info->pixelType = bim::FMT_SIGNED;
+        else if (sampleformat == SAMPLEFORMAT_IEEEFP)
+            info->pixelType = bim::FMT_FLOAT;
+
+        if (allocImg(fmtHndl, info, img) != 0) return 1;
+    }
+
+
+    //--------------------------------------------------------------------
+    // read data
+    //--------------------------------------------------------------------
+    for (unsigned int sample = 0; sample < (unsigned int)info->samples; ++sample) {
+        tiff_page = computeTiffDirectory(fmtHndl, fmtHndl->pageNumber, sample);
+        if (TIFFSetDirectory(tif, (bim::uint16) tiff_page) == 0) return 1;
+        detectTiffPyramid(par);
+        if (pyramid->number_levels > 0 && pyramid->number_levels <= level) return 1;
+        bim::uint64 subdiroffset = pyramid->directory_offsets[level];
+        if (TIFFSetSubDirectory(tif, subdiroffset) == 0) return 1;
+
+        if (!TIFFIsTiled(tif)) {
+            if (!ometiff_read_striped(tif, img, fmtHndl, sample)) return 1;
+        } else {
+            if (!ometiff_read_tiled(tif, img, fmtHndl, sample)) return 1;
+        }
+    }  // for sample
+
+    TIFFSetDirectory(tif, tiff_page);
+    return 0;
+}
+
+int ometiff_read_image_tile(bim::FormatHandle *fmtHndl, bim::TiffParams *par, bim::uint page, bim::uint64 xid, bim::uint64 yid, bim::uint level) {
+    if (!par) return 1;
+    if (!par->tiff) return 1;
+    if (par->subType != bim::tstOmeTiff && par->subType != bim::tstOmeBigTiff) return 1;
+    TIFF *tif = par->tiff;
+    if (!tif) return 1;
+
+    bim::OMETiffInfo *ome = &par->omeTiffInfo;
+    bim::PyramidInfo *pyramid = &par->pyramid;
+    bim::ImageBitmap *img = fmtHndl->image;
+
+    if (!TIFFIsTiled(tif)) return 1;
+
+    // set correct level
+    bim::uint64 tiff_page = computeTiffDirectory(fmtHndl, fmtHndl->pageNumber, 0);
+    TIFFSetDirectory(tif, (bim::uint16) tiff_page);
+    detectTiffPyramid(par);
+    if (pyramid->number_levels > 0 && pyramid->number_levels <= level) return 1;
+    bim::uint64 subdiroffset = pyramid->directory_offsets[level];
+    if (TIFFSetSubDirectory(tif, subdiroffset) == 0) return 1;
+
+    // set tile parameters
+    bim::uint32 height = 0;
+    bim::uint32 width = 0;
+    bim::uint16 planarConfig;
+    bim::uint32 columns, rows;
+    bim::uint16 photometric = PHOTOMETRIC_MINISWHITE;
+    bim::uint16 bitspersample = 1;
+    bim::uint16 samplesperpixel = 1;
+
+    TIFFGetField(tif, TIFFTAG_IMAGEWIDTH, &width);
+    TIFFGetField(tif, TIFFTAG_IMAGELENGTH, &height);
+    TIFFGetField(tif, TIFFTAG_TILEWIDTH, &columns);
+    TIFFGetField(tif, TIFFTAG_TILELENGTH, &rows);
+    TIFFGetField(tif, TIFFTAG_PLANARCONFIG, &planarConfig);
+    TIFFGetField(tif, TIFFTAG_PHOTOMETRIC, &photometric);
+    TIFFGetField(tif, TIFFTAG_SAMPLESPERPIXEL, &samplesperpixel);
+    TIFFGetField(tif, TIFFTAG_BITSPERSAMPLE, &bitspersample);
+
+    // fix for ome-tiff files with all channels within one image
+    if (samplesperpixel > 1) {
+        tiff_page = computeTiffDirectoryNoChannels(fmtHndl, fmtHndl->pageNumber, 0);
+        TIFFSetDirectory(tif, (bim::uint16) tiff_page);
+        detectTiffPyramid(par);
+        return read_tiff_image_tile(fmtHndl, par, page, xid, yid, level);
+    }
+
+    // tile sizes may be smaller at the border
+    bim::uint64 x = xid * columns;
+    bim::uint64 y = yid * rows;
+    bim::uint tile_width = (width - x >= columns) ? columns : (bim::uint) width - x;
+    bim::uint tile_height = (height - y >= rows) ? rows : (bim::uint) height - y;
+
+    //img->i.samples = samplesperpixel;
+    img->i.samples = ome->channels;
+    img->i.depth = bitspersample;
+    img->i.width = tile_width;
+    img->i.height = tile_height;
+    bim::uint bpp = ceil((double)img->i.depth / 8.0);
+    if (allocImg(fmtHndl, &img->i, img) != 0) return 1;
+
+    std::vector<bim::uint8> buffer(TIFFTileSize(tif));
+    bim::uint8 *buf = &buffer[0];
+
+    // libtiff tiles will always have columns hight with empty pixels
+    // we need to copy only the usable portion
+    for (bim::uint sample = 0; sample < img->i.samples; sample++) {
+        tiff_page = computeTiffDirectory(fmtHndl, fmtHndl->pageNumber, sample);
+        if (TIFFSetDirectory(tif, (bim::uint16) tiff_page) == 0) return 1;
+        detectTiffPyramid(par);
+        if (pyramid->number_levels > 0 && pyramid->number_levels <= level) return 1;
+        bim::uint64 subdiroffset = pyramid->directory_offsets[level];
+        if (TIFFSetSubDirectory(tif, subdiroffset) == 0) return 1;
+
+        if (TIFFReadTile(tif, buf, x, y, 0, 0) < 0) return 1;
+
+        #pragma omp parallel for default(shared) 
+        for (bim::int64 y = 0; y < tile_height; ++y) {
+            bim::uint8 *from = buf + y*bpp*columns;
+            bim::uint8 *to = ((bim::uint8 *)img->bits[sample]) + y*bpp*tile_width;
+            memcpy(to, from, bpp*tile_width);
+        }
+    }  // for sample
+
+    TIFFSetDirectory(tif, tiff_page);
+    return 0;
+}
+
+
 
 //----------------------------------------------------------------------------
 // Metadata hash
@@ -467,25 +680,56 @@ bim::uint append_metadata_omeTiff(bim::FormatHandle *fmtHndl, bim::TagMap *hash)
 
     // channel names may also be stored in Logical channel in the Image
     // v >=5
-    p = tag_270.find("<Channel ");
-    if (p != std::string::npos)
-    for (unsigned int i = 0; i < (bim::uint)ome->channels; ++i) {
+    // read using pugixml
+    int red_channels = 0;
+    pugi::xml_document doc;
+    if (doc.load_buffer(tag_270.c_str(), tag_270.size())) {
+        try {
+            pugi::xpath_node_set channels = doc.select_nodes("/OME/Image/Pixels/Channel");
+            for (pugi::xpath_node_set::const_iterator it = channels.begin(); it != channels.end(); ++it) {
+                pugi::xpath_node node = *it;
+                bim::xstring medium = node.node().attribute("Name").value();
+                bim::xstring index = node.node().attribute("ID").value();
+                bim::xstring wavelength = node.node().attribute("ExcitationWavelength").value();
 
-        bim::xstring tag = tag_270.section("<Channel", ">", p);
-        if (tag.size() <= 0) continue;
-        tag = ometiff_normalize_xml_spaces(tag);
-        bim::xstring medium = tag.section(" Name=\"", "\"");
-        if (medium.size() <= 0) continue;
-        bim::xstring index = tag.section(" ID=\"Channel:0:", "\"");
-        int chan = index.toInt(i);
-        bim::xstring wavelength = tag.section(" ExcitationWavelength=\"", "\"");
+                // parse index
+                std::vector<bim::xstring> ids = index.split(":");
+                if (ids.size() > 2) {
+                    int chan = ids[2].toInt(0);
+                    if (wavelength.size() > 0)
+                        hash->append_tag(bim::xstring::xprintf(bim::CHANNEL_NAME_TEMPLATE.c_str(), chan), medium + " - " + wavelength + "nm");
+                    else
+                        hash->append_tag(bim::xstring::xprintf(bim::CHANNEL_NAME_TEMPLATE.c_str(), chan), medium);
+                    ++red_channels;
+                }
+            }
+        }
+        catch (pugi::xpath_exception& e) {
+            // do nothing
+        }
+    }
 
-        if (wavelength.size() > 0)
-            hash->append_tag(bim::xstring::xprintf(bim::CHANNEL_NAME_TEMPLATE.c_str(), chan), medium + " - " + wavelength + "nm");
-        else
-            hash->append_tag(bim::xstring::xprintf(bim::CHANNEL_NAME_TEMPLATE.c_str(), chan), medium);
+    // OME-XML may contain errors, try old way of reading
+    if (red_channels < ome->channels) {
+        p = tag_270.find("<Channel ");
+        if (p != std::string::npos)
+        for (unsigned int i = 0; i < (bim::uint)ome->channels; ++i) {
 
-        p += 8;
+            bim::xstring heading = bim::xstring::xprintf("<Channel ID=\"Channel:0:%d\"", i);
+            bim::xstring tag = tag_270.section(heading, ">", p);
+            if (tag.size() <= 0) continue;
+            tag = ometiff_normalize_xml_spaces(tag);
+            bim::xstring medium = tag.section(" Name=\"", "\"");
+            if (medium.size() <= 0) continue;
+
+            int chan = i;
+            bim::xstring wavelength = tag.section(" ExcitationWavelength=\"", "\"");
+
+            if (wavelength.size() > 0)
+                hash->append_tag(bim::xstring::xprintf(bim::CHANNEL_NAME_TEMPLATE.c_str(), chan), medium + " - " + wavelength + "nm");
+            else
+                hash->append_tag(bim::xstring::xprintf(bim::CHANNEL_NAME_TEMPLATE.c_str(), chan), medium);
+        }
     }
 
 
@@ -497,6 +741,12 @@ bim::uint append_metadata_omeTiff(bim::FormatHandle *fmtHndl, bim::TagMap *hash)
     hash->append_tag( "display_channel_blue",  fvi->display_lut[2] );
     }
     */
+
+    //----------------------------------------------------------------------------
+    // pyramid info
+    //----------------------------------------------------------------------------
+
+    pyramid_append_metadata(fmtHndl, hash);
 
     //----------------------------------------------------------------------------
     // stage position
@@ -758,131 +1008,237 @@ bim::uint write_omeTiff_metadata (bim::FormatHandle *fmtHndl, bim::TiffParams *t
 // OME-TIFF WRITER
 //****************************************************************************
 
-int omeTiffWritePlane(bim::FormatHandle *fmtHndl, bim::TiffParams *tifParams) {
-  TIFF *out = tifParams->tiff;
-  bim::ImageBitmap *img = fmtHndl->image;
+void ometiff_write_striped_plane(TIFF *out, bim::ImageBitmap *img, bim::FormatHandle *fmtHndl, const bim::uint &sample) {
+    bim::uint64 height = (bim::uint32) img->i.height;
+    bim::uchar *bits = (bim::uchar *) img->bits[sample];
+    bim::uint line_size = getLineSizeInBytes(img);
+    for (bim::uint64 y = 0; y < height; y++) {
+        xprogress(fmtHndl, y*(sample + 1), height*img->i.samples, "Writing OME-TIFF");
+        if (xtestAbort(fmtHndl) == 1) break;
+        TIFFWriteScanline(out, bits, y, 0);
+        bits += line_size;
+    } // for y
+}
+
+void ometiff_write_tiled_plane(TIFF *tif, bim::ImageBitmap *img, bim::FormatHandle *fmtHndl, const bim::uint &sample) {
+    bim::TiffParams *par = (bim::TiffParams *)fmtHndl->internalParams;
+
+    bim::uint32 width = (bim::uint32) img->i.width;
+    bim::uint32 height = (bim::uint32) img->i.height;
+    bim::uint32 columns = par->info.tileWidth, rows = par->info.tileHeight;
+    bim::uint bpp = ceil((double)img->i.depth / 8.0);
+
+    TIFFSetField(tif, TIFFTAG_TILEWIDTH, columns);
+    TIFFSetField(tif, TIFFTAG_TILELENGTH, rows);
+
+    std::vector<bim::uint8> buffer(TIFFTileSize(tif));
+    bim::uint8 *buf = &buffer[0];
+
+    for (bim::uint y = 0; y<img->i.height; y += rows) {
+        xprogress(fmtHndl, y, img->i.height, "Writing OME-TIFF");
+        if (xtestAbort(fmtHndl) == 1) break;
+        for (bim::uint x = 0; x<(bim::uint)img->i.width; x += columns) {
+            bim::uint tile_width = (width - x >= columns) ? columns : (bim::uint) width - x;
+            bim::uint tile_height = (height - y >= rows) ? rows : (bim::uint) height - y;
+
+            // libtiff tiles will always have columns hight with empty pixels
+            // we need to copy only the usable portion
+            #pragma omp parallel for default(shared) 
+            for (bim::int64 i = 0; i < tile_height; ++i) {
+                bim::uint8 *to = buf + i*bpp*columns;
+                bim::uint8 *from = ((bim::uint8 *)img->bits[sample]) + (y + i)*bpp*width + x*bpp;
+                memcpy(to, from, bpp*tile_width);
+            }
+            if (TIFFWriteTile(tif, buf, x, y, 0, 0) < 0) break;
+        } // for x
+    } // for y
+}
+
+using namespace bim;
+
+int omeTiffWritePlane(bim::FormatHandle *fmtHndl, bim::TiffParams *par, bim::ImageBitmap *img = NULL, bool subscale = false) {
+  TIFF *out = par->tiff;
+  if (!img) img = fmtHndl->image;
  
-  bim::uint32 height;
-  bim::uint32 width;
+  bim::uint32 height = img->i.height;
+  bim::uint32 width = img->i.width;
   bim::uint32 rowsperstrip = (bim::uint32) -1;
-  bim::uint16 bitspersample;
+  bim::uint16 bitspersample = img->i.depth;
   bim::uint16 samplesperpixel = 1;
   bim::uint16 photometric = PHOTOMETRIC_MINISBLACK;
+  if (bitspersample == 1 && samplesperpixel == 1) photometric = PHOTOMETRIC_MINISWHITE;
   bim::uint16 compression;
   bim::uint16 planarConfig = PLANARCONFIG_SEPARATE;	// separated planes 
 
+  // ignore storing pyramid for small images
+  bim::int64 sz = bim::max<bim::int64>(width, height);
+  if (!subscale && par->pyramid.format != PyramidInfo::pyrFmtNone && sz<PyramidInfo::min_level_size) {
+      par->pyramid.format = PyramidInfo::pyrFmtNone;
+  }
+
+  // only allow sub-dirs in ome-tiff for pyramid storage to maximize compatibility with other readers
+  if (par->pyramid.format == PyramidInfo::pyrFmtTopDirs) {
+      par->pyramid.format = PyramidInfo::pyrFmtSubDirs;
+  }
 
   // samples in OME-TIFF are stored in separate IFDs 
-  for (bim::uint sample=0; sample<img->i.samples; sample++) {
+  for (bim::uint sample = 0; sample < img->i.samples; sample++) {
 
-    width = (bim::uint32) img->i.width;
-    height = (bim::uint32) img->i.height;
-    bitspersample = img->i.depth;
-    //samplesperpixel = img->i.samples;
+      // handle standard width/height/bpp stuff
+      TIFFSetField(out, TIFFTAG_IMAGEWIDTH, width);
+      TIFFSetField(out, TIFFTAG_IMAGELENGTH, height);
+      TIFFSetField(out, TIFFTAG_SAMPLESPERPIXEL, samplesperpixel);
+      TIFFSetField(out, TIFFTAG_BITSPERSAMPLE, bitspersample);
+      TIFFSetField(out, TIFFTAG_PHOTOMETRIC, photometric);
+      TIFFSetField(out, TIFFTAG_ORIENTATION, ORIENTATION_TOPLEFT);
+      TIFFSetField(out, TIFFTAG_PLANARCONFIG, planarConfig);	// separated planes
+      TIFFSetField(out, TIFFTAG_SOFTWARE, "libbioimage");
 
-    if ( bitspersample==1 && samplesperpixel==1 ) photometric = PHOTOMETRIC_MINISWHITE;
+      // set pixel format
+      bim::uint16 sampleformat = SAMPLEFORMAT_UINT;
+      if (img->i.pixelType == bim::FMT_SIGNED) sampleformat = SAMPLEFORMAT_INT;
+      if (img->i.pixelType == bim::FMT_FLOAT)  sampleformat = SAMPLEFORMAT_IEEEFP;
+      TIFFSetField(out, TIFFTAG_SAMPLEFORMAT, sampleformat);
 
-    // handle standard width/height/bpp stuff
-    TIFFSetField(out, TIFFTAG_IMAGEWIDTH, width);
-    TIFFSetField(out, TIFFTAG_IMAGELENGTH, height);
-    TIFFSetField(out, TIFFTAG_SAMPLESPERPIXEL, samplesperpixel);
-    TIFFSetField(out, TIFFTAG_BITSPERSAMPLE, bitspersample);
-    TIFFSetField(out, TIFFTAG_PHOTOMETRIC, photometric);
-    TIFFSetField(out, TIFFTAG_ORIENTATION, ORIENTATION_TOPLEFT);
-    TIFFSetField(out, TIFFTAG_PLANARCONFIG, planarConfig);	// separated planes
-    TIFFSetField(out, TIFFTAG_SOFTWARE, "DIMIN TIFF WRAPPER <www.dimin.net>");
+      //if( TIFFGetField( out, TIFFTAG_DOCUMENTNAME, &pszText ) )
+      //if( TIFFGetField( out, TIFFTAG_DATETIME, &pszText ) )
 
-    // set pixel format
-    bim::uint16 sampleformat = SAMPLEFORMAT_UINT;
-    if (img->i.pixelType == bim::FMT_SIGNED) sampleformat = SAMPLEFORMAT_INT;
-    if (img->i.pixelType == bim::FMT_FLOAT)  sampleformat = SAMPLEFORMAT_IEEEFP;
-    TIFFSetField(out, TIFFTAG_SAMPLEFORMAT, sampleformat);
 
-    //if( TIFFGetField( out, TIFFTAG_DOCUMENTNAME, &pszText ) )
-    //if( TIFFGetField( out, TIFFTAG_DATETIME, &pszText ) )
+      //------------------------------------------------------------------------------  
+      // resolution pyramid
+      //------------------------------------------------------------------------------  
 
-    //------------------------------------------------------------------------------  
-    // compression
-    //------------------------------------------------------------------------------  
+      if (par->info.tileWidth > 0 && par->pyramid.format != PyramidInfo::pyrFmtNone) {
+          TIFFSetField(out, TIFFTAG_SUBFILETYPE, subscale ? FILETYPE_REDUCEDIMAGE : 0);
 
-    compression = fmtHndl->compression;
-    if (compression == 0) compression = COMPRESSION_NONE; 
-
-    switch(bitspersample) {
-    case 1  :
-      if (compression != COMPRESSION_CCITTFAX4) compression = COMPRESSION_NONE;
-      break;
-
-    case 8  :
-    case 16 :
-    case 32 :
-    case 64 :
-      if ( (compression != COMPRESSION_LZW) && (compression != COMPRESSION_PACKBITS) )
-        compression = COMPRESSION_NONE;  
-      break;
-    
-    default :
-      compression = COMPRESSION_NONE;
-      break;
-    }
-
-    TIFFSetField(out, TIFFTAG_COMPRESSION, compression);
-
-    unsigned long strip_size = bim::max<unsigned long>( TIFFDefaultStripSize(out,-1), 1 );
-    switch ( compression ) {
-      case COMPRESSION_JPEG: {
-        TIFFSetField( out, TIFFTAG_ROWSPERSTRIP, strip_size+(16-(strip_size % 16)) );
-        break;
+          if (!subscale) {
+              par->pyramid.directory_offsets.resize(0);
+              bim::int64 num_levels = ceil(bim::log2<double>(sz)) - ceil(bim::log2<double>(PyramidInfo::min_level_size)) + 1;
+              if (par->pyramid.format == PyramidInfo::pyrFmtSubDirs) {
+                  // if pyramid levels are to be written into SUBIFDs, write the tag and indicate to libtiff how many subifds are coming
+                  bim::uint16 num_sub_ifds = num_levels - 1; // number of pyramidal levels - 1
+                  std::vector<bim::uint64> offsets_sub_ifds(num_levels - 1, 0UL);
+                  TIFFSetField(out, TIFFTAG_SUBIFD, num_sub_ifds, &offsets_sub_ifds[0]);
+              }
+          }
       }
-      case COMPRESSION_ADOBE_DEFLATE: {
-        TIFFSetField( out, TIFFTAG_ROWSPERSTRIP, height );
-        if ( (photometric == PHOTOMETRIC_RGB) ||
-             ((photometric == PHOTOMETRIC_MINISBLACK) && (bitspersample >= 8)) )
-          TIFFSetField( out, TIFFTAG_PREDICTOR, 2 );
-        TIFFSetField( out, TIFFTAG_ZIPQUALITY, 9 );
-        break;
-      }
-      case COMPRESSION_CCITTFAX4: {
-        TIFFSetField( out, TIFFTAG_ROWSPERSTRIP, height );
-        break;
-      }
-      case COMPRESSION_LZW: {
-        TIFFSetField( out, TIFFTAG_ROWSPERSTRIP, strip_size );
-        if (planarConfig == PLANARCONFIG_SEPARATE)
-           TIFFSetField( out, TIFFTAG_PREDICTOR, PREDICTOR_NONE );
-        else
-           TIFFSetField( out, TIFFTAG_PREDICTOR, PREDICTOR_HORIZONTAL );
-        break;
-      }
-      default: {
-        TIFFSetField( out, TIFFTAG_ROWSPERSTRIP, strip_size );
-        break;
-      }
-    }
 
-    //------------------------------------------------------------------------------
-    // writing meta data
-    //------------------------------------------------------------------------------
-    if (fmtHndl->pageNumber == 0 && sample == 0 )
-      write_omeTiff_metadata (fmtHndl, tifParams);
+      //------------------------------------------------------------------------------  
+      // compression
+      //------------------------------------------------------------------------------  
 
-    //------------------------------------------------------------------------------
-    // writing image
-    //------------------------------------------------------------------------------
-    bim::uchar *bits = (bim::uchar *) img->bits[sample];
-    bim::uint line_size = getLineSizeInBytes( img );
-    for (bim::uint32 y=0; y<height; y++) {
-      xprogress( fmtHndl, y*(sample+1), height*img->i.samples, "Writing OME-TIFF" );
-      if ( xtestAbort( fmtHndl ) == 1) break;  
-      TIFFWriteScanline(out, bits, y, 0);
-      bits += line_size;
-    } // for y
+      compression = fmtHndl->compression;
+      if (compression == 0) compression = COMPRESSION_NONE;
 
-    TIFFWriteDirectory( out );
+      switch (bitspersample) {
+          case 1:
+              if (compression != COMPRESSION_CCITTFAX4) compression = COMPRESSION_NONE;
+              break;
+
+          case 8:
+          case 16:
+          case 32:
+          case 64:
+              if ((compression != COMPRESSION_LZW) && (compression != COMPRESSION_PACKBITS))
+                  compression = COMPRESSION_NONE;
+              break;
+
+          default:
+              compression = COMPRESSION_NONE;
+              break;
+      }
+
+      TIFFSetField(out, TIFFTAG_COMPRESSION, compression);
+
+      unsigned long strip_size = bim::max<unsigned long>(TIFFDefaultStripSize(out, -1), 1);
+      switch (compression) {
+          case COMPRESSION_JPEG: {
+            //TIFFSetField(out, TIFFTAG_ROWSPERSTRIP, strip_size + (16 - (strip_size % 16)));
+            break;
+          }
+          case COMPRESSION_ADOBE_DEFLATE: {
+            //TIFFSetField(out, TIFFTAG_ROWSPERSTRIP, height);
+            if ((photometric == PHOTOMETRIC_RGB) ||
+                ((photometric == PHOTOMETRIC_MINISBLACK) && (bitspersample >= 8)))
+                TIFFSetField(out, TIFFTAG_PREDICTOR, 2);
+            TIFFSetField(out, TIFFTAG_ZIPQUALITY, 9);
+            break;
+          }
+          case COMPRESSION_CCITTFAX4: {
+            //TIFFSetField(out, TIFFTAG_ROWSPERSTRIP, height);
+            break;
+          }
+          case COMPRESSION_LZW: {
+            //TIFFSetField(out, TIFFTAG_ROWSPERSTRIP, strip_size);
+            if (planarConfig == PLANARCONFIG_SEPARATE)
+                TIFFSetField(out, TIFFTAG_PREDICTOR, PREDICTOR_NONE);
+            else
+                TIFFSetField(out, TIFFTAG_PREDICTOR, PREDICTOR_HORIZONTAL);
+            break;
+          }
+          default: {
+            //TIFFSetField(out, TIFFTAG_ROWSPERSTRIP, strip_size);
+            break;
+          }
+      }
+
+      //------------------------------------------------------------------------------
+      // writing meta data
+      //------------------------------------------------------------------------------
+      if (fmtHndl->pageNumber == 0 && sample == 0 && !subscale) {
+          write_omeTiff_metadata(fmtHndl, par);
+      }
+
+      //------------------------------------------------------------------------------
+      // writing image
+      //------------------------------------------------------------------------------
+
+      if (par->info.tileWidth < 1 || par->pyramid.format == PyramidInfo::pyrFmtNone) {
+          ometiff_write_striped_plane(out, img, fmtHndl, sample);
+      } else {
+          ometiff_write_tiled_plane(out, img, fmtHndl, sample);
+      }
+
+      // correct libtiff writing of subifds by linking sibling ifds through nextifd offset
+      if (subscale && par->pyramid.format == PyramidInfo::pyrFmtSubDirs) {
+          bim::uint64 dir_offset = (TIFFSeekFile(out, 0, SEEK_END) + 1) &~1;
+          par->pyramid.directory_offsets.push_back(dir_offset);
+      }
+
+
+      TIFFWriteDirectory(out);
+
+      //------------------------------------------------------------------------------
+      // write pyramid levels
+      //------------------------------------------------------------------------------
+
+      bim::ImageBitmap temp;
+      if (!subscale && par->info.tileWidth >0 && par->pyramid.format != PyramidInfo::pyrFmtNone) {
+          //bim::ImageBitmap temp;
+          temp.i = img->i;
+          temp.i.samples = 1;
+          temp.bits[0] = img->bits[sample];
+          bim::Image image(&temp);
+          int i = 0;
+          while (bim::max<unsigned int>(image.width(), image.height()) > PyramidInfo::min_level_size) {
+              image = image.downSampleBy2x();
+              if (omeTiffWritePlane(fmtHndl, par, image.imageBitmap(), true) != 0) break;
+              ++i;
+          }
+
+          // correct libtiff writing of subifds by linking sibling ifds through nextifd offset
+          if (par->pyramid.format == PyramidInfo::pyrFmtSubDirs)
+          for (int i = 0; i < par->pyramid.directory_offsets.size() - 1; ++i) {
+              if (!tiff_update_subifd_next_pointer(out, par->pyramid.directory_offsets[i], par->pyramid.directory_offsets[i + 1])) break;
+          }
+      }
+
   } // for sample
 
-  TIFFFlushData(out);
-  TIFFFlush(out);
+  if (!subscale) {
+      TIFFFlushData(out);
+      TIFFFlush(out);
+  }
   return 0;
 }
 
