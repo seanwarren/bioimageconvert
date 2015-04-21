@@ -93,9 +93,10 @@ inline FormatManager &FormatManager::operator=( FormatManager fm )
 { 
   unsigned int i;
 
-  if (fm.countInstalledFormats() > static_formats)
-  for (i=static_formats; i<fm.countInstalledFormats(); i++) {
-    this->addNewFormatHeader ( fm.getFormatHeader(i) );
+  if (fm.countInstalledFormats() > static_formats) {
+    for (i=static_formats; i<fm.countInstalledFormats(); i++) {
+      this->addNewFormatHeader ( fm.getFormatHeader(i) );
+    }
   }
 
   return *this; 
@@ -908,7 +909,12 @@ int FormatManager::sessionStartWrite ( BIM_STREAM_CLASS *stream,
   if (session_active == true) sessionEnd();
   sessionCurrentPage = 0;
 
-  getNeededFormatByName(formatName, sessionFormatIndex, sessionSubIndex);  
+  getNeededFormatByName(formatName, sessionFormatIndex, sessionSubIndex);
+  if (sessionFormatIndex < 0) {
+    std::cerr << "Error: selected format '" << formatName << "' not found. Formats are not case sensitive, but must be given with the precise string (i.e. 'tif' is not the same as 'tiff'). Aborted." << std::endl;
+    return -1;
+  }
+
   FormatHeader *selectedFmt = formatList.at( sessionFormatIndex );
 
   sessionHandle = selectedFmt->aquireFormatProc();
@@ -931,7 +937,7 @@ int FormatManager::sessionStartWrite ( BIM_STREAM_CLASS *stream,
   sessionHandle.fileName = &sessionFileName[0];
   sessionHandle.io_mode  = IO_WRITE;  
   sessionHandle.subFormat = sessionSubIndex;
-  
+
   if (options != NULL && options[0] != 0) sessionHandle.options = (char *) options;
 
   res = selectedFmt->openImageProc ( &sessionHandle, IO_WRITE );
