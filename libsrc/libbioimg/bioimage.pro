@@ -230,16 +230,16 @@ SOURCES += $$BIM_FMTS_API/bim_img_format_utils.cpp \
 HEADERS += $$BIM_FMTS_API/bim_buffer.h \
            $$BIM_FMTS_API/bim_histogram.h \
            $$BIM_FMTS_API/bim_image_5d.h \
-	   $$BIM_FMTS_API/bim_image.h \
+           $$BIM_FMTS_API/bim_image.h \
            $$BIM_FMTS_API/bim_image_pyramid.h \
            $$BIM_FMTS_API/bim_image_stack.h \
            $$BIM_FMTS_API/bim_img_format_interface.h \
            $$BIM_FMTS_API/bim_img_format_utils.h \
-	   $$BIM_FMTS_API/bim_metatags.h \
+           $$BIM_FMTS_API/bim_metatags.h \
            $$BIM_FMTS_API/bim_primitives.h \
-	   $$BIM_FMTS_API/bim_qt_utils.h \
+           $$BIM_FMTS_API/bim_qt_utils.h \
            $$BIM_FMTS_API/resize.h \
-	   $$BIM_FMTS_API/rotate.h \
+           $$BIM_FMTS_API/rotate.h \
            $$BIM_FMTS_API/slic.h
 
 #Formats
