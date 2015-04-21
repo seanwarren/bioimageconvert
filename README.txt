@@ -1,4 +1,4 @@
-BioImageConvertor 1.70
+BioImageConvertor ver: 2.0
 
 Author: Dima V. Fedorov <http://www.dimin.net/>
 
@@ -39,6 +39,8 @@ Ex: imgcnv -i 1.jpg -o 2.tif -t TIFF
 
 
 -display              - creates 3 channel image with preferred channel mapping
+
+-enhancemeta          - Enhances an image beased on preferred settings, currently only CT hounsfield mode is supported, ex: -enhancemeta
 
 -filter               - filters input image, ex: -filter edge
     edge - first derivative
@@ -81,7 +83,20 @@ Here ch1 will go to red, ch2 to cyan, ch3 not rendered and ch4 to blue
 -gamma                - sets gamma for histogram conversion: 0.5, 1.0, 2.2, etc, ex: -gamma 2.2
 
 
--geometry             - redefines geometry for any incoming image with: z-num z, t-num t, ex: -geometry 5,1
+-geometry             - redefines geometry for any incoming image with: z-num z, t-num t and optionally c-num channels, ex: -geometry 5,1 or -geometry 5,1,3
+
+-hounsfield           - enhances CT image using hounsfield scale, ex: -hounsfield 8,U,40,80
+  output depth (in bits) per channel, allowed values now are: 8,16,32,64
+  followed by comma and [U|S|F] the type of output image can be defined
+    U - Unsigned integer (with depths: 8,16,32,64) (default)
+    S - Signed integer (with depths: 8,16,32,64)
+    F - Float (with depths: 32,64,80)
+  followed by comma and window center
+  followed by comma and window width
+  optionally followed by comma and slope
+  followed by comma and intercept, ex: -hounsfield 8,U,40,80,1.0,-1024.0
+  if slope and intercept are not set, their values would be red from DICOM metadata, defaulting to 1 and -1024
+
 
 -i                    - input file name, multiple -i are allowed, but in multiple case each will be interpreted as a 1 page image.
 
@@ -132,18 +147,20 @@ Here ch1 will go to red, ch2 to cyan, ch3 not rendered and ch4 to blue
 
 -options              - specify encoder specific options, ex: -options "fps 15 bitrate 1000"
 
-Encoder specific options
 Video files AVI, SWF, MPEG, etc. encoder options:
-  fps N - specify Frames per Second, where N is a float number, if empty or 0 uses default, ex: fps 29.9
-  bitrate N - specify bitrate in Mb, where N is an integer number, if empty or 0 uses default, ex: bitrate 10000000
+  fps N - specify Frames per Second, where N is a float number, if empty or 0 uses default, ex: -options "fps 29.9"
+  bitrate N - specify bitrate in Mb, where N is an integer number, if empty or 0 uses default, ex: -options "bitrate 10000000"
 
 JPEG encoder options:
-  quality N - specify encoding quality 0-100, where 100 is best, ex: quality 90
+  quality N - specify encoding quality 0-100, where 100 is best, ex: -options "quality 90"
   progressive no - disables progressive JPEG encoding
   progressive yes - enables progressive JPEG encoding (default)
 
 TIFF encoder options:
-  compression N - where N can be: none, packbits, lzw, fax, ex: compression none
+  compression N - where N can be: none, packbits, lzw, fax, ex: -options "compression none"
+  tiles N - write tiled TIFF where N defined tile size, ex: tiles -options "512"
+  pyramid N - writes TIFF pyramid where N is a storage type: subdirs, topdirs, ex: -options "compression lzw tiles 512 pyramid subdirs"
+
 
 
 -overlap-sampling     - Defines sampling after overlap detected until no overlap, used to reduce sampling if overlapping, ex: -overlap-sampling 5
@@ -163,10 +180,11 @@ TIFF encoder options:
 
 -projectmin           - combines by MIN all inout frames into one
 
--raw                  - reads RAW image with w,h,c,d,p,e,t ex: -raw 100,100,3,8,10,0,uint8
+-raw                  - reads RAW image with w,h,c,d,p,e,t,interleaved ex: -raw 100,100,3,8,10,0,uint8,1
   w-width, h-height, c - channels, d-bits per channel, p-pages
   e-endianness(0-little,1-big), if in doubt choose 0
   t-pixel type: int8|uint8|int16|uint16|int32|uint32|float|double, if in doubt choose uint8
+  interleaved - (0-planar or RRRGGGBBB, 1-interleaved or RGBRGBRGB)
 
 -rawmeta              - print image's raw meta-data in one huge pile
 
@@ -181,6 +199,9 @@ TIFF encoder options:
 
 
 -remap                - Changes order and number of channels in the output, channel numbers are separated by comma (0 means empty channel), ex: -remap 1,2,3
+
+-res-level            - extract a specified pyramidal level, ex: -res-level 4
+    L - is a resolution level, L=0 is native resolution, L=1 is 2X smaller, L=2 is 4X smaller, and so on
 
 -resample             - Is the same as resize, the difference is resample is brute force and resize uses image pyramid for speed
 
@@ -243,10 +264,13 @@ guess will extract suggested rotation from EXIF
     both - sets pixels below the threshold to lowest possible value and above or equal to highest
 
 
--tile                 - tilte the image and store tiles in the output directory, ex: -tile 256
+-tile                 - tile the image and store tiles in the output directory, ex: -tile 256
   argument defines the size of the tiles in pixels
   tiles will be created based on the outrput file name with inserted L, X, Y, where    L - is a resolution level, L=0 is native resolution, L=1 is 2x smaller, and so on    X and Y - are tile indices in X and Y, where the first tile is 0,0, second in X is: 1,0 and so on  ex: '-o my_file.jpg' will produce files: 'my_file_LLL_XXX_YYY.jpg'
 
+  Providing more arguments will instruct extraction of embedded tiles with -tile SZ,XID,YID,L ex: -tile 256,2,4,3
+    SZ: defines the size of the tile in pixels
+    XID and YID - are tile indices in X and Y, where the first tile is 0,0, second in X is: 1,0 and so on    L - is a resolution level, L=0 is native resolution, L=1 is 2x smaller, and so on
 
 -transform            - transforms input image, ex: -transform fft
     chebyshev - outputs a transformed image in double precision

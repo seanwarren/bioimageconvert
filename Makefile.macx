@@ -1,22 +1,33 @@
 prefix=/usr
 BINDIR=$(prefix)/bin
+LIBDIR=$(prefix)/lib
 MAKEFLAGS += -j 4
 LIBBIM=libsrc/libbioimg
 LIBRAW=libsrc/libraw
 LIBVPX=libsrc/libvpx
 LIBX264=libsrc/libx264
+LIBX265=libsrc/libx265
+LIBOGG=libsrc/libogg
+LIBVORBIS=libsrc/libvorbis
+LIBTHEORA=libsrc/libtheora
+LIBXVID=libsrc/libxvidcore
 LIBFFTW=libsrc/libfftw/src
 FFMPEG=libsrc/ffmpeg
+LIBJPEGTURBO=libsrc/libjpeg-turbo
+LIBGDCM=libsrc/gdcm
+LIBGDCMBIN=libsrc/gdcmbin
 LIBS=libs/macosx
-QMAKEOPTS=-spec macx-g++
-MACOSX_DEPLOYMENT_TARGET=10.6
-
+#QMAKEOPTS=-spec macx-g++
+QMAKEOPTS=-spec macx-g++49
+MACOSX_DEPLOYMENT_TARGET=10.7
+VERSION=2.0.0
 
 all : imgcnv
 
 
 install:
 	install imgcnv $(DESTDIR)$(BINDIR)
+	install libimgcnv.so.* $(DESTDIR)$(LIBDIR)	
 
 
 imgcnv:
@@ -34,6 +45,11 @@ imgcnv:
 	(cd src; qmake $(QMAKEOPTS) imgcnv.pro)
 	(cd src; $(MAKE))
 
+	@echo
+	@echo
+	@echo "Building libimgcnv"   
+	(cd src_dylib; qmake $(QMAKEOPTS) libimgcnv.pro)
+	(cd src_dylib; $(MAKE))
 
 full:
 	-mkdir -p .generated/obj
@@ -45,21 +61,78 @@ full:
 	(cd $(LIBBIM); qmake $(QMAKEOPTS) bioimage.pro)
 	(cd $(LIBBIM); $(MAKE))
 	
+
 	@echo
 	@echo
-	@echo "Building libvpx in $(LIBVPX)"
+	@echo "Building libogg 1.3.2 in $(LIBOGG)"
+	(cd $(LIBOGG); chmod -f u+x configure)
+	#(cd $(LIBOGG); chmod -f u+x version.sh)
+	(cd $(LIBOGG); chmod -f u+x config.guess)
+	(cd $(LIBOGG); chmod -f u+x config.sub)
+	(cd $(LIBOGG); ./configure )
+	(cd $(LIBOGG); $(MAKE))
+	(cp $(LIBOGG)/src/.libs/libogg.a $(LIBS)/) 
+
+    # relative paths to libogg seem not to be working
+	@echo
+	@echo
+	@echo "Building libvorbis 1.3.4 in $(LIBVORBIS)"
+	(cd $(LIBVORBIS); chmod -f u+x configure)
+	#(cd $(LIBVORBIS); chmod -f u+x version.sh)
+	(cd $(LIBVORBIS); chmod -f u+x config.guess)
+	(cd $(LIBVORBIS); chmod -f u+x config.sub)
+	(cd $(LIBVORBIS); ./configure --disable-oggtest --build=x86_64 --with-ogg=../libogg --with-ogg-includes=../libogg/include --with-ogg-libraries=../libogg/src/.libs )
+	(cd $(LIBVORBIS); $(MAKE))
+	(cp $(LIBVORBIS)/lib/.libs/libvorbis.a $(LIBS)/)
+	(cp $(LIBVORBIS)/lib/.libs/libvorbisenc.a $(LIBS)/) 
+	(cp $(LIBVORBIS)/lib/.libs/libvorbisfile.a $(LIBS)/) 
+
+    # relative paths to libogg and libvorbis seem not to be working
+    # after configure required creating a libtool shell script in the libtheora root pointing to gnu libtool:
+    # /usr/local/Cellar/libtool/2.4.4/bin/glibtool "$@"
+	@echo
+	@echo
+	@echo "Building libtheora 1.1.1 in $(LIBTHEORA)"
+	(cd $(LIBTHEORA); chmod -f u+x configure)
+	(cd $(LIBTHEORA); chmod -f u+x version.sh)
+	(cd $(LIBTHEORA); chmod -f u+x config.guess)
+	(cd $(LIBTHEORA); chmod -f u+x config.sub)
+	(cd $(LIBTHEORA); ./configure --build=x86_64 --disable-oggtest --disable-vorbistest --disable-examples --disable-asm \
+		--enable-shared=no --enable-static=yes \
+		--with-ogg=../libogg --with-ogg-includes=../libogg/include --with-ogg-libraries=../libogg/src/.libs \
+		--with-vorbis=../libvorbis --with-vorbis-includes=../libvorbis/include --with-vorbis-libraries=../libvorbis/lib/.libs )
+	(cd $(LIBTHEORA); $(MAKE))
+	(cp $(LIBTHEORA)/lib/.libs/libtheora.a $(LIBS)/)
+	(cp $(LIBTHEORA)/lib/.libs/libtheoradec.a $(LIBS)/)
+	(cp $(LIBTHEORA)/lib/.libs/libtheoraenc.a $(LIBS)/) 	
+
+    # required removing -no-cpp-precomp from configure
+	@echo
+	@echo
+	@echo "Building xvidcore 1.3.3 in $(LIBXVID)"
+	(cd $(LIBXVID)/build/generic; chmod -f u+x configure)
+	(cd $(LIBXVID)/build/generic; chmod -f u+x bootstrap.sh)
+	(cd $(LIBXVID)/build/generic; chmod -f u+x config.guess)
+	(cd $(LIBXVID)/build/generic; chmod -f u+x config.sub)
+	(cd $(LIBXVID)/build/generic; ./configure --disable-assembly )
+	(cd $(LIBXVID)/build/generic; $(MAKE))
+	(cp $(LIBXVID)/build/generic/=build/libxvidcore.a $(LIBS)/) 
+
+	@echo
+	@echo
+	@echo "Building libvpx 1.3.0 in $(LIBVPX)"
 	(cd $(LIBVPX); chmod -f u+x configure)
 	(cd $(LIBVPX); chmod -f u+x build/make/version.sh)
 	(cd $(LIBVPX); chmod -f u+x build/make/rtcd.sh)
 	(cd $(LIBVPX); chmod -f u+x build/make/gen_asm_deps.sh)
 	(cd $(LIBVPX); chmod -f u+x build/make/gen_asm_deps.sh)     
-	(cd $(LIBVPX); ./configure --enable-vp8 --enable-pic --disable-examples  --disable-vp9 --disable-unit-tests)
+	(cd $(LIBVPX); ./configure --enable-vp8 --enable-vp9 --enable-pic --disable-examples --disable-unit-tests )
 	(cd $(LIBVPX); $(MAKE))
 	(cp $(LIBVPX)/libvpx.a $(LIBS)/)
 	
 	@echo
 	@echo
-	@echo "Building libx264 in $(LIBX264)"
+	@echo "Building libx264 20141220 in $(LIBX264)"
 	(cd $(LIBX264); chmod -f u+x configure)
 	(cd $(LIBX264); chmod -f u+x version.sh)
 	(cd $(LIBX264); chmod -f u+x config.guess)
@@ -67,6 +140,33 @@ full:
 	(cd $(LIBX264); ./configure --enable-pic --enable-static --disable-opencl )
 	(cd $(LIBX264); $(MAKE))
 	(cp $(LIBX264)/libx264.a $(LIBS)/) 
+
+	@echo
+	@echo
+	@echo "Building libx265 1.4 in $(LIBX265)"
+	#(cd $(LIBX265)/build/linux; chmod -f u+x make-Makefiles.bash)
+	#(cd $(LIBX265)/build/linux; bash make-Makefiles.bash )
+	(cd $(LIBX265)/build/linux; cmake -G "Unix Makefiles" ../../source -DCMAKE_CXX_FLAGS=-fPIC -DCMAKE_C_FLAGS=-fPIC )
+	(cd $(LIBX265)/build/linux; $(MAKE))
+	(cp $(LIBX265)/build/linux/libx265.a $(LIBS)/)
+
+	@echo
+	@echo
+	@echo "Building libjpeg-turbo 1.4.0 in $(LIBJPEGTURBO)"
+	(cd $(LIBJPEGTURBO); chmod -f u+x configure)
+	(cd $(LIBJPEGTURBO); chmod -f u+x config.guess)
+	(cd $(LIBJPEGTURBO); chmod -f u+x config.sub)
+	(cd $(LIBJPEGTURBO); ./configure --enable-pic --enable-static --enable-shared=no )
+	(cd $(LIBJPEGTURBO); $(MAKE))
+	(cp $(LIBJPEGTURBO)/.libs/libturbojpeg.a $(LIBS)/)
+	
+	@echo
+	@echo
+	@echo "Building libGDCM 2.4.4 in $(LIBGDCM)"
+	-mkdir -p $(LIBGDCMBIN)
+	(cd $(LIBGDCMBIN); cmake ../gdcm -DCMAKE_CXX_FLAGS=-fPIC -DCMAKE_C_FLAGS=-fPIC -DGDCM_USE_OPENJPEG_V2=ON )
+	(cd $(LIBGDCMBIN); $(MAKE))
+	(cp $(LIBGDCMBIN)/bin/*.a $(LIBS)/gdcm/)	
 
 	#@echo
 	#@echo
@@ -81,15 +181,16 @@ full:
 	
 	@echo
 	@echo     
-	@echo "Building ffmpeg in $(FFMPEG)"
+	@echo "Building ffmpeg 2.5.3 in $(FFMPEG)"
 	(cd $(FFMPEG)/ffmpeg; chmod -f u+x configure)
 	(cd $(FFMPEG)/ffmpeg; chmod -f u+x version.sh)
 	-mkdir -p $(FFMPEG)/ffmpeg-obj
 	(cd $(FFMPEG)/ffmpeg-obj; ../ffmpeg/configure \
-		--enable-static --disable-shared --as=yasm \
+		--enable-static --disable-shared --enable-pic --as=yasm \
 		--prefix=./../ffmpeg-out \
-		--extra-cflags="-I./../../libvpx -I./../../libx264" \
-		--extra-ldflags="-L./../../libvpx -L./../../libx264" \
+		#--pkg-config-flags="--static" \
+		--extra-cflags="-fPIC -I./../../libvpx -I./../../libx264 -I./../../libx265/source" \
+		--extra-ldflags="-fPIC -L./../../libvpx -L./../../libx264 -L./../../libx265/build/linux" \		
 		--enable-gpl --enable-runtime-cpudetect --enable-pthreads --enable-swscale \
 		--disable-ffserver --disable-ffplay --disable-network --disable-ffmpeg --disable-devices \
 		--disable-frei0r --disable-libass --disable-libcelt --disable-libopencore-amrnb --disable-libopencore-amrwb \
@@ -120,15 +221,23 @@ full:
 	@echo "Building imgcnv"   
 	(cd src; qmake $(QMAKEOPTS) imgcnv.pro)
 	(cd src; $(MAKE))
+	
+	@echo
+	@echo
+	@echo "Building libimgcnv"   
+	(cd src_dylib; qmake $(QMAKEOPTS) libimgcnv.pro)
+	(cd src_dylib; $(MAKE))	
 
 clean:
 	(cd src; $(MAKE) clean)
-	rm -rf .generated *.o *~
+	rm -rf .generated *.o *~ .qmake.stash
+	rm -rf $(LIBBIM)/.generated $(LIBBIM)/*.o $(LIBBIM)/*~ $(LIBBIM)/.qmake.stash
 	(cd $(LIBBIM); $(MAKE) clean)
 
 cleanfull:
 	(cd src; $(MAKE) clean)
-	rm -rf .generated *.o *~
+	rm -rf .generated *.o *~ .qmake.stash
+	rm -rf $(LIBBIM)/.generated $(LIBBIM)/*.o $(LIBBIM)/*~ $(LIBBIM)/.qmake.stash
 	(cd $(LIBBIM); $(MAKE) clean)   
 	(cd $(LIBVPX); $(MAKE) clean)
 	(cd $(LIBX264); $(MAKE) clean)
@@ -138,7 +247,8 @@ cleanfull:
 
 realclean: clean
 	rm -f imgcnv
-
-
+	rm -fR imgcnv.app
+	rm -f imgcnv.dylib*
+	
 
 .FORCE: imgcnv

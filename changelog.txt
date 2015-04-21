@@ -1,5 +1,27 @@
 = Version Change Log =
 
+== 2.0 ==
+
+ * New: All command line operations are now ordered and thus may render different results to version 1.X
+ * New: Added DICOM support using GDCM 2.4.4 
+ * New: Added Hounsfield space enhancements for CT DICOM data
+ * New: Added MPEG H265 encoding/decoding support
+ * New: Added interleaved data support for RAW decoder/encoder
+ * New: Added support for multi-file images with channels stored in separate files via -geometry 1,1,Ch and -il for list of files
+ * New: Added support for reading pyramidal files: reading resolution levels and/or specific tiles and applying all requested operations
+        Supported formats:
+          TIFF pyramids in two variuants: with top level pages with low-res images as well as low res stored in sub-ifds
+          OME-TIFF files support only sub-ifd storage in order to keep compatibility
+ * New: Added support for writing pyramidal files in both variants
+ * New: Support for virtual tiles, where reader will export tiles in requested sizes independent of what is stored in the image
+ * New: Added mosaicking command to assemble a large image from aligned non-overlapping tiles
+ * Update: replaced libjpeg with libjpeg-turbo 1.4.0 for faster decoding and encoding
+ * Update: improved parsing of OME-TIFF metadata using pugixml parser
+ * Update: added parsing of MetaXpress versions of STK files
+ * Update: updated ffmpeg to version 2.5.3 supporting H265
+ * Update: updated libpng to 1.6.16
+ * Fix: Fix for libpng reading 16-bit files
+
 == 1.70 ==
  * New: GeoTIFF metadata parsing and coordinate conversions
 

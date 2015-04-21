@@ -51,8 +51,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,65,0,65
- PRODUCTVERSION 1,65,0,65
+ FILEVERSION 2,0,0,0
+ PRODUCTVERSION 2,0,0,0
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -68,13 +68,13 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "CompanyName", "Center for BioImage Informatics, UCSB"
-            VALUE "FileDescription", "imgcnv - BioImage Converter"
-            VALUE "FileVersion", "1.65.0.65"
-            VALUE "InternalName", "imgcnv"
-            VALUE "LegalCopyright", "Copyright (C) 2004-2013, Dmtiry Fedorov, Center for BioImage Informatics"
-            VALUE "OriginalFilename", "imgcnv.exe"
-            VALUE "ProductName", "imgcnv - BioImage Converter"
-            VALUE "ProductVersion", "1.65.0.65"
+            VALUE "FileDescription", "bimread - Matlab MEX for libbioimage"
+            VALUE "FileVersion", "2.0.0.0"
+            VALUE "InternalName", "bimread"
+            VALUE "LegalCopyright", "Copyright (C) 2005-2015, Center for BioImage Informatics"
+            VALUE "OriginalFilename", "imgcnv.dll"
+            VALUE "ProductName", "bimread - Matlab MEX for libbioimage"
+            VALUE "ProductVersion", "2.0.0.0"
         END
     END
     BLOCK "VarFileInfo"

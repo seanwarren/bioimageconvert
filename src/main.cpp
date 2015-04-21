@@ -106,12 +106,10 @@
                          now support only for 12 bit -> 16 bit conversion
    2010-01-25 18:55:54 - support for floating point images throughout the app
    2010-01-29 11:25:38 - preserve all metadata and correctly transform it
-                         
-
- Ver : 70
+                
 *******************************************************************************/
 
-#define IMGCNV_VER "1.71"
+#define IMGCNV_VER "2.0.0"
 
 #include <cmath>
 #include <cstdio>
@@ -123,6 +121,7 @@
 #include <algorithm>
 #include <iostream>
 #include <fstream>
+#include <strstream>
 
 #include <BioImageCore>
 #include <BioImage>
@@ -221,7 +220,7 @@ public:
   float superpixels_regularization;
 
   bool geometry;
-
+  
   bool resolution;
   double resvals[4];
 
@@ -229,6 +228,7 @@ public:
 
   bool raw;
   unsigned int  p,e;
+  bool interleaved;
   DataFormat raw_type;
 
   bool display;
@@ -252,7 +252,15 @@ public:
   std::string loadomexml;
   std::string omexml;
 
+  int res_level;
   int tile_size;
+  int tile_xid;
+  int tile_yid;
+
+  bool mosaic;
+  int mosaic_num_x;
+  int mosaic_num_y;
+
 
   int sample_frames;
   int sample_frames_original;
@@ -328,13 +336,29 @@ void DConf::init() {
 
   appendArgumentDefinition( "-textureatlas", 0, "Produces a texture atlas 2D image for 3D input images" );
 
-  xstring tmp = "tilte the image and store tiles in the output directory, ex: -tile 256\n";
+  xstring tmp = "tile the image and store tiles in the output directory, ex: -tile 256\n";
   tmp += "  argument defines the size of the tiles in pixels\n";
   tmp += "  tiles will be created based on the outrput file name with inserted L, X, Y, where";
   tmp += "    L - is a resolution level, L=0 is native resolution, L=1 is 2x smaller, and so on";
   tmp += "    X and Y - are tile indices in X and Y, where the first tile is 0,0, second in X is: 1,0 and so on";
   tmp += "  ex: '-o my_file.jpg' will produce files: 'my_file_LLL_XXX_YYY.jpg'\n";
+  tmp += "\n";
+  tmp += "  Providing more arguments will instruct extraction of embedded tiles with -tile SZ,XID,YID,L ex: -tile 256,2,4,3\n";
+  tmp += "    SZ: defines the size of the tile in pixels\n";
+  tmp += "    XID and YID - are tile indices in X and Y, where the first tile is 0,0, second in X is: 1,0 and so on";
+  tmp += "    L - is a resolution level, L=0 is native resolution, L=1 is 2x smaller, and so on";
   appendArgumentDefinition( "-tile",    1, tmp );
+
+  tmp = "compose an image from aligned tiles, ex: -mosaic 512,20,11\n";
+  tmp += "  Arguments are defined as SZ,NX,NY where:\n";
+  tmp += "    SZ: defines the size of the tile in pixels with width equal to height\n";
+  tmp += "    NX - number of tile images in X direction";
+  tmp += "    NY - number of tile images in Y direction";
+  appendArgumentDefinition("-mosaic", 1, tmp);
+
+  tmp = "extract a specified pyramidal level, ex: -res-level 4\n";
+  tmp += "    L - is a resolution level, L=0 is native resolution, L=1 is 2X smaller, L=2 is 4X smaller, and so on";
+  appendArgumentDefinition("-res-level", 1, tmp);
 
   appendArgumentDefinition( "-rotate", 1, 
     "rotates the image by deg degrees, only accepted valueas now are: 90, -90, 180, guess\nguess will extract suggested rotation from EXIF" );
@@ -358,6 +382,9 @@ void DConf::init() {
   appendArgumentDefinition( "-fusemeta", 0, 
     "Produces 3 channel image getting fusion weights from embedded metadata, ex: -fusemeta" );
 
+  appendArgumentDefinition("-enhancemeta", 0,
+      "Enhances an image beased on preferred settings, currently only CT hounsfield mode is supported, ex: -enhancemeta");
+
   tmp = "Produces 3 channel image from N channels, for each channel an RGB weight should be given\n";
   tmp += "Component contribution are separated by comma and channels are separated by semicolon:\n";
   tmp += "(0 or empty value means no output), ex: -fusergb 100,0,0;0,100,100;0;0,0,100\n";
@@ -380,7 +407,7 @@ void DConf::init() {
     "creates a new image with w-width, h-height, z-num z, t-num t, c - channels, d-bits per channel, ex: -create 100,100,1,1,3,8" );
   
   appendArgumentDefinition( "-geometry", 1, 
-    "redefines geometry for any incoming image with: z-num z, t-num t, ex: -geometry 5,1" );
+    "redefines geometry for any incoming image with: z-num z, t-num t and optionally c-num channels, ex: -geometry 5,1 or -geometry 5,1,3" );
 
   appendArgumentDefinition( "-resolution", 1, 
     "redefines resolution for any incoming image with: x,y,z,t where x,y,z are in microns and t in seconds  ex: -resolution 0.012,0.012,1,0" );
@@ -458,6 +485,19 @@ void DConf::init() {
   tmp += "    CS - channels separate, each channel enhanced separately (default)\n";
   tmp += "    CC - channels combined, channels enhanced together preserving mutual relationships\n";
   appendArgumentDefinition( "-depth", 1, tmp );
+
+  tmp = "enhances CT image using hounsfield scale, ex: -hounsfield 8,U,40,80\n";
+  tmp += "  output depth (in bits) per channel, allowed values now are: 8,16,32,64\n";
+  tmp += "  followed by comma and [U|S|F] the type of output image can be defined\n";
+  tmp += "    U - Unsigned integer (with depths: 8,16,32,64) (default)\n";
+  tmp += "    S - Signed integer (with depths: 8,16,32,64)\n";
+  tmp += "    F - Float (with depths: 32,64,80)\n";
+  tmp += "  followed by comma and window center\n";
+  tmp += "  followed by comma and window width\n";
+  tmp += "  optionally followed by comma and slope\n";
+  tmp += "  followed by comma and intercept, ex: -hounsfield 8,U,40,80,1.0,-1024.0\n";
+  tmp += "  if slope and intercept are not set, their values would be red from DICOM metadata, defaulting to 1 and -1024\n";
+  appendArgumentDefinition("-hounsfield", 1, tmp);
 
   tmp = "sets gamma for histogram conversion: 0.5, 1.0, 2.2, etc, ex: -gamma 2.2\n";
   appendArgumentDefinition( "-gamma", 1, tmp );
@@ -544,23 +584,25 @@ void DConf::init() {
   tmp += "  if followed by comma AR, the size will be used as maximum bounding box to resize preserving aspect ratio, ex: 640,640,16,BC,AR";
   appendArgumentDefinition( "-resize3d", 1, tmp );
 
-  tmp = "reads RAW image with w,h,c,d,p,e,t ex: -raw 100,100,3,8,10,0,uint8\n";
+  tmp = "reads RAW image with w,h,c,d,p,e,t,interleaved ex: -raw 100,100,3,8,10,0,uint8,1\n";
   tmp += "  w-width, h-height, c - channels, d-bits per channel, p-pages\n";
   tmp += "  e-endianness(0-little,1-big), if in doubt choose 0\n";
-  tmp += "  t-pixel type: int8|uint8|int16|uint16|int32|uint32|float|double, if in doubt choose uint8";
+  tmp += "  t-pixel type: int8|uint8|int16|uint16|int32|uint32|float|double, if in doubt choose uint8\n";
+  tmp += "  interleaved - (0-planar or RRRGGGBBB, 1-interleaved or RGBRGBRGB)";
   appendArgumentDefinition( "-raw", 1, tmp );
 
   tmp = "specify encoder specific options, ex: -options \"fps 15 bitrate 1000\"\n\n";
-  tmp += "Encoder specific options\n";
   tmp += "Video files AVI, SWF, MPEG, etc. encoder options:\n";
-  tmp += "  fps N - specify Frames per Second, where N is a float number, if empty or 0 uses default, ex: fps 29.9\n";
-  tmp += "  bitrate N - specify bitrate in Mb, where N is an integer number, if empty or 0 uses default, ex: bitrate 10000000\n\n";
+  tmp += "  fps N - specify Frames per Second, where N is a float number, if empty or 0 uses default, ex: -options \"fps 29.9\"\n";
+  tmp += "  bitrate N - specify bitrate in Mb, where N is an integer number, if empty or 0 uses default, ex: -options \"bitrate 10000000\"\n\n";
   tmp += "JPEG encoder options:\n";
-  tmp += "  quality N - specify encoding quality 0-100, where 100 is best, ex: quality 90\n";
+  tmp += "  quality N - specify encoding quality 0-100, where 100 is best, ex: -options \"quality 90\"\n";
   tmp += "  progressive no - disables progressive JPEG encoding\n";  
   tmp += "  progressive yes - enables progressive JPEG encoding (default)\n\n";    
   tmp += "TIFF encoder options:\n";
-  tmp += "  compression N - where N can be: none, packbits, lzw, fax, ex: compression none\n";
+  tmp += "  compression N - where N can be: none, packbits, lzw, fax, ex: -options \"compression none\"\n";
+  tmp += "  tiles N - write tiled TIFF where N defined tile size, ex: tiles -options \"512\"\n";
+  tmp += "  pyramid N - writes TIFF pyramid where N is a storage type: subdirs, topdirs, ex: -options \"compression lzw tiles 512 pyramid subdirs\"\n\n";
   appendArgumentDefinition( "-options", 1, tmp );
 
   
@@ -581,6 +623,15 @@ void DConf::init() {
   supported     = false;
   raw_meta      = false;
   //page          = 0; // first page is 1
+
+  res_level = 0;
+  tile_size = 0;
+  tile_xid = -1;
+  tile_yid = -1;
+
+  mosaic = false;
+  mosaic_num_x = 0;
+  mosaic_num_y = 0;
 
   roi           = false;
  
@@ -636,6 +687,7 @@ void DConf::init() {
   raw_type = FMT_UNSIGNED;
   p = 0;
   e=0;
+  interleaved = false;
 
   display = false;
   rotate_guess = false;
@@ -692,7 +744,7 @@ void DConf::cureParams() {
 
   if ( this->i_names.size()>1 ) {
     // while creating a new image from multiple we should not be extracting one page of that
-    this->page.clear();
+    //this->page.clear(); // dima: no need to impose this
   }
 
   if ( this->display ) {
@@ -803,21 +855,47 @@ void DConf::processArguments() {
   options       = getValue("-options");
   page          = splitValueInt( "-page", 0 );
 
-  tile_size     = getValueInt("-tile", 0);
-
   if (keyExists( "-il" )) {
       std::string listname = getValue("-il");
       std::ifstream text (listname.c_str());
       if (text.is_open()) {
           i_names.clear();
           while (text.good()) {
-              std::string line;
-              getline(text,line);
-              i_names.push_back(line);
+              xstring line;
+              getline(text, line);
+              line = line.strip(" ");
+              if (line.size()>0)
+                  i_names.push_back(line);
           }
           text.close();
       }
   }
+
+
+  res_level = getValueInt("-res-level", 0);
+
+  if (keyExists("-tile")) {
+      std::vector<int> t = splitValueInt("-tile");
+      if (t.size() == 1) {
+          tile_size = t[0];
+      } else if (t.size() > 3) {
+          tile_size = t[0];
+          tile_xid  = t[1];
+          tile_yid  = t[2];
+          res_level = t[3];
+      }
+  }
+
+  if (keyExists("-mosaic")) {
+      std::vector<int> t = splitValueInt("-mosaic");
+      if (t.size() > 2) {
+          tile_size = t[0];
+          mosaic_num_x = t[1];
+          mosaic_num_y = t[2];
+          mosaic = true;
+      }
+  }
+
 
   if (keyExists( "-no-overlap" )) { 
     no_overlap = true; 
@@ -836,7 +914,7 @@ void DConf::processArguments() {
       else {
           rotate_angle = getValueDouble( "-rotate", 0 );
           if ( rotate_angle!=0 && rotate_angle!=90 && rotate_angle!=-90 && rotate_angle!=180 ) { 
-            printf("This rotation angle value is not yet supported...\n");
+              std::cout << "This rotation angle value is not yet supported..." << std::endl;
             exit(0);
           }
       }
@@ -878,8 +956,8 @@ void DConf::processArguments() {
       if ( strl[2].toLowerCase()=="f" ) out_pixel_format = FMT_FLOAT;
     }
     if (strl.size()>3) {
-        if ( strl[2].toLowerCase()=="cs" ) chan_mode = Histogram::cmSeparate;
-        if ( strl[2].toLowerCase()=="cc" ) chan_mode = Histogram::cmCombined;
+        if ( strl[3].toLowerCase()=="cs" ) chan_mode = Histogram::cmSeparate;
+        if ( strl[3].toLowerCase()=="cc" ) chan_mode = Histogram::cmCombined;
     }
 
   }
@@ -972,6 +1050,11 @@ void DConf::processArguments() {
   if (keyExists( "-fusergb" )) {
     std::vector<xstring> ch = splitValue( "-fusergb", "", ";" );
     out_weighted_fuse_channels.clear();
+    // trim trailing empty channels
+    for (int c = ch.size()-1; c>=0; --c) {
+        if (ch[c] == "") ch.resize(c); else break;
+    }
+
     for (int c=0; c<ch.size(); ++c) {
         std::vector<int> cmp = ch[c].splitInt(",");
         cmp.resize(3,0);
@@ -991,7 +1074,7 @@ void DConf::processArguments() {
     std::vector<int> ints = splitValueInt( "-create" );
     for (unsigned int x=0; x<ints.size(); ++x)
       if (ints[x] <= 0) { 
-        printf("Unable to create an image, some parameters are invalid! Note that one image lives in 1 time and 1 z points...\n");
+          std::cout << "Unable to create an image, some parameters are invalid!Note that one image lives in 1 time and 1 z points..." << std::endl;
         exit(0);
       }
 
@@ -1010,7 +1093,7 @@ void DConf::processArguments() {
     std::vector<int> ints = splitValueInt( "-geometry" );
     for (unsigned int x=0; x<ints.size(); ++x)
       if (ints[x] <= 0) { 
-        printf("Incorrect geometry values! Note that one image lives in 1 time and 1 z points...\n");
+          std::cout << "Incorrect geometry values! Note that one image lives in 1 time and 1 z points..." << std::endl;
         exit(0);
       }
 
@@ -1019,6 +1102,9 @@ void DConf::processArguments() {
       this->t = ints[1]; 
       this->geometry = true;
     }
+    if (ints.size() > 2) {
+        this->c = ints[2];
+    }
   }
 
   if (keyExists( "-resolution" )) {
@@ -1026,7 +1112,7 @@ void DConf::processArguments() {
     for (unsigned int x=0; x<4; ++x) resvals[x] = 0.0;
     for (unsigned int x=0; x<vals.size(); ++x)
       if (vals[x]<0) { 
-        printf("Incorrect resolution values!\n");
+          this->error("Incorrect resolution values!");
         exit(0);
       } else
         this->resvals[x] = vals[x];
@@ -1064,6 +1150,7 @@ void DConf::processArguments() {
     if ( strl.toLowerCase() == "odd") deinterlace_method = Image::deOdd;
     if ( strl.toLowerCase() == "even") deinterlace_method = Image::deEven;
     if ( strl.toLowerCase() == "avg") deinterlace_method = Image::deAverage;
+    if (strl.toLowerCase() == "offset") deinterlace_method = Image::deOffset;
   }
 
   if (keyExists("-transform")) {
@@ -1143,6 +1230,10 @@ void DConf::processArguments() {
       if ( strl[6]=="double") raw_type = FMT_FLOAT;
     }
 
+    if (strl.size() > 7) {
+        this->interleaved = strl[7].toBool(false);
+    }
+
     if (this->w>0 && this->h>0 && this->c>0 && this->d>0 && this->p>0 ) raw = true;
   }
 
@@ -1153,10 +1244,10 @@ void DConf::processArguments() {
 //------------------------------------------------------------------------------
 
 void printAbout() {
-  printf("\nimgcnv ver: %s\n\n", IMGCNV_VER);
-  printf("Author: Dima V. Fedorov <http://www.dimin.net/>\n\n");
-  printf("Arguments: [[-i | -o] FILE_NAME | -t FORMAT_NAME ]\n\n");
-  printf("Ex: imgcnv -i 1.jpg -o 2.tif -t TIFF\n\n");
+    std::cout << xstring::xprintf("\nimgcnv ver: %s\n\n", IMGCNV_VER);
+    std::cout << "Author: Dima V. Fedorov <http://www.dimin.net/>" << std::endl << std::endl;
+    std::cout << "Arguments: [[-i | -o] FILE_NAME | -t FORMAT_NAME ]" << std::endl << std::endl;
+    std::cout << "Ex: imgcnv -i 1.jpg -o 2.tif -t TIFF" << std::endl << std::endl;
 }
 
 
@@ -1177,10 +1268,12 @@ void printFormatsHTML() {
 
 void printMetaField( const xstring &key, const xstring &val ) {
   xstring v = val.replace( "\\", "\\\\" );
+  v = v.erase_zeros();
   v = v.replace( "\n", "\\" );
   v = v.replace( "\"", "'" );
   v = v.removeSpacesBoth();
-  printf("%s: %s\n", key.c_str(), v.c_str() );  
+
+  std::cout << key << ": " << v << std::endl;
 }
 
 void printMeta( MetaFormatManager *fm ) {
@@ -1188,8 +1281,9 @@ void printMeta( MetaFormatManager *fm ) {
   std::map<std::string, std::string>::const_iterator it;
   for(it = metadata.begin(); it != metadata.end(); ++it) {
     xstring s = (*it).first;
-    if ( !s.startsWith("raw/") )
-    printMetaField( (*it).first, (*it).second );  
+    xstring v = (*it).second;
+    if (!s.startsWith("raw/"))
+       printMetaField( (*it).first, (*it).second );  
   }
 }
 
@@ -1197,7 +1291,7 @@ void printTag( MetaFormatManager *fm, const std::string &key ) {
   const std::map<std::string, std::string> metadata = fm->get_metadata();
   std::map<std::string, std::string>::const_iterator it = metadata.find(key);
   if (it != metadata.end())
-    printf( (*it).second.c_str() );  
+      std::cout << (*it).second;
 }
 
 void printMetaParsed( MetaFormatManager *fm ) {
@@ -1241,16 +1335,21 @@ int extractTiles(DConf *c) {
     int tile_size = c->tile_size;
 
     if (output_path.size() < 1) {
-        printf("You must provide output path for tile storage!\n");
+        c->error("You must provide output path for tile storage!");
         return IMGCNV_ERROR_NO_OUTPUT_FILE; 
     }
  
     ImagePyramid ip;
     ip.setMinImageSize( tile_size );
+
+    // read requested page, only the first page will be used !!!!
+    int page = 0;
+    if (c->page.size()>0) {
+        page = c->page[0];
+    }
     
-    // dima: load only page 0 !!!!!!!!!!!!!
-    if (!ip.fromFile(input_filename, 0)) {
-        printf("Input format is not supported\n");
+    if (!ip.fromFile(input_filename, page)) {
+        c->error("Input format is not supported");
         return IMGCNV_ERROR_READING_FILE;
     }
 
@@ -1279,11 +1378,52 @@ int extractTiles(DConf *c) {
 }
 
 //------------------------------------------------------------------------------
+// Compositing a mosaic from a set of aligned and non overlapping tiles
+//------------------------------------------------------------------------------
+
+int mosaicTiles(DConf *c) {
+    int tile_size = c->tile_size;
+    int num_x = c->mosaic_num_x;
+    int num_y = c->mosaic_num_y;
+
+    if (c->o_name.size() < 1) {
+        c->error("You must provide output path for tile storage!");
+        return IMGCNV_ERROR_NO_OUTPUT_FILE;
+    }
+
+    Image tile(c->i_names[0]);
+    Image img(num_x*tile_size, num_y*tile_size, tile.depth(), tile.samples(), tile.pixelType());
+    img.fill(0);
+
+    int i = 0;
+    for (int y = 0; y<img.height(); y += tile_size) {
+        for (int x = 0; x<img.width(); x += tile_size) {
+            c->error(xstring::xprintf("%d,%d for %s\n", x, y, c->i_names[i].c_str()));
+            Image tile(c->i_names[i]);
+            if (!tile.isEmpty()) {
+                tile.process(c->getOperations(), 0, c);
+                img.setROI(x, y, tile);
+            } else {
+                c->error("Tile could not be loaded");
+            }
+            ++i;
+        } // j
+    } // i
+
+    c->print("Writing output image", 2);
+    img.toFile(c->o_name, c->o_fmt, c->options);
+
+    return IMGCNV_ERROR_NONE;
+}
+
+
+//------------------------------------------------------------------------------
 // Histogram
 //------------------------------------------------------------------------------
 
 int extractHistogram(DConf *c) {
     Image img(c->i_names[0], 0);
+    img.process(c->getOperations(), 0, c);
     ImageHistogram hist(img);
 
     if (c->o_histogram_format=="xml") 
@@ -1295,7 +1435,7 @@ int extractHistogram(DConf *c) {
 }
 
 //------------------------------------------------------------------------------
-// Poixel counts
+// Pixel counts
 //------------------------------------------------------------------------------
 
 inline void write_string(std::ostream *s, const std::string &str) {
@@ -1326,9 +1466,14 @@ int countPixels(DConf *c) {
 
 int resize_3d(DConf *c) {
     c->print( "About to run resize3D", 2 );
-    ImageStack stack( c->i_names[0] );
+    xoperations ops = c->getOperations();
+    xoperations before = ops.left("-textureatlas");
+    xoperations after = ops.right("-textureatlas");
+
+    ImageStack stack(c->i_names, c->c, &before);
     stack.ensureTypedDepth();
     stack.resize( c->w, c->h, c->z, c->resize_method, c->resize_preserve_aspect_ratio );  
+    stack.process(after, 0, c);
     stack.toFile(c->o_name, c->o_fmt, c->options );
     return IMGCNV_ERROR_NONE;
 }
@@ -1339,11 +1484,15 @@ int resize_3d(DConf *c) {
 
 int rearrangeDimensions(DConf *c) {
     c->print( "About to run Rearrange Dimensions", 2 );
-    ImageStack stack( c->i_names[0] );
-    stack.ensureTypedDepth();
+    xoperations ops = c->getOperations();
+    xoperations before = ops.left("-textureatlas");
+    xoperations after = ops.right("-textureatlas");
 
+    ImageStack stack(c->i_names, c->c, &before);
+    stack.ensureTypedDepth();
+    stack.process(after, 0, c);
     if (!stack.rearrange3DToFile( c->rearrange3d, c->o_name, c->o_fmt, c->options )) {
-        c->print(xstring::xprintf("Cannot write into: %s\n", c->o_name.c_str()));        
+        c->error(xstring::xprintf("Cannot write into: %s\n", c->o_name.c_str()));
         return IMGCNV_ERROR_WRITING_FILE;
     }
     return IMGCNV_ERROR_NONE;
@@ -1355,9 +1504,14 @@ int rearrangeDimensions(DConf *c) {
 
 int texture_atlas(DConf *c) {
     c->print( "About to run textureAtlas", 2 );
-    ImageStack stack( c->i_names[0] );
+    xoperations ops = c->getOperations();
+    xoperations before = ops.left("-textureatlas");
+    xoperations after = ops.right("-textureatlas");
+
+    ImageStack stack(c->i_names, c->c, &before);
     stack.ensureTypedDepth();
-    Image atlas = stack.textureAtlas();  
+    Image atlas = stack.textureAtlas();
+    atlas.process(after, 0, c);
     atlas.toFile(c->o_name, c->o_fmt, c->options );
     return IMGCNV_ERROR_NONE;
 }
@@ -1412,12 +1566,32 @@ bool is_overlapping_previous( const Image &img, DConf *c ) {
 }
 
 void init_fusion_from_meta( const Image &img, DConf *c ) {
+    std::vector<bim::DisplayColor> channel_colors_default = bim::defaultChannelColors();
+    bim::TagMap m = img.get_metadata();
     c->out_weighted_fuse_channels.clear();
     for (bim::uint i=0; i<img.samples(); ++i) {
-        xstring t = img.get_metadata_tag( xstring::xprintf(bim::CHANNEL_COLOR_TEMPLATE.c_str(), i), "" );
-        std::vector<int> cmp = t.splitInt(",");
-        cmp.resize(3,0);
-        c->out_weighted_fuse_channels.push_back(bim::DisplayColor(cmp[0], cmp[1], cmp[2]));
+        xstring key = xstring::xprintf(bim::CHANNEL_COLOR_TEMPLATE.c_str(), i);
+        if (m.hasKey(key)) {
+            xstring t = m.get_value(key, "");
+            std::vector<int> cmp = t.splitInt(",");
+            cmp.resize(3, 0);
+            c->out_weighted_fuse_channels.push_back(bim::DisplayColor(cmp[0], cmp[1], cmp[2]));
+        } else if (i<channel_colors_default.size()) {
+            c->out_weighted_fuse_channels.push_back(channel_colors_default[i]);
+        }
+    }
+}
+
+bool read_session_pixels(MetaFormatManager *fm, Image *img, unsigned int plane, DConf *c) {
+    ImageInfo info = fm->sessionGetInfo();
+    if (c->tile_size == 0 && c->res_level>0 && info.number_levels>1) { // read image level
+        ImageProxy ip(fm);
+        return ip.readLevel(*img, plane, c->res_level);
+    } else if (c->tile_size > 0 && c->tile_xid >= 0 && info.number_levels>1 && info.tileWidth>0) { // read image tile
+        ImageProxy ip(fm);
+        return ip.readTile(*img, plane, c->tile_xid, c->tile_yid, c->res_level, c->tile_size);
+    } else { // read image normally
+        return fm->sessionReadImage(img->imageBitmap(), plane) == 0;
     }
 }
 
@@ -1432,9 +1606,9 @@ int main( int argc, char** argv ) {
 
   DConf conf;
   if (conf.readParams(argc, argv) != 0)  {
-    printAbout(); 
-    printf( conf.usage().c_str() ); 
-    return IMGCNV_ERROR_NONE; 
+      printAbout(); 
+      conf.print(conf.usage(), 0);
+      return IMGCNV_ERROR_NONE; 
   }
 
   MetaFormatManager fm; // input format manager
@@ -1443,8 +1617,8 @@ int main( int argc, char** argv ) {
   Image img_projected;
 
   if (conf.version) { 
-    printf("%s\n", IMGCNV_VER);
-    return IMGCNV_ERROR_NONE; 
+      conf.print(xstring::xprintf("%s\n", IMGCNV_VER), 0);
+      return IMGCNV_ERROR_NONE; 
   }
 
   if (conf.print_formats) { 
@@ -1456,26 +1630,33 @@ int main( int argc, char** argv ) {
   }
 
   if (conf.i_names.size() <= 0) { 
-    printf("You must provide at least one input file!\n");
-    return IMGCNV_ERROR_NO_INPUT_FILE; 
+      conf.error("You must provide at least one input file!");
+      return IMGCNV_ERROR_NO_INPUT_FILE; 
   }
 
   if (conf.supported) { 
-    if (fm.sessionStartRead((const bim::Filename) conf.i_names[0].c_str()) != 0) printf("no\n"); else printf("yes\n");
-    return IMGCNV_ERROR_NONE; 
+      if (fm.sessionStartRead((const bim::Filename) conf.i_names[0].c_str()) != 0) 
+          conf.print("no", 0); 
+      else 
+          conf.print("yes", 0);
+      return IMGCNV_ERROR_NONE; 
   }
 
   // check if format supported for writing
   if (ofm.isFormatSupportsW(conf.o_fmt.c_str()) == false) {
-    printf("\"%s\" Format is not supported for writing!\n", conf.o_fmt.c_str());  
-    return IMGCNV_ERROR_WRITING_NOT_SUPPORTED;
+      conf.error(xstring::xprintf("\"%s\" Format is not supported for writing!\n", conf.o_fmt.c_str()));
+      return IMGCNV_ERROR_WRITING_NOT_SUPPORTED;
   }  
 
-  if (conf.o_histogram_file.size()>0 && conf.i_names.size()>0 && conf.o_name.size()<1) { 
+  /*if (conf.o_histogram_file.size()>0 && conf.i_names.size()>0 && conf.o_name.size()<1) { 
       return extractHistogram(&conf);
+  }*/
+
+  if (conf.mosaic && conf.tile_size > 0 && conf.mosaic_num_x > 0 && conf.mosaic_num_y > 0) {
+      return mosaicTiles(&conf);
   }
 
-  if (conf.tile_size > 0) { 
+  if (conf.tile_size > 0 && conf.tile_xid < 0 && conf.res_level <= 0) {
       return extractTiles(&conf);
   }
 
@@ -1527,7 +1708,10 @@ int main( int argc, char** argv ) {
     // create image from defeined params
     img.create( conf.w, conf.h, conf.d, conf.c );
     img.fill(0);
-    if (img.isNull()) { printf("Error creating new image\n"); return IMGCNV_ERROR_CREATING_IMAGE; }
+    if (img.isNull()) { 
+        conf.error("Error creating new image"); 
+        return IMGCNV_ERROR_CREATING_IMAGE; 
+    }
     num_pages = conf.t * conf.z;
   } else
   if (conf.i_names.size()==1) { 
@@ -1535,34 +1719,44 @@ int main( int argc, char** argv ) {
     // load image from the file, in the normal way
     if (!conf.raw) {
       if (fm.sessionStartRead((const bim::Filename)conf.i_names[0].c_str()) != 0)  {
-        printf("Input format is not supported\n");    
-        return IMGCNV_ERROR_READING_FILE;
+          conf.error("Input format is not supported");
+          return IMGCNV_ERROR_READING_FILE;
       }
       num_pages = fm.sessionGetNumberOfPages();
     } else {
-      // if reading RAW
-      if (fm.sessionStartReadRAW((const bim::Filename)conf.i_names[0].c_str(), 0, (bool)conf.e) != 0)  {
-        printf("Error opening RAW file\n");    
-        return IMGCNV_ERROR_READING_FILE_RAW;
+        // if reading RAW
+        if (fm.sessionStartReadRAW((const bim::Filename)conf.i_names[0].c_str(), 0, (bool)conf.e, conf.interleaved) != 0)  {
+            conf.error("Error opening RAW file");
+            return IMGCNV_ERROR_READING_FILE_RAW;
       }
       num_pages = conf.p;
     }
 
-
+    /*
     if (conf.page.size()>0) {
       // cure pages array first, removing invalid pages and dashes
       //curePagesArray( &conf, num_pages );
       conf.curePagesArray( num_pages );
       num_pages = (bim::uint) conf.page.size();
-    }
+    }*/
 
   } else
   if (conf.i_names.size() > 1) { 
     // multiple input files, interpret each one as pages
     num_pages = (bim::uint) conf.i_names.size();
+    // if channels are also stored as separate files
+    if (conf.c > 1) {
+        num_pages /= conf.c;
+    }
   }
 
-  conf.print( xstring::xprintf("Number of frames: %d", num_pages) );
+  if (conf.page.size()>0) {
+      // cure pages array first, removing invalid pages and dashes
+      conf.curePagesArray(num_pages);
+      num_pages = (bim::uint) conf.page.size();
+  }
+
+  conf.print(xstring::xprintf("Number of frames: %d", num_pages), 2);
 
   // check if format supports writing multipage
   if (ofm.isFormatSupportsWMP(conf.o_fmt.c_str()) == false) conf.multipage = false;
@@ -1570,8 +1764,8 @@ int main( int argc, char** argv ) {
   // start writing session if multipage 
   if (conf.multipage == true && conf.o_name.size()>0) {
     if (ofm.sessionStartWrite((const bim::Filename)conf.o_name.c_str(), conf.o_fmt.c_str(), conf.options.c_str()) != 0) {
-      printf("Cannot write into: %s\n", conf.o_name.c_str());        
-      return IMGCNV_ERROR_WRITING_FILE;
+        conf.error(xstring::xprintf("Cannot write into: %s\n", conf.o_name.c_str()));
+        return IMGCNV_ERROR_WRITING_FILE;
     }
   }
   int sampling_frame = 0;
@@ -1580,9 +1774,15 @@ int main( int argc, char** argv ) {
   // printing info - fast method
   if (conf.print_info) {
       ImageInfo info = fm.sessionGetInfo();
+
+      // dima: special case when appending channels from other files
+      if (conf.c > 1) {
+          info.samples = conf.c;
+      }
+
       if (info.width>0) {
-          printf( "format: %s\n", fm.sessionGetFormatName() );
-          printf( getImageInfoText(&info).c_str() );
+          conf.print(xstring::xprintf("format: %s", fm.sessionGetFormatName()), 0);
+          conf.print(getImageInfoText(&info), 0);
           return 0;
       }
   }
@@ -1590,6 +1790,13 @@ int main( int argc, char** argv ) {
   // printing meta - fast method
   if (conf.print_meta) {
       fm.sessionParseMetaData(0);
+
+      // dima: special case when appending channels from other files
+      if (conf.c > 1) {
+          fm.set_metadata_tag(bim::IMAGE_NUM_C, (int) conf.c);
+          fm.delete_metadata_tag(xstring::xprintf(bim::CHANNEL_COLOR_TEMPLATE.c_str(), 0));
+          fm.delete_metadata_tag(xstring::xprintf(bim::CHANNEL_NAME_TEMPLATE.c_str(), 0));
+      }
 
       if (conf.print_meta_parsed)
         printMetaParsed( &fm );
@@ -1627,36 +1834,41 @@ int main( int argc, char** argv ) {
 
     // if it's raw reading we have to init raw input image
     if (conf.raw) {
-      img.alloc(conf.w, conf.h, conf.c, conf.d);
-      img.imageBitmap()->i.number_pages = conf.p;
-      img.imageBitmap()->i.pixelType    = conf.raw_type;
+        img.alloc(conf.w, conf.h, conf.c, conf.d, conf.raw_type);
+        img.imageBitmap()->i.number_pages = conf.p;
     }
     
     // if normal reading
     unsigned int real_frame = page;
     if (conf.page.size()>0) real_frame = conf.page[page]-1;
-    if (!conf.create && conf.i_names.size()==1)
-      fm.sessionReadImage  ( img.imageBitmap(), real_frame );
-
-    // if multiple file reading    
-    if (!conf.create && conf.i_names.size()>1) {
+    if (!conf.create && conf.i_names.size() == 1) {
+        read_session_pixels(&fm, &img, real_frame, &conf);
+    } else if (!conf.create && conf.i_names.size() > 1) { // if multiple file reading    
       int res=0;
       
-      if (!conf.raw)
-        res = fm.sessionStartRead((const bim::Filename)conf.i_names[page].c_str());
-      else
-        res = fm.sessionStartReadRAW((const bim::Filename)conf.i_names[0].c_str(), 0, (bool)conf.e);
+      if (conf.raw)
+          res = fm.sessionStartReadRAW((const bim::Filename)conf.i_names[0].c_str(), 0, (bool)conf.e, conf.interleaved);
+      else {
+          if (conf.c<=1) 
+              res = fm.sessionStartRead((const bim::Filename)conf.i_names[real_frame].c_str());
+          else {
+              int mypage = real_frame*conf.c;
+              res = fm.sessionStartRead((const bim::Filename)conf.i_names[real_frame*conf.c].c_str()); // read first channel out of requested, add later
+          }
+      }
 
       if (res != 0)  {
-        printf("Input format is not supported for: %s\n", conf.i_names[page].c_str());    
-        return IMGCNV_ERROR_READING_FILE;
+          conf.error(xstring::xprintf("Input format is not supported for: %s\n", conf.i_names[page].c_str()));
+          return IMGCNV_ERROR_READING_FILE;
       }
-      fm.sessionReadImage  ( img.imageBitmap(), 0 );
+
+      // read full image or level or tile
+      read_session_pixels(&fm, &img, 0, &conf);
     }
 
     if (img.isNull()) continue;
 
-    conf.print( xstring::xprintf("Got image for frame: %d/%d (%.1f%%)", real_frame+1, num_pages, (real_frame+1)*100.0/num_pages*1.0) );
+    conf.print(xstring::xprintf("Got image for frame: %d/%d (%.1f%%)", real_frame + 1, num_pages, (real_frame + 1)*100.0 / num_pages*1.0), 1);
 
 
     // ------------------------------------------------------------------
@@ -1668,15 +1880,16 @@ int main( int argc, char** argv ) {
     // ------------------------------------------------------------------
 
     // update image's geometry
-    if (conf.geometry)
-      img.updateGeometry( conf.z, conf.t );
+    if (conf.geometry) {
+        img.updateGeometry(conf.z, conf.t);
+    }
 
     if (conf.resolution)
       img.updateResolution( conf.resvals );
 
     if ( (conf.print_info == true) && (page == 0) ) {
-      printf( "format: %s\n", fm.sessionGetFormatName() );
-      printf( img.getTextInfo().c_str() );
+        conf.print(xstring::xprintf("format: %s\n", fm.sessionGetFormatName()), 0);
+        conf.print(img.getTextInfo(), 0);
     }
 
     // print out meta-data
@@ -1698,7 +1911,7 @@ int main( int argc, char** argv ) {
     }
 
     xstring ofname = conf.o_name;
-    if (ofname.size() < 1) return IMGCNV_ERROR_NO_OUTPUT_FILE;
+    if (ofname.size() < 1 && conf.o_histogram_file.size()<1) return IMGCNV_ERROR_NO_OUTPUT_FILE;
 
     // make sure red image is in supported pixel format, e.g. will convert 12 bit to 16 bit
     img = img.ensureTypedDepth();
@@ -1707,232 +1920,75 @@ int main( int argc, char** argv ) {
     // if asked to append channels
     if (conf.c_names.size()>0) {
       conf.print( "About to append channels", 2 );
+      Image ccc_img;
       for (int ccc=0; ccc<conf.c_names.size(); ++ccc) {
-        Image ccc_img;
-        ccc_img.fromFile( conf.c_names[ccc], page );
+        //ccc_img.fromFile( conf.c_names[ccc], page );
+        ccc_img.fromPyramidFile(conf.c_names[ccc], page, conf.res_level, conf.tile_xid, conf.tile_yid, conf.tile_size);
         img = img.appendChannels( ccc_img );
       }
-      hist.clear();
+      if (conf.i_histogram_file.size()<1) 
+          hist.clear(); // dima: probably should not clear the loaded histogram
+      img.delete_metadata_tag(xstring::xprintf(bim::CHANNEL_COLOR_TEMPLATE.c_str(), 0));
+      img.delete_metadata_tag(xstring::xprintf(bim::CHANNEL_NAME_TEMPLATE.c_str(), 0));
     }
 
-    if (conf.stretch) {
-        img = img.convertToDepth( img.depth(), Lut::ltLinearDataRange, FMT_UNDEFINED, Histogram::cmSeparate, &hist );
-    }
-
-    // ------------------------------------ 
-    // color levels adjustment
-    if ( conf.levels ) {
-        conf.print( "About to run levels", 2 );
-        img.color_levels( conf.minv, conf.maxv, conf.gamma );
-    }
-
-    // ------------------------------------ 
-    // color brightness/contrast adjustment
-    if ( conf.brightness!=0.0 || conf.contrast!=0.0 ) {
-        conf.print( "About to run brightness/contrast", 2 );
-        img.color_brightness_contrast( conf.brightness, conf.contrast );
-    }
-
-    // ------------------------------------    
-    // if asked convert image depth
-    if (conf.out_depth>0) {
-      conf.print( "About to run Depth", 2 );
-      if (conf.out_depth!=8 && conf.out_depth!=16 && conf.out_depth!=32 && conf.out_depth!=64)
-          printf( "Output depth (%s bpp) is not supported! Ignored!\n", conf.out_depth );
-      else {
-          if (conf.lut_method == Lut::ltGamma) {
-              double gamma = conf.gamma;
-              img = img.convertToDepth( conf.out_depth, conf.lut_method, conf.out_pixel_format, conf.chan_mode, &hist, (void*) &gamma );
-          } else if (conf.lut_method == Lut::ltMinMaxGamma) {
-              bim::min_max_gamma_args args;
-              args.gamma = conf.gamma;
-              args.maxv = conf.maxv;
-              args.minv = conf.minv;
-              img = img.convertToDepth( conf.out_depth, conf.lut_method, conf.out_pixel_format, conf.chan_mode, &hist, (void*) &args );
-          } else {
-              img = img.convertToDepth( conf.out_depth, conf.lut_method, conf.out_pixel_format, conf.chan_mode, &hist );
-          }
-      }
-    }
-
-    // if asked, normalize, also, has to be normalized if format does not support intput depth
-    if ( (conf.normalize == true) || (!fm.isFormatSupportsBpcW( conf.o_fmt.c_str(), img.depth() )) ) {
-      conf.print( "About to run normalize", 2 );
-      img = img.normalize(8, &hist);
-    }
-
-    // ------------------------------------    
-    // Channel fusion
-    if (conf.fuse_channels) {
-      conf.print( "About to run channel fusion", 2 );
-      if (conf.fuse_to_grey) {
-          img = img.fuseToGrayscale();
-      } else if (conf.fuse_to_rgb) {
-          img = img.fuseToRGB( conf.out_weighted_fuse_channels, conf.fuse_method, &hist );
-      } else if (conf.fuse_meta) {
-          fm.sessionParseMetaData(0);
-          init_fusion_from_meta( img, &conf );
-          img = img.fuseToRGB( conf.out_weighted_fuse_channels, conf.fuse_method, &hist );
-      } else {
-          img = img.fuse( conf.out_fuse_channels );
-      }
-       
-      hist.clear();
-    }
-
-    // ------------------------------------
-    // Deinterlace
-    if (conf.deinterlace) {
-      conf.print( "About to run deinterlace", 2 );
-      img.deinterlace(conf.deinterlace_method);
-    }
-
-    // ------------------------------------
-    // ROI
-    if ( conf.roi ) {
-        conf.print( "About to run ROI", 2 );
-        for (int i=conf.rois.size()-1; i>=0; --i) {
-            bim::Rectangle<int> r = conf.rois[i];
-
-            // it's allowed to specify only one of the sizes, the other one will be computed
-            if (r.p1.x == -1) r.p1.x = 0;
-            if (r.p1.y == -1) r.p1.y = 0;
-            if (r.p2.x == -1) r.p2.x = (int)img.width() - 1;
-            if (r.p2.y == -1) r.p2.y = (int)img.height() - 1;
-
-            if (r.p1.x >= r.p2.x || r.p1.y >= r.p2.y) {
-                printf("ROI parameters are invalid, ignored!\n");
-                continue;
-            }
-
-            if (i == 0) {
-                img = img.ROI(r.p1.x, r.p1.y, r.width(), r.height());
-            } else {
-                std::map<std::string, std::string> vars;
-                vars["x1"] = xstring::xprintf("%d", r.p1.x);
-                vars["y1"] = xstring::xprintf("%d", r.p1.y);
-                vars["x2"] = xstring::xprintf("%d", r.p2.x);
-                vars["y2"] = xstring::xprintf("%d", r.p2.y);
-                xstring fn = conf.template_filename.processTemplate(vars);
-
-                Image o = img.ROI(r.p1.x, r.p1.y, r.width(), r.height());
-                o.toFile(fn, conf.o_fmt, conf.options);
-            }
+    // if multiple file reading with separate channels
+    if (!conf.create && conf.i_names.size()>1 && conf.c>1) {
+        conf.print("About to append channels", 2);
+        Image ccc_img;
+        for (int ccc = 1; ccc<conf.c; ++ccc) {
+            //ccc_img.fromFile(conf.i_names[real_frame*conf.c + ccc], 0);
+            ccc_img.fromPyramidFile(conf.i_names[real_frame*conf.c + ccc], 0, conf.res_level, conf.tile_xid, conf.tile_yid, conf.tile_size);
+            img = img.appendChannels(ccc_img);
         }
+        if (conf.i_histogram_file.size()<1)
+            hist.clear(); // dima: probably should not clear the loaded histogram
+        img.delete_metadata_tag( xstring::xprintf(bim::CHANNEL_COLOR_TEMPLATE.c_str(), 0) );
+        img.delete_metadata_tag( xstring::xprintf(bim::CHANNEL_NAME_TEMPLATE.c_str(), 0) );
     }
 
-    // ------------------------------------
-    // Resize
-    if (conf.resize && (!conf.resize_no_upsample || (conf.resize_no_upsample && img.width()>conf.w && img.height()>conf.h)) ) {
-      conf.print( "About to run resize", 2 );
-      if (conf.resize_preserve_aspect_ratio)
-        if ( (img.width()/(float)conf.w) >= (img.height()/(float)conf.h) ) conf.h = 0; else conf.w = 0;
+    //======================================================================================
+    // BEGIN OPS - operations are now applied according to the position in the command line
+    //======================================================================================
 
-      // it's allowed to specify only one of the sizes, the other one will be computed
-      if (conf.w == 0)
-        conf.w = bim::round<unsigned int>( img.width() / (img.height()/(float)conf.h) );
-      if (conf.h == 0)
-        conf.h = bim::round<unsigned int>( img.height() / (img.width()/(float)conf.w) );
+    img.process(conf.getOperations(), &hist, &conf);
 
-      if (!conf.resample)
-        img = img.resize( conf.w, conf.h, conf.resize_method );
-      else
-        img = img.resample( conf.w, conf.h, conf.resize_method );
+    //======================================================================================
+    // END OPS - operations are now applied according to the position in the command line
+    //======================================================================================
 
-      if (conf.out_depth>0)
-        img = img.convertToDepth( conf.out_depth, conf.lut_method, conf.out_pixel_format, conf.chan_mode );
+    // write histogram file
+    if (conf.o_histogram_file.size()>0) {
+        ImageHistogram h(img);
+        if (conf.o_histogram_format == "xml")
+            h.toXML(conf.o_histogram_file);
+        else
+            h.to(conf.o_histogram_file);
     }
 
-    // ------------------------------------
-    // Color Transforms
-    if (conf.transform_color != Image::tmcNone) {
-        conf.print( "About to run color transform", 2 );
-        img = img.transform_color(conf.transform_color);
-    }
-
-    // ------------------------------------
-    // Transforms
-    if (conf.transform != Image::tmNone) {
-        conf.print( "About to run transform", 2 );
-        img = img.transform(conf.transform);
-    }
-
-    // ------------------------------------
-    // Filters
-    if (conf.filter) {
-        conf.print( "About to run filter", 2 );
-        if (conf.filter_method == "edge")
-            img = img.filter_edge();
-        else if (conf.filter_method == "wndchrmcolor")
-            img = img.transform_color(Image::tmcRGB2WndChrmColor);
-        else if (conf.filter_method == "otsu")
-            img = img.filter_edge();
-    }
-
-    // ------------------------------------    
-    // Superpixels
-    if (conf.superpixels>0) {
-        conf.print( "About to run SLIC superpixels", 2 );
-        conf.timerStart();
-        img = img.superpixels( conf.superpixels, conf.superpixels_regularization );
-        conf.printElapsed("SLIC superpixels: ", 2);
-    }
-
-    // ------------------------------------    
-    // Rotate
-    if (conf.rotate_guess) {
-        conf.print( "About to run rotate_guess", 2 );
-        img = img.rotate_guess();
-    }
-
-    if (conf.rotate_angle != 0) {
-      conf.print( "About to run rotate", 2 );
-      img = img.rotate( conf.rotate_angle );
-    }
-
-    if (conf.mirror) {
-      conf.print( "About to run mirror", 2 );
-      img = img.mirror();
-    }
-
-    if (conf.flip) {
-      conf.print( "About to run flip", 2 );
-      img = img.flip();
-    }
-
-    // ------------------------------------    
-    // Negative
-    if (conf.negative) {
-      conf.print( "About to run negative", 2 );
-      img = img.negative();
-    }
-
-    // ------------------------------------    
-    // Threshold
-    if (conf.threshold_operation!=Image::ttNone) {
-        conf.print( "About to run Threshold", 2 );
-        img.operationThreshold( conf.threshold, conf.threshold_operation );
-    }
+    if (ofname.size() < 1 && conf.o_histogram_file.size()>0) return IMGCNV_ERROR_NONE;
+    if (ofname.size() < 1) return IMGCNV_ERROR_NO_OUTPUT_FILE;
 
     // ------------------------------------    
     // Project
+    //if ((operation == "-project" || operation == "-projectmax" || operation == "-projectmin") && conf.project) {
     if (conf.project) {
-      conf.print( "About to run project", 2 );
-      if (img_projected.isNull()) 
-        img_projected = img.deepCopy();
-      else
-        if (!conf.project_min)
-          img_projected.pixelArithmeticMax( img );
+        conf.print("About to run project", 2);
+        if (img_projected.isNull())
+            img_projected = img.deepCopy();
         else
-          img_projected.pixelArithmeticMin( img );
-      hist.clear();
+        if (!conf.project_min)
+            img_projected.pixelArithmeticMax(img);
+        else
+            img_projected.pixelArithmeticMin(img);
+        hist.clear();
     }
 
     // ------------------------------------    
     // Overlapping frames detection
     if (conf.no_overlap) {
       if (is_overlapping_previous(img, &conf)) {
-        conf.print( xstring::xprintf("Overlap detected, skipping frame %d", real_frame) );
+          conf.print(xstring::xprintf("Overlap detected, skipping frame %d", real_frame), 1);
         if (conf.overlap_frame_sampling>0)
           conf.sample_frames = conf.overlap_frame_sampling;
         continue;
@@ -1973,7 +2029,7 @@ int main( int argc, char** argv ) {
 
     // write into a file
     conf.print( "About to write", 2 );
-    if (!conf.project) {
+    if (!conf.project && ofname.size()>0) {
 
       if ( conf.omexml.size()>0 ) 
         ofm.sessionWriteSetOMEXML( conf.omexml ); 
@@ -2032,3 +2088,124 @@ int main( int argc, char** argv ) {
   return IMGCNV_ERROR_NONE;
 }
 
+//------------------------------------------------------------------------------
+// dynamic library exported function
+//------------------------------------------------------------------------------
+/*
+template <class charT, class traits = std::char_traits<charT>>
+class stringbuf : public std::basic_streambuf<charT, traits> {
+public:
+    using char_type = charT;
+    using traits_type = traits;
+    using int_type = typename traits::int_type;
+public:
+    stringbuf() : buffer(1000000, 0) {
+        this->setp(&buffer.front(), &buffer.back());
+    }
+
+    int_type overflow(int_type c) {
+        if (traits::eq_int_type(c, traits::eof()))
+            return traits::not_eof(c);
+
+        std::ptrdiff_t diff = this->pptr() - this->pbase();
+
+        buffer.resize(buffer.size() * 1.5);
+        //this->setp(&buffer.front(), &buffer.back());
+        this->setp(&this->buffer.front(), &this->buffer.front() + this->buffer.size());
+
+        this->pbump(diff);
+        *this->pptr() = traits::to_char_type(c);
+        this->pbump(1);
+
+        return traits::not_eof(traits::to_int_type(*this->pptr()));
+    }
+
+    std::basic_string<charT> str() const {
+        return this->buffer.substr(0, this->pptr() - this->pbase());
+    }
+
+private:
+    std::basic_string<charT> buffer;
+};
+
+//stringbuf<char> buf;
+//std::ostream buffer(&buf);
+*/
+
+void handle_exception() {
+    try {
+        throw;
+    }
+    catch (const std::exception &e) {
+        std::cerr << e.what() << "\n";
+    }
+    catch (const int i) {
+        std::cerr << i << "\n";
+    }
+    catch (const long l) {
+        std::cerr << l << "\n";
+    }
+    catch (const char *p) {
+        std::cerr << p << "\n";
+    }
+    catch (...) {
+        std::cerr << "unknown excepition\n";
+    }
+}
+
+extern "C" {
+#ifdef BIM_WIN
+int imgcnv(int argc, wchar_t *argv[], char **out) {
+    try {
+        std::ostringstream buffer;
+        std::streambuf *old = std::cout.rdbuf(buffer.rdbuf());
+
+        int retcode = wmain(argc, argv, NULL);
+
+        std::string text = buffer.str();
+        if (text.size() > 0) {
+            *out = new char[text.size() + 1];
+            memcpy(*out, &text[0], text.size());
+            (*out)[text.size()] = 0;
+        }
+        std::cout.rdbuf(old);
+        return retcode;
+    }
+    catch (...) {
+        handle_exception();
+        return 101;
+    }
+}
+#else
+    int imgcnv(int argc, char** argv, char **out) {
+    try {
+        std::ostringstream buffer;
+        std::streambuf *old = std::cout.rdbuf(buffer.rdbuf());
+
+        int retcode = main(argc, argv);
+
+        std::string text = buffer.str();
+        if (text.size() > 0) {
+            *out = new char[text.size() + 1];
+            memcpy(*out, &text[0], text.size());
+            (*out)[text.size()] = 0;
+        }
+        std::cout.rdbuf(old);
+        return retcode;
+    } catch (...) {
+        handle_exception();
+        return 101;
+    }
+}
+#endif
+
+void imgcnv_clear(char **out) {
+    try {
+        if (*out) delete[] * out;
+        *out = NULL;
+    } catch (...) {
+
+    }
+}
+
+}

@@ -19,15 +19,12 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="imgcnv.rc">
+    <ResourceCompile Include="bimread.rc">
       <Filter>Source Files</Filter>
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\main.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\reg\registration.cpp">
+    <ClCompile Include="..\src_bimread\mex_bimread.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

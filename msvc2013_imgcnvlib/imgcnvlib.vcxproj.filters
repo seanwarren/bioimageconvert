@@ -19,7 +19,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="imgcnv.rc">
+    <ResourceCompile Include="imgcnvlib.rc">
       <Filter>Source Files</Filter>
     </ResourceCompile>
   </ItemGroup>

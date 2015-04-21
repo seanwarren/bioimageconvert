@@ -27,7 +27,8 @@
 APP_NAME = imgcnv
 TARGET = imgcnv
 
-TEMPLATE = app
+TEMPLATE = lib
+CONFIG  += dll
 VERSION = 2.0.0
 
 CONFIG += console
@@ -63,11 +64,11 @@ macx {
 } else:unix {
   QMAKE_CFLAGS_DEBUG += -pg -fPIC -ggdb
   QMAKE_CXXFLAGS_DEBUG += -pg -fPIC -ggdb
-  QMAKE_LFLAGS_DEBUG += -pg -fPIC -ggdb
+  QMAKE_LFLAGS_DEBUG += -Wl,-Bsymbolic -pg -fPIC -ggdb
 
   QMAKE_CFLAGS_RELEASE += -fPIC -fopenmp -O3 -ftree-vectorize -msse2 -ffast-math -ftree-vectorizer-verbose=0
   QMAKE_CXXFLAGS_RELEASE += -fPIC -fopenmp -O3 -ftree-vectorize -msse2 -ffast-math -ftree-vectorizer-verbose=0
-  QMAKE_LFLAGS_RELEASE += -fPIC -fopenmp -O3 -ftree-vectorize -msse2 -ffast-math -ftree-vectorizer-verbose=0
+  QMAKE_LFLAGS_RELEASE += -Wl,-Bsymbolic -fPIC -fopenmp -O3 -ftree-vectorize -msse2 -ffast-math -ftree-vectorizer-verbose=0
 }
 
 

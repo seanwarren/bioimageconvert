@@ -51,8 +51,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,51,0,51
- PRODUCTVERSION 1,51,0,51
+ FILEVERSION 2,0,0,0
+ PRODUCTVERSION 2,0,0,0
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -68,13 +68,13 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "CompanyName", "Center for BioImage Informatics, UCSB"
-            VALUE "FileDescription", "imgcnv_gobjects - BioImage Converter"
-            VALUE "FileVersion", "1.51.0.51"
-            VALUE "InternalName", "imgcnv_gobjects"
-            VALUE "LegalCopyright", "Copyright (C) 2011, Center for BioImage Informatics "
-            VALUE "OriginalFilename", "imgcnv_gobjects.exe"
-            VALUE "ProductName", "imgcnv_gobjects - BioImage Converter for GObjects"
-            VALUE "ProductVersion", "1.51.0.51"
+            VALUE "FileDescription", "imgcnv - BioImage Converter"
+            VALUE "FileVersion", "2.0.0.0"
+            VALUE "InternalName", "imgcnv"
+            VALUE "LegalCopyright", "Copyright (C) 2004-2015, Dmtiry Fedorov, Center for BioImage Informatics"
+            VALUE "OriginalFilename", "imgcnv.dll"
+            VALUE "ProductName", "imgcnv - BioImage Converter"
+            VALUE "ProductVersion", "2.0.0.0"
         END
     END
     BLOCK "VarFileInfo"

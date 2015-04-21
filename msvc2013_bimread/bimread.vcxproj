@@ -19,30 +19,30 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{DFA9674B-761F-48B5-A261-9C386B1F2202}</ProjectGuid>
-    <RootNamespace>imgcnv</RootNamespace>
+    <ProjectGuid>{2292BBEF-AD62-44FC-A2DD-9FD169C3604E}</ProjectGuid>
+    <RootNamespace>bimread</RootNamespace>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseOfMfc>false</UseOfMfc>
     <CharacterSet>MultiByte</CharacterSet>
     <PlatformToolset>v120</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseOfMfc>false</UseOfMfc>
     <CharacterSet>MultiByte</CharacterSet>
     <PlatformToolset>v120</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseOfMfc>false</UseOfMfc>
     <CharacterSet>MultiByte</CharacterSet>
     <PlatformToolset>v120</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseOfMfc>false</UseOfMfc>
     <CharacterSet>MultiByte</CharacterSet>
     <PlatformToolset>v120</PlatformToolset>
@@ -72,7 +72,7 @@
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(Platform)\$(Configuration)\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(Platform)\$(Configuration)\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</LinkIncremental>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(Platform)\$(Configuration)\</OutDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">f:\dima\develop\python\bq5irods\bqserver\bq\image_service\tests\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(Platform)\$(Configuration)\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkIncremental>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(Platform)\$(Configuration)\</OutDir>
@@ -82,21 +82,33 @@
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(Platform)\$(Configuration)\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkIncremental>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <TargetExt>.mexw32</TargetExt>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <TargetExt>.mexw32</TargetExt>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <TargetExt>.mexw64</TargetExt>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <TargetExt>.mexw64</TargetExt>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Midl>
-      <TypeLibraryName>$(Platform)\$(Configuration)/imgcnv.tlb</TypeLibraryName>
+      <TypeLibraryName>$(Platform)\$(Configuration)/bimread.tlb</TypeLibraryName>
       <HeaderFileName>
       </HeaderFileName>
     </Midl>
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\libsrc\libbioimg\formats;..\libsrc\libbioimg\formats_api;..\libsrc\libbioimg\core_lib;..\libsrc\libjpeg-turbo;..\libsrc\libpng;..\libsrc\libtiff;..\libsrc\zlib;..\libsrc\ffmpeg\include;..\libsrc\ffmpeg\include-win;..\libsrc\libraw;..\libsrc\libbioimg;..\libsrc\pole;..\libsrc\exiv2;..\libsrc\libgeotiff;..\libsrc\eigen;..\libsrc\jzon;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(MATLAB)\extern\include\;..\libsrc\libbioimg\formats;..\libsrc\libbioimg\formats_api;..\libsrc\libbioimg\core_lib;..\libsrc\libjpeg-turbo;..\libsrc\libpng;..\libsrc\libtiff;..\libsrc\zlib;..\libsrc\ffmpeg\include;..\libsrc\ffmpeg\include-win;..\libsrc\libraw;..\libsrc\libbioimg;..\libsrc\pole;..\libsrc\exiv2;..\libsrc\libgeotiff;..\libsrc\eigen;..\libsrc\jzon;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;__STDC_CONSTANT_MACROS;_MSVC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <PrecompiledHeader>
       </PrecompiledHeader>
-      <PrecompiledHeaderOutputFile>$(Platform)\$(Configuration)/imgcnv.pch</PrecompiledHeaderOutputFile>
+      <PrecompiledHeaderOutputFile>$(Platform)\$(Configuration)/bimread.pch</PrecompiledHeaderOutputFile>
       <AssemblerListingLocation>$(Platform)\$(Configuration)/</AssemblerListingLocation>
       <ObjectFileName>$(Platform)\$(Configuration)/</ObjectFileName>
       <ProgramDataBaseFileName>$(Platform)\$(Configuration)/</ProgramDataBaseFileName>
@@ -112,33 +124,36 @@
       <Culture>0x0409</Culture>
     </ResourceCompile>
     <Link>
-      <OutputFile>$(Platform)\$(Configuration)/imgcnv.exe</OutputFile>
+      <OutputFile>$(Platform)\$(Configuration)/bimread.mexw32</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <ProgramDatabaseFile>$(Platform)\$(Configuration)/imgcnv.pdb</ProgramDatabaseFile>
+      <ProgramDatabaseFile>$(Platform)\$(Configuration)/bimread.pdb</ProgramDatabaseFile>
       <SubSystem>Console</SubSystem>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <DataExecutionPrevention>
       </DataExecutionPrevention>
       <TargetMachine>MachineX86</TargetMachine>
+      <ModuleDefinitionFile>.\dll_exports.def</ModuleDefinitionFile>
+      <AdditionalLibraryDirectories>$(MATLAB)\extern\lib\win32\microsoft;</AdditionalLibraryDirectories>
+      <AdditionalDependencies>libmx.lib;libmex.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Midl>
       <TargetEnvironment>X64</TargetEnvironment>
-      <TypeLibraryName>$(Platform)\$(Configuration)/imgcnv.tlb</TypeLibraryName>
+      <TypeLibraryName>$(Platform)\$(Configuration)/bimread.tlb</TypeLibraryName>
       <HeaderFileName>
       </HeaderFileName>
     </Midl>
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\libsrc\libbioimg\formats;..\libsrc\libbioimg\formats_api;..\libsrc\libbioimg\core_lib;..\libsrc\libjpeg-turbo;..\libsrc\libpng;..\libsrc\libtiff;..\libsrc\zlib;..\libsrc\ffmpeg\include;..\libsrc\ffmpeg\include-win;..\libsrc\libraw;..\libsrc\libbioimg;..\libsrc\pole;..\libsrc\exiv2;..\libsrc\libgeotiff;..\libsrc\eigen;..\libsrc\jzon;..\libsrc\libfftw\src\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(MATLAB)\extern\include\;..\libsrc\libbioimg\formats;..\libsrc\libbioimg\formats_api;..\libsrc\libbioimg\core_lib;..\libsrc\libjpeg-turbo;..\libsrc\libpng;..\libsrc\libtiff;..\libsrc\zlib;..\libsrc\ffmpeg\include;..\libsrc\ffmpeg\include-win;..\libsrc\libraw;..\libsrc\libbioimg;..\libsrc\pole;..\libsrc\exiv2;..\libsrc\libgeotiff;..\libsrc\eigen;..\libsrc\jzon;..\libsrc\libfftw\src\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;__STDC_CONSTANT_MACROS;BIM_USE_TRANSFORMS;BIM_USE_FILTERS;BIM_GDCM_FORMAT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <PrecompiledHeaderOutputFile>$(Platform)\$(Configuration)/imgcnv.pch</PrecompiledHeaderOutputFile>
+      <PrecompiledHeaderOutputFile>$(Platform)\$(Configuration)/bimread.pch</PrecompiledHeaderOutputFile>
       <AssemblerListingLocation>$(Platform)\$(Configuration)/</AssemblerListingLocation>
       <ObjectFileName>$(Platform)\$(Configuration)/</ObjectFileName>
       <ProgramDataBaseFileName>$(Platform)\$(Configuration)/</ProgramDataBaseFileName>
@@ -154,21 +169,24 @@
       <Culture>0x0409</Culture>
     </ResourceCompile>
     <Link>
-      <OutputFile>$(Platform)\$(Configuration)/imgcnv.exe</OutputFile>
+      <OutputFile>f:\dima\develop\python\bq5irods\bqserver\bq\image_service\tests\bimread.mexw64</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <ProgramDatabaseFile>$(Platform)\$(Configuration)/imgcnv.pdb</ProgramDatabaseFile>
+      <ProgramDatabaseFile>$(Platform)\$(Configuration)/bimread.pdb</ProgramDatabaseFile>
       <SubSystem>Console</SubSystem>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <DataExecutionPrevention>
       </DataExecutionPrevention>
       <TargetMachine>MachineX64</TargetMachine>
+      <ModuleDefinitionFile>.\dll_exports.def</ModuleDefinitionFile>
+      <AdditionalLibraryDirectories>$(MATLAB)\extern\lib\win64\microsoft;</AdditionalLibraryDirectories>
+      <AdditionalDependencies>libmx.lib;libmex.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <Midl>
-      <TypeLibraryName>$(Platform)\$(Configuration)/imgcnv.tlb</TypeLibraryName>
+      <TypeLibraryName>$(Platform)\$(Configuration)/bimread.tlb</TypeLibraryName>
       <HeaderFileName>
       </HeaderFileName>
     </Midl>
@@ -179,14 +197,14 @@
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <OmitFramePointers>true</OmitFramePointers>
       <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
-      <AdditionalIncludeDirectories>..\libsrc\libbioimg\formats;..\libsrc\libbioimg\formats_api;..\libsrc\libbioimg\core_lib;..\libsrc\libjpeg-turbo;..\libsrc\libpng;..\libsrc\libtiff;..\libsrc\zlib;..\libsrc\ffmpeg\include;..\libsrc\ffmpeg\include-win;..\libsrc\libraw;..\libsrc\libbioimg;..\libsrc\pole;..\libsrc\exiv2;..\libsrc\libgeotiff;..\libsrc\eigen;..\libsrc\vjson;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(MATLAB)\extern\include\;..\libsrc\libbioimg\formats;..\libsrc\libbioimg\formats_api;..\libsrc\libbioimg\core_lib;..\libsrc\libjpeg-turbo;..\libsrc\libpng;..\libsrc\libtiff;..\libsrc\zlib;..\libsrc\ffmpeg\include;..\libsrc\ffmpeg\include-win;..\libsrc\libraw;..\libsrc\libbioimg;..\libsrc\pole;..\libsrc\exiv2;..\libsrc\libgeotiff;..\libsrc\eigen;..\libsrc\vjson;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;__STDC_CONSTANT_MACROS;_MSVC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <PrecompiledHeader>
       </PrecompiledHeader>
-      <PrecompiledHeaderOutputFile>$(Platform)\$(Configuration)/imgcnv.pch</PrecompiledHeaderOutputFile>
+      <PrecompiledHeaderOutputFile>$(Platform)\$(Configuration)/bimread.pch</PrecompiledHeaderOutputFile>
       <AssemblerListingLocation>$(Platform)\$(Configuration)/</AssemblerListingLocation>
       <ObjectFileName>$(Platform)\$(Configuration)/</ObjectFileName>
       <ProgramDataBaseFileName>$(Platform)\$(Configuration)/</ProgramDataBaseFileName>
@@ -201,21 +219,23 @@
       <Culture>0x0409</Culture>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>imm32.lib;wsock32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <OutputFile>$(Platform)\$(Configuration)/imgcnv.exe</OutputFile>
+      <AdditionalDependencies>libmx.lib;libmex.lib;imm32.lib;wsock32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>$(Platform)\$(Configuration)/bimread.mexw32</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
-      <ProgramDatabaseFile>$(Platform)\$(Configuration)/imgcnv.pdb</ProgramDatabaseFile>
+      <ProgramDatabaseFile>$(Platform)\$(Configuration)/bimread.pdb</ProgramDatabaseFile>
       <SubSystem>Console</SubSystem>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <DataExecutionPrevention>
       </DataExecutionPrevention>
       <TargetMachine>MachineX86</TargetMachine>
+      <ModuleDefinitionFile>.\dll_exports.def</ModuleDefinitionFile>
+      <AdditionalLibraryDirectories>$(MATLAB)\extern\lib\win32\microsoft;</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <Midl>
       <TargetEnvironment>X64</TargetEnvironment>
-      <TypeLibraryName>$(Platform)\$(Configuration)/imgcnv.tlb</TypeLibraryName>
+      <TypeLibraryName>$(Platform)\$(Configuration)/bimread.tlb</TypeLibraryName>
       <HeaderFileName>
       </HeaderFileName>
     </Midl>
@@ -226,14 +246,14 @@
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <OmitFramePointers>true</OmitFramePointers>
       <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
-      <AdditionalIncludeDirectories>..\libsrc\libbioimg\formats;..\libsrc\libbioimg\formats_api;..\libsrc\libbioimg\core_lib;..\libsrc\libjpeg-turbo;..\libsrc\libpng;..\libsrc\libtiff;..\libsrc\zlib;..\libsrc\ffmpeg\include;..\libsrc\ffmpeg\include-win;..\libsrc\libraw;..\libsrc\libbioimg;..\libsrc\pole;..\libsrc\exiv2;..\libsrc\libgeotiff;..\libsrc\eigen;..\libsrc\jzon;..\libsrc\libfftw\src\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(MATLAB)\extern\include\;..\libsrc\libbioimg\formats;..\libsrc\libbioimg\formats_api;..\libsrc\libbioimg\core_lib;..\libsrc\libjpeg-turbo;..\libsrc\libpng;..\libsrc\libtiff;..\libsrc\zlib;..\libsrc\ffmpeg\include;..\libsrc\ffmpeg\include-win;..\libsrc\libraw;..\libsrc\libbioimg;..\libsrc\pole;..\libsrc\exiv2;..\libsrc\libgeotiff;..\libsrc\eigen;..\libsrc\jzon;..\libsrc\libfftw\src\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;__STDC_CONSTANT_MACROS;_MSVC;BIM_USE_OPENMP;BIM_USE_TRANSFORMS;BIM_USE_FILTERS;BIM_GDCM_FORMAT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <PrecompiledHeader>
       </PrecompiledHeader>
-      <PrecompiledHeaderOutputFile>$(Platform)\$(Configuration)/imgcnv.pch</PrecompiledHeaderOutputFile>
+      <PrecompiledHeaderOutputFile>$(Platform)\$(Configuration)/bimread.pch</PrecompiledHeaderOutputFile>
       <AssemblerListingLocation>$(Platform)\$(Configuration)/</AssemblerListingLocation>
       <ObjectFileName>$(Platform)\$(Configuration)/</ObjectFileName>
       <ProgramDataBaseFileName>$(Platform)\$(Configuration)/</ProgramDataBaseFileName>
@@ -249,25 +269,27 @@
       <Culture>0x0409</Culture>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>imm32.lib;wsock32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <OutputFile>$(Platform)\$(Configuration)/imgcnv.exe</OutputFile>
+      <AdditionalDependencies>libmx.lib;libmex.lib;imm32.lib;wsock32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>$(Platform)\$(Configuration)/bimread.mexw64</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
-      <ProgramDatabaseFile>$(Platform)\$(Configuration)/imgcnv.pdb</ProgramDatabaseFile>
+      <ProgramDatabaseFile>$(Platform)\$(Configuration)/bimread.pdb</ProgramDatabaseFile>
       <SubSystem>Console</SubSystem>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <DataExecutionPrevention>
       </DataExecutionPrevention>
       <TargetMachine>MachineX64</TargetMachine>
+      <ModuleDefinitionFile>.\dll_exports.def</ModuleDefinitionFile>
+      <AdditionalLibraryDirectories>$(MATLAB)\extern\lib\win64\microsoft;</AdditionalLibraryDirectories>
     </Link>
     <Bscmake>
       <PreserveSbr>true</PreserveSbr>
     </Bscmake>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ResourceCompile Include="imgcnv.rc" />
+    <ResourceCompile Include="bimread.rc" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\main.cpp">
+    <ClCompile Include="..\src_bimread\mex_bimread.cpp">
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Disabled</Optimization>
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -287,7 +309,6 @@
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BrowseInformation Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</BrowseInformation>
     </ClCompile>
-    <ClCompile Include="..\src\reg\registration.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resource.h" />
