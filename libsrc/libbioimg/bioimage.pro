@@ -82,10 +82,10 @@ macx {
 # configuration paths: editable
 #---------------------------------------------------------------------
 
-BIM_SRC  = ./
-BIM_LSRC = ../
-BIM_LIBS = ../../libs
-BIM_IMGS = ../../images
+BIM_SRC  = $${_PRO_FILE_PWD_}/
+BIM_LSRC = $${_PRO_FILE_PWD_}/../
+BIM_LIBS = $${_PRO_FILE_PWD_}/../../libs
+BIM_IMGS = $${_PRO_FILE_PWD_}/../../images
 
 HOSTTYPE = $$(HOSTTYPE)
 
