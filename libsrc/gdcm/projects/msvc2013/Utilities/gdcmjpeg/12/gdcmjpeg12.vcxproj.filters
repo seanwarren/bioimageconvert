@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="Windows-1252"?>
+<Project ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jmemnobs.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jcomapi.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jutils.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jerror.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jmemmgr.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jcapimin.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jcapistd.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jctrans.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jcparam.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jcinit.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jcmaster.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jcmarker.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jcmainct.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jcprepct.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jccoefct.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jccolor.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jcsample.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jchuff.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jcphuff.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jcdctmgr.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jfdctfst.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jfdctflt.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jdatadst.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jdapimin.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jdapistd.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jdtrans.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jdmaster.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jdinput.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jdmarker.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jdhuff.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jdphuff.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jdmainct.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jdcoefct.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jdpostct.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jddctmgr.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jidctfst.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jidctflt.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jidctint.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jidctred.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jdsample.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jdcolor.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jquant1.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jquant2.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jdmerge.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jdatasrc.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jfdctint.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jclossy.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jclossls.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jcodec.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jcscale.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jcshuff.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jclhuff.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jcpred.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jcdiffct.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jdlossls.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jdlossy.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jdlhuff.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jddiffct.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jdpred.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jdscale.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jdshuff.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\12\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{22A39A02-EF76-462A-89CB-3817F0B09EBA}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

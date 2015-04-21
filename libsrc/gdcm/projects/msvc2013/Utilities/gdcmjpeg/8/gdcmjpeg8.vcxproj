@@ -1,0 +1,322 @@
+<?xml version="1.0" encoding="Windows-1252"?>
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="MinSizeRel|x64">
+      <Configuration>MinSizeRel</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="RelWithDebInfo|x64">
+      <Configuration>RelWithDebInfo</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGUID>{866F9BFC-6F18-4F31-9844-31ADEBCA61CB}</ProjectGUID>
+    <Keyword>Win32Proj</Keyword>
+    <Platform>x64</Platform>
+    <ProjectName>gdcmjpeg8</ProjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v120</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v120</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v120</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v120</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+    <PropertyGroup>
+      <_ProjectFileVersion>10.0.20506.1</_ProjectFileVersion>
+      <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4.build\bin\Debug\</OutDir>
+      <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">gdcmjpeg8.dir\Debug\</IntDir>
+      <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">gdcmjpeg8</TargetName>
+      <TargetExt Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.lib</TargetExt>
+      <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4.build\bin\Release\</OutDir>
+      <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">gdcmjpeg8.dir\Release\</IntDir>
+      <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">gdcmjpeg8</TargetName>
+      <TargetExt Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.lib</TargetExt>
+      <OutDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4.build\bin\MinSizeRel\</OutDir>
+      <IntDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">gdcmjpeg8.dir\MinSizeRel\</IntDir>
+      <TargetName Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">gdcmjpeg8</TargetName>
+      <TargetExt Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">.lib</TargetExt>
+      <OutDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4.build\bin\RelWithDebInfo\</OutDir>
+      <IntDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">gdcmjpeg8.dir\RelWithDebInfo\</IntDir>
+      <TargetName Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">gdcmjpeg8</TargetName>
+      <TargetExt Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">.lib</TargetExt>
+    </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\8;f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4.build\Utilities\gdcmjpeg\8;f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4.build\Utilities\gdcmjpeg;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AssemblerListingLocation>Debug/</AssemblerListingLocation>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <CompileAs>CompileAsC</CompileAs>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <ExceptionHandling>
+      </ExceptionHandling>
+      <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
+      <Optimization>Disabled</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;_DEBUG;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;_CRT_SECURE_NO_WARNINGS;_SCL_SECURE_NO_DEPRECATE;_SCL_SECURE_NO_WARNINGS;CMAKE_INTDIR="Debug";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;_DEBUG;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;_CRT_SECURE_NO_WARNINGS;_SCL_SECURE_NO_DEPRECATE;_SCL_SECURE_NO_WARNINGS;CMAKE_INTDIR=\"Debug\";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\8;f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4.build\Utilities\gdcmjpeg\8;f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4.build\Utilities\gdcmjpeg;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Midl>
+      <AdditionalIncludeDirectories>f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\8;f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4.build\Utilities\gdcmjpeg\8;f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4.build\Utilities\gdcmjpeg;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\8;f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4.build\Utilities\gdcmjpeg\8;f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4.build\Utilities\gdcmjpeg;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AssemblerListingLocation>Release/</AssemblerListingLocation>
+      <CompileAs>CompileAsC</CompileAs>
+      <ExceptionHandling>
+      </ExceptionHandling>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <Optimization>MaxSpeed</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;_CRT_SECURE_NO_WARNINGS;_SCL_SECURE_NO_DEPRECATE;_SCL_SECURE_NO_WARNINGS;CMAKE_INTDIR="Release";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <DebugInformationFormat></DebugInformationFormat>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;_CRT_SECURE_NO_WARNINGS;_SCL_SECURE_NO_DEPRECATE;_SCL_SECURE_NO_WARNINGS;CMAKE_INTDIR=\"Release\";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\8;f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4.build\Utilities\gdcmjpeg\8;f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4.build\Utilities\gdcmjpeg;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Midl>
+      <AdditionalIncludeDirectories>f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\8;f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4.build\Utilities\gdcmjpeg\8;f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4.build\Utilities\gdcmjpeg;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\8;f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4.build\Utilities\gdcmjpeg\8;f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4.build\Utilities\gdcmjpeg;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AssemblerListingLocation>MinSizeRel/</AssemblerListingLocation>
+      <CompileAs>CompileAsC</CompileAs>
+      <ExceptionHandling>
+      </ExceptionHandling>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <Optimization>MinSpace</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;_CRT_SECURE_NO_WARNINGS;_SCL_SECURE_NO_DEPRECATE;_SCL_SECURE_NO_WARNINGS;CMAKE_INTDIR="MinSizeRel";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <DebugInformationFormat></DebugInformationFormat>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;_CRT_SECURE_NO_WARNINGS;_SCL_SECURE_NO_DEPRECATE;_SCL_SECURE_NO_WARNINGS;CMAKE_INTDIR=\"MinSizeRel\";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\8;f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4.build\Utilities\gdcmjpeg\8;f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4.build\Utilities\gdcmjpeg;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Midl>
+      <AdditionalIncludeDirectories>f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\8;f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4.build\Utilities\gdcmjpeg\8;f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4.build\Utilities\gdcmjpeg;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\8;f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4.build\Utilities\gdcmjpeg\8;f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4.build\Utilities\gdcmjpeg;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AssemblerListingLocation>RelWithDebInfo/</AssemblerListingLocation>
+      <CompileAs>CompileAsC</CompileAs>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <ExceptionHandling>
+      </ExceptionHandling>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <Optimization>MaxSpeed</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;_CRT_SECURE_NO_WARNINGS;_SCL_SECURE_NO_DEPRECATE;_SCL_SECURE_NO_WARNINGS;CMAKE_INTDIR="RelWithDebInfo";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;_CRT_SECURE_NO_WARNINGS;_SCL_SECURE_NO_DEPRECATE;_SCL_SECURE_NO_WARNINGS;CMAKE_INTDIR=\"RelWithDebInfo\";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\8;f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4.build\Utilities\gdcmjpeg\8;f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4.build\Utilities\gdcmjpeg;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Midl>
+      <AdditionalIncludeDirectories>f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\8;f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4.build\Utilities\gdcmjpeg\8;f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4.build\Utilities\gdcmjpeg;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <CustomBuild Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\8\CMakeLists.txt">
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Building Custom Rule f:/dima/develop/c++/imgcnv/_files/gdcm/gdcm-2.4.4/Utilities/gdcmjpeg/8/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
+C:\Programs\Develop\CMake\bin\cmake.exe -Hf:/dima/develop/c++/imgcnv/_files/gdcm/gdcm-2.4.4 -B../../.. --check-stamp-file f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4.build\Utilities\gdcmjpeg\8\CMakeFiles\generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">f:/dima/develop/c++/imgcnv/_files/gdcm/gdcm-2.4.4/Utilities/gdcmjpeg/8/CMakeLists.txt;f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\8\CMakeLists.txt;f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\8\CMakeLists.txt;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4.build\Utilities\gdcmjpeg\8\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Building Custom Rule f:/dima/develop/c++/imgcnv/_files/gdcm/gdcm-2.4.4/Utilities/gdcmjpeg/8/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">setlocal
+C:\Programs\Develop\CMake\bin\cmake.exe -Hf:/dima/develop/c++/imgcnv/_files/gdcm/gdcm-2.4.4 -B../../.. --check-stamp-file f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4.build\Utilities\gdcmjpeg\8\CMakeFiles\generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">f:/dima/develop/c++/imgcnv/_files/gdcm/gdcm-2.4.4/Utilities/gdcmjpeg/8/CMakeLists.txt;f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\8\CMakeLists.txt;f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\8\CMakeLists.txt;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4.build\Utilities\gdcmjpeg\8\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">Building Custom Rule f:/dima/develop/c++/imgcnv/_files/gdcm/gdcm-2.4.4/Utilities/gdcmjpeg/8/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">setlocal
+C:\Programs\Develop\CMake\bin\cmake.exe -Hf:/dima/develop/c++/imgcnv/_files/gdcm/gdcm-2.4.4 -B../../.. --check-stamp-file f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4.build\Utilities\gdcmjpeg\8\CMakeFiles\generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">f:/dima/develop/c++/imgcnv/_files/gdcm/gdcm-2.4.4/Utilities/gdcmjpeg/8/CMakeLists.txt;f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\8\CMakeLists.txt;f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\8\CMakeLists.txt;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4.build\Utilities\gdcmjpeg\8\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">Building Custom Rule f:/dima/develop/c++/imgcnv/_files/gdcm/gdcm-2.4.4/Utilities/gdcmjpeg/8/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">setlocal
+C:\Programs\Develop\CMake\bin\cmake.exe -Hf:/dima/develop/c++/imgcnv/_files/gdcm/gdcm-2.4.4 -B../../.. --check-stamp-file f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4.build\Utilities\gdcmjpeg\8\CMakeFiles\generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">f:/dima/develop/c++/imgcnv/_files/gdcm/gdcm-2.4.4/Utilities/gdcmjpeg/8/CMakeLists.txt;f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\8\CMakeLists.txt;f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\8\CMakeLists.txt;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4.build\Utilities\gdcmjpeg\8\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">false</LinkObjects>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jmemnobs.c"  />
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jcomapi.c"  />
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jutils.c"  />
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jerror.c"  />
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jmemmgr.c"  />
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jcapimin.c"  />
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jcapistd.c"  />
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jctrans.c"  />
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jcparam.c"  />
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jcinit.c"  />
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jcmaster.c"  />
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jcmarker.c"  />
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jcmainct.c"  />
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jcprepct.c"  />
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jccoefct.c"  />
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jccolor.c"  />
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jcsample.c"  />
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jchuff.c"  />
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jcphuff.c"  />
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jcdctmgr.c"  />
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jfdctfst.c"  />
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jfdctflt.c"  />
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jdatadst.c"  />
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jdapimin.c"  />
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jdapistd.c"  />
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jdtrans.c"  />
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jdmaster.c"  />
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jdinput.c"  />
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jdmarker.c"  />
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jdhuff.c"  />
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jdphuff.c"  />
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jdmainct.c"  />
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jdcoefct.c"  />
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jdpostct.c"  />
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jddctmgr.c"  />
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jidctfst.c"  />
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jidctflt.c"  />
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jidctint.c"  />
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jidctred.c"  />
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jdsample.c"  />
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jdcolor.c"  />
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jquant1.c"  />
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jquant2.c"  />
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jdmerge.c"  />
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jdatasrc.c"  />
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jfdctint.c"  />
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jclossy.c"  />
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jclossls.c"  />
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jcodec.c"  />
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jcscale.c"  />
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jcshuff.c"  />
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jclhuff.c"  />
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jcpred.c"  />
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jcdiffct.c"  />
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jdlossls.c"  />
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jdlossy.c"  />
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jdlhuff.c"  />
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jddiffct.c"  />
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jdpred.c"  />
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jdscale.c"  />
+    <ClCompile Include="f:\dima\develop\c++\imgcnv\_files\gdcm\gdcm-2.4.4\Utilities\gdcmjpeg\jdshuff.c"  />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="./build/ZERO_CHECK.vcxproj">
+      <Project>D94B18CC-4321-41ED-B68E-5BF058ADAD20</Project>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

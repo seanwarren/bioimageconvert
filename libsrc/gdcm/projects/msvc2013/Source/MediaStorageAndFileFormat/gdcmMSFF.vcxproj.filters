@@ -1,0 +1,289 @@
+<?xml version="1.0" encoding="Windows-1252"?>
+<Project ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmFileStreamer.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmJSON.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmFileChangeTransferSyntax.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmAnonymizer.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmFileAnonymizer.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmIconImageFilter.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmIconImageGenerator.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmDICOMDIRGenerator.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmSpacing.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmFileExplicitFilter.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmFileDerivation.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmImageFragmentSplitter.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmTagPath.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmSimpleSubjectWatcher.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmAnonymizeEvent.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmPixmap.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmBitmap.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmRescaler.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmImageToImageFilter.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmBitmapToBitmapFilter.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmPixmapToPixmapFilter.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmImageChangeTransferSyntax.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmImageApplyLookupTable.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmOrientation.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmDataSetHelper.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmImageChangePlanarConfiguration.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmImageChangePhotometricInterpretation.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmDirectionCosines.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmSorter.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmSerieHelper.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmIPPSorter.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmApplicationEntity.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmDICOMDIR.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmSpectroscopy.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmEncapsulatedDocument.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmSplitMosaicFilter.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmFiducials.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmWaveform.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmPersonName.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmIconImage.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmUIDGenerator.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmUUIDGenerator.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmPrinter.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmDictPrinter.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmXMLPrinter.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmScanner.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmPixmapReader.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmImageReader.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmPixmapWriter.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmImageWriter.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmStringFilter.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmImageHelper.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmValidate.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmDumper.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmImage.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmImageConverter.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmImageCodec.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmJPEG12Codec.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmRLECodec.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmPDFCodec.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmAudioCodec.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmJPEG16Codec.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmJPEGLSCodec.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmJPEG8Codec.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmJPEGCodec.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmPVRGCodec.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmKAKADUCodec.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmPNMCodec.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmPGXCodec.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmRAWCodec.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmLookupTable.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmOverlay.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmCurve.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmPhotometricInterpretation.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmPixelFormat.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmSegmentedPaletteColorLookupTable.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmStreamImageReader.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmImageRegionReader.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmDirectoryHelper.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmSegment.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmSurface.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmMeshPrimitive.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmSegmentWriter.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmSurfaceWriter.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmSegmentReader.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmSurfaceReader.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmSurfaceHelper.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmSegmentHelper.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\MediaStorageAndFileFormat\gdcmJPEG2000Codec.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Utilities\gdcmrle\rle.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Utilities\gdcmrle\info.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Utilities\gdcmrle\io.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="../../../../\Source\MediaStorageAndFileFormat\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{22A39A02-EF76-462A-89CB-3817F0B09EBA}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
