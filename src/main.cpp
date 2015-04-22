@@ -1978,9 +1978,9 @@ int main( int argc, char** argv ) {
             img_projected = img.deepCopy();
         else
         if (!conf.project_min)
-            img_projected.pixelArithmeticMax(img);
+            img_projected.imageArithmetic(img, Image::aoMax);
         else
-            img_projected.pixelArithmeticMin(img);
+            img_projected.imageArithmetic(img, Image::aoMin);
         hist.clear();
     }
 

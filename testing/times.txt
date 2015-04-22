@@ -27,4 +27,4 @@ hammer debian x64  35 tests: 16.4180080891 seconds - jpeg-turbo
 tests:
 Win 8 MSVC 2013   360 tests: 221.73300004 seconds
 MacOSX 10.10      360 tests: X seconds
-hammer debian x64 360 tests: X seconds
+hammer debian x64 360 tests: 421.298635006 seconds

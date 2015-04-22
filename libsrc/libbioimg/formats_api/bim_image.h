@@ -127,8 +127,24 @@ class Image {
     };
 
     enum FuseMethod { 
-      fmAverage=0, 
-      fmMax=1, 
+      fmAverage=0,  // combine pixels using mean operator, where Pbase = mean(Pbase, Px)
+      fmMax=1,      // combine pixels using max operator, where Pbase = max(Pbase, Px)
+      fmMin=2,      // combine pixels using min operator, where Pbase = min(Pbase, Px)
+      fmReplace=3,  // replace pixels in the base image, where Pbase = Px
+      fmBlend=4,    // using mask weights blend with base image, where Pbase = Pbase*Wbase + Px*Wpx
+      fmAdd=5,      // combine pixels using add operator, where Pbase = Pbase + Px
+      fmSubtract=6, // combine pixels using subtract operator, where Pbase = Pbase - Px
+      fmMult=7,     // combine pixels using multiplication operator, where Pbase = Pbase * Px
+      fmDiv=8,      // combine pixels using division operator, where Pbase = Pbase / Px
+    };
+
+    enum ArithmeticOperators {
+        aoAdd = 0,
+        aoSub = 1,
+        aoMul = 2,
+        aoDiv = 3,
+        aoMax = 4,
+        aoMin = 5,
     };
 
     enum LineOps { 
@@ -330,10 +346,10 @@ class Image {
     bool  isUnTypedDepth() const;    
     Image ensureTypedDepth() const;
 
-    Image ROI( uint64 x, uint64 y, uint64 w, uint64 h ) const;
-    void  setROI( uint64 x, uint64 y, const Image &roi );
-    void  setROI_max( uint64 x, uint64 y, const Image &roi );
-    void  setROI_avg( uint64 x, uint64 y, const Image &roi );
+    Image ROI(bim::uint64 x, bim::uint64 y, bim::uint64 w, bim::uint64 h) const;
+
+    void  setROI(bim::uint64 x, bim::uint64 y, const Image &roi, const Image &mask = Image(), FuseMethod method = fmReplace);
+    void  setROI(bim::uint64 x, bim::uint64 y, bim::uint64 w, bim::uint64 h, const double &value);
 
     //--------------------------------------------------------------------------    
     // geometry
@@ -371,22 +387,18 @@ class Image {
 
     // Generic arithmetic with other image
     template <typename T, typename F>
-    bool pixel_arithmetic( const Image &img, F func );
+    bool image_arithmetic(const Image &img, F func, const Image &mask = Image());
 
     // examples of arithmetic
-    bool pixelArithmeticMax( const Image &img );
-    bool pixelArithmeticMin( const Image &img );
-    bool pixelArithmeticSub( const Image &img );
-    bool pixelArithmeticAdd( const Image &img );
-    bool pixelArithmeticMul( const Image &img );
-    bool pixelArithmeticDiv( const Image &img );
+    bool imageArithmetic(const Image &img, Image::ArithmeticOperators op, const Image &mask = Image());
 
     // generic operations with this image pixels
     template <typename T, typename F, typename A>
-    bool pixel_operations( F func, const A &args );
+    bool pixel_operations(F func, const A &args, const Image &mask = Image());
 
     // examples of operations
-    bool operationThreshold( const double &th, const ThresholdTypes &method = ttBoth );
+    bool operationThreshold(const double &th, const ThresholdTypes &method = ttBoth, const Image &mask = Image());
+    bool operationArithmetic(const double &v, const Image::ArithmeticOperators &op, const Image &mask = Image());
     
     //--------------------------------------------------------------------------    
     // operators 
@@ -395,6 +407,11 @@ class Image {
     Image operator- (const Image &img);
     Image operator/ (const Image &img);
     Image operator* (const Image &img);
+
+    Image operator+ (const double &v);
+    Image operator- (const double &v);
+    Image operator/ (const double &v);
+    Image operator* (const double &v);
 
     //--------------------------------------------------------------------------    
     // filters

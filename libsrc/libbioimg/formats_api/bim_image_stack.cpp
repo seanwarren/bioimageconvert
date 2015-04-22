@@ -631,14 +631,14 @@ void ImageStack::setNumberPlanes( unsigned int n ) {
 Image ImageStack::pixelArithmeticMax() const {
   Image p = images[0].deepCopy();
   for (int z=1; z<images.size(); ++z)
-    p.pixelArithmeticMax( images[z] );
+      p.imageArithmetic(images[z], Image::aoMax);
   return p;
 }
 
 Image ImageStack::pixelArithmeticMin() const {
   Image p = images[0].deepCopy();
   for (int z=1; z<images.size(); ++z)
-    p.pixelArithmeticMin( images[z] );
+      p.imageArithmetic(images[z], Image::aoMin);
   return p;
 }
 

@@ -213,35 +213,140 @@ void Image::disconnectFromMemory() {
 //------------------------------------------------------------------------------------
 
 template <typename T>
-void lineops_max ( void *pdest, void *psrc1, void *psrc2, bim::uint64 &w ) {
+void lineops_max ( void *pdest, void *psrc1, void *psrc2, bim::uint64 &w, bim::uint8 *mask = NULL) {
   T *src1 = (T*) psrc1;
   T *src2 = (T*) psrc2;
   T *dest = (T*) pdest;
 
-  for (unsigned int x=0; x<w; ++x)
-      dest[x] = bim::max<T>(src1[x], src2[x]);
+  if (mask == NULL) {
+      for (unsigned int x = 0; x < w; ++x)
+          dest[x] = bim::max<T>(src1[x], src2[x]);
+  } else {
+      for (unsigned int x = 0; x < w; ++x)
+          dest[x] = mask[x] > 0 ? bim::max<T>(src1[x], src2[x]) : src1[x];
+  }
 }
 
 template <typename T>
-void lineops_min ( void *pdest, void *psrc1, void *psrc2, bim::uint64 &w ) {
+void lineops_min(void *pdest, void *psrc1, void *psrc2, bim::uint64 &w, bim::uint8 *mask = NULL) {
   T *src1 = (T*) psrc1;
   T *src2 = (T*) psrc2;
   T *dest = (T*) pdest;
 
-  for (unsigned int x=0; x<w; ++x)
-      dest[x] = bim::min<T>(src1[x], src2[x]);
+  if (mask == NULL) {
+      for (unsigned int x = 0; x < w; ++x)
+          dest[x] = bim::min<T>(src1[x], src2[x]);
+  } else {
+      for (unsigned int x = 0; x < w; ++x)
+          dest[x] = mask[x] > 0 ? bim::min<T>(src1[x], src2[x]) : src1[x];
+  }
 }
 
 template <typename T>
-void lineops_avg ( void *pdest, void *psrc1, void *psrc2, bim::uint64 &w ) {
+void lineops_avg(void *pdest, void *psrc1, void *psrc2, bim::uint64 &w, bim::uint8 *mask = NULL) {
   T *src1 = (T*) psrc1;
   T *src2 = (T*) psrc2;
   T *dest = (T*) pdest;
 
-  for (unsigned int x=0; x<w; ++x)
-      dest[x] = (src1[x]+src2[x])/(T)2;
+  if (mask == NULL) {
+      for (unsigned int x = 0; x < w; ++x)
+          dest[x] = (src1[x] + src2[x]) / (T)2;
+  } else {
+      for (unsigned int x = 0; x < w; ++x)
+          dest[x] = mask[x] > 0 ? (src1[x] + src2[x]) / (T)2 : src1[x];
+  }
 }
 
+template <typename T>
+void lineops_replace(void *pdest, void *psrc1, void *psrc2, bim::uint64 &w, bim::uint8 *mask = NULL) {
+    T *src1 = (T*)psrc1;
+    T *src2 = (T*)psrc2;
+    T *dest = (T*)pdest;
+
+    if (mask == NULL) {
+        for (unsigned int x = 0; x < w; ++x)
+            dest[x] = src2[x];
+    } else {
+        for (unsigned int x = 0; x < w; ++x)
+            dest[x] = mask[x] > 0 ? src2[x] : src1[x];
+    }
+}
+
+// uses mask weights to blend, without a mask becomes avg
+template <typename T>
+void lineops_blend(void *pdest, void *psrc1, void *psrc2, bim::uint64 &w, bim::uint8 *mask = NULL) {
+    T *src1 = (T*)psrc1;
+    T *src2 = (T*)psrc2;
+    T *dest = (T*)pdest;
+
+    if (mask == NULL) {
+        for (unsigned int x = 0; x < w; ++x)
+            dest[x] = (src1[x] + src2[x]) / (T)2;
+    } else {
+        for (unsigned int x = 0; x < w; ++x)
+            dest[x] = bim::trim<T, double>((src1[x] * (255.0 - mask[x]) + src2[x] * ((double)mask[x])) / 255.0);
+    }
+}
+
+template <typename T>
+void lineops_add(void *pdest, void *psrc1, void *psrc2, bim::uint64 &w, bim::uint8 *mask = NULL) {
+    T *src1 = (T*)psrc1;
+    T *src2 = (T*)psrc2;
+    T *dest = (T*)pdest;
+
+    if (mask == NULL) {
+        for (unsigned int x = 0; x < w; ++x)
+            dest[x] = bim::trim<T,T>(src1[x] + src2[x]);
+    } else {
+        for (unsigned int x = 0; x < w; ++x)
+            dest[x] = mask[x] > 0 ? bim::trim<T, T>(src1[x] + src2[x]) : src1[x];
+    }
+}
+
+template <typename T>
+void lineops_sub(void *pdest, void *psrc1, void *psrc2, bim::uint64 &w, bim::uint8 *mask = NULL) {
+    T *src1 = (T*)psrc1;
+    T *src2 = (T*)psrc2;
+    T *dest = (T*)pdest;
+
+    if (mask == NULL) {
+        for (unsigned int x = 0; x < w; ++x)
+            dest[x] = bim::trim<T, T>(src1[x] - src2[x]);
+    } else {
+        for (unsigned int x = 0; x < w; ++x)
+            dest[x] = mask[x] > 0 ? bim::trim<T, T>(src1[x] - src2[x]) : src1[x];
+    }
+}
+
+template <typename T>
+void lineops_mul(void *pdest, void *psrc1, void *psrc2, bim::uint64 &w, bim::uint8 *mask = NULL) {
+    T *src1 = (T*)psrc1;
+    T *src2 = (T*)psrc2;
+    T *dest = (T*)pdest;
+
+    if (mask == NULL) {
+        for (unsigned int x = 0; x < w; ++x)
+            dest[x] = bim::trim<T, T>(src1[x] * src2[x]);
+    } else {
+        for (unsigned int x = 0; x < w; ++x)
+            dest[x] = mask[x] > 0 ? bim::trim<T, T>(src1[x] * src2[x]) : src1[x];
+    }
+}
+
+template <typename T>
+void lineops_div(void *pdest, void *psrc1, void *psrc2, bim::uint64 &w, bim::uint8 *mask = NULL) {
+    T *src1 = (T*)psrc1;
+    T *src2 = (T*)psrc2;
+    T *dest = (T*)pdest;
+
+    if (mask == NULL) {
+        for (unsigned int x = 0; x < w; ++x)
+            dest[x] = bim::trim<T, T>(src1[x] / src2[x]);
+    } else {
+        for (unsigned int x = 0; x < w; ++x)
+            dest[x] = mask[x] > 0 ? bim::trim<T, T>(src1[x] / src2[x]) : src1[x];
+    }
+}
 
 //------------------------------------------------------------------------------------
 // allocation
@@ -516,107 +621,131 @@ Image operation_roi(Image &img, const bim::xstring &arguments, const xoperations
     return img;
 };
 
-void Image::setROI( bim::uint64 x, bim::uint64 y, const Image &img ) {
-    bim::uint64 w = img.width();
-    bim::uint64 h = img.height();
-    if (img.depth() != bmp->i.depth) return;
-    if (img.samples() != bmp->i.samples) return;
-    if (x >= bmp->i.width)  x = 0;
-    if (y >= bmp->i.height) y = 0;
-    if (w+x > bmp->i.width)  w = bmp->i.width-x;
-    if (h+y > bmp->i.height) h = bmp->i.height-y;
-  
-    int newLineSize = img.bytesPerLine();
-    int oldLineSize = this->bytesPerLine();
-    int Bpp = (long) ceil( ((double)bmp->i.depth) / 8.0 );
+// set ROI
+void render_roi_replace(bim::uint64 x, bim::uint64 y, const Image &img, const Image &roi) {
+    bim::uint64 w = roi.width();
+    bim::uint64 h = roi.height();
+    if (x >= img.width())  x = 0;
+    if (y >= img.height()) y = 0;
+    if (w + x > img.width())  w = img.width() - x;
+    if (h + y > img.height()) h = img.height() - y;
 
-    for (unsigned int sample=0; sample<bmp->i.samples; ++sample ) {
-        unsigned char *pl  = (unsigned char *) img.bits(sample);
-        unsigned char *plo = ( (unsigned char *) bmp->bits[sample] ) + y*oldLineSize + x*Bpp;
-        for (register unsigned int yi=0; yi<h; yi++) {
-            memcpy( plo, pl, w*Bpp );      
-            pl  += newLineSize;
-            plo += oldLineSize;
+    int newLineSize = roi.bytesPerLine();
+    int oldLineSize = img.bytesPerLine();
+    int Bpp = (long)ceil(((double)img.depth()) / 8.0);
+
+    for (unsigned int sample = 0; sample<img.samples(); ++sample) {
+        unsigned char *pl = (unsigned char *)roi.bits(sample);
+        unsigned char *plo = ((unsigned char *)img.bits(sample)) + y*oldLineSize + x*Bpp;
+        #pragma omp parallel for default(shared)
+        for (register bim::int64 yi = 0; yi<h; yi++) {
+            unsigned char *ppl = pl + yi*newLineSize;
+            unsigned char *pplo = plo + yi*oldLineSize;
+            memcpy(pplo, ppl, w*Bpp);
         } // for yi
     } // sample
 }
 
 template <typename T, typename F>
-void render_roi( bim::uint64 x, bim::uint64 y, const Image &img, const Image &roi, F func ) {
+void render_roi(bim::uint64 x, bim::uint64 y, const Image &img, const Image &roi, F func, const Image &mask = Image()) {
     bim::uint64 w = (bim::uint64) roi.width();
     bim::uint64 h = (bim::uint64) roi.height();
     if (roi.depth() != img.depth()) return;
     if (roi.samples() != img.samples()) return;
+    if (!mask.isEmpty() && mask.depth() != 8) return;
     if (x >= img.width())  x = 0;
     if (y >= img.height()) y = 0;
-    if (w+x > img.width())  w = img.width()-x;
-    if (h+y > img.height()) h = img.height()-y;
+    if (w + x > img.width())  w = img.width() - x;
+    if (h + y > img.height()) h = img.height() - y;
 
     bim::uint64 newLineSize = roi.bytesPerLine();
     bim::uint64 oldLineSize = img.bytesPerLine();
-    int Bpp = (long) ceil( ((double)img.depth()) / 8.0 );
+    bim::uint64 maskLineSize = mask.bytesPerLine();
+    int Bpp = (long)ceil(((double)img.depth()) / 8.0);
 
-    for (unsigned int sample=0; sample<img.samples(); ++sample ) {
-        unsigned char *pl  = (unsigned char *) roi.bits(sample);
-        unsigned char *plo = ( (unsigned char *) img.bits(sample) ) + y*oldLineSize + x*Bpp;
-        for (register unsigned int yi=0; yi<h; yi++) {
-            func ( plo, pl, plo, w );
-            pl  += newLineSize;
-            plo += oldLineSize;
+    for (unsigned int sample = 0; sample<img.samples(); ++sample) {
+        unsigned char *pl = (unsigned char *)roi.bits(sample);
+        unsigned char *plo = ((unsigned char *)img.bits(sample)) + y*oldLineSize + x*Bpp;
+        unsigned char *m = (unsigned char *)mask.bits(0);
+        #pragma omp parallel for default(shared)
+        for (register bim::int64 yi = 0; yi<h; yi++) {
+            unsigned char *ppl = pl + yi*newLineSize;
+            unsigned char *pplo = plo + yi*oldLineSize;
+            unsigned char *pm = m + yi*maskLineSize;
+            func(pplo, pplo, ppl, w, pm);
         } // for yi
     } // sample
 }
 
-void Image::setROI_max( bim::uint64 x, bim::uint64 y, const Image &img ) {
-  if (bmp->i.depth==8 && bmp->i.pixelType==FMT_UNSIGNED)
-    render_roi<uint8> ( x, y, *this, img, lineops_max<uint8> );
-  else
-  if (bmp->i.depth==16 && bmp->i.pixelType==FMT_UNSIGNED)
-    render_roi<uint16> ( x, y, *this, img, lineops_max<uint16> );
-  else
-  if (bmp->i.depth==32 && bmp->i.pixelType==FMT_UNSIGNED)
-    render_roi<uint32> ( x, y, *this, img, lineops_max<uint32> );
-  else
-  if (bmp->i.depth==8 && bmp->i.pixelType==FMT_SIGNED)
-    render_roi<int8> ( x, y, *this, img, lineops_max<int8> );
-  else
-  if (bmp->i.depth==16 && bmp->i.pixelType==FMT_SIGNED)
-    render_roi<int16> ( x, y, *this, img, lineops_max<int16> );
-  else
-  if (bmp->i.depth==32 && bmp->i.pixelType==FMT_SIGNED)
-    render_roi<int32> ( x, y, *this, img, lineops_max<int32> );
-  else
-  if (bmp->i.depth==32 && bmp->i.pixelType==FMT_FLOAT)
-    render_roi<float32> ( x, y, *this, img, lineops_max<float32> );
-  else
-  if (bmp->i.depth == 64 && bmp->i.pixelType==FMT_FLOAT)
-    render_roi<float64> ( x, y, *this, img, lineops_max<float64> );
+template <typename T>
+void render_roi_func(bim::uint64 x, bim::uint64 y, const Image &img, const Image &roi, Image::FuseMethod method, const Image &mask = Image()) {
+    if (method == Image::fmReplace) {
+        render_roi<T>(x, y, img, roi, lineops_replace<T>, mask);
+    }
+    else if (method == Image::fmMax) {
+        render_roi<T>(x, y, img, roi, lineops_max<T>, mask);
+    }
+    else if (method == Image::fmMin) {
+        render_roi<T>(x, y, img, roi, lineops_min<T>, mask);
+    }
+    else if (method == Image::fmAverage) {
+        render_roi<T>(x, y, img, roi, lineops_avg<T>, mask);
+    }
+    else if (method == Image::fmBlend) {
+        render_roi<T>(x, y, img, roi, lineops_blend<T>, mask);
+    }
+    else if (method == Image::fmAdd) {
+        render_roi<T>(x, y, img, roi, lineops_add<T>, mask);
+    }
+    else if (method == Image::fmSubtract) {
+        render_roi<T>(x, y, img, roi, lineops_sub<T>, mask);
+    }
+    else if (method == Image::fmMult) {
+        render_roi<T>(x, y, img, roi, lineops_mul<T>, mask);
+    }
+    else if (method == Image::fmDiv) {
+        render_roi<T>(x, y, img, roi, lineops_div<T>, mask);
+    }
 }
 
-void Image::setROI_avg( bim::uint64 x, bim::uint64 y, const Image &img ) {
-  if (bmp->i.depth==8 && bmp->i.pixelType==FMT_UNSIGNED)
-    render_roi<uint8> ( x, y, *this, img, lineops_avg<uint8> );
-  else
-  if (bmp->i.depth==16 && bmp->i.pixelType==FMT_UNSIGNED)
-    render_roi<uint16> ( x, y, *this, img, lineops_avg<uint16> );
-  else
-  if (bmp->i.depth==32 && bmp->i.pixelType==FMT_UNSIGNED)
-    render_roi<uint32> ( x, y, *this, img, lineops_avg<uint32> );
-  else
-  if (bmp->i.depth==8 && bmp->i.pixelType==FMT_SIGNED)
-    render_roi<int8> ( x, y, *this, img, lineops_avg<int8> );
-  else
-  if (bmp->i.depth==16 && bmp->i.pixelType==FMT_SIGNED)
-    render_roi<int16> ( x, y, *this, img, lineops_avg<int16> );
-  else
-  if (bmp->i.depth==32 && bmp->i.pixelType==FMT_SIGNED)
-    render_roi<int32> ( x, y, *this, img, lineops_avg<int32> );
-  else
-  if (bmp->i.depth==32 && bmp->i.pixelType==FMT_FLOAT)
-    render_roi<float32> ( x, y, *this, img, lineops_avg<float32> );
-  else
-  if (bmp->i.depth == 64 && bmp->i.pixelType==FMT_FLOAT)
-    render_roi<float64> ( x, y, *this, img, lineops_avg<float64> );
+void Image::setROI(bim::uint64 x, bim::uint64 y, const Image &img, const Image &mask, FuseMethod method) {
+    bim::uint64 w = img.width();
+    bim::uint64 h = img.height();
+    if (img.depth() != bmp->i.depth) return;
+    if (img.samples() != bmp->i.samples) return;
+    if (!mask.isEmpty() && mask.depth() != 8) return;
+
+    if (method == fmReplace && mask.isEmpty()) {
+        render_roi_replace(x, y, *this, img);
+    } else if (img.depth() == 8 && img.pixelType() == FMT_UNSIGNED)
+        render_roi_func<uint8>(x, y, *this, img, method, mask);
+    else
+    if (img.depth() == 16 && img.pixelType() == FMT_UNSIGNED)
+        render_roi_func<uint16>(x, y, *this, img, method, mask);
+    else
+    if (img.depth() == 32 && img.pixelType() == FMT_UNSIGNED)
+        render_roi_func<uint32>(x, y, *this, img, method, mask);
+    else
+    if (img.depth() == 8 && img.pixelType() == FMT_SIGNED)
+        render_roi_func<int8>(x, y, *this, img, method, mask);
+    else
+    if (img.depth() == 16 && img.pixelType() == FMT_SIGNED)
+        render_roi_func<int16>(x, y, *this, img, method, mask);
+    else
+    if (img.depth() == 32 && img.pixelType() == FMT_SIGNED)
+        render_roi_func<int32>(x, y, *this, img, method, mask);
+    else
+    if (img.depth() == 32 && img.pixelType() == FMT_FLOAT)
+        render_roi_func<float32>(x, y, *this, img, method, mask);
+    else
+    if (img.depth() == 64 && img.pixelType() == FMT_FLOAT)
+        render_roi_func<float64>(x, y, *this, img, method, mask);
+}
+
+void Image::setROI(bim::uint64 x, bim::uint64 y, bim::uint64 w, bim::uint64 h, const double &value) {
+    Image solid(w, h, this->depth(), this->samples(), this->pixelType());
+    solid.fill(value);
+    this->setROI(x, y, solid);
 }
 
 std::string Image::getTextInfo() const {
@@ -1322,260 +1451,204 @@ Image operation_flip(Image &img, const bim::xstring &arguments, const xoperation
 //------------------------------------------------------------------------------------
 
 template <typename T, typename F>
-bool Image::pixel_arithmetic( const Image &img, F func ) {
-    if (bmp==NULL) return false;
-    if (img.width() != this->width()) return false;
-    if (img.height() != this->height()) return false;
-    if (img.samples() != this->samples()) return false;
-    if (img.depth() != this->depth()) return false;
+bool image_arithmetic(const Image &img, const Image &ar, F func, const Image &mask) {
+    if (ar.width() != img.width()) return false;
+    if (ar.height() != img.height()) return false;
+    if (ar.samples() != img.samples()) return false;
+    if (ar.depth() != img.depth()) return false;
+    if (!mask.isEmpty() && mask.depth() != 8) return false;
 
-    bim::uint64 w = (bim::uint64) bmp->i.width;
-    bim::uint64 h = (bim::uint64) bmp->i.height;
+    bim::uint64 w = (bim::uint64) img.width();
+    bim::uint64 h = (bim::uint64) img.height();
 
-    for (unsigned int sample=0; sample<bmp->i.samples; ++sample ) {
+    for (unsigned int sample = 0; sample<img.samples(); ++sample) {
         #pragma omp parallel for default(shared)
-        for (bim::int64 y=0; y<(bim::int64)h; ++y ) {
-            void *src = img.scanLine( sample, y ); 
-            void *dest = this->scanLine( sample, y );
-            //func ( dest, src, dest, w );
-            func ( dest, dest, src, w );
+        for (bim::int64 y = 0; y<(bim::int64)h; ++y) {
+            void *src = ar.scanLine(sample, y);
+            void *dest = img.scanLine(sample, y);
+            bim::uint8 *m = mask.isEmpty() ? NULL : mask.scanLine(0, y);
+            func(dest, dest, src, w, m);
         }
     } // sample
     return true;
 }
 
-bool Image::pixelArithmeticMin( const Image &img ) {
-  if (bmp->i.depth==8 && bmp->i.pixelType==FMT_UNSIGNED)
-    return pixel_arithmetic<uint8> ( img, lineops_min<uint8> );
-  else
-  if (bmp->i.depth==16 && bmp->i.pixelType==FMT_UNSIGNED)
-    return pixel_arithmetic<uint16> ( img, lineops_min<uint16> );
-  else
-  if (bmp->i.depth==32 && bmp->i.pixelType==FMT_UNSIGNED)
-    return pixel_arithmetic<uint32> ( img, lineops_min<uint32> );
-  else
-  if (bmp->i.depth==8 && bmp->i.pixelType==FMT_SIGNED)
-    return pixel_arithmetic<int8> ( img, lineops_min<int8> );
-  else
-  if (bmp->i.depth==16 && bmp->i.pixelType==FMT_SIGNED)
-    return pixel_arithmetic<int16> ( img, lineops_min<int16> );
-  else
-  if (bmp->i.depth==32 && bmp->i.pixelType==FMT_SIGNED)
-    return pixel_arithmetic<int32> ( img, lineops_min<int32> );
-  else
-  if (bmp->i.depth==32 && bmp->i.pixelType==FMT_FLOAT)
-    return pixel_arithmetic<float32> ( img, lineops_min<float32> );
-  else
-  if (bmp->i.depth == 64 && bmp->i.pixelType==FMT_FLOAT)
-    return pixel_arithmetic<float64> ( img, lineops_min<float64> );
-  else
-  return false;
+template <typename T, typename F>
+bool Image::image_arithmetic(const Image &img, F func, const Image &mask) {
+    return image_arithmetic<T, F>(*this, img, F, mask);
 }
 
-bool Image::pixelArithmeticMax( const Image &img ) {
-  if (bmp->i.depth==8 && bmp->i.pixelType==FMT_UNSIGNED)
-    return pixel_arithmetic<uint8> ( img, lineops_max<uint8> );
-  else
-  if (bmp->i.depth==16 && bmp->i.pixelType==FMT_UNSIGNED)
-    return pixel_arithmetic<uint16> ( img, lineops_max<uint16> );
-  else
-  if (bmp->i.depth==32 && bmp->i.pixelType==FMT_UNSIGNED)
-    return pixel_arithmetic<uint32> ( img, lineops_max<uint32> );
-  else
-  if (bmp->i.depth==8 && bmp->i.pixelType==FMT_SIGNED)
-    return pixel_arithmetic<int8> ( img, lineops_max<int8> );
-  else
-  if (bmp->i.depth==16 && bmp->i.pixelType==FMT_SIGNED)
-    return pixel_arithmetic<int16> ( img, lineops_max<int16> );
-  else
-  if (bmp->i.depth==32 && bmp->i.pixelType==FMT_SIGNED)
-    return pixel_arithmetic<int32> ( img, lineops_max<int32> );
-  else
-  if (bmp->i.depth==32 && bmp->i.pixelType==FMT_FLOAT)
-    return pixel_arithmetic<float32> ( img, lineops_max<float32> );
-  else
-  if (bmp->i.depth == 64 && bmp->i.pixelType==FMT_FLOAT)
-    return pixel_arithmetic<float64> ( img, lineops_max<float64> );
-  else
-  return false;
+template <typename T>
+bool image_arithmetic_func(const Image &img, const Image &ar, const Image &mask, Image::ArithmeticOperators op) {
+    if (op == Image::aoAdd) {
+        return image_arithmetic<T>(img, ar, lineops_add<T>, mask);
+    }
+    else if (op == Image::aoSub) {
+        return image_arithmetic<T>(img, ar, lineops_sub<T>, mask);
+    }
+    else if (op == Image::aoMul) {
+        return image_arithmetic<T>(img, ar, lineops_mul<T>, mask);
+    }
+    else if (op == Image::aoDiv) {
+        return image_arithmetic<T>(img, ar, lineops_div<T>, mask);
+    }
+    else if (op == Image::aoMax) {
+        return image_arithmetic<T>(img, ar, lineops_max<T>, mask);
+    }
+    else if (op == Image::aoMin) {
+        return image_arithmetic<T>(img, ar, lineops_min<T>, mask);
+    }
+    else
+        return false;
+}
+
+bool image_arithmetic_type(const Image &img, const Image &ar, const Image &mask, Image::ArithmeticOperators op) {
+    if (img.depth() == 8 && img.pixelType() == FMT_UNSIGNED)
+        return image_arithmetic_func<uint8>(img, ar, mask, op);
+    else
+    if (img.depth() == 16 && img.pixelType() == FMT_UNSIGNED)
+        return image_arithmetic_func<uint16>(img, ar, mask, op);
+    else
+    if (img.depth() == 32 && img.pixelType() == FMT_UNSIGNED)
+        return image_arithmetic_func<uint32>(img, ar, mask, op);
+    else
+    if (img.depth() == 8 && img.pixelType() == FMT_SIGNED)
+        return image_arithmetic_func<int8>(img, ar, mask, op);
+    else
+    if (img.depth() == 16 && img.pixelType() == FMT_SIGNED)
+        return image_arithmetic_func<int16>(img, ar, mask, op);
+    else
+    if (img.depth() == 32 && img.pixelType() == FMT_SIGNED)
+        return image_arithmetic_func<int32>(img, ar, mask, op);
+    else
+    if (img.depth() == 32 && img.pixelType() == FMT_FLOAT)
+        return image_arithmetic_func<float32>(img, ar, mask, op);
+    else
+    if (img.depth() == 64 && img.pixelType() == FMT_FLOAT)
+        return image_arithmetic_func<float64>(img, ar, mask, op);
+    else
+        return false;
 }
 
 //--------------------------------------------------------------------------    
-// operators 
+// image-based operators 
 //--------------------------------------------------------------------------
 
-template <typename T>
-void lineops_sub ( void *pdest, void *psrc1, void *psrc2, bim::uint64 &w ) {
-  T *src1 = (T*) psrc1;
-  T *src2 = (T*) psrc2;
-  T *dest = (T*) pdest;
-  for (unsigned int x=0; x<w; ++x)
-      dest[x] = src1[x] - src2[x];
-}
-
-template <typename T>
-void lineops_add ( void *pdest, void *psrc1, void *psrc2, bim::uint64 &w ) {
-  T *src1 = (T*) psrc1;
-  T *src2 = (T*) psrc2;
-  T *dest = (T*) pdest;
-  for (unsigned int x=0; x<w; ++x)
-      dest[x] = src1[x] + src2[x];
-}
-
-template <typename T>
-void lineops_mul ( void *pdest, void *psrc1, void *psrc2, bim::uint64 &w ) {
-  T *src1 = (T*) psrc1;
-  T *src2 = (T*) psrc2;
-  T *dest = (T*) pdest;
-  for (unsigned int x=0; x<w; ++x)
-      dest[x] = src1[x] * src2[x];
-}
-
-template <typename T>
-void lineops_div ( void *pdest, void *psrc1, void *psrc2, bim::uint64 &w ) {
-  T *src1 = (T*) psrc1;
-  T *src2 = (T*) psrc2;
-  T *dest = (T*) pdest;
-  for (unsigned int x=0; x<w; ++x)
-      dest[x] = src1[x] / src2[x];
-}
-
-bool Image::pixelArithmeticSub( const Image &img ) {
-  if (bmp->i.depth==8 && bmp->i.pixelType==FMT_UNSIGNED)
-    return pixel_arithmetic<uint8> ( img, lineops_sub<uint8> );
-  else
-  if (bmp->i.depth==16 && bmp->i.pixelType==FMT_UNSIGNED)
-    return pixel_arithmetic<uint16> ( img, lineops_sub<uint16> );
-  else
-  if (bmp->i.depth==32 && bmp->i.pixelType==FMT_UNSIGNED)
-    return pixel_arithmetic<uint32> ( img, lineops_sub<uint32> );
-  else
-  if (bmp->i.depth==8 && bmp->i.pixelType==FMT_SIGNED)
-    return pixel_arithmetic<int8> ( img, lineops_sub<int8> );
-  else
-  if (bmp->i.depth==16 && bmp->i.pixelType==FMT_SIGNED)
-    return pixel_arithmetic<int16> ( img, lineops_sub<int16> );
-  else
-  if (bmp->i.depth==32 && bmp->i.pixelType==FMT_SIGNED)
-    return pixel_arithmetic<int32> ( img, lineops_sub<int32> );
-  else
-  if (bmp->i.depth==32 && bmp->i.pixelType==FMT_FLOAT)
-    return pixel_arithmetic<float32> ( img, lineops_sub<float32> );
-  else
-  if (bmp->i.depth == 64 && bmp->i.pixelType==FMT_FLOAT)
-    return pixel_arithmetic<float64> ( img, lineops_sub<float64> );
-  else
-  return false;
-}
-
-bool Image::pixelArithmeticAdd( const Image &img ) {
-  if (bmp->i.depth==8 && bmp->i.pixelType==FMT_UNSIGNED)
-    return pixel_arithmetic<uint8> ( img, lineops_add<uint8> );
-  else
-  if (bmp->i.depth==16 && bmp->i.pixelType==FMT_UNSIGNED)
-    return pixel_arithmetic<uint16> ( img, lineops_add<uint16> );
-  else
-  if (bmp->i.depth==32 && bmp->i.pixelType==FMT_UNSIGNED)
-    return pixel_arithmetic<uint32> ( img, lineops_add<uint32> );
-  else
-  if (bmp->i.depth==8 && bmp->i.pixelType==FMT_SIGNED)
-    return pixel_arithmetic<int8> ( img, lineops_add<int8> );
-  else
-  if (bmp->i.depth==16 && bmp->i.pixelType==FMT_SIGNED)
-    return pixel_arithmetic<int16> ( img, lineops_add<int16> );
-  else
-  if (bmp->i.depth==32 && bmp->i.pixelType==FMT_SIGNED)
-    return pixel_arithmetic<int32> ( img, lineops_add<int32> );
-  else
-  if (bmp->i.depth==32 && bmp->i.pixelType==FMT_FLOAT)
-    return pixel_arithmetic<float32> ( img, lineops_add<float32> );
-  else
-  if (bmp->i.depth == 64 && bmp->i.pixelType==FMT_FLOAT)
-    return pixel_arithmetic<float64> ( img, lineops_add<float64> );
-  else
-  return false;
-}
-
-bool Image::pixelArithmeticMul( const Image &img ) {
-  if (bmp->i.depth==8 && bmp->i.pixelType==FMT_UNSIGNED)
-    return pixel_arithmetic<uint8> ( img, lineops_mul<uint8> );
-  else
-  if (bmp->i.depth==16 && bmp->i.pixelType==FMT_UNSIGNED)
-    return pixel_arithmetic<uint16> ( img, lineops_mul<uint16> );
-  else
-  if (bmp->i.depth==32 && bmp->i.pixelType==FMT_UNSIGNED)
-    return pixel_arithmetic<uint32> ( img, lineops_mul<uint32> );
-  else
-  if (bmp->i.depth==8 && bmp->i.pixelType==FMT_SIGNED)
-    return pixel_arithmetic<int8> ( img, lineops_mul<int8> );
-  else
-  if (bmp->i.depth==16 && bmp->i.pixelType==FMT_SIGNED)
-    return pixel_arithmetic<int16> ( img, lineops_mul<int16> );
-  else
-  if (bmp->i.depth==32 && bmp->i.pixelType==FMT_SIGNED)
-    return pixel_arithmetic<int32> ( img, lineops_mul<int32> );
-  else
-  if (bmp->i.depth==32 && bmp->i.pixelType==FMT_FLOAT)
-    return pixel_arithmetic<float32> ( img, lineops_mul<float32> );
-  else
-  if (bmp->i.depth == 64 && bmp->i.pixelType==FMT_FLOAT)
-    return pixel_arithmetic<float64> ( img, lineops_mul<float64> );
-  else
-  return false;
-}
-
-bool Image::pixelArithmeticDiv( const Image &img ) {
-  if (bmp->i.depth==8 && bmp->i.pixelType==FMT_UNSIGNED)
-    return pixel_arithmetic<uint8> ( img, lineops_div<uint8> );
-  else
-  if (bmp->i.depth==16 && bmp->i.pixelType==FMT_UNSIGNED)
-    return pixel_arithmetic<uint16> ( img, lineops_div<uint16> );
-  else
-  if (bmp->i.depth==32 && bmp->i.pixelType==FMT_UNSIGNED)
-    return pixel_arithmetic<uint32> ( img, lineops_div<uint32> );
-  else
-  if (bmp->i.depth==8 && bmp->i.pixelType==FMT_SIGNED)
-    return pixel_arithmetic<int8> ( img, lineops_div<int8> );
-  else
-  if (bmp->i.depth==16 && bmp->i.pixelType==FMT_SIGNED)
-    return pixel_arithmetic<int16> ( img, lineops_div<int16> );
-  else
-  if (bmp->i.depth==32 && bmp->i.pixelType==FMT_SIGNED)
-    return pixel_arithmetic<int32> ( img, lineops_div<int32> );
-  else
-  if (bmp->i.depth==32 && bmp->i.pixelType==FMT_FLOAT)
-    return pixel_arithmetic<float32> ( img, lineops_div<float32> );
-  else
-  if (bmp->i.depth == 64 && bmp->i.pixelType==FMT_FLOAT)
-    return pixel_arithmetic<float64> ( img, lineops_div<float64> );
-  else
-  return false;
+bool Image::imageArithmetic(const Image &img, Image::ArithmeticOperators op, const Image &mask) {
+    return image_arithmetic_type(*this, img, mask, op);
 }
 
 Image Image::operator+ (const Image &img) {
     Image r = this->deepCopy();
-    r.pixelArithmeticAdd( img );
+    r.imageArithmetic( img, Image::aoAdd );
     return r;
 }
 
 Image Image::operator- (const Image &img) {
     Image r = this->deepCopy();
-    r.pixelArithmeticSub( img );
+    r.imageArithmetic(img, Image::aoSub);
     return r;
 }
 
 Image Image::operator/ (const Image &img) {
     Image r = this->deepCopy();
-    r.pixelArithmeticDiv( img );
+    r.imageArithmetic(img, Image::aoDiv);
     return r;
 }
 
 Image Image::operator* (const Image &img) {
     Image r = this->deepCopy();
-    r.pixelArithmeticMul( img );
+    r.imageArithmetic(img, Image::aoMul);
     return r;
 }
 
+//--------------------------------------------------------------------------    
+// numeric operators 
+//--------------------------------------------------------------------------
+
+struct numeric_args {
+    double v;
+    Image::ArithmeticOperators op;
+};
+
+template <typename T>
+void operation_numeric(void *p, const bim::uint64 &w, const numeric_args &args, const unsigned char *m) {
+    T *src = (T*)p;
+    double v = args.v;
+
+    if (args.op == Image::aoAdd) {
+        for (bim::int64 x = 0; x<(bim::int64)w; ++x)
+            src[x] = m[x]>0 ? bim::trim<T, T>(src[x] + v) : src[x];
+    }
+    else if (args.op == Image::aoSub) {
+        for (bim::int64 x = 0; x<(bim::int64)w; ++x)
+            src[x] = m[x]>0 ? bim::trim<T, T>(src[x] - v) : src[x];
+    }
+    else if (args.op == Image::aoMul) {
+        for (bim::int64 x = 0; x<(bim::int64)w; ++x)
+            src[x] = m[x]>0 ? bim::trim<T, T>(src[x] * v) : src[x];
+    }
+    else if (args.op == Image::aoDiv) {
+        for (bim::int64 x = 0; x<(bim::int64)w; ++x)
+            src[x] = m[x]>0 ? bim::trim<T, T>(src[x] / v) : src[x];
+    }
+}
+
+bool Image::operationArithmetic(const double &v, const Image::ArithmeticOperators &op, const Image &mask) {
+    numeric_args args;
+    args.v = v;
+    args.op = op;
+
+    if (bmp->i.depth == 8 && bmp->i.pixelType == FMT_UNSIGNED)
+        return pixel_operations<uint8>(operation_numeric<uint8>, args, mask);
+    else
+    if (bmp->i.depth == 16 && bmp->i.pixelType == FMT_UNSIGNED)
+        return pixel_operations<uint16>(operation_numeric<uint16>, args, mask);
+    else
+    if (bmp->i.depth == 32 && bmp->i.pixelType == FMT_UNSIGNED)
+        return pixel_operations<uint32>(operation_numeric<uint32>, args, mask);
+    else
+    if (bmp->i.depth == 8 && bmp->i.pixelType == FMT_SIGNED)
+        return pixel_operations<int8>(operation_numeric<int8>, args, mask);
+    else
+    if (bmp->i.depth == 16 && bmp->i.pixelType == FMT_SIGNED)
+        return pixel_operations<int16>(operation_numeric<int16>, args, mask);
+    else
+    if (bmp->i.depth == 32 && bmp->i.pixelType == FMT_SIGNED)
+        return pixel_operations<int32>(operation_numeric<int32>, args, mask);
+    else
+    if (bmp->i.depth == 32 && bmp->i.pixelType == FMT_FLOAT)
+        return pixel_operations<float32>(operation_numeric<float32>, args, mask);
+    else
+    if (bmp->i.depth == 64 && bmp->i.pixelType == FMT_FLOAT)
+        return pixel_operations<float64>(operation_numeric<float64>, args, mask);
+    else
+        return false;
+}
+
+Image Image::operator+ (const double &v) {
+    Image r = this->deepCopy();
+    r.operationArithmetic(v, Image::aoAdd);
+    return r;
+}
+
+Image Image::operator- (const double &v) {
+    Image r = this->deepCopy();
+    r.operationArithmetic(v, Image::aoSub);
+    return r;
+}
+
+Image Image::operator/ (const double &v) {
+    Image r = this->deepCopy();
+    r.operationArithmetic(v, Image::aoDiv);
+    return r;
+}
+
+Image Image::operator* (const double &v) {
+    Image r = this->deepCopy();
+    r.operationArithmetic(v, Image::aoMul);
+    return r;
+}
 
 //------------------------------------------------------------------------------------
 // Negative
@@ -1710,8 +1783,8 @@ void Image::color_levels( const double &val_min, const double &val_max, const do
         vmin = hist[0]->min_value();
         vmax = hist[0]->max_value();
         for (unsigned int sample=1; sample<bmp->i.samples; ++sample ) {
-            vmin - bim::min<double>(vmin, hist[sample]->min_value());
-            vmax - bim::max<double>(vmax, hist[sample]->max_value());
+            vmin = bim::min<double>(vmin, hist[sample]->min_value());
+            vmax = bim::max<double>(vmax, hist[sample]->max_value());
         }
     }
 
@@ -1873,6 +1946,8 @@ bim::uint64 Image::pixel_counter( const unsigned int &sample, const double &thre
     else
     if (bmp->i.depth==64 && bmp->i.pixelType==FMT_FLOAT)
         return image_pixel_counter<float64>( *this, sample, threshold_above );
+
+    return 0;
 }
 
 std::vector<bim::uint64> Image::pixel_counter( const double &threshold_above ) {
@@ -1918,16 +1993,18 @@ void Image::scanRow( bim::uint64 sample, bim::uint64 x, bim::uchar *buf ) const 
 //------------------------------------------------------------------------------------
 
 template <typename T, typename F, typename A>
-bool Image::pixel_operations( F func, const A &args ) {
+bool Image::pixel_operations(F func, const A &args, const Image &mask) {
     if (bmp==NULL) return false;
     bim::uint64 w = (bim::uint64) bmp->i.width;
     bim::uint64 h = (bim::uint64) bmp->i.height;
+    std::vector<unsigned char> mm(w, 255);
 
     for (unsigned int sample=0; sample<bmp->i.samples; ++sample ) {
         #pragma omp parallel for default(shared)
         for (bim::int64 y=0; y<(bim::int64)h; ++y ) {
             void *src = this->scanLine( sample, y );
-            func ( src, w, args );
+            unsigned char *m = !mask.isEmpty() ? mask.scanLine(0, y) : &mm[0];
+            func ( src, w, args, m );
         }
     } // sample
     return true;
@@ -1943,60 +2020,59 @@ struct threshold_args {
 };
 
 template <typename T>
-void operation_threshold ( void *p, const bim::uint64 &w, const threshold_args &args ) {
+void operation_threshold(void *p, const bim::uint64 &w, const threshold_args &args, const unsigned char *m) {
     double th = args.th;
     T *src = (T*) p;
     T max_val = std::numeric_limits<T>::max();
     T min_val = bim::lowest<T>();
 
     if (args.method == Image::ttLower) {
-        #pragma omp parallel for default(shared)
         for (bim::int64 x=0; x<(bim::int64)w; ++x)
-            if (src[x] < th) 
+            if (src[x] < th && m[x]>0) 
                 src[x] = min_val; 
     } else if (args.method == Image::ttUpper) {
-        #pragma omp parallel for default(shared)
         for (bim::int64 x=0; x<(bim::int64)w; ++x)
-            if (src[x] >= th) 
+        if (src[x] >= th && m[x]>0)
                 src[x] = max_val;
     } else if (args.method == Image::ttBoth) { 
-        #pragma omp parallel for default(shared)
         for (bim::int64 x=0; x<(bim::int64)w; ++x)
-            if (src[x] < th) 
-                src[x] = min_val; 
-            else 
+        if (m[x]>0) {
+            if (src[x] < th)
+                src[x] = min_val;
+            else
                 src[x] = max_val;
+        }
     }
 }
 
-bool Image::operationThreshold( const double &th, const Image::ThresholdTypes &method ) {
+bool Image::operationThreshold(const double &th, const Image::ThresholdTypes &method, const Image &mask) {
     threshold_args args;
     args.th = th;
     args.method = method;
 
     if (bmp->i.depth == 8 && bmp->i.pixelType==FMT_UNSIGNED)
-        return pixel_operations<uint8>  ( operation_threshold<uint8>, args );
+        return pixel_operations<uint8>  ( operation_threshold<uint8>, args, mask );
     else
     if (bmp->i.depth == 16 && bmp->i.pixelType==FMT_UNSIGNED)
-        return pixel_operations<uint16> ( operation_threshold<uint16>, args );
+        return pixel_operations<uint16>(operation_threshold<uint16>, args, mask);
     else      
     if (bmp->i.depth == 32 && bmp->i.pixelType==FMT_UNSIGNED)
-        return pixel_operations<uint32> ( operation_threshold<uint32>, args );
+        return pixel_operations<uint32>(operation_threshold<uint32>, args, mask);
     else
     if (bmp->i.depth == 8 && bmp->i.pixelType==FMT_SIGNED)
-        return pixel_operations<int8>  ( operation_threshold<int8>, args );
+        return pixel_operations<int8>(operation_threshold<int8>, args, mask);
     else
     if (bmp->i.depth == 16 && bmp->i.pixelType==FMT_SIGNED)
-        return pixel_operations<int16> ( operation_threshold<int16>, args );
+        return pixel_operations<int16>(operation_threshold<int16>, args, mask);
     else      
     if (bmp->i.depth == 32 && bmp->i.pixelType==FMT_SIGNED)
-        return pixel_operations<int32> ( operation_threshold<int32>, args );
+        return pixel_operations<int32>(operation_threshold<int32>, args, mask);
     else    
     if (bmp->i.depth == 32 && bmp->i.pixelType==FMT_FLOAT)
-        return pixel_operations<float32> ( operation_threshold<float32>, args );
+        return pixel_operations<float32>(operation_threshold<float32>, args, mask);
     else      
     if (bmp->i.depth == 64 && bmp->i.pixelType==FMT_FLOAT)
-        return pixel_operations<float64> ( operation_threshold<float64>, args );
+        return pixel_operations<float64>(operation_threshold<float64>, args, mask);
     else
     return false;
 }
@@ -2870,7 +2946,7 @@ std::map<std::string, ImageModifierProc> Image::create_modifiers() {
     ops["-rotate"] = operation_rotate;
     ops["-mirror"] = operation_mirror;
     ops["-flip"] = operation_flip;
-    ops["-negative"] = operation_stretch;
+    ops["-negative"] = operation_negative;
     ops["-threshold"] = operation_stretch;
 
     #ifdef BIM_USE_TRANSFORMS
