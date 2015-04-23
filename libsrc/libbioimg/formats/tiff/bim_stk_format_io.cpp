@@ -982,7 +982,7 @@ void stkParseUIC1Tag( TiffParams *tiffParams )
   bim::uint64 num_ids = ifd->tagCount(tag);
   bim::uint64 id_offset = offset;
 
-  // now read and parce ID table
+  // now read and parse ID table
   for (bim::uint64 i=0; i<num_ids; i++) {
    ifd->readBufNoAlloc( (toff_t) id_offset, (bim::uint64) 2*sizeof( bim::int32 ), TAG_LONG, (uchar *) pair);
     stkParseIDEntry(pair, (bim::uint32) id_offset, tiffParams);
@@ -1262,7 +1262,7 @@ void appendValues( StkRational *v, unsigned int N, const std::string &tag_name, 
   xstring name, val;
   if ( isValueRepeated(v, N) ) N=1;
   for (bim::uint i=0; i<N; ++i)
-    if (v[i].den!=0 && v[i].num!=0) {
+    if (v[i].den!=0) { // && v[i].num!=0) {
       double vv = v[i].num / (double) v[i].den;
       if (N>1)
         name.sprintf( "%s_planes/%d", tag_name.c_str(), i );
@@ -1355,14 +1355,24 @@ bim::uint append_metadata_stk (FormatHandle *fmtHndl, TagMap *hash ) {
   //------------------------------------------------------------
   // Long arrays
   //------------------------------------------------------------
+  // custom values
+  appendValues(stk->StagePositionX, stk->N, bim::CUSTOM_TAGS_PREFIX + "StagePositionX", hash);
+  appendValues(stk->StagePositionY, stk->N, bim::CUSTOM_TAGS_PREFIX + "StagePositionY", hash);
+  appendValues(stk->zDistance, stk->N, bim::CUSTOM_TAGS_PREFIX + "zDistance", hash);
+  appendValues(stk->CameraChipOffsetX, stk->N, bim::CUSTOM_TAGS_PREFIX + "CameraChipOffsetX", hash);
+  appendValues(stk->CameraChipOffsetY, stk->N, bim::CUSTOM_TAGS_PREFIX + "CameraChipOffsetY", hash);
+
+  // parsed tags
   appendValues( stk->StagePositionX, stk->N, bim::STAGE_POSITION_X, hash );
   appendValues( stk->StagePositionY, stk->N, bim::STAGE_POSITION_Y, hash );
   appendValues( stk->zDistance, stk->N, bim::STAGE_DISTANCE_Z, hash );
   appendValues( stk->CameraChipOffsetX, stk->N, bim::CAMERA_SENSOR_X, hash );
   appendValues( stk->CameraChipOffsetY, stk->N, bim::CAMERA_SENSOR_Y, hash );
 
-  if (info->number_z>0 && stk->AbsoluteZValid && stk->AbsoluteZValid[0]) 
-    appendValues( stk->AbsoluteZ, stk->N, bim::STAGE_POSITION_Z, hash );
+  if (info->number_z > 0 && stk->AbsoluteZValid && stk->AbsoluteZValid[0]) {
+      appendValues(stk->AbsoluteZ, stk->N, bim::STAGE_POSITION_Z, hash);
+      appendValues(stk->AbsoluteZ, stk->N, bim::CUSTOM_TAGS_PREFIX + "AbsoluteZ", hash);
+  }
 
   //------------------------------------------------------------
   // Add tags from structure
@@ -1433,16 +1443,16 @@ bim::uint append_metadata_stk (FormatHandle *fmtHndl, TagMap *hash ) {
 */
 
   for (size_t vIdx = 0; vIdx < stk->PlaneProperties.size(); ++vIdx) {
-    std::string key = std::string("Channel #0 ") + stk->PlaneProperties[vIdx].Key;
     std::string value;
     if (stk->PlaneProperties[vIdx].type == 1) {
-      std::ostringstream tmpstr;
-      tmpstr << (double)stk->PlaneProperties[vIdx].rational.num / (double)stk->PlaneProperties[vIdx].rational.den;
-      value = tmpstr.str();
+        std::ostringstream tmpstr;
+        tmpstr << (double)stk->PlaneProperties[vIdx].rational.num / (double)stk->PlaneProperties[vIdx].rational.den;
+        value = tmpstr.str();
+        //value = xstring::xprintf("%.6f", stk->PlaneProperties[vIdx].rational.num / (double)stk->PlaneProperties[vIdx].rational.den );
     } else {
-      value = stk->PlaneProperties[vIdx].Value;
+        value = stk->PlaneProperties[vIdx].Value;
     }
-    hash->append_tag(bim::CUSTOM_TAGS_PREFIX + key, value);
+    hash->append_tag(bim::CUSTOM_TAGS_PREFIX + "PlaneProperties/" + stk->PlaneProperties[vIdx].Key, value);
   }
 
   /*
