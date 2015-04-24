@@ -13,13 +13,13 @@
 
 #include "bim_buffer.h"
 
-DimBuffer::DimBuffer( unsigned int size ) {
+DimBuffer::DimBuffer( size_t size ) {
   buf = 0;
   buf_size = 0;
   allocate( size );
 }
 
-DimBuffer::DimBuffer( unsigned int size, unsigned char fill_byte ) {
+DimBuffer::DimBuffer( size_t size, unsigned char fill_byte ) {
   buf = 0;
   buf_size = 0;
   allocate( size );
@@ -30,7 +30,7 @@ DimBuffer::~DimBuffer() {
   free();
 }
 
-bool DimBuffer::allocate( unsigned int size ) {
+bool DimBuffer::allocate( size_t size ) {
   if (size == buf_size) return true;
   free();
   if (size <= 0) return true;
@@ -50,7 +50,7 @@ void DimBuffer::free( ) {
 
 void DimBuffer::fill( unsigned char fill_byte ) {
   if (size()==0) return;
-  for (unsigned int i=0; i<buf_size; ++i) 
+  for (size_t i=0; i<buf_size; ++i) 
     buf[i] = fill_byte;
 }
 
