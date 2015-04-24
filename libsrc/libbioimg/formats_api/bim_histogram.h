@@ -48,8 +48,8 @@ class Histogram {
   public:
 
     enum ChannelMode { 
-      cmSeparate=0, 
-      cmCombined=1, 
+      cmSeparate=0,
+      cmCombined=1
     };
 
     typedef uint64 StorageType; 
@@ -155,16 +155,16 @@ class Histogram {
 class Lut {
   public:
 
-    enum LutType { 
-      ltLinearFullRange=0, 
-      ltLinearDataRange=1, 
+    enum LutType {
+      ltLinearFullRange=0,
+      ltLinearDataRange=1,
       ltLinearDataTolerance=2,
       ltEqualize=3,
       ltTypecast=4,
       ltFloat01=5,
       ltGamma=6,
       ltMinMaxGamma=7,
-      ltCustom=8, 
+      ltCustom=8
     };
 
     typedef double StorageType; 

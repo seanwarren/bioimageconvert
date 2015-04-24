@@ -103,7 +103,7 @@ typedef enum {
   IM_RGBA      = 7,  // 32-bit
   IM_ABGR      = 8,  // 32-bit
   IM_CMYK      = 9,  // 32-bit
-  IM_MULTI     = 12, // undefined - image with many separate grayscale channels
+  IM_MULTI     = 12  // undefined - image with many separate grayscale channels
 } ImageModes;
 
 typedef enum {
@@ -123,7 +123,7 @@ typedef enum {
   RES_Gm  = 7, // Giga  Meters 10^^9  
   RES_Mm  = 8, // Mega  Meters 10^^6
   RES_km  = 9, // Kilo  Meters 10^^3
-  RES_hm  = 10,// Hecto Meters 10^^2
+  RES_hm  = 10 // Hecto Meters 10^^2
 } ResolutionUnits;
 
 //------------------------------------------------------------------------------
@@ -284,7 +284,7 @@ typedef struct TagList {
 
 typedef enum {
   METADATA_TAGS    = 0,  // points to TagMap
-  METADATA_OMEXML  = 1,  // points to the whole XML as a std::string
+  METADATA_OMEXML  = 1   // points to the whole XML as a std::string
 } GENERIC_MetaTags;
 
 //******************************************************************************

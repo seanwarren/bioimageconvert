@@ -135,7 +135,7 @@ class Image {
       fmAdd=5,      // combine pixels using add operator, where Pbase = Pbase + Px
       fmSubtract=6, // combine pixels using subtract operator, where Pbase = Pbase - Px
       fmMult=7,     // combine pixels using multiplication operator, where Pbase = Pbase * Px
-      fmDiv=8,      // combine pixels using division operator, where Pbase = Pbase / Px
+      fmDiv=8       // combine pixels using division operator, where Pbase = Pbase / Px
     };
 
     enum ArithmeticOperators {
@@ -144,7 +144,7 @@ class Image {
         aoMul = 2,
         aoDiv = 3,
         aoMax = 4,
-        aoMin = 5,
+        aoMin = 5
     };
 
     enum LineOps { 
