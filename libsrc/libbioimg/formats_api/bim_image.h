@@ -296,11 +296,11 @@ class Image {
 
 
     #ifdef BIM_USE_NUMPY
-    template <typename PixelType> 
-    Ndarray<PixelType, ????> toNdarray() const; // dima: incomplete
+    //template <typename PixelType> 
+    //Ndarray<PixelType, ????> toNdarray() const; // dima: incomplete
 
-    template <typename PixelType>
-    void fromNdarray( const Ndarray<PixelType, ?????> &m ); // dima: incomplete
+    //template <typename PixelType>
+    //void fromNdarray( const Ndarray<PixelType, ?????> &m ); // dima: incomplete
     #endif //BIM_USE_NUMPY
 
     #ifdef BIM_USE_IMAGEMANAGER
