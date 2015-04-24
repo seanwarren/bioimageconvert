@@ -1475,7 +1475,7 @@ bool image_arithmetic(const Image &img, const Image &ar, F func, const Image &ma
 
 template <typename T, typename F>
 bool Image::image_arithmetic(const Image &img, F func, const Image &mask) {
-    return image_arithmetic<T, F>(*this, img, F, mask);
+    return image_arithmetic<T, F>(*this, img, func, mask);
 }
 
 template <typename T>
