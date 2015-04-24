@@ -83,9 +83,9 @@ typedef	long double float80;
 //------------------------------------------------------------------------------
 // BIG_ENDIAN is for SPARC, Motorola, IBM and LITTLE_ENDIAN for intel type
 //------------------------------------------------------------------------------
-static int bimOne = 1;
-static int bigendian = (*(char *)&bimOne == 0);
-static double Pi = 3.14159265358979323846264338327950288419716939937510;
+const static int bimOne = 1;
+const static int bigendian = (*(const char *)&bimOne == 0);
+const static double Pi = 3.14159265358979323846264338327950288419716939937510;
 
 #if defined(_MSC_VER)
 #define BIM_RESTRICT __restrict
