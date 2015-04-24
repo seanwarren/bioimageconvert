@@ -602,7 +602,7 @@ N	= Number of planes
 At the indicated offset, there is a series of pairs consisting of an ID code 
 of size SHORT and a variable-sized (ID-dependent) block of data. Pairs should 
 be read until an ID of 0 is encountered. The possible tags and their values 
-are defined in the “Tag ID Codes” section below. The “AutoScale” tag never 
+are defined in the 'Tag ID Codes' section below. The 'AutoScale' tag never 
 appears in this table (because its ID is used to terminate the table.)
 */
 void stkParseUIC4Tag( TiffParams *tiffParams ) {
