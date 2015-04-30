@@ -14,7 +14,7 @@
 #include <cstdlib>
 #include <cmath>
 #include <algorithm>
-
+#include <limits>
 #include <iostream>
 #include <fstream>
 
@@ -29,6 +29,16 @@
 #include "xtiffio.h"
 #include "bim_tiny_tiff.h"
 #include "bim_tiff_format.h"
+
+using namespace bim;
+
+#ifdef max
+#undef max
+#endif
+
+#ifdef min
+#undef min
+#endif
 
 unsigned int tiffGetNumberOfPages( bim::TiffParams *par );
 int tiff_update_subifd_next_pointer(TIFF* tif, bim::uint64 dir_offset, bim::uint64 to_offset);
@@ -572,6 +582,130 @@ int ometiff_read_image_tile(bim::FormatHandle *fmtHndl, bim::TiffParams *par, bi
 // Metadata hash
 //----------------------------------------------------------------------------
 
+// OME Color class from Bioformats Color.h
+class OmeColor {
+public:
+    // The type of an individual color component (R, G, B, A)
+    typedef bim::uint8  component_type;
+    // The type of all components composed as a single RGBA value (unsigned)
+    typedef bim::uint32 composed_type;
+    // The type of all components composed as a single RGBA value (signed)
+    typedef bim::int32  signed_type;
+
+    inline OmeColor() : value(0x000000FFU) {}
+
+    inline OmeColor(composed_type value) : value(value) {
+    }
+
+    inline OmeColor(signed_type value) :
+        value(static_cast<composed_type>(value)) {
+    }
+
+    inline OmeColor(component_type r, component_type g, component_type b, component_type a = std::numeric_limits<component_type>::max()) :
+        value(static_cast<composed_type>(r) << 24U |
+              static_cast<composed_type>(g) << 16U |
+              static_cast<composed_type>(b) << 8U |
+              static_cast<composed_type>(a) << 0U) {
+    }
+
+    inline ~OmeColor() {
+    }
+
+    // Get the red component of this color.
+    inline component_type getRed() const {
+        return static_cast<component_type>((this->value >> 24U) & 0xffU);
+    }
+
+    // Set the red component of this color.
+    inline void setRed(component_type red) {
+        this->value &= ~(0xFFU << 24U);
+        this->value |= static_cast<composed_type>(red) << 24U;
+    }
+
+    // Get the green component of this color.
+    inline component_type getGreen() const {
+        return static_cast<component_type>((this->value >> 16U) & 0xffU);
+    }
+
+    // Set the green component of this color.
+    inline void setGreen(component_type green) {
+        this->value &= ~(0xffU << 16U);
+        this->value |= static_cast<composed_type>(green) << 16U;
+    }
+
+    // Get the blue component of this color.
+    inline component_type getBlue() const {
+        return static_cast<component_type>((this->value >> 8U) & 0xffU);
+    }
+
+    // Set the blue component of this color.
+    inline void setBlue(component_type blue) {
+        this->value &= ~(0xffU << 8U);
+        this->value |= static_cast<composed_type>(blue) << 8U;
+    }
+
+    // Get the alpha component of this color.
+    inline component_type getAlpha() const {
+        return static_cast<component_type>((this->value >> 0) & 0xffU);
+    }
+
+    // Set the alpha component of this color.
+    inline void setAlpha(component_type alpha) {
+        this->value &= ~(0xffU << 0);
+        this->value |= static_cast<composed_type>(alpha) << 0;
+    }
+
+    // Get the *signed* integer value of this color.
+    inline signed_type getValue() const {
+        return static_cast<signed_type>(this->value);
+    }
+
+    // Set the integer value of this color from an unsigned integer
+    inline void setValue(composed_type value) {
+        this->value = value;
+    }
+
+    // Set the integer value of this color from a *signed* integer.
+    inline void setValue(signed_type value) {
+        this->value = static_cast<composed_type>(value);
+    }
+
+    // Cast the color to its value as an unsigned integer.
+    inline operator composed_type () const {
+        return this->value;
+    }
+
+    // Cast the color to its value as a signed integer.
+    inline operator signed_type () const {
+        return static_cast<signed_type>(this->value);
+    }
+
+    inline std::string toString() const {
+        std::ostringstream s;
+        s << this->getValue();
+        return s.str();
+    }
+
+private:
+    composed_type value;
+};
+
+inline std::string colorRGBStringToOMEString(const xstring &c) {
+    std::vector<int> v = c.splitInt(",");
+    OmeColor omec;
+    if (v.size()>0) omec.setRed(v[0]);
+    if (v.size()>1) omec.setGreen(v[1]);
+    if (v.size()>2) omec.setBlue(v[2]);
+    if (v.size()>3) omec.setAlpha(v[3]);
+    return omec.toString();
+}
+
+inline std::string colorOMEStringToRGBString(const xstring &c) {
+    OmeColor omec(c.toInt());
+    return xstring::xprintf("%d,%d,%d", omec.getRed(), omec.getGreen(), omec.getBlue());
+}
+
+
 void parse_json_object (bim::TagMap *hash, Jzon::Object &parent_node, const std::string &path) {
   for (Jzon::Object::iterator it = parent_node.begin(); it != parent_node.end(); ++it) {
     std::string name = (*it).first;
@@ -661,6 +795,7 @@ bim::uint append_metadata_omeTiff(bim::FormatHandle *fmtHndl, bim::TagMap *hash)
         bim::xstring medium = tag.section(" Name=\"", "\"");
         if (medium.size() <= 0) continue;
         bim::xstring wavelength = tag.section(" ExWave=\"", "\"");
+        bim::xstring color      = tag.section(" Color=\"", "\"");
         int chan = i;
         p = tag_270.find("<ChannelComponent", p);
         tag = tag_270.section("<ChannelComponent", ">", p);
@@ -675,6 +810,9 @@ bim::uint append_metadata_omeTiff(bim::FormatHandle *fmtHndl, bim::TagMap *hash)
         else
             hash->append_tag(bim::xstring::xprintf(bim::CHANNEL_NAME_TEMPLATE.c_str(), chan), medium);
 
+        if (color.size() > 0)
+            hash->append_tag(xstring::xprintf(bim::CHANNEL_COLOR_TEMPLATE.c_str(), chan), colorOMEStringToRGBString(color));
+
         p += 15;
     }
 
@@ -688,9 +826,10 @@ bim::uint append_metadata_omeTiff(bim::FormatHandle *fmtHndl, bim::TagMap *hash)
             pugi::xpath_node_set channels = doc.select_nodes("/OME/Image/Pixels/Channel");
             for (pugi::xpath_node_set::const_iterator it = channels.begin(); it != channels.end(); ++it) {
                 pugi::xpath_node node = *it;
-                bim::xstring medium = node.node().attribute("Name").value();
-                bim::xstring index = node.node().attribute("ID").value();
+                bim::xstring medium     = node.node().attribute("Name").value();
+                bim::xstring index      = node.node().attribute("ID").value();
                 bim::xstring wavelength = node.node().attribute("ExcitationWavelength").value();
+                bim::xstring color      = node.node().attribute("Color").value();
 
                 // parse index
                 std::vector<bim::xstring> ids = index.split(":");
@@ -700,6 +839,10 @@ bim::uint append_metadata_omeTiff(bim::FormatHandle *fmtHndl, bim::TagMap *hash)
                         hash->append_tag(bim::xstring::xprintf(bim::CHANNEL_NAME_TEMPLATE.c_str(), chan), medium + " - " + wavelength + "nm");
                     else
                         hash->append_tag(bim::xstring::xprintf(bim::CHANNEL_NAME_TEMPLATE.c_str(), chan), medium);
+
+                    if (color.size() > 0)
+                        hash->append_tag(xstring::xprintf(bim::CHANNEL_COLOR_TEMPLATE.c_str(), chan), colorOMEStringToRGBString(color));
+
                     ++red_channels;
                 }
             }
@@ -724,23 +867,19 @@ bim::uint append_metadata_omeTiff(bim::FormatHandle *fmtHndl, bim::TagMap *hash)
 
             int chan = i;
             bim::xstring wavelength = tag.section(" ExcitationWavelength=\"", "\"");
+            bim::xstring color      = tag.section(" Color=\"", "\"");
 
             if (wavelength.size() > 0)
                 hash->append_tag(bim::xstring::xprintf(bim::CHANNEL_NAME_TEMPLATE.c_str(), chan), medium + " - " + wavelength + "nm");
             else
                 hash->append_tag(bim::xstring::xprintf(bim::CHANNEL_NAME_TEMPLATE.c_str(), chan), medium);
+
+            if (color.size() > 0)
+                hash->append_tag(xstring::xprintf(bim::CHANNEL_COLOR_TEMPLATE.c_str(), chan), colorOMEStringToRGBString(color));
+
         }
     }
 
-
-    // the preferred mapping seems to be the default order
-    /*
-    if ( fvi->display_lut.size() == 3 ) {
-    hash->append_tag( "display_channel_red",   fvi->display_lut[0] );
-    hash->append_tag( "display_channel_green", fvi->display_lut[1] );
-    hash->append_tag( "display_channel_blue",  fvi->display_lut[2] );
-    }
-    */
 
     //----------------------------------------------------------------------------
     // pyramid info
@@ -939,9 +1078,14 @@ std::string constructOMEXML( bim::FormatHandle *fmtHndl, bim::TagMap *hash ) {
   if (hash && hash->size()>0 && hash->hasKey(bim::CHANNEL_NAME_0)) {
       for (bim::uint i = 0; i<img->i.samples; ++i) {
           bim::xstring key = bim::xstring::xprintf(bim::CHANNEL_NAME_TEMPLATE.c_str(), i);
+          bim::xstring color = bim::xstring::xprintf(bim::CHANNEL_COLOR_TEMPLATE.c_str(), i);
           if (hash->hasKey(key)) {
-              str += bim::xstring::xprintf("<Channel ID=\"Channel:0:%d\" Name=\"%s\" SamplesPerPixel=\"1\">",
+              str += bim::xstring::xprintf("<Channel ID=\"Channel:0:%d\" Name=\"%s\" SamplesPerPixel=\"1\"",
                   i, hash->get_value(key).c_str());
+              if (hash->hasKey(color)) {
+                  str += bim::xstring::xprintf(" Color=\"%s\"", colorRGBStringToOMEString(hash->get_value(color)).c_str());
+              }
+              str += ">";
               str += bim::xstring::xprintf("<DetectorSettings ID=\"Detector:0:%d\" /><LightPath/>", i);
               str += "</Channel>";
           }
@@ -1053,8 +1197,6 @@ void ometiff_write_tiled_plane(TIFF *tif, bim::ImageBitmap *img, bim::FormatHand
         } // for x
     } // for y
 }
-
-using namespace bim;
 
 int omeTiffWritePlane(bim::FormatHandle *fmtHndl, bim::TiffParams *par, bim::ImageBitmap *img = NULL, bool subscale = false) {
   TIFF *out = par->tiff;
