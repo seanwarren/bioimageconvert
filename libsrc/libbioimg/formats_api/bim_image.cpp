@@ -638,7 +638,7 @@ void render_roi_replace(bim::uint64 x, bim::uint64 y, const Image &img, const Im
         unsigned char *pl = (unsigned char *)roi.bits(sample);
         unsigned char *plo = ((unsigned char *)img.bits(sample)) + y*oldLineSize + x*Bpp;
         #pragma omp parallel for default(shared)
-        for (register bim::int64 yi = 0; yi<h; yi++) {
+        for (bim::int64 yi = 0; yi<h; yi++) {
             unsigned char *ppl = pl + yi*newLineSize;
             unsigned char *pplo = plo + yi*oldLineSize;
             memcpy(pplo, ppl, w*Bpp);
@@ -668,7 +668,7 @@ void render_roi(bim::uint64 x, bim::uint64 y, const Image &img, const Image &roi
         unsigned char *plo = ((unsigned char *)img.bits(sample)) + y*oldLineSize + x*Bpp;
         unsigned char *m = (unsigned char *)mask.bits(0);
         #pragma omp parallel for default(shared)
-        for (register bim::int64 yi = 0; yi<h; yi++) {
+        for (bim::int64 yi = 0; yi<h; yi++) {
             unsigned char *ppl = pl + yi*newLineSize;
             unsigned char *pplo = plo + yi*oldLineSize;
             unsigned char *pm = m + yi*maskLineSize;
