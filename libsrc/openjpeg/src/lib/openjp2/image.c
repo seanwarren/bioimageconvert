@@ -198,6 +198,8 @@ void opj_copy_image_header(const opj_image_t* p_image_src, opj_image_t* p_image_
 		else
 			p_image_dest->icc_profile_buf = NULL;
 
+	p_image_dest->cp_comment = p_image_src->cp_comment;
+
 	return;
 }
 

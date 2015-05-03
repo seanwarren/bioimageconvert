@@ -931,7 +931,6 @@ opj_stream_t* OPJ_CALLCONV opj_stream_create_file_stream (
 		OPJ_SIZE_T p_size, 
         OPJ_BOOL p_is_read_stream)
 {
-    opj_stream_t* l_stream = 00;
     FILE *p_file;
     const char *mode;
 
@@ -946,6 +945,16 @@ opj_stream_t* OPJ_CALLCONV opj_stream_create_file_stream (
     if (! p_file) {
 	    return NULL;
     }
+
+    return opj_stream_create_file_stream_from_stream(p_file, OPJ_J2K_STREAM_CHUNK_SIZE, p_is_read_stream);
+}
+
+opj_stream_t* OPJ_CALLCONV opj_stream_create_file_stream_from_stream (
+        FILE *p_file, 
+		OPJ_SIZE_T p_size, 
+        OPJ_BOOL p_is_read_stream)
+{
+    opj_stream_t* l_stream = 00;
 
     l_stream = opj_stream_create(p_size,p_is_read_stream);
     if (! l_stream) {

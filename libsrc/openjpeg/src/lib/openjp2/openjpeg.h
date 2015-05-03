@@ -673,6 +673,8 @@ typedef struct opj_image {
 	OPJ_BYTE *icc_profile_buf;
 	/** size of ICC profile */
 	OPJ_UINT32 icc_profile_len;
+        /** header comments */
+        char* cp_comment;
 } opj_image_t;
 
 
@@ -1176,6 +1178,15 @@ OPJ_API opj_stream_t* OPJ_CALLCONV opj_stream_create_default_file_stream (const 
 OPJ_API opj_stream_t* OPJ_CALLCONV opj_stream_create_file_stream (const char *fname,
                                                                      OPJ_SIZE_T p_buffer_size,
                                                                      OPJ_BOOL p_is_read_stream);
+ 
+/** Create a stream from a FILE stream with a specific buffer size
+ * @param p_file            the FILE of the opened file stream
+ * @param p_buffer_size     size of the chunk used to stream
+ * @param p_is_read_stream  whether the stream is a read stream (true) or not (false)
+*/
+OPJ_API opj_stream_t* OPJ_CALLCONV opj_stream_create_file_stream_from_stream (FILE *p_file,
+                                                                                 OPJ_SIZE_T p_buffer_size,
+                                                                                 OPJ_BOOL p_is_read_stream);
  
 /* 
 ==========================================================
