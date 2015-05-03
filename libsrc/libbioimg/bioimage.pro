@@ -271,7 +271,10 @@ SOURCES += $$BIM_FMTS/bim_format_manager.cpp \
            $$BIM_FMTS/ole/bim_oib_format_io.cpp \
            $$BIM_FMTS/ole/bim_zvi_format_io.cpp \
            $$BIM_FMTS/ole/zvi.cpp \
-           $$BIM_FMTS/dcraw/bim_dcraw_format.cpp
+           $$BIM_FMTS/dcraw/bim_dcraw_format.cpp \
+           $$BIM_FMTS/jp2/bim_jp2_color.cpp \
+           $$BIM_FMTS/jp2/bim_jp2_decompress.cpp \
+           $$BIM_FMTS/jp2/bim_jp2_format.cpp
 
 HEADERS += $$BIM_FMTS/dcraw/bim_dcraw_format.h \
            $$BIM_FMTS/bmp/bim_bmp_format.h \
@@ -307,8 +310,10 @@ HEADERS += $$BIM_FMTS/dcraw/bim_dcraw_format.h \
            $$BIM_FMTS/mpeg/handle.h \
            $$BIM_FMTS/mpeg/OVideo.h \
            $$BIM_FMTS/ome/bim_ome_format.h \
-           $$BIM_FMTS/meta_format_manager.h
-
+           $$BIM_FMTS/meta_format_manager.h \
+           $$BIM_FMTS/jp2/bim_jp2_color.h \
+           $$BIM_FMTS/jp2/bim_jp2_decompress.h \
+           $$BIM_FMTS/jp2/bim_jp2_format.h
 
 #---------------------------------------------------------------------
 # Transforms

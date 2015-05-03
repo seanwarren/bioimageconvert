@@ -32,6 +32,7 @@
 #include "biorad_pic/bim_biorad_pic_format.h"
 #include "bmp/bim_bmp_format.h"
 #include "nanoscope/bim_nanoscope_format.h"
+#include "jp2/bim_jp2_format.h"
 #include "ibw/bim_ibw_format.h"
 #include "ome/bim_ome_format.h"
 #include "raw/bim_raw_format.h"
@@ -66,6 +67,7 @@ FormatManager::FormatManager() {
   addNewFormatHeader ( bmpGetFormatHeader() );
   addNewFormatHeader ( pngGetFormatHeader() );
   addNewFormatHeader ( nanoscopeGetFormatHeader() );
+  addNewFormatHeader ( jp2GetFormatHeader() );
   addNewFormatHeader ( ibwGetFormatHeader() );
   addNewFormatHeader ( omeGetFormatHeader() );
   addNewFormatHeader ( rawGetFormatHeader() );
