@@ -2307,39 +2307,41 @@ static OPJ_BOOL opj_j2k_read_com (  opj_j2k_t *p_j2k,
         assert(p_header_data != 00);
   (void)p_header_size;
 
-        char* tmp_comment;
-        size_t cp_prev_comment_len = 0;
-        opj_image_t *l_image = 00;
+        const OPJ_UINT32 new_cp_comment_len = p_header_size-2;
+        const OPJ_BYTE *new_cp_comment = p_header_data+2;
+        opj_image_t *l_image = p_j2k->m_private_image;
 
-        if (p_header_size > 3 && p_header_data[0] == 0 && p_header_data[1] == 1) {
-                l_image = p_j2k->m_private_image;
+        // Check if this is a COM marker:
+        if (new_cp_comment_len > 0 && p_header_data[0] == 0 && p_header_data[1] == 1) {
+                // Check if we have an image pointer:
                 if (l_image != 00) {
+                        // Check if there are already comments with the image:
                         if (!l_image->cp_comment) {
+                                // The first comment in the list is a simple, triple-null-terminated string
 #ifdef DEBUG
-                                fprintf(stderr, "Setting J2K COM comment of length %d as the first/only comment.\n", p_header_size-2);
+                                fprintf(stderr, "Setting J2K COM comment of length %d as the first/only comment.\n", new_cp_comment_len);
 #endif
-                                // The first comment is a triple-null-terminated string
-                                l_image->cp_comment = opj_malloc((p_header_size - 2) + 3);
-                                memcpy(l_image->cp_comment, p_header_data+2, p_header_size-2);
-                                l_image->cp_comment[p_header_size-2] = 0;
-                                l_image->cp_comment[p_header_size-1] = 0;
-                                l_image->cp_comment[p_header_size-0] = 0;
+                                l_image->cp_comment = opj_malloc(new_cp_comment_len + 3);
+                                memset(l_image->cp_comment, 0, new_cp_comment_len + 3);
+                                memcpy(l_image->cp_comment, new_cp_comment, new_cp_comment_len);
                         } else {
+                                // Additional comments are appended after a null-separator, and again triple-null-terminated
+                                OPJ_BYTE *tmp_comment;
+                                OPJ_UINT32 curr_cp_comment_len = 2;
 #ifdef DEBUG
-                                fprintf(stderr, "Appending J2K COM comment of length %d to list of comments.\n", p_header_size-2);
+                                fprintf(stderr, "Appending J2K COM comment of length %d to list of comments.\n", new_cp_comment_len);
 #endif
-                                // Additional comments are added after a null-separator, and again triple-null-terminated
-                                while (l_image->cp_comment[cp_prev_comment_len] != 0 || l_image->cp_comment[cp_prev_comment_len+1] != 0 || l_image->cp_comment[cp_prev_comment_len+2] != 0) {
-                                        ++cp_prev_comment_len;
+                                while (l_image->cp_comment[curr_cp_comment_len-2] != 0 || l_image->cp_comment[curr_cp_comment_len-1] != 0 || l_image->cp_comment[curr_cp_comment_len] != 0) {
+                                        ++curr_cp_comment_len;
                                 }
-                                tmp_comment = opj_malloc(cp_prev_comment_len + 1 + (p_header_size - 2) + 3);
-                                memcpy(tmp_comment, l_image->cp_comment, cp_prev_comment_len + 1);
-                                memcpy(tmp_comment + cp_prev_comment_len + 1, p_header_data+2, p_header_size-2);
+                                ++curr_cp_comment_len;
+                                tmp_comment = opj_malloc(curr_cp_comment_len + new_cp_comment_len + 1);
+                                memset(tmp_comment, 0, curr_cp_comment_len + new_cp_comment_len + 1);
+                                memcpy(tmp_comment, l_image->cp_comment, curr_cp_comment_len);
+                                memcpy(tmp_comment + curr_cp_comment_len - 2, new_cp_comment, new_cp_comment_len);
                                 opj_free(l_image->cp_comment);
                                 l_image->cp_comment = tmp_comment;
-                                l_image->cp_comment[cp_prev_comment_len+1+p_header_size-2] = 0;
-                                l_image->cp_comment[cp_prev_comment_len+1+p_header_size-1] = 0;
-                                l_image->cp_comment[cp_prev_comment_len+1+p_header_size-0] = 0;
+                                tmp_comment = 00;
                         }
                 }
 
