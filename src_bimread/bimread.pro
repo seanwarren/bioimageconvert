@@ -39,15 +39,15 @@ CONFIG += warn_off
 
 # static library config
 CONFIG += stat_libtiff
-#CONFIG += stat_libjpeg
+#CONFIG += stat_libjpeg # pick one or the other
 CONFIG += stat_libjpeg_turbo # pick one or the other
 CONFIG += stat_libpng
 CONFIG += stat_zlib
 CONFIG += ffmpeg
-CONFIG += sys_bzlib
 CONFIG += stat_exiv2
 CONFIG += stat_eigen
 CONFIG += libraw
+CONFIG += sys_bzlib
 CONFIG += stat_gdcm
 #CONFIG += dyn_gdcm
 
@@ -57,9 +57,9 @@ CONFIG(debug, debug|release) {
 }
 
 macx {
-  QMAKE_CFLAGS_RELEASE = -m64 -fPIC -fopenmp -O3 -ftree-vectorize -msse2 -ffast-math -ftree-vectorizer-verbose=0
-  QMAKE_CXXFLAGS_RELEASE = -m64 -fPIC -fopenmp -O3 -ftree-vectorize -msse2 -ffast-math -ftree-vectorizer-verbose=0
-  QMAKE_LFLAGS_RELEASE = -m64 -fPIC -fopenmp -O3 -ftree-vectorize -msse2 -ffast-math -ftree-vectorizer-verbose=0
+  QMAKE_CFLAGS_RELEASE += -m64 -fPIC -fopenmp -O3 -ftree-vectorize -msse2 -ffast-math -ftree-vectorizer-verbose=0
+  QMAKE_CXXFLAGS_RELEASE += -m64 -fPIC -fopenmp -O3 -ftree-vectorize -msse2 -ffast-math -ftree-vectorizer-verbose=0
+  QMAKE_LFLAGS_RELEASE += -m64 -fPIC -fopenmp -O3 -ftree-vectorize -msse2 -ffast-math -ftree-vectorizer-verbose=0
   QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.7
 } else:unix {
   QMAKE_CFLAGS_DEBUG += -pg -fPIC -ggdb
@@ -71,52 +71,55 @@ macx {
   QMAKE_LFLAGS_RELEASE += -Wl,-Bsymbolic -fPIC -fopenmp -O3 -ftree-vectorize -msse2 -ffast-math -ftree-vectorizer-verbose=0
 }
 
-
 #---------------------------------------------------------------------
 # configuration paths: editable
 #---------------------------------------------------------------------
 
-BIM_SRC = ../src_bimread
-DN_LSRC = ../libsrc
-DN_LIBS = ../libs
-DN_IMGS = ../images
+BIM_SRC = $${_PRO_FILE_PWD_}/../src_bimread
+BIM_LSRC = $${_PRO_FILE_PWD_}/../libsrc
+BIM_LIBS = $${_PRO_FILE_PWD_}/../libs
+BIM_IMGS = $${_PRO_FILE_PWD_}/../images
 
 HOSTTYPE = $$(HOSTTYPE)
 
 unix {
-  DN_GENS = ../.generated/$$HOSTTYPE
+  BIM_GENS = ../.generated/$$HOSTTYPE
   # path for object files
-  DN_OBJ = $$DN_GENS/obj
+  BIM_OBJ = $$BIM_GENS/obj
   # path for generated binary
-  DN_BIN = ../$$HOSTTYPE
+  BIM_BIN = ../$$HOSTTYPE
 }
 win32 {
-  DN_GENS = ../.generated/$(PlatformName)/$(ConfigurationName)
+  BIM_GENS = ../.generated/$(PlatformName)/$(ConfigurationName)
   # path for object files
-  DN_OBJ = $$DN_GENS
+  BIM_OBJ = $$BIM_GENS
   # path for generated binary
-  DN_BIN = ../$(PlatformName)/$(ConfigurationName)
+  BIM_BIN = ../$(PlatformName)/$(ConfigurationName)
 }
 
-DN_LIB_TIF = $$DN_LSRC/libtiff
-DN_LIB_JPG = $$DN_LSRC/libjpeg
-DN_LIB_PNG = $$DN_LSRC/libpng
-DN_LIB_Z   = $$DN_LSRC/zlib
-DN_LIB_BZ2 = $$DN_LSRC/bzip2
-DN_LIB_BIO = $$DN_LSRC/libbioimg
+BIM_LIB_TIF = $$BIM_LSRC/libtiff
+stat_libjpeg_turbo {
+  BIM_LIB_JPG    = $$BIM_LSRC/libjpeg-turbo
+} else {
+  BIM_LIB_JPG = $$BIM_LSRC/libjpeg
+}
+BIM_LIB_PNG = $$BIM_LSRC/libpng
+BIM_LIB_Z   = $$BIM_LSRC/zlib
+BIM_LIB_BZ2 = $$BIM_LSRC/bzip2
+BIM_LIB_BIO = $$BIM_LSRC/libbioimg
 
-DN_CORE     = $$DN_LIB_BIO/core_lib
-DN_FMTS     = $$DN_LIB_BIO/formats
-DN_FMTS_API = $$DN_LIB_BIO/formats_api
+BIM_CORE     = $$BIM_LIB_BIO/core_lib
+BIM_FMTS     = $$BIM_LIB_BIO/formats
+BIM_FMTS_API = $$BIM_LIB_BIO/formats_api
 
 ffmpeg {
-  DN_LIB_FFMPEG = $$DN_LSRC/ffmpeg
-  DN_FMT_FFMPEG = $$DN_FMTS/mpeg
+  BIM_LIB_FFMPEG = $$BIM_LSRC/ffmpeg
+  BIM_FMT_FFMPEG = $$BIM_FMTS/mpeg
 }
-DN_LIB_EXIV2   = $$DN_LSRC/exiv2
-DN_LIB_EIGEN   = $$DN_LSRC/eigen
-DN_LIB_RAW     = $$DN_LSRC/libraw
-BIM_LIB_GDCM   = $$DN_LSRC/gdcm
+BIM_LIB_EXIV2   = $$BIM_LSRC/exiv2
+BIM_LIB_EIGEN   = $$BIM_LSRC/eigen
+BIM_LIB_RAW     = $$BIM_LSRC/libraw
+BIM_LIB_GDCM   = $$BIM_LSRC/gdcm
 
 #---------------------------------------------------------------------
 # configuration: matlab
@@ -127,7 +130,6 @@ BIM_LIB_GDCM   = $$DN_LSRC/gdcm
 MATLAB = $$(MATLAB)
 MATLAB_TEST = $$MATLAB/extern/src/mexversion.c
 !exists( $$MATLAB_TEST ) {
-
   #some default locations
   unix:MATLAB = /usr/local/matlab
   linux-g++-64:MATLAB = /usr/local/matlab
@@ -256,29 +258,29 @@ win32 {
 }
 
 win32: {
-  BIM_LIBS_PLTFM = $$DN_LIBS/vc2008
+  BIM_LIBS_PLTFM = $$BIM_LIBS/vc2008
 } else:macx {
-  BIM_LIBS_PLTFM = $$DN_LIBS/macosx
+  BIM_LIBS_PLTFM = $$BIM_LIBS/macosx
 } else:unix {
-  BIM_LIBS_PLTFM = $$DN_LIBS/linux/$$HOSTTYPE
+  BIM_LIBS_PLTFM = $$BIM_LIBS/linux/$$HOSTTYPE
 } else {
-  BIM_LIBS_PLTFM = $$DN_LIBS/linux
+  BIM_LIBS_PLTFM = $$BIM_LIBS/linux
 }
 
 unix {
-  !exists( $$DN_GENS ) {
-    message( "Cannot find directory: $$DN_GENS, creating..." )
-    system( mkdir -p $$DN_GENS )
+  !exists( $$BIM_GENS ) {
+    message( "Cannot find directory: $$BIM_GENS, creating..." )
+    system( mkdir -p $$BIM_GENS )
   }
-  !exists( $$DN_OBJ ) {
-    message( "Cannot find directory: $$DN_OBJ, creating..." )
-    system( mkdir -p $$DN_OBJ )
+  !exists( $$BIM_OBJ ) {
+    message( "Cannot find directory: $$BIM_OBJ, creating..." )
+    system( mkdir -p $$BIM_OBJ )
   }
 }
 
 win32 {
-  !exists( $$DN_GENS ) {
-    message( "Cannot find directory: $$DN_GENS, creating..." )
+  !exists( $$BIM_GENS ) {
+    message( "Cannot find directory: $$BIM_GENS, creating..." )
     !exists( ../.generated/Win32/Debug       ) { system( mkdir ..\\.generated\\Win32\\Debug ) }
     !exists( ../.generated/Win32/Release     ) { system( mkdir ..\\.generated\\Win32\\Release ) }
     !exists( ../.generated/Win32/ICC_Release ) { system( mkdir ..\\.generated\\Win32\\ICC_Release ) }
@@ -286,8 +288,8 @@ win32 {
     !exists( ../.generated/x64/Release       ) { system( mkdir ..\\.generated\\x64\\Release ) }
     !exists( ../.generated/x64/ICC_Release   ) { system( mkdir ..\\.generated\\x64\\ICC_Release ) }
   }
-  !exists( $$DN_OBJ ) {
-    message( "Cannot find directory: $$DN_GENS, creating..." )
+  !exists( $$BIM_OBJ ) {
+    message( "Cannot find directory: $$BIM_GENS, creating..." )
     !exists( ../.generated/Win32/Debug   ) { system( mkdir ..\\.generated\\Win32\\Debug ) }
     !exists( ../.generated/Win32/Release ) { system( mkdir ..\\.generated\\Win32\\Release ) }
     !exists( ../.generated/x64/Debug     ) { system( mkdir ..\\.generated\\x64\\Debug ) }
@@ -301,10 +303,10 @@ win32 {
 
 CONFIG  -= qt x11 windows
 
-MOC_DIR = $$DN_GENS
-DESTDIR = $$DN_BIN
-OBJECTS_DIR = $$DN_OBJ
-INCLUDEPATH += $$DN_GENS
+MOC_DIR = $$BIM_GENS
+DESTDIR = $$BIM_BIN
+OBJECTS_DIR = $$BIM_OBJ
+INCLUDEPATH += $$BIM_GENS
 
 #---------------------------------------------------------------------
 # main sources
@@ -321,14 +323,15 @@ DEFINES += BIM_USE_OPENMP
 DEFINES += BIM_USE_TRANSFORMS
 DEFINES += BIM_USE_FILTERS
 
-INCLUDEPATH += $$DN_LIB_BIO
-INCLUDEPATH += $$DN_FMTS_API
-INCLUDEPATH += $$DN_FMTS
-INCLUDEPATH += $$DN_CORE
+INCLUDEPATH += $$BIM_LIB_BIO
+INCLUDEPATH += $$BIM_FMTS_API
+INCLUDEPATH += $$BIM_FMTS
+INCLUDEPATH += $$BIM_FMTS/tiff
+INCLUDEPATH += $$BIM_CORE
 
 unix:LIBS += -lbz2
 unix:LIBS += -ldl
-#SUBDIRS = $$DN_LIB_BIO/bioimage.pro
+#SUBDIRS = $$BIM_LIB_BIO/bioimage.pro
 
 macx {
   LIBS += $$BIM_LIBS_PLTFM/libfftw3.a
@@ -337,12 +340,12 @@ macx {
   LIBS += -lfftw3
 }
 
-PRE_TARGETDEPS = $$DN_LIB_BIO/.generated/libbioimage.a
-LIBS += $$DN_LIB_BIO/.generated/libbioimage.a
+PRE_TARGETDEPS = $$BIM_LIB_BIO/.generated/libbioimage.a
+LIBS += $$BIM_LIB_BIO/.generated/libbioimage.a
 
-BimLib.target = $$DN_LIB_BIO/.generated/libbioimage.a
-#BimLib.commands = cd $$DN_LIB_BIO && qmake bioimage.pro && make
-BimLib.depends = $$DN_LIB_BIO/Makefile
+BimLib.target = $$BIM_LIB_BIO/.generated/libbioimage.a
+#BimLib.commands = cd $$BIM_LIB_BIO && qmake bioimage.pro && make
+BimLib.depends = $$BIM_LIB_BIO/Makefile
 QMAKE_EXTRA_TARGETS += BimLib
 
 
@@ -351,7 +354,7 @@ QMAKE_EXTRA_TARGETS += BimLib
 #---------------------------------------------------------------------
 
 stat_eigen {
-  INCLUDEPATH += $$DN_LIB_EIGEN
+  INCLUDEPATH += $$BIM_LIB_EIGEN
 }
 
 #---------------------------------------------------------------------
