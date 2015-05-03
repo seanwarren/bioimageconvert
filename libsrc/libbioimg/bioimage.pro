@@ -56,6 +56,7 @@ CONFIG += libbioimage_transforms
 CONFIG += stat_pugixml
 CONFIG += stat_gdcm
 #CONFIG += dyn_gdcm
+CONFIG += stat_openjpeg
 
 CONFIG(debug, debug|release) {
   message(Building in DEBUG mode!)
@@ -105,35 +106,36 @@ win32 {
 }
 
 
-BIM_LIB_TIF    = $$BIM_LSRC/libtiff
+BIM_LIB_TIF      = $$BIM_LSRC/libtiff
 stat_libjpeg_turbo {
-  BIM_LIB_JPG  = $$BIM_LSRC/libjpeg-turbo
+  BIM_LIB_JPG    = $$BIM_LSRC/libjpeg-turbo
 } else {
-  BIM_LIB_JPG  = $$BIM_LSRC/libjpeg
+  BIM_LIB_JPG    = $$BIM_LSRC/libjpeg
 }
-BIM_LIB_PNG    = $$BIM_LSRC/libpng
-BIM_LIB_Z      = $$BIM_LSRC/zlib
-BIM_LIB_BZ2    = $$BIM_LSRC/bzip2
-BIM_LIB_BIO    = $$BIM_LSRC/libbioimg
+BIM_LIB_PNG      = $$BIM_LSRC/libpng
+BIM_LIB_Z        = $$BIM_LSRC/zlib
+BIM_LIB_BZ2      = $$BIM_LSRC/bzip2
+BIM_LIB_BIO      = $$BIM_LSRC/libbioimg
 
-BIM_CORE       = $$BIM_LIB_BIO/core_lib
-BIM_FMTS       = $$BIM_LIB_BIO/formats
-BIM_FMTS_API   = $$BIM_LIB_BIO/formats_api
-BIM_TRANSFORMS = $$BIM_LIB_BIO/transforms
+BIM_CORE         = $$BIM_LIB_BIO/core_lib
+BIM_FMTS         = $$BIM_LIB_BIO/formats
+BIM_FMTS_API     = $$BIM_LIB_BIO/formats_api
+BIM_TRANSFORMS   = $$BIM_LIB_BIO/transforms
 
 ffmpeg {
   BIM_LIB_FFMPEG = $$BIM_LSRC/ffmpeg
   BIM_FMT_FFMPEG = $$BIM_FMTS/mpeg
 }
-BIM_LIB_EXIV2   = $$BIM_LSRC/exiv2
-BIM_LIB_EIGEN   = $$BIM_LSRC/eigen
-BIM_LIB_RAW     = $$BIM_LSRC/libraw
-BIM_LIB_FFT     = $$BIM_LSRC/libfftw/src
-BIM_LIB_GEOTIF  = $$BIM_LSRC/libgeotiff
-BIM_LIB_PROJ4   = $$BIM_LSRC/proj4/src
-BIM_LIB_PUGIXML = $$BIM_LSRC/pugixml/src
-BIM_LIB_GDCM    = $$BIM_LSRC/gdcm
-BIM_FMT_DICOM   = $$BIM_FMTS/dicom
+BIM_LIB_EXIV2    = $$BIM_LSRC/exiv2
+BIM_LIB_EIGEN    = $$BIM_LSRC/eigen
+BIM_LIB_RAW      = $$BIM_LSRC/libraw
+BIM_LIB_FFT      = $$BIM_LSRC/libfftw/src
+BIM_LIB_GEOTIF   = $$BIM_LSRC/libgeotiff
+BIM_LIB_PROJ4    = $$BIM_LSRC/proj4/src
+BIM_LIB_PUGIXML  = $$BIM_LSRC/pugixml/src
+BIM_LIB_GDCM     = $$BIM_LSRC/gdcm
+BIM_FMT_DICOM    = $$BIM_FMTS/dicom
+BIM_LIB_OPENJPEG = $$BIM_LSRC/openjpeg/src
 
 #---------------------------------------------------------------------
 # configuration: automatic
@@ -485,6 +487,70 @@ dyn_gdcm {
 #    LIBS += -lgdcm
 #  }
 } # System GDCM
+
+
+#---------------------------------------------------------------------
+# OPENJPEG - under linux we only use system dynamic version right now
+#---------------------------------------------------------------------
+
+stat_openjpeg {
+  INCLUDEPATH += $${OPENJPEGDIR}/src/lib
+  INCLUDEPATH += $${OPENJPEGDIR}/src/lib/openjp2
+  INCLUDEPATH += $${OPENJPEGDIR}/src/bin
+  INCLUDEPATH += $${OPENJPEGDIR}/src/bin/common
+  INCLUDEPATH += $${OPENJPEGDIR}/project/qt
+
+# there is a naming conflict with one source file:
+# 'image' is also a name in exiv. Exclude image here:
+# SOURCES += $${BIM_LIB_OPENJPEG}/lib/openjp2/image.c
+
+  SOURCES += $${BIM_LIB_OPENJPEG}/lib/openjp2/bio.c \
+             $${BIM_LIB_OPENJPEG}/lib/openjp2/cio.c \
+             $${BIM_LIB_OPENJPEG}/lib/openjp2/dwt.c \
+             $${BIM_LIB_OPENJPEG}/lib/openjp2/event.c \
+             $${BIM_LIB_OPENJPEG}/lib/openjp2/invert.c \
+             $${BIM_LIB_OPENJPEG}/lib/openjp2/j2k.c \
+             $${BIM_LIB_OPENJPEG}/lib/openjp2/jp2.c \
+             $${BIM_LIB_OPENJPEG}/lib/openjp2/mct.c \
+             $${BIM_LIB_OPENJPEG}/lib/openjp2/mqc.c \
+             $${BIM_LIB_OPENJPEG}/lib/openjp2/openjpeg.c \
+             $${BIM_LIB_OPENJPEG}/lib/openjp2/opj_clock.c \
+             $${BIM_LIB_OPENJPEG}/lib/openjp2/pi.c \
+             $${BIM_LIB_OPENJPEG}/lib/openjp2/raw.c \
+             $${BIM_LIB_OPENJPEG}/lib/openjp2/t1.c \
+             $${BIM_LIB_OPENJPEG}/lib/openjp2/t2.c \
+             $${BIM_LIB_OPENJPEG}/lib/openjp2/tcd.c \
+             $${BIM_LIB_OPENJPEG}/lib/openjp2/tgt.c \
+             $${BIM_LIB_OPENJPEG}/lib/openjp2/function_list.c
+
+  HEADERS += $${BIM_LIB_OPENJPEG}/lib/openjp2/t2.h \
+             $${BIM_LIB_OPENJPEG}/lib/openjp2/raw.h \
+             $${BIM_LIB_OPENJPEG}/lib/openjp2/openjpeg.h \
+             $${BIM_LIB_OPENJPEG}/lib/openjp2/dwt.h \
+             $${BIM_LIB_OPENJPEG}/lib/openjp2/event.h \
+             $${BIM_LIB_OPENJPEG}/lib/openjp2/mct.h \
+             $${BIM_LIB_OPENJPEG}/lib/openjp2/t1.h \
+             $${BIM_LIB_OPENJPEG}/lib/openjp2/indexbox_manager.h \
+             $${BIM_LIB_OPENJPEG}/lib/openjp2/mqc.h \
+             $${BIM_LIB_OPENJPEG}/lib/openjp2/opj_includes.h \
+             $${BIM_LIB_OPENJPEG}/lib/openjp2/tcd.h \
+             $${BIM_LIB_OPENJPEG}/lib/openjp2/t1_luts.h \
+             $${BIM_LIB_OPENJPEG}/lib/openjp2/opj_malloc.h \
+             $${BIM_LIB_OPENJPEG}/lib/openjp2/cio.h \
+             $${BIM_LIB_OPENJPEG}/lib/openjp2/pi.h \
+             $${BIM_LIB_OPENJPEG}/lib/openjp2/jp2.h \
+             $${BIM_LIB_OPENJPEG}/lib/openjp2/tgt.h \
+             $${BIM_LIB_OPENJPEG}/lib/openjp2/cidx_manager.h \
+             $${BIM_LIB_OPENJPEG}/lib/openjp2/j2k.h \
+             $${BIM_LIB_OPENJPEG}/lib/openjp2/bio.h \
+             $${BIM_LIB_OPENJPEG}/lib/openjp2/image.h \
+             $${BIM_LIB_OPENJPEG}/lib/openjp2/opj_config_private.h \
+             $${BIM_LIB_OPENJPEG}/lib/openjp2/opj_config.h
+}
+
+dyn_openjpeg {
+  # TODO FIXME: add instructions here...
+}
 
 #---------------------------------------------------------------------
 # libraw
