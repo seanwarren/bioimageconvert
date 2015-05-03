@@ -94,6 +94,10 @@ void OPJ_CALLCONV opj_image_destroy(opj_image_t *image) {
 			opj_free(image->icc_profile_buf);
 		}
 
+		if(image->cp_comment) {
+			opj_free(image->cp_comment);
+		}
+
 		opj_free(image);
 	}
 }
@@ -144,6 +148,7 @@ void opj_image_comp_header_update(opj_image_t * p_image_header, const struct opj
 void opj_copy_image_header(const opj_image_t* p_image_src, opj_image_t* p_image_dest)
 {
 	OPJ_UINT32 compno;
+        OPJ_UINT64 cp_comment_len = 2;
 
 	/* preconditions */
 	assert(p_image_src != 00);
@@ -198,7 +203,16 @@ void opj_copy_image_header(const opj_image_t* p_image_src, opj_image_t* p_image_
 		else
 			p_image_dest->icc_profile_buf = NULL;
 
-	p_image_dest->cp_comment = p_image_src->cp_comment;
+        if (p_image_src->cp_comment) {
+		if (p_image_dest->cp_comment) {
+			opj_free(p_image_dest->cp_comment);
+		}
+                while (p_image_src->cp_comment[cp_comment_len-2] != 0 || p_image_src->cp_comment[cp_comment_len-1] != 0 || p_image_src->cp_comment[cp_comment_len] != 0) {
+			++cp_comment_len;
+		}
+		p_image_dest->cp_comment = opj_malloc(cp_comment_len);
+		memcpy(p_image_dest->cp_comment, p_image_src->cp_comment, cp_comment_len);
+	}
 
 	return;
 }

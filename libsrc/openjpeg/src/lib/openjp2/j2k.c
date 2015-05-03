@@ -2314,16 +2314,24 @@ static OPJ_BOOL opj_j2k_read_com (  opj_j2k_t *p_j2k,
         if (p_header_size > 3 && p_header_data[0] == 0 && p_header_data[1] == 1) {
                 l_image = p_j2k->m_private_image;
                 if (l_image != 00) {
-                        if (l_image->cp_comment) {
+                        if (!l_image->cp_comment) {
+#ifdef DEBUG
+                                fprintf(stderr, "Setting J2K COM comment of length %d as the first/only comment.\n", p_header_size-2);
+#endif
+                                // The first comment is a triple-null-terminated string
+                                l_image->cp_comment = opj_malloc((p_header_size - 2) + 3);
+                                memcpy(l_image->cp_comment, p_header_data+2, p_header_size-2);
+                                l_image->cp_comment[p_header_size-2] = 0;
+                                l_image->cp_comment[p_header_size-1] = 0;
+                                l_image->cp_comment[p_header_size-0] = 0;
+                        } else {
 #ifdef DEBUG
                                 fprintf(stderr, "Appending J2K COM comment of length %d to list of comments.\n", p_header_size-2);
 #endif
-                                while (1) {
-                                        if (l_image->cp_comment[cp_prev_comment_len] == 0 && l_image->cp_comment[cp_prev_comment_len+1] == 0 && l_image->cp_comment[cp_prev_comment_len+2] == 0)
-                                                break;
+                                // Additional comments are added after a null-separator, and again triple-null-terminated
+                                while (l_image->cp_comment[cp_prev_comment_len] != 0 || l_image->cp_comment[cp_prev_comment_len+1] != 0 || l_image->cp_comment[cp_prev_comment_len+2] != 0) {
                                         ++cp_prev_comment_len;
                                 }
-                                cp_prev_comment_len = cp_prev_comment_len;
                                 tmp_comment = opj_malloc(cp_prev_comment_len + 1 + (p_header_size - 2) + 3);
                                 memcpy(tmp_comment, l_image->cp_comment, cp_prev_comment_len + 1);
                                 memcpy(tmp_comment + cp_prev_comment_len + 1, p_header_data+2, p_header_size-2);
@@ -2332,15 +2340,6 @@ static OPJ_BOOL opj_j2k_read_com (  opj_j2k_t *p_j2k,
                                 l_image->cp_comment[cp_prev_comment_len+1+p_header_size-2] = 0;
                                 l_image->cp_comment[cp_prev_comment_len+1+p_header_size-1] = 0;
                                 l_image->cp_comment[cp_prev_comment_len+1+p_header_size-0] = 0;
-                        } else {
-#ifdef DEBUG
-                                fprintf(stderr, "Setting J2K COM comment of length %d.\n", p_header_size-2);
-#endif
-                                l_image->cp_comment = opj_malloc((p_header_size - 2) + 3);
-                                memcpy(l_image->cp_comment, p_header_data+2, p_header_size-2);
-                                l_image->cp_comment[p_header_size-2] = 0;
-                                l_image->cp_comment[p_header_size-1] = 0;
-                                l_image->cp_comment[p_header_size-0] = 0;
                         }
                 }
 
