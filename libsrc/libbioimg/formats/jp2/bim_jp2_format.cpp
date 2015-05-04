@@ -40,7 +40,6 @@
 bim::Jp2Params::Jp2Params()
 {
   i = initImageInfo(); 
-  //i.depth  = 8;
 }
 
 bim::Jp2Params::~Jp2Params()
@@ -58,7 +57,59 @@ bool jp2GetImageInfo( bim::FormatHandle *fmtHndl )
 #ifdef DEBUG
   std::cerr << "jp2GetImageInfo() called" << std::endl;
 #endif
+  if (fmtHndl == NULL) return false;
+  if (fmtHndl->internalParams == NULL) return false;
 
+/*
+  // TODO FIXME: this is just an example taken from another file format.
+  // Implement this missing functionality.
+  bim::Jp2Params *par = (bim::Jp2Params *) fmtHndl->internalParams;
+  bim::ImageInfo *info = &par->i;  
+
+  *info = initImageInfo();
+  info->imageMode = IM_GRAYSCALE;
+  info->tileWidth = 0;
+  info->tileHeight = 0; 
+  info->transparentIndex = 0;
+  info->transparencyMatting = 0;
+  info->lut.count = 0;
+  info->samples = 1;
+
+  info->number_pages = *(header+4) + *(header+5) * 256; // multiplatform approach, no swapping needed
+  info->width  = *(header + 0) + *(header + 1) * 256;
+  info->height = *(header + 2) + *(header + 3) * 256;
+
+  par->has_notes = * (int32 *) (header + 10);
+  if (bim::bigendian) swapLong ( (uint32*) &par->has_notes );
+  par->num_images = info->number_pages;
+
+
+  val = (short)( *(header + 14) + *(header + 15) * 256 ); 
+  if (val == 1)   {
+    info->depth = 8;
+    info->pixelType = FMT_UNSIGNED;
+  }  else   {
+    info->depth = 16;
+    info->pixelType = FMT_UNSIGNED;
+  }
+
+  par->data_offset = 76;
+  par->page_size_bytes = info->width * info->height * (info->depth / 8);
+  par->notes_offset = par->data_offset + par->page_size_bytes * info->number_pages;
+
+  if ( (info->number_pages == 3) || (info->number_pages == 2) )   {
+    info->samples = 3;    
+    info->number_pages = 1;
+    info->imageMode = IM_MULTI;
+  }
+
+  // if more than 1 page it's a z series
+  if (info->number_pages > 1) {
+    info->number_dims = 4;
+    info->dimensions[3].dim = DIM_Z;
+    info->number_z = info->number_pages;
+  }
+*/
   return true;
 }
 
@@ -79,7 +130,7 @@ static int write_jp2_image( bim::FormatHandle *fmtHndl )
   std::cerr << "write_jp2_image() called" << std::endl;
 #endif
 
-  return 0;
+  return 1;
 }
 
 
@@ -94,16 +145,16 @@ bim::uint jp2_append_metadata(bim::FormatHandle *fmtHndl, bim::TagMap *hash ) {
   bim::Jp2Params *par = (bim::Jp2Params *) fmtHndl->internalParams;
 
   for (size_t comidx = 0; comidx < par->comments.size(); ++comidx) {
-    // NOTE: our current format of comments are 'key=value' strings:
-    size_t pos = par->comments[comidx].find('=');
-    if (pos == std::string::npos) {
-      std::cerr << "Encountered an illegal comment '" << par->comments[comidx]
-              << "', aborted." << std::endl;
-      return 1;
+    // NOTE: if comments contain an '=' sign, they are 'key=value' strings and
+    // should be split on the '=' sign:
+    const size_t pos = par->comments[comidx].find('=');
+    if (pos != std::string::npos) {
+      std::string key = par->comments[comidx].substr(0, pos);
+      std::string value = par->comments[comidx].substr(pos+1);
+      hash->append_tag( "custom/" + key, value );
+    } else {
+      hash->append_tag( "custom/Comment", par->comments[comidx] );
     }
-    std::string key = par->comments[comidx].substr(0, pos);
-    std::string value = par->comments[comidx].substr(pos+1);
-    hash->append_tag( "custom/" + key, value );
   }
 
   // Append EXIV2 metadata
@@ -151,7 +202,7 @@ void jp2ReleaseFormatProc(bim::FormatHandle *fmtHndl) {
 // OPEN/CLOSE
 //----------------------------------------------------------------------------
 
-void jp2SetWriteParameters  (bim::FormatHandle *fmtHndl) {
+void jp2SetWriteParameters(bim::FormatHandle *fmtHndl) {
 #ifdef DEBUG
   std::cerr << "jp2SetWriteParameters() called" << std::endl;
 #endif
@@ -189,51 +240,50 @@ void jp2SetWriteParameters  (bim::FormatHandle *fmtHndl) {
 
 void jp2CloseImageProc(bim::FormatHandle *fmtHndl) {
 #ifdef DEBUG
-  std::cerr << "jp2CloseImageProc() called" << std::endl;
+    std::cerr << "jp2CloseImageProc() called" << std::endl;
 #endif
 
     if (fmtHndl == NULL) return;
     if (fmtHndl->internalParams == NULL) return;
     bim::Jp2Params *par = (bim::Jp2Params *) fmtHndl->internalParams;
     delete par;
-    fmtHndl->internalParams = 0;
+    fmtHndl->internalParams = NULL;
     xclose( fmtHndl );
 }
 
 bim::uint jp2OpenImageProc(bim::FormatHandle *fmtHndl, bim::ImageIOModes io_mode) {
-#ifdef DEBUG
-  std::cerr << "jp2OpenImageProc() called" << std::endl;
-#endif
-
   if (fmtHndl == NULL) return 1;
   if (fmtHndl->internalParams != NULL) jp2CloseImageProc(fmtHndl);  
 
   fmtHndl->io_mode = io_mode;
   if ( io_mode == bim::IO_READ ) {
 #ifdef DEBUG
-  std::cerr << "jp2OpenImageProc(): setting read mode, and opening the file." << std::endl;
+    std::cerr << "jp2OpenImageProc(): setting read mode, and opening the file." << std::endl;
 #endif
 
-      fmtHndl->internalParams = (void *) new bim::Jp2Params();
-      bim::Jp2Params *par = (bim::Jp2Params *) fmtHndl->internalParams;
-      
-      // TODO FIXME: do we want to open the file here???
-      bim::xopen(fmtHndl);
-      if (!fmtHndl->stream) { 
-          jp2CloseImageProc(fmtHndl); 
-          return 1; 
-      };
+    fmtHndl->internalParams = (void *) new bim::Jp2Params();
+    bim::Jp2Params *par = (bim::Jp2Params *) fmtHndl->internalParams;
 
-      if ( !jp2GetImageInfo( fmtHndl ) ) { jp2CloseImageProc(fmtHndl); return 1; };
+    bim::xopen(fmtHndl);
+    if (!fmtHndl->stream) { 
+      jp2CloseImageProc(fmtHndl); 
+      return 1; 
+    }
+
+    if ( !jp2GetImageInfo( fmtHndl ) ) {
+      jp2CloseImageProc(fmtHndl);
+      return 1;
+    };
   }
 
+  // TODO FIXME: writing is currently not implemented/tested:
   if (io_mode == bim::IO_WRITE) {
 #ifdef DEBUG
-  std::cerr << "jp2OpenImageProc(): setting write mode, calling jp2SetWriteParameters()." << std::endl;
+    std::cerr << "jp2OpenImageProc(): setting write mode, calling jp2SetWriteParameters()." << std::endl;
 #endif
-
-      jp2SetWriteParameters(fmtHndl);
+    jp2SetWriteParameters(fmtHndl);
   }
+
   return 0;
 }
 
@@ -256,10 +306,9 @@ bim::ImageInfo jp2GetImageInfoProc( bim::FormatHandle *fmtHndl, bim::uint page_n
 
   bim::ImageInfo ii = bim::initImageInfo();
   if (fmtHndl == NULL) return ii;
-  fmtHndl->pageNumber = page_num;
-  fmtHndl->subFormat = 0;
-  //bim::Jp2Params *par = (bim::Jp2Params *) fmtHndl->internalParams;
-  //return par->i;
+
+  bim::Jp2Params *par = (bim::Jp2Params *) fmtHndl->internalParams;
+  return par->i;
 }
 
 //----------------------------------------------------------------------------
@@ -298,6 +347,7 @@ char* jp2ReadMetaDataAsTextProc( bim::FormatHandle *fmtHndl ) {
 bim::uint jp2ReadImageProc( bim::FormatHandle *fmtHndl, bim::uint page ) {
   if (fmtHndl == NULL) return 1;
   if (!fmtHndl->stream) return 1;
+
   fmtHndl->pageNumber = page;
   return read_jp2_image( fmtHndl );
 }
@@ -307,6 +357,7 @@ bim::uint jp2WriteImageProc( bim::FormatHandle *fmtHndl ) {
   std::cerr << "jp2WriteImageProc() called" << std::endl;
 #endif
 
+/*
   if (fmtHndl == NULL) return 1;
   bim::xopen(fmtHndl);
   if (!fmtHndl->stream) return 1;
@@ -314,6 +365,8 @@ bim::uint jp2WriteImageProc( bim::FormatHandle *fmtHndl ) {
   xflush( fmtHndl );
   xclose( fmtHndl );
   return res;
+*/
+  return 1;
 }
 
 
@@ -397,5 +450,4 @@ bim::FormatHeader* jp2GetFormatHeader(void)
 }
 
 } // extern C
-
 
