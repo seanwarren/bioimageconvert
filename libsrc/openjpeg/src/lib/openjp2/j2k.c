@@ -2348,7 +2348,7 @@ static OPJ_BOOL opj_j2k_read_com (  opj_j2k_t *p_j2k,
                 return OPJ_TRUE;
         }
 
-        return OPJ_FALSE;
+        return OPJ_TRUE;
 }
 
 OPJ_BOOL opj_j2k_write_cod(     opj_j2k_t *p_j2k,
