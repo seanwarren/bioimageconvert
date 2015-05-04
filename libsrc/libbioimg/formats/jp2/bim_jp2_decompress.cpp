@@ -80,42 +80,52 @@
 #include <format_defs.h>
 
 
+template<class T>
+void copy_memory_generic(opj_image_t* opj_image, bim::ImageBitmap* bim_image, const size_t numcomps, const size_t imgsize)
+{
+  const int  maxval = (int)std::pow(2.0, 8.0 * sizeof(T)) - 1;
+  const bool sgnd   = (int)opj_image->comps[0].sgnd;
+  const int  sgndadjust = sgnd ? 1 << (opj_image->comps[0].prec - 1) : 0;
+
+  for (size_t n = 0; n < numcomps; ++n) {
+    for (size_t i = 0; i < imgsize; ++i) {
+      int c = opj_image->comps[n].data[i];
+
+      if (sgnd) {
+        c += sgndadjust;
+        if (c > maxval) c = maxval;
+        else if (c < 0) c = 0;
+      }
+
+      ((T*)bim_image->bits[n])[i] = (T)c;
+    }
+  }
+}
+
 
 int openjpeg_image_to_bim_image(opj_image_t* opj_image, bim::ImageBitmap* bim_image)
 {
-  int bps, ushift, dshift, has_alpha;
-  bool force16;
+  const size_t width = opj_image->comps[0].w;
+  const size_t height = opj_image->comps[0].h;
+  const size_t numcomps = opj_image->numcomps;
+  const size_t imgsize = width * height;
 
-  bps = (int)opj_image->comps[0].prec;
+  // libbioimage supports only 8 and 16 bit images, JPEG2000 can handle more:
+  int bps  = (int)opj_image->comps[0].prec;
   if (bps > 8 && bps < 16) {
 #ifdef DEBUG
-    std::cerr << "openjpeg_image_to_bim_image(): The image has bit depth "
-            << bps <<"bit, so it will be scaled to 16 bit (ushift " << ushift
-            << ", dshift " << dshift << ")." << std::endl;
+    std::cerr << "openjpeg_image_to_bim_image(): The image has bit depth of "
+            << bps <<"bit, which the library can not handle." << std::endl
+            << " We will set 16bit instead." << std::endl;
 #endif
-    ushift = 16 - bps;
-    dshift = bps - ushift;
     bps = 16;
-    force16 = true;
-  } else {
-    ushift = 0;
-    dshift = 0;
-    force16 = false;
   }
 
-  const int sgnd = (int)opj_image->comps[0].sgnd;
-  const int sgndadjust = sgnd ? 1 << (opj_image->comps[0].prec - 1) : 0;
-
-  const size_t width = (int)opj_image->comps[0].w;
-  const size_t height = (int)opj_image->comps[0].h;
-  const size_t imgsize = width * height;
-  const size_t numcomps = opj_image->numcomps;
-
-
+  // Check that the sizes and precision of all components are identical:
   for (size_t n = 1; n < numcomps; ++n) {
-    if (opj_image->comps[n].dx != opj_image->comps[n-1].dx ||
-        opj_image->comps[n].dy != opj_image->comps[n-1].dy ||
-        opj_image->comps[n].prec != opj_image->comps[n-1].prec) {
+    const opj_image_comp_t* cn0 = &opj_image->comps[n-1];
+    const opj_image_comp_t* cn1 = &opj_image->comps[n];
+    if (cn1->dx != cn0->dx || cn1->dy != cn0->dy || cn1->prec != cn0->prec) {
       std::cerr << "openjpeg_image_to_bim_image(): Found in component " << n
               << " a difference in size or precision compared to previous"
               << " component. Aborted." << std::endl;
@@ -123,7 +133,7 @@ int openjpeg_image_to_bim_image(opj_image_t* opj_image, bim::ImageBitmap* bim_im
     }
   }
 
-
+  // Reserve memory for the library image:
   if (bim::allocImg( bim_image, width, height, numcomps, bps ) != 0) {
 #ifdef DEBUG
     std::cerr << "Failed to reserve memory for bim::image of size "
@@ -135,31 +145,11 @@ int openjpeg_image_to_bim_image(opj_image_t* opj_image, bim::ImageBitmap* bim_im
 
 
   if (bps == 8) {
-    for (size_t n = 0; n < numcomps; ++n) {
-      for (size_t i = 0; i < imgsize; ++i) {
-        int c = opj_image->comps[n].data[i];
-
-        if (sgnd)    c += sgndadjust;
-        if (c > 255) c = 255;
-        if (c < 0)   c = 0;
-
-        ((bim::uchar*)bim_image->bits[n])[i] = (unsigned char)c;
-      }
-    }
+    copy_memory_generic<bim::uchar>(opj_image, bim_image, numcomps, imgsize);
   } else if (bps == 16) {
-    for (size_t n = 0; n < numcomps; ++n) {
-      for (size_t i = 0; i < imgsize; ++i) {
-        int c = opj_image->comps[n].data[i];
-
-        if (sgnd)      c += sgndadjust;
-        if (force16)   c = (c << ushift) + (c >> dshift);
-        if (c > 65535) c = 65535;
-        if (c < 0)     c = 0;
-
-        ((bim::uint16*)bim_image->bits[n])[i] = (unsigned short)c;
-      }
-    }
+    copy_memory_generic<bim::uint16>(opj_image, bim_image, numcomps, imgsize);
   } else {
+    // TODO FIXME: other bit depths could be added here...
     std::cerr << "openjpeg_image_to_bim_image(): Found bits=" << bps
             << ", but only the range from 8 - 16 bit is implemented."
             << " Aborted." << std::endl;
