@@ -186,7 +186,7 @@ class Image {
     Image &operator=(const Image & );
 
     // will create a new memory area and copy the image there
-    Image  deepCopy() const;
+    Image  deepCopy(bool nohist=false) const;
 
     // will create a new memory area
     int        alloc( uint64 w, uint64 h, uint64 samples, uint64 depth, DataFormat format=FMT_UNSIGNED );
@@ -328,6 +328,12 @@ class Image {
     void        delete_metadata_tag(const std::string &key) { metadata.delete_tag(key); }
 
     void        set_metadata( const TagMap &md ) { metadata = md; }
+    
+    //--------------------------------------------------------------------------    
+    // histogram
+    //--------------------------------------------------------------------------
+
+    //ImageHistogram* histogram() { return &histo; }
 
     //--------------------------------------------------------------------------    
     // process an image based on command line arguments or a string
@@ -372,10 +378,10 @@ class Image {
     void trim(double min_v, double max_v) const;
 
     // same as photoshop levels command
-    void color_levels( const double &val_min, const double &val_max, const double &gamma );
+    void color_levels(const double &val_min, const double &val_max, const double &gamma, ImageHistogram *hist = 0);
 
     // same as photoshop brightness/contrast command, both values in range [-100, 100]
-    void color_brightness_contrast( const int &brightness, const int &contrast );
+    void color_brightness_contrast(const int &brightness, const int &contrast, ImageHistogram *hist = 0);
 
     // returns a number of pixels above the threshold
     uint64 pixel_counter( const unsigned int &channel, const double &threshold_above );
@@ -579,8 +585,10 @@ class Image {
     // pointer to a shared bitmap
     ImageBitmap *bmp;
 
-    // not shared image metadata - most of the time it is empty
+    // not shared image metadata
     TagMap metadata;
+    // not shared image histogram
+    //ImageHistogram *histo;
 
     // not shared buffer
     DTypedBuffer<unsigned char> buf;

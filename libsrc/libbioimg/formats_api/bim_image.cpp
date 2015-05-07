@@ -74,6 +74,7 @@ const Image::map_modifiers Image::modifiers = Image::create_modifiers();
 
 Image::Image() {
   bmp = NULL;
+  //histo = 0;
   connectToNewMemory();
 }
 
@@ -83,12 +84,15 @@ Image::~Image() {
 
 Image::Image(const Image& img) { 
   bmp = NULL;
+  //histo = 0;
   connectToMemory( img.bmp );
   if (img.metadata.size()>0) metadata = img.metadata;
+  //if (img.histo && img.histo->isValid()) *this->histo = *img.histo;
 }
 
 Image::Image(bim::uint64 width, bim::uint64 height, bim::uint64 depth, bim::uint64 samples, DataFormat format) { 
   bmp = NULL;
+  //histo = 0;
   connectToNewMemory();
   create( width, height, depth, samples, format ); 
 }
@@ -96,28 +100,33 @@ Image::Image(bim::uint64 width, bim::uint64 height, bim::uint64 depth, bim::uint
 #ifdef BIM_USE_IMAGEMANAGER
 Image::Image(const char *fileName, int page) {
   bmp = NULL;
+  //histo = 0;
   connectToNewMemory();
   fromFile( fileName, page ); 
 }
 
 Image::Image(const std::string &fileName, int page) { 
   bmp = NULL;
+  //histo = 0;
   connectToNewMemory();
   fromFile( fileName, page ); 
 }
 #endif //BIM_USE_IMAGEMANAGER
 
 Image &Image::operator=( const Image & img ) { 
+  //histo = 0;
   connectToMemory( img.bmp );
   if (img.metadata.size()>0) this->metadata = img.metadata;
+  //if (img.histo && img.histo->isValid()) *this->histo = *img.histo;
   return *this; 
 }
 
-Image Image::deepCopy() const { 
+Image Image::deepCopy(bool nohist) const {
   if (bmp==NULL) return Image();
   Image img( this->width(), this->height(), this->depth(), this->samples(), this->pixelType() );
   img.bmp->i = this->bmp->i;
   if (img.metadata.size()>0) img.metadata = this->metadata;
+  //if (nohist == false && img.histo && img.histo->isValid()) *this->histo = *img.histo;
 
   bim::uint64 sample, chan_size = img.bytesPerChan();
   for (sample=0; sample<bmp->i.samples; sample++) {
@@ -381,6 +390,7 @@ int Image::alloc( bim::uint64 w, bim::uint64 h, bim::uint64 samples, bim::uint64
 void Image::free( ) {
   connectToNewMemory();
   metadata.clear();
+  //histo.clear();
 }
 
 void* Image::bits(const unsigned int &sample) const { 
@@ -423,6 +433,7 @@ Image Image::convertToDepth( const ImageLut &lut ) const {
   }
 
   img.metadata = this->metadata;
+  //img.histo = this->histo;
   return img;
 }
 
@@ -465,6 +476,7 @@ Image Image::convertToDepth( int depth, Lut::LutType method, DataFormat pxt, His
   }
 
   img.metadata = this->metadata;
+  //img.histo = this->histo;
   return img;
 }
 
@@ -567,6 +579,7 @@ Image Image::ROI( bim::uint64 x, bim::uint64 y, bim::uint64 w, bim::uint64 h ) c
   img.bmp->i.width = w;
   img.bmp->i.height = h;
   img.metadata = this->metadata;
+  //img.histo = this->histo;
   return img;
 }
 
@@ -886,6 +899,7 @@ Image Image::ensureTypedDepth( ) const {
   img.bmp->i = this->bmp->i;
   img.bmp->i.depth = out_depth;
   img.metadata = this->metadata;
+  //img.histo = this->histo;
   return img;
 }
 
@@ -1096,6 +1110,7 @@ Image Image::downSampleBy2x( ) const {
   img.bmp->i.width  = w;
   img.bmp->i.height = h;
   img.metadata = resizeMetadata( this->metadata, w, h, width(), height() );
+  //img.histo = this->histo;
   return img;
 }
 
@@ -1175,6 +1190,7 @@ Image Image::resample( bim::uint w, bim::uint h, ResizeMethod method, bool keep_
   img.bmp->i.width  = w;
   img.bmp->i.height = h;
   img.metadata = resizeMetadata( this->metadata, w, h, width(), height() );
+  //img.histo = this->histo;
   return img;
 }
 
@@ -1213,6 +1229,7 @@ Image Image::resize( bim::uint w, bim::uint h, ResizeMethod method, bool keep_as
   img.bmp->i.width  = w;
   img.bmp->i.height = h;
   img.metadata = resizeMetadata( this->metadata, w, h, width(), height() );
+  //img.histo = this->histo;
   return img;
 }
 
@@ -1341,6 +1358,7 @@ Image Image::rotate( double deg ) const {
   img.bmp->i.width  = w;
   img.bmp->i.height = h;
   img.metadata = rotateMetadata( this->metadata, deg );
+  //img.histo = this->histo;
   return img;
 }
 
@@ -1393,6 +1411,7 @@ Image Image::mirror() const {
     } // sample
 
     img.metadata = this->metadata;
+    //img.histo = this->histo;
     return img;
 }
 
@@ -1419,6 +1438,7 @@ Image Image::flip() const {
     } // sample
 
     img.metadata = this->metadata;
+    //img.histo = this->histo;
     return img;
 }
 
@@ -1776,10 +1796,14 @@ void image_color_levels ( void *pdest, void *psrc, unsigned int &w, double val_m
     }
 }
 
-void Image::color_levels( const double &val_min, const double &val_max, const double &gamma ) {
+void Image::color_levels(const double &val_min, const double &val_max, const double &gamma, ImageHistogram *h) {
     double vmax = val_max, vmin = val_min;
     if (vmin == vmax) {
-        ImageHistogram hist(*this);
+        ImageHistogram hist;
+        if (h && h->isValid()) 
+            hist = *h; 
+        else 
+            hist.fromImage(*this);
         vmin = hist[0]->min_value();
         vmax = hist[0]->max_value();
         for (unsigned int sample=1; sample<bmp->i.samples; ++sample ) {
@@ -1825,7 +1849,7 @@ Image operation_levels(Image &img, const bim::xstring &arguments, const xoperati
     if (strl.size()>1) maxv = strl[1];
     if (strl.size()>2) gamma = strl[2];
 
-    img.color_levels(minv, maxv, gamma);
+    img.color_levels(minv, maxv, gamma, hist);
     return img;
 };
 
@@ -1836,25 +1860,36 @@ Image operation_levels(Image &img, const bim::xstring &arguments, const xoperati
 
 template <typename T>
 void image_brightness_contrast ( void *pdest, void *psrc, unsigned int &w, double b, double c, Histogram *h ) {
-    double a = h->average();
-    b *= a;
+    double mx = h->max_value();
+    double mu = h->average();
+    double g = 1;
+    if (b > 0)
+        g = 1.0 - b;
+    else
+        g = 1.0 / (1.0 + b);
+
     T *src = (T*) psrc;
     T *dest = (T*) pdest;
     #pragma omp parallel for default(shared)
     for (bim::int64 x=0; x<w; ++x) {
         double px = ((double)src[x]);
-        px = (px-a) * c + a;
-        px += b;
+        px = (px-mu) * c + mu;
+        px = pow(px / mx, g) * mx;
         dest[x] = bim::trim<T, double>(px);
     }
 }
 
 // same as photoshop brightness/contrast command, both values in range [-100, 100]
-void Image::color_brightness_contrast( const int &brightness, const int &contrast ) {
+void Image::color_brightness_contrast(const int &brightness, const int &contrast, ImageHistogram *h) {
     unsigned int plane_size_pixels = this->width()*this->height();
-    ImageHistogram hist(*this);
-    double b = (brightness/100.0);
-    double c = contrast>=0 ? (contrast/100.0)+1 : 1.0-(contrast/-200.0);
+    ImageHistogram hist;
+    if (h && h->isValid()) 
+        hist = *h; 
+    else 
+        hist.fromImage(*this);
+
+    double b = (brightness/200.0);
+    double c = contrast>=0 ? (contrast/200.0)+1 : 1.0-(contrast/-200.0);
 
     for (unsigned int sample=0; sample<bmp->i.samples; ++sample ) {
         if (bmp->i.depth==8 && bmp->i.pixelType==FMT_UNSIGNED)
@@ -1892,7 +1927,7 @@ Image operation_brightnesscontrast(Image &img, const bim::xstring &arguments, co
     if (strl.size()>1) contrast = strl[1];
 
     if (brightness != 0.0 || contrast != 0.0)
-        img.color_brightness_contrast(brightness, contrast);
+        img.color_brightness_contrast(brightness, contrast, hist);
     return img;
 };
 
@@ -2188,6 +2223,7 @@ Image Image::fuse( const std::vector< std::set<int> > &mapping ) const {
   img.bmp->i = this->bmp->i;
   img.bmp->i.samples = c;
   img.metadata = this->metadata;
+  //img.histo = this->histo;
   return img;
 }
 
@@ -2402,6 +2438,7 @@ Image Image::fuse( const std::vector< std::vector< std::pair<int,float> > > &map
     img.bmp->i.samples = c;
     //out.metadata = this->metadata;
     img.metadata = fuseMetadata( this->metadata, bmp->i.samples, map );
+    //img.histo = this->histo;
     return img;
 
   /*
@@ -2609,6 +2646,7 @@ Image Image::appendChannels( const Image &i2 ) const {
   img.bmp->i = this->bmp->i;
   img.bmp->i.samples = c;
   img.metadata = this->metadata;
+  //img.histo = this->histo;
   appendChannelMetadata( img.metadata, i2.metadata, this->samples(), i2.samples() );
   return img;
 }

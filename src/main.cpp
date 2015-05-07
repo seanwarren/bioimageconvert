@@ -1467,8 +1467,8 @@ int countPixels(DConf *c) {
 int resize_3d(DConf *c) {
     c->print( "About to run resize3D", 2 );
     xoperations ops = c->getOperations();
-    xoperations before = ops.left("-textureatlas");
-    xoperations after = ops.right("-textureatlas");
+    xoperations before = ops.left("-resize3d");
+    xoperations after = ops.right("-resize3d");
 
     ImageStack stack(c->i_names, c->c, &before);
     stack.ensureTypedDepth();
@@ -1485,8 +1485,8 @@ int resize_3d(DConf *c) {
 int rearrangeDimensions(DConf *c) {
     c->print( "About to run Rearrange Dimensions", 2 );
     xoperations ops = c->getOperations();
-    xoperations before = ops.left("-textureatlas");
-    xoperations after = ops.right("-textureatlas");
+    xoperations before = ops.left("-rearrange3d");
+    xoperations after = ops.right("-rearrange3d");
 
     ImageStack stack(c->i_names, c->c, &before);
     stack.ensureTypedDepth();

@@ -48,7 +48,7 @@ class Histogram {
   public:
 
     enum ChannelMode { 
-      cmSeparate=0,
+      cmSeparate=0, 
       cmCombined=1
     };
 
@@ -92,8 +92,10 @@ class Histogram {
     const std::vector<StorageType> &get_hist( ) const { return hist; }
 
     double average() const;
+    double median() const;
     double std() const;
     StorageType cumsum( const unsigned int &bin ) const;
+    double range() const;
 
     double get_shift() const { return d.shift; }
     double get_scale() const { return d.scale; }
@@ -155,9 +157,9 @@ class Histogram {
 class Lut {
   public:
 
-    enum LutType {
-      ltLinearFullRange=0,
-      ltLinearDataRange=1,
+    enum LutType { 
+      ltLinearFullRange=0, 
+      ltLinearDataRange=1, 
       ltLinearDataTolerance=2,
       ltEqualize=3,
       ltTypecast=4,

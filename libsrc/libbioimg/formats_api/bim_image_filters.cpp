@@ -57,7 +57,7 @@ void edge_filter( const Image &in, Image &out ) {
 }
 
 Image Image::filter_edge() const {
-    Image out = this->deepCopy();
+    Image out = this->deepCopy(true);
     out.fill(0);
 
     if (this->depth()==8 && this->pixelType()==FMT_UNSIGNED)

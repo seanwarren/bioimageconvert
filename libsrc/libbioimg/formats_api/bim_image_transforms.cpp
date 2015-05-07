@@ -478,7 +478,7 @@ bool convert_colors( const Image &in, Image &out, F func ) {
 }
 
 Image Image::transform_color( Image::TransformColorMethod type ) const {
-    Image out = this->deepCopy();
+    Image out = this->deepCopy(true);
 
     if (type==Image::tmcRGB2HSV) {
         convert_colors( *this, out, rgb2hsv );
@@ -552,11 +552,12 @@ Image Image::transform_hounsfield(const double &slope, const double &intercept )
     Image out;
 
     if (this->pixelType() == FMT_SIGNED || this->pixelType() == FMT_FLOAT) {
-        out = this->deepCopy();
+        out = this->deepCopy(true);
     } else {
         // convert to signed data type keeping image depth, typically this should be 16 bit per sample
         out = this->convertToDepth(32, Lut::ltTypecast, FMT_FLOAT);
     }
+    //out.histo.clear();
 
     if (out.depth() == 8 && out.pixelType() == FMT_SIGNED)
         converter_hounsfield<bim::int8, double>(out, out, slope, intercept);
@@ -625,7 +626,7 @@ bool enhancer_hounsfield(const Image &in, const T &min_val, const T &max_val, co
 }
 
 Image compute_hounsfield(const Image &in, int depth, DataFormat pxtype, const double &minv, const double &maxv, const double &maxs) {
-    Image img = in.deepCopy();
+    Image img = in.deepCopy(true);
 
     if (in.depth() == 8 && in.pixelType() == FMT_SIGNED)
         enhancer_hounsfield<bim::int8>(img, minv, maxv, minv, maxs);

@@ -324,6 +324,16 @@ double Histogram::average() const {
   return (mu/d.scale) + d.shift;
 }
 
+double Histogram::median() const {
+    double medfreq = cumsum(hist.size()-1) / 2.0;
+    unsigned int sum = 0;
+    for (unsigned int i = 0; i < hist.size(); ++i) {
+        sum += hist[i];
+        if (sum >= medfreq) return (i / d.scale) + d.shift;
+    }
+    return -1;
+}
+
 double Histogram::std() const {
   double mu = average();
   double a=0.0, s=0.0;
@@ -343,6 +353,10 @@ Histogram::StorageType Histogram::cumsum( const unsigned int &bin ) const {
   for (unsigned int i=0; i<=b; ++i) 
     sum += hist[i];
   return sum;
+}
+
+double Histogram::range() const {
+    return max_value() - min_value();
 }
 
 Histogram::StorageType Histogram::get_value( const unsigned int &bin ) const {

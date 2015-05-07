@@ -1036,7 +1036,7 @@ std::string constructOMEXML( bim::FormatHandle *fmtHndl, bim::TagMap *hash ) {
   str += "<OME xmlns=\"http://www.openmicroscopy.org/Schemas/OME/2013-06\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.openmicroscopy.org/Schemas/OME/2013-06 http://www.openmicroscopy.org/Schemas/OME/2013-06/ome.xsd\">";
 
   // Image tag
-  str += bim::xstring::xprintf("<Image ID=\"Image:0\" Name=\"%s\">", "bioimage.ome.tif" );
+  str += "<Image ID=\"Image:0\" Name=\"bioimage.ome.tif\">";
 
   if (hash->hasKey(bim::IMAGE_DATE_TIME))
       str += bim::xstring::xprintf("<AcquisitionDate>%s</AcquisitionDate>", hash->get_value(bim::IMAGE_DATE_TIME).c_str());
