@@ -16,7 +16,7 @@
  * New: Support for virtual tiles, where reader will export tiles in requested sizes independent of what is stored in the image
  * New: Added mosaicking command to assemble a large image from aligned non-overlapping tiles
  * Update: replaced libjpeg with libjpeg-turbo 1.4.0 for faster decoding and encoding
- * Update: improved parsing of OME-TIFF metadata using pugixml parser
+ * Update: improved parsing of OME-TIFF metadata using pugixml parser, improved parsing of channel data
  * Update: added parsing of MetaXpress versions of STK files
  * Update: updated ffmpeg to version 2.5.3 supporting H265
  * Update: updated libpng to 1.6.16

@@ -15,9 +15,10 @@
 #include <cmath>
 #include <algorithm>
 #include <limits>
+#include <string>
 #include <iostream>
-#include <sstream>
 #include <fstream>
+#include <sstream>
 
 #include <Jzon.h>
 #include <pugixml.hpp>
@@ -682,7 +683,7 @@ public:
     }
 
     inline std::string toString() const {
-        std::ostringstream s;
+        std::stringstream s;
         s << this->getValue();
         return s.str();
     }

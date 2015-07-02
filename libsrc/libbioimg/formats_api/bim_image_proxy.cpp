@@ -137,9 +137,21 @@ bool ImageProxy::readTile(Image &img, bim::uint page, bim::uint64 xid, bim::uint
         } // y
     } // x
 
+    // compute level image size
+    xstring s = fm->get_metadata_tag(bim::IMAGE_RES_L_SCALES, "");
+    std::vector<double> scales = s.splitDouble(",");
+    float scale = scales[requested_level];
+    int level_w = bim::round<double>(scale*fm->get_metadata_tag_int(bim::IMAGE_NUM_X, 0));
+    int level_h = bim::round<double>(scale*fm->get_metadata_tag_int(bim::IMAGE_NUM_Y, 0));
+
     // extract requested ROI
     int dx = x1 - (xid1*im_tile_sz);
     int dy = y1 - (yid1*im_tile_sz);
-    img = temp.ROI(dx, dy, tile_size, tile_size);
+    int szx = std::min<int>(tile_size, level_w - x1);
+    int szy = std::min<int>(tile_size, level_h - y1);
+    if (szx>0 && szy>0)
+        img = temp.ROI(dx, dy, szx, szy);
+    else
+        img = Image();
     return true;
 }

@@ -55,6 +55,7 @@ using namespace bim;
 #define BIM_FORMAT_FFMPEG_H264       13
 #define BIM_FORMAT_FFMPEG_WEBM       14
 #define BIM_FORMAT_FFMPEG_H265       15
+#define BIM_FORMAT_FFMPEG_WEBM9      16
 
 
 //****************************************************************************
@@ -89,6 +90,7 @@ std::vector< std::string > init_formats_write() {
     v.push_back( "mp4" );        // 13 "H264",
     v.push_back( "webm" );       // 14 "WebM",
     v.push_back( "mp4" );        // 15 "H265",
+    v.push_back( "webm" );       // 16 "WebM VP9",
     return v;
 }
 
@@ -110,6 +112,7 @@ std::vector< std::string > init_formats_fourcc() {
     v.push_back( "" );     // 13 "H264",
     v.push_back( "" );     // 14 "WebM",
     v.push_back( "" );     // 15 "H265",
+    v.push_back("");       // 16 "WebM VP9",
     return v;
 }
 
@@ -133,6 +136,7 @@ std::vector< AVCodecID > init_encoder_ids() {
     v.push_back( AV_CODEC_ID_H264 );  // 13 "MPEG4 H264",
     v.push_back( AV_CODEC_ID_NONE );  // 14 "WebM default VP8 or VP9
     v.push_back( AV_CODEC_ID_H265 );  // 15 "MPEG4 H265",
+    v.push_back(AV_CODEC_ID_VP9);    // 16 "WebM VP9
     return v;
 }
 
@@ -159,6 +163,7 @@ std::map< std::string, int > init_formats() {
     v.insert( std::make_pair( "h264", 13 ) );
     v.insert( std::make_pair( "webm", 14 ) );
     v.insert( std::make_pair( "h265", 15 ) );
+    v.insert(std::make_pair("webm", 16));
     return v;
 }
 
@@ -181,6 +186,7 @@ std::vector<int> init_bitrate_scaler() {
     v.push_back(100);  // 13 "MPEG4 H264"
     v.push_back(10);   // 14 "WebM VP8"
     v.push_back(100);  // 15 "MPEG4 H265"
+    v.push_back(10);   // 16 "WebM VP9"
     return v;
 }
 
@@ -203,6 +209,7 @@ std::vector<int> init_default_bitrates() {
     v.push_back(1000000);  // 13 "MPEG4 H264"
     v.push_back(0);   // 14 "WebM VP8"
     v.push_back(1000000);  // 15 "MPEG4 H265"
+    v.push_back(0);   // 16 "WebM VP9"
     return v;
 }
 
@@ -702,7 +709,7 @@ bim::uint ffmpeg_append_metadata (FormatHandle *fmtHndl, TagMap *hash ) {
 //
 //****************************************************************************
 
-#define BIM_FFMPEG_NUM_FORMATS 16
+#define BIM_FFMPEG_NUM_FORMATS 17
 
 FormatItem ffMpegItems[BIM_FFMPEG_NUM_FORMATS] = {
   {
@@ -881,13 +888,24 @@ FormatItem ffMpegItems[BIM_FFMPEG_NUM_FORMATS] = {
       1, //canWriteMultiPage;   // 0 - NO, 1 - YES
       //TDivFormatConstrains constrains ( w, h, pages, minsampl, maxsampl, minbitsampl, maxbitsampl, noLut )
     { 0, 0, 0, 3, 3, 8, 8, 1 } 
-  }                
+  }, {
+      "WEBM9",            // short name, no spaces
+      "WebM VP9", // Long format name
+      "webm",        // pipe "|" separated supported extension list
+      1, //canRead;      // 0 - NO, 1 - YES
+      1, //canWrite;     // 0 - NO, 1 - YES
+      0, //canReadMeta;  // 0 - NO, 1 - YES
+      0, //canWriteMeta; // 0 - NO, 1 - YES
+      1, //canWriteMultiPage;   // 0 - NO, 1 - YES
+      //TDivFormatConstrains constrains ( w, h, pages, minsampl, maxsampl, minbitsampl, maxbitsampl, noLut )
+      { 0, 0, 0, 3, 3, 8, 8, 1 }
+  }
 };
 
 FormatHeader ffMpegHeader = {
 
   sizeof(FormatHeader),
-  "2.5.3",
+  "2.6.3",
   "FFMPEG",
   "FFMPEG codecs",
 

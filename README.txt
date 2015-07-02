@@ -129,12 +129,17 @@ Here ch1 will go to red, ch2 to cyan, ch3 not rendered and ch4 to blue
 
 -mirror               - mirror the image horizontally
 
+-mosaic               - compose an image from aligned tiles, ex: -mosaic 512,20,11
+  Arguments are defined as SZ,NX,NY where:
+    SZ: defines the size of the tile in pixels with width equal to height
+    NX - number of tile images in X direction    NY - number of tile images in Y direction
+
 -multi                - creates a multi-paged image if possible (TIFF,AVI), enabled by default
 
 -negative             - returns negative of input image
 
 -no-overlap           - Skips frames that overlap with the previous non-overlapping frame, ex: -no-overlap 5
-  argument defines maximum allowed overlap in , in the example it is 5
+  argument defines maximum allowed overlap in %, in the example it is 5%
 
 
 -norm                 - normalize input into 8 bits output
@@ -257,6 +262,9 @@ guess will extract suggested rotation from EXIF
 
 -textureatlas         - Produces a texture atlas 2D image for 3D input images
 
+-texturegrid          - Creates custom texture atlas with: rows,cols ex: -texturegrid 5,7
+
+
 -threshold            - thresholds the image, ex: -threshold 120,upper
   value is followed by comma and [lower|upper|both] to selet thresholding method
     lower - sets pixels below the threshold to lowest possible value
@@ -287,5 +295,4 @@ guess will extract suggested rotation from EXIF
 -verbose              - output information about the processing progress, ex: -verbose
   verbose allows argument that defines the amount of info, currently: 1 and 2
   where: 1 is the light info output, 2 is full output
-
 

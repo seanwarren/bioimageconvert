@@ -12,6 +12,7 @@ LIBJPEGTURBO=libsrc/libjpeg-turbo
 LIBGDCM=libsrc/gdcm
 LIBGDCMBIN=libsrc/gdcmbin
 LIBS=libs/linux
+PKG_CONFIG_PATH=$LIBVPX/vpx.pc:$LIBX264/x264.pc:$LIBX265/build/linux/x265.pc
 QMAKEOPTS=
 VERSION=2.0.0
 
@@ -19,8 +20,10 @@ all : imgcnv
 
 
 install:
+	install -d $(DESTDIR)$(BINDIR)
 	install imgcnv $(DESTDIR)$(BINDIR)
-	install libimgcnv.so.* $(DESTDIR)$(LIBDIR)	
+	install -d $(DESTDIR)$(LIBDIR)
+	install libimgcnv.so.2 $(DESTDIR)$(LIBDIR)
 
 
 imgcnv:
@@ -56,7 +59,7 @@ full:
 	
 	@echo
 	@echo
-	@echo "Building libvpx 1.3.0 in $(LIBVPX)"
+	@echo "Building libvpx 1.4.0 in $(LIBVPX)"
 	(cd $(LIBVPX); chmod -f u+x configure)
 	(cd $(LIBVPX); chmod -f u+x build/make/version.sh)
 	(cd $(LIBVPX); chmod -f u+x build/make/rtcd.sh)
@@ -68,7 +71,7 @@ full:
 	
 	@echo
 	@echo
-	@echo "Building libx264 20141220 in $(LIBX264)"
+	@echo "Building libx264 20150223 in $(LIBX264)"
 	(cd $(LIBX264); chmod -f u+x configure)
 	(cd $(LIBX264); chmod -f u+x version.sh)
 	(cd $(LIBX264); chmod -f u+x config.guess)
@@ -79,7 +82,7 @@ full:
 	
 	@echo
 	@echo
-	@echo "Building libx265 1.4 in $(LIBX265)"
+	@echo "Building libx265 20150509 in $(LIBX265)"
 	#(cd $(LIBX265)/build/linux; chmod -f u+x make-Makefiles.bash)
 	#(cd $(LIBX265)/build/linux; bash make-Makefiles.bash )
 	(cd $(LIBX265)/build/linux; cmake -G "Unix Makefiles" ../../source -DCMAKE_CXX_FLAGS=-fPIC -DCMAKE_C_FLAGS=-fPIC )
@@ -106,27 +109,25 @@ full:
 	
 	@echo
 	@echo     
-	@echo "Building ffmpeg 2.5.3 in $(FFMPEG)"
+	@echo "Building ffmpeg 2.6.3 in $(FFMPEG)"
 	(cd $(FFMPEG)/ffmpeg; chmod -f u+x configure)
 	(cd $(FFMPEG)/ffmpeg; chmod -f u+x version.sh)
 	-mkdir -p $(FFMPEG)/ffmpeg-obj
 	(cd $(FFMPEG)/ffmpeg-obj; ../ffmpeg/configure \
-		--enable-static --disable-shared --enable-pic \
-		--prefix=./../ffmpeg-out \
-		#--pkg-config-flags="--static" \
-		--extra-cflags="-fPIC -I./../../libvpx -I./../../libx264 -I./../../libx265/source" \
-		--extra-ldflags="-fPIC -L./../../libvpx -L./../../libx264 -L./../../libx265/build/linux" \
-		--enable-gpl --enable-runtime-cpudetect --enable-pthreads --enable-swscale \
+		--enable-static --disable-shared --enable-pic --enable-gray \
+		--prefix=../ffmpeg-out \
+		--extra-cflags="-fPIC -I../../libvpx -I../../libx264 -I../../libx265/source" \
+		--extra-cxxflags="-fPIC -I../../libvpx -I../../libx264 -I../../libx265/source" \
+		--extra-ldflags="-fPIC -L../../libvpx -L../../libx264 -L../../libx265/build/linux" \
+		--enable-gpl --enable-version3 --enable-runtime-cpudetect --enable-pthreads --enable-swscale \
 		--disable-ffserver --disable-ffplay --disable-network --disable-ffmpeg --disable-devices \
 		--disable-frei0r --disable-libass --disable-libcelt --disable-libopencore-amrnb --disable-libopencore-amrwb \
 		--disable-libfreetype --disable-libgsm --disable-libmp3lame --disable-libnut --disable-librtmp \
 		--disable-libspeex --disable-libvorbis \
 		--enable-bzlib --enable-zlib \
 		--disable-libopenjpeg --disable-libschroedinger \
-		--enable-libtheora --enable-libvpx --enable-libx264 --enable-libx265 --enable-libxvid \
-		--disable-libvo-aacenc --disable-libvo-amrwbenc \
-		--disable-libxavs \
-		--disable-vda )
+		--enable-libtheora --enable-libvpx --enable-libx264 --enable-encoder=libx264 --enable-libx265 --enable-libxvid \
+		--disable-libvo-aacenc --disable-libvo-amrwbenc )
 	
 	(cd $(FFMPEG)/ffmpeg-obj; $(MAKE) all install)
 	

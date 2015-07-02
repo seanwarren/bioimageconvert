@@ -334,8 +334,6 @@ void DConf::init() {
   appendArgumentDefinition( "-mirror",     0, "mirror the image horizontally" );
   appendArgumentDefinition( "-flip",       0, "flip the image vertically" );
 
-  appendArgumentDefinition( "-textureatlas", 0, "Produces a texture atlas 2D image for 3D input images" );
-
   xstring tmp = "tile the image and store tiles in the output directory, ex: -tile 256\n";
   tmp += "  argument defines the size of the tiles in pixels\n";
   tmp += "  tiles will be created based on the outrput file name with inserted L, X, Y, where";
@@ -466,6 +464,10 @@ void DConf::init() {
   tmp = "Define a template for file names, ex: -template {output_filename}_{n}.tif\n";
   tmp += "  templates specify variables inside {} blocks, available variables vary for different processing";
   appendArgumentDefinition("-template", 1, tmp);
+
+  appendArgumentDefinition("-textureatlas", 0, "Produces a texture atlas 2D image for 3D input images");
+  tmp = "Creates custom texture atlas with: rows,cols ex: -texturegrid 5,7\n";
+  appendArgumentDefinition("-texturegrid", 1, tmp);
 
   tmp = "output depth (in bits) per channel, allowed values now are: 8,16,32,64, ex: -depth 8,D,U\n";
   tmp += "  if followed by comma and [F|D|T|E] allowes to choose LUT method\n";
@@ -1203,7 +1205,7 @@ void DConf::processArguments() {
     if (this->w>0 || this->h>0 || this->z>0) resize3d = true;
   }
 
-  if (keyExists("-textureatlas")) {
+  if (keyExists("-textureatlas") || keyExists("-texturegrid")) {
       this->textureAtlas = true;
   }
 
@@ -1505,12 +1507,15 @@ int rearrangeDimensions(DConf *c) {
 int texture_atlas(DConf *c) {
     c->print( "About to run textureAtlas", 2 );
     xoperations ops = c->getOperations();
-    xoperations before = ops.left("-textureatlas");
-    xoperations after = ops.right("-textureatlas");
+    xstring op = "-textureatlas";
+    if (ops.contains("-texturegrid")) op = "-texturegrid";
+    xoperations before = ops.left(op);
+    xoperations after = ops.right(op);
+    xstring arguments = ops.arguments("-texturegrid");
 
     ImageStack stack(c->i_names, c->c, &before);
     stack.ensureTypedDepth();
-    Image atlas = stack.textureAtlas();
+    Image atlas = stack.textureAtlas(arguments);
     atlas.process(after, 0, c);
     atlas.toFile(c->o_name, c->o_fmt, c->options );
     return IMGCNV_ERROR_NONE;

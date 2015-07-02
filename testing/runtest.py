@@ -653,6 +653,7 @@ if 'all' in mode or 'writingvideo' in mode:
     test_video_write( "Matroska", "161pkcvampz1Live2-17-2004_11-57-21_AM.tif" )
     test_video_write( "FLV", "161pkcvampz1Live2-17-2004_11-57-21_AM.tif" )
     test_video_write( "WEBM", "161pkcvampz1Live2-17-2004_11-57-21_AM.tif" )
+    test_video_write( "WEBM9", "161pkcvampz1Live2-17-2004_11-57-21_AM.tif" )
     test_video_write( "H264", "161pkcvampz1Live2-17-2004_11-57-21_AM.tif" )
     test_video_write( "H265", "161pkcvampz1Live2-17-2004_11-57-21_AM.tif" )
 

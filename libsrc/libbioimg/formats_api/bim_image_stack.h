@@ -138,7 +138,8 @@ class ImageStack {
     Image pixelArithmeticMax() const;
     Image pixelArithmeticMin() const;
 
-    Image textureAtlas() const;
+    Image textureAtlas(int rows=0, int cols=0) const;
+    Image textureAtlas(const xstring &arguments) const;
 
   protected:
     std::vector<Image> images;

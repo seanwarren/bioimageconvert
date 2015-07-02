@@ -642,31 +642,50 @@ Image ImageStack::pixelArithmeticMin() const {
   return p;
 }
 
-Image ImageStack::textureAtlas() const {
+Image ImageStack::textureAtlas(const xstring &arguments) const {
+    int rows = 0, cols = 0;
+    std::vector<int> vs = arguments.splitInt(",");
+    if (vs.size()>1) {
+        rows = vs[0];
+        cols = vs[1];
+    }
+    return this->textureAtlas(rows, cols);
+}
+
+Image ImageStack::textureAtlas(int rows, int cols) const {
     uint64 w = images[0].width();
     uint64 h = images[0].height();
     uint64 n = images.size();
+    uint64 ww = 0, hh = 0;
 
-    // start with atlas composed of a row of images
-    uint64 ww = w*n, hh = h;
-    double ratio = ww / (double)hh;
-    // optimize side to be as close to ratio of 1.0
-    for (int r = 2; r < images.size(); ++r) {
-        double ipr = ceil(n / (double)r);
-        uint64 aw = w*ipr;
-        uint64 ah = h*r;
-        double rr = bim::max<double>(aw, ah) / bim::min<double>(aw, ah);
-        if (rr < ratio) {
-            ratio = rr;
-            ww = aw;
-            hh = ah;
-        } else
-            break;
+    if (rows == 0 || cols == 0) {
+        // start with atlas composed of a row of images
+        ww = w*n;
+        hh = h;
+        double ratio = ww / (double)hh;
+        // optimize side to be as close to ratio of 1.0
+        for (int r = 2; r < images.size(); ++r) {
+            double ipr = ceil(n / (double)r);
+            uint64 aw = w*ipr;
+            uint64 ah = h*r;
+            double rr = bim::max<double>(aw, ah) / bim::min<double>(aw, ah);
+            if (rr < ratio) {
+                ratio = rr;
+                ww = aw;
+                hh = ah;
+            }
+            else
+                break;
+        }
+
+        // compose atlas image
+        rows = ww / w;
+        cols = hh / h;
+    } else {
+        ww = rows*w;
+        hh = cols*h;
     }
 
-    // compose atlas image
-    uint64 rows = ww / w;
-    uint64 cols = hh / h;
     Image atlas(ww, hh, images[0].depth(), images[0].samples(), images[0].pixelType());
     atlas.fill(0);
     uint64 i = 0;
