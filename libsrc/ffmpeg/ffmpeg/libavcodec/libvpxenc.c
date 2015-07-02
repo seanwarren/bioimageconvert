@@ -253,7 +253,7 @@ static av_cold int vp8_free(AVCodecContext *avctx)
     if (ctx->is_alpha)
         vpx_codec_destroy(&ctx->encoder_alpha);
     av_freep(&ctx->twopass_stats.buf);
-    av_freep(&avctx->coded_frame);
+    av_frame_free(&avctx->coded_frame);
     av_freep(&avctx->stats_out);
     free_frame_list(ctx->coded_frame_list);
     return 0;
@@ -441,9 +441,10 @@ static av_cold int vpx_init(AVCodecContext *avctx,
         codecctl_int(avctx, VP8E_SET_ARNR_STRENGTH,    ctx->arnr_strength);
     if (ctx->arnr_type >= 0)
         codecctl_int(avctx, VP8E_SET_ARNR_TYPE,        ctx->arnr_type);
-    codecctl_int(avctx, VP8E_SET_NOISE_SENSITIVITY, avctx->noise_reduction);
-    if (avctx->codec_id == AV_CODEC_ID_VP8)
+    if (avctx->codec_id == AV_CODEC_ID_VP8) {
+        codecctl_int(avctx, VP8E_SET_NOISE_SENSITIVITY, avctx->noise_reduction);
         codecctl_int(avctx, VP8E_SET_TOKEN_PARTITIONS,  av_log2(avctx->slices));
+    }
 #if FF_API_MPV_OPT
     FF_DISABLE_DEPRECATION_WARNINGS
     if (avctx->mb_threshold) {
@@ -717,9 +718,14 @@ static int vp8_encode(AVCodecContext *avctx, AVPacket *pkt,
             rawimg_alpha = &ctx->rawimg_alpha;
             rawimg_alpha->planes[VPX_PLANE_Y] = frame->data[3];
             u_plane = av_malloc(frame->linesize[1] * frame->height);
+            v_plane = av_malloc(frame->linesize[2] * frame->height);
+            if (!u_plane || !v_plane) {
+                av_free(u_plane);
+                av_free(v_plane);
+                return AVERROR(ENOMEM);
+            }
             memset(u_plane, 0x80, frame->linesize[1] * frame->height);
             rawimg_alpha->planes[VPX_PLANE_U] = u_plane;
-            v_plane = av_malloc(frame->linesize[2] * frame->height);
             memset(v_plane, 0x80, frame->linesize[2] * frame->height);
             rawimg_alpha->planes[VPX_PLANE_V] = v_plane;
             rawimg_alpha->stride[VPX_PLANE_Y] = frame->linesize[0];
@@ -855,7 +861,7 @@ static const AVCodecDefault defaults[] = {
 #if CONFIG_LIBVPX_VP8_ENCODER
 static av_cold int vp8_init(AVCodecContext *avctx)
 {
-    return vpx_init(avctx, &vpx_codec_vp8_cx_algo);
+    return vpx_init(avctx, vpx_codec_vp8_cx());
 }
 
 static const AVClass class_vp8 = {
@@ -884,7 +890,7 @@ AVCodec ff_libvpx_vp8_encoder = {
 #if CONFIG_LIBVPX_VP9_ENCODER
 static av_cold int vp9_init(AVCodecContext *avctx)
 {
-    return vpx_init(avctx, &vpx_codec_vp9_cx_algo);
+    return vpx_init(avctx, vpx_codec_vp9_cx());
 }
 
 static const AVClass class_vp9 = {

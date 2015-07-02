@@ -1,6 +1,6 @@
 /*
  * Westwood Studios VQA Video Decoder
- * Copyright (C) 2003 the ffmpeg project
+ * Copyright (c) 2003 The FFmpeg Project
  *
  * This file is part of FFmpeg.
  *
@@ -230,6 +230,12 @@ static int decode_format80(VqaContext *s, int src_size,
     int src_pos;
     unsigned char color;
     int i;
+
+    if (src_size < 0 || src_size > bytestream2_get_bytes_left(&s->gb)) {
+        av_log(s->avctx, AV_LOG_ERROR, "Chunk size %d is out of range\n",
+               src_size);
+        return AVERROR_INVALIDDATA;
+    }
 
     start = bytestream2_tell(&s->gb);
     while (bytestream2_tell(&s->gb) - start < src_size) {

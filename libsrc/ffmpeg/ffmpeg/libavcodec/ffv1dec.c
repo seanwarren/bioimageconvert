@@ -546,6 +546,12 @@ static int read_extra_header(FFV1Context *f)
     f->num_h_slices               = 1 + get_symbol(c, state, 0);
     f->num_v_slices               = 1 + get_symbol(c, state, 0);
 
+    if (f->chroma_h_shift > 4U || f->chroma_v_shift > 4U) {
+        av_log(f->avctx, AV_LOG_ERROR, "chroma shift parameters %d %d are invalid\n",
+               f->chroma_h_shift, f->chroma_v_shift);
+        return AVERROR_INVALIDDATA;
+    }
+
     if (f->num_h_slices > (unsigned)f->width  || !f->num_h_slices ||
         f->num_v_slices > (unsigned)f->height || !f->num_v_slices
        ) {
@@ -649,6 +655,12 @@ static int read_header(FFV1Context *f)
                 av_log(f->avctx, AV_LOG_ERROR, "Invalid change of global parameters\n");
                 return AVERROR_INVALIDDATA;
             }
+        }
+
+        if (chroma_h_shift > 4U || chroma_v_shift > 4U) {
+            av_log(f->avctx, AV_LOG_ERROR, "chroma shift parameters %d %d are invalid\n",
+                   chroma_h_shift, chroma_v_shift);
+            return AVERROR_INVALIDDATA;
         }
 
         f->colorspace                 = colorspace;
@@ -854,13 +866,13 @@ static av_cold int decode_init(AVCodecContext *avctx)
 
 static int decode_frame(AVCodecContext *avctx, void *data, int *got_frame, AVPacket *avpkt)
 {
-    const uint8_t *buf  = avpkt->data;
+    uint8_t *buf        = avpkt->data;
     int buf_size        = avpkt->size;
     FFV1Context *f      = avctx->priv_data;
     RangeCoder *const c = &f->slice_context[0]->c;
     int i, ret;
     uint8_t keystate = 128;
-    const uint8_t *buf_p;
+    uint8_t *buf_p;
     AVFrame *p;
 
     if (f->last_picture.f)
@@ -938,7 +950,7 @@ static int decode_frame(AVCodecContext *avctx, void *data, int *got_frame, AVPac
         if (i) {
             ff_init_range_decoder(&fs->c, buf_p, v);
         } else
-            fs->c.bytestream_end = (uint8_t *)(buf_p + v);
+            fs->c.bytestream_end = buf_p + v;
 
         fs->avctx = avctx;
         fs->cur = p;
@@ -966,7 +978,7 @@ static int decode_frame(AVCodecContext *avctx, void *data, int *got_frame, AVPac
                 src[j] = f->last_picture.f->data[j] + f->last_picture.f->linesize[j] *
                          (fs->slice_y >> sv) + (fs->slice_x >> sh);
             }
-            av_image_copy(dst, p->linesize, (const uint8_t **)src,
+            av_image_copy(dst, p->linesize, src,
                           f->last_picture.f->linesize,
                           avctx->pix_fmt,
                           fs->slice_width,

@@ -772,7 +772,7 @@ static int decode_lowdelay_slice(AVCodecContext *avctx, void *arg)
  * Dirac Specification ->
  * 13.5.1 low_delay_transform_data()
  */
-static void decode_lowdelay(DiracContext *s)
+static int decode_lowdelay(DiracContext *s)
 {
     AVCodecContext *avctx = s->avctx;
     int slice_x, slice_y, bytes, bufsize;
@@ -781,6 +781,8 @@ static void decode_lowdelay(DiracContext *s)
     int slice_num = 0;
 
     slices = av_mallocz_array(s->lowdelay.num_x, s->lowdelay.num_y * sizeof(struct lowdelay_slice));
+    if (!slices)
+        return AVERROR(ENOMEM);
 
     align_get_bits(&s->gb);
     /*[DIRAC_STD] 13.5.2 Slices. slice(sx,sy) */
@@ -799,7 +801,10 @@ static void decode_lowdelay(DiracContext *s)
             slice_num++;
 
             buf     += bytes;
-            bufsize -= bytes*8;
+            if (bufsize/8 >= bytes)
+                bufsize -= bytes*8;
+            else
+                bufsize = 0;
         }
 
     avctx->execute(avctx, decode_lowdelay_slice, slices, NULL, slice_num,
@@ -808,6 +813,7 @@ static void decode_lowdelay(DiracContext *s)
     intra_dc_prediction(&s->plane[1].band[0][0]);  /* [DIRAC_STD] 13.3 intra_dc_prediction() */
     intra_dc_prediction(&s->plane[2].band[0][0]);  /* [DIRAC_STD] 13.3 intra_dc_prediction() */
     av_free(slices);
+    return 0;
 }
 
 static void init_planes(DiracContext *s)
@@ -896,6 +902,14 @@ static int dirac_unpack_prediction_parameters(DiracContext *s)
     /*[DIRAC_STD] 11.2.4 motion_data_dimensions()
       Calculated in function dirac_unpack_block_motion_data */
 
+    if (s->plane[0].xblen % (1 << s->chroma_x_shift) != 0 ||
+        s->plane[0].yblen % (1 << s->chroma_y_shift) != 0 ||
+        !s->plane[0].xblen || !s->plane[0].yblen) {
+        av_log(s->avctx, AV_LOG_ERROR,
+               "invalid x/y block length (%d/%d) for x/y chroma shift (%d/%d)\n",
+               s->plane[0].xblen, s->plane[0].yblen, s->chroma_x_shift, s->chroma_y_shift);
+        return AVERROR_INVALIDDATA;
+    }
     if (!s->plane[0].xbsep || !s->plane[0].ybsep || s->plane[0].xbsep < s->plane[0].xblen/2 || s->plane[0].ybsep < s->plane[0].yblen/2) {
         av_log(s->avctx, AV_LOG_ERROR, "Block separation too small\n");
         return -1;
@@ -1590,6 +1604,7 @@ static int dirac_decode_frame_internal(DiracContext *s)
 {
     DWTContext d;
     int y, i, comp, dsty;
+    int ret;
 
     if (s->low_delay) {
         /* [DIRAC_STD] 13.5.1 low_delay_transform_data() */
@@ -1597,8 +1612,10 @@ static int dirac_decode_frame_internal(DiracContext *s)
             Plane *p = &s->plane[comp];
             memset(p->idwt_buf, 0, p->idwt_stride * p->idwt_height * sizeof(IDWTELEM));
         }
-        if (!s->zero_res)
-            decode_lowdelay(s);
+        if (!s->zero_res) {
+            if ((ret = decode_lowdelay(s)) < 0)
+                return ret;
+        }
     }
 
     for (comp = 0; comp < 3; comp++) {
@@ -1736,6 +1753,12 @@ static int dirac_decode_picture_header(DiracContext *s)
                     get_buffer_with_edge(s->avctx, s->ref_pics[i]->avframe, AV_GET_BUFFER_FLAG_REF);
                     break;
                 }
+
+        if (!s->ref_pics[i]) {
+            av_log(s->avctx, AV_LOG_ERROR, "Reference could not be allocated\n");
+            return -1;
+        }
+
     }
 
     /* retire the reference frames that are not used anymore */
@@ -1931,8 +1954,8 @@ static int dirac_decode_frame(AVCodecContext *avctx, void *data, int *got_frame,
             break;
 
         data_unit_size = AV_RB32(buf+buf_idx+5);
-        if (buf_idx + data_unit_size > buf_size || !data_unit_size) {
-            if(buf_idx + data_unit_size > buf_size)
+        if (data_unit_size > buf_size - buf_idx || !data_unit_size) {
+            if(data_unit_size > buf_size - buf_idx)
             av_log(s->avctx, AV_LOG_ERROR,
                    "Data unit with size %d is larger than input buffer, discarding\n",
                    data_unit_size);

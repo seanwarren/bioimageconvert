@@ -189,14 +189,14 @@ static int mpeg4_decode_sprite_trajectory(Mpeg4DecContext *ctx, GetBitContext *g
         int x = 0, y = 0;
 
         length = get_vlc2(gb, sprite_trajectory.table, SPRITE_TRAJ_VLC_BITS, 3);
-        if (length)
+        if (length > 0)
             x = get_xbits(gb, length);
 
         if (!(ctx->divx_version == 500 && ctx->divx_build == 413))
             skip_bits1(gb);     /* marker bit */
 
         length = get_vlc2(gb, sprite_trajectory.table, SPRITE_TRAJ_VLC_BITS, 3);
-        if (length)
+        if (length > 0)
             y = get_xbits(gb, length);
 
         skip_bits1(gb);         /* marker bit */
@@ -2115,8 +2115,7 @@ int ff_mpeg4_workaround_bugs(AVCodecContext *avctx)
     MpegEncContext *s = &ctx->m;
 
     if (ctx->xvid_build == -1 && ctx->divx_version == -1 && ctx->lavc_build == -1) {
-        if (s->stream_codec_tag == AV_RL32("XVID") ||
-            s->codec_tag        == AV_RL32("XVID") ||
+        if (s->codec_tag        == AV_RL32("XVID") ||
             s->codec_tag        == AV_RL32("XVIX") ||
             s->codec_tag        == AV_RL32("RMP4") ||
             s->codec_tag        == AV_RL32("ZMP4") ||
