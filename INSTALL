@@ -1,3 +1,6 @@
+First download prebuilt dependencies:
+python download_build_libs.py
+
 For most systems symply use:
 make -j 8
 make install
