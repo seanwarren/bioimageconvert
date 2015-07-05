@@ -319,6 +319,10 @@ stat_gdcm {
     LIBS += $$BIM_LIBS_PLTFM/gdcm/libgdcmzlib.a
   }
 
+  macx {
+    LIBS += -framework CoreFoundation
+  }
+
 } # static GDCM
 
 dyn_gdcm {
