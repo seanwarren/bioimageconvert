@@ -4,7 +4,7 @@
 
   IMPLEMENTATION
   
-  Programmer: Mario Emmenlauer <mario@emmenlauer.de>
+  Author: Mario Emmenlauer <mario@emmenlauer.de>
 
   History:
     04/19/2015 14:20 - First creation
@@ -393,8 +393,8 @@ bim::FormatItem jp2Items[1] = {
 
 bim::FormatHeader jp2Header = {
   sizeof(bim::FormatHeader),
-  "1.4.0",
-  "DIMIN JP2 CODEC",
+  "2.1.0",
+  "JPEG2000 CODEC",
   "JP2-JFIF Compliant CODEC",
   
   12,                 // 0 or more, specify number of bytes needed to identify the file

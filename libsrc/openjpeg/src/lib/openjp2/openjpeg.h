@@ -87,7 +87,8 @@ Most compilers implement their own version of this keyword ...
 #endif
 #define OPJ_CALLCONV
 #else
-#define OPJ_CALLCONV __stdcall
+//#define OPJ_CALLCONV __stdcall
+#define OPJ_CALLCONV
 /*
 The following ifdef block is the standard way of creating macros which make exporting 
 from a DLL simpler. All files within this DLL are compiled with the OPJ_EXPORTS
@@ -99,7 +100,8 @@ defined with this macro as being exported.
 #if defined(OPJ_EXPORTS) || defined(DLL_EXPORT)
 #define OPJ_API __declspec(dllexport)
 #else
-#define OPJ_API __declspec(dllimport)
+//#define OPJ_API __declspec(dllimport)
+#define OPJ_API
 #endif /* OPJ_EXPORTS */
 #endif /* !OPJ_STATIC || !_WIN32 */
 

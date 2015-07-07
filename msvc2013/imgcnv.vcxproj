@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -494,6 +494,9 @@
     </ProjectReference>
     <ProjectReference Include="..\libsrc\libtiff\projects\vc2013\libtiff.vcxproj">
       <Project>{4f69756a-2106-408b-bab5-6dc294fdf3fe}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\libsrc\openjpeg\projects\vc2013\openjpeg.vcxproj">
+      <Project>{d8b08d9a-ac16-4e2d-9baa-e7548350ad12}</Project>
     </ProjectReference>
     <ProjectReference Include="..\libsrc\proj4\projects\vc2013\proj4.vcxproj">
       <Project>{e092533a-6dd8-4d75-a5e8-aec82393e75d}</Project>

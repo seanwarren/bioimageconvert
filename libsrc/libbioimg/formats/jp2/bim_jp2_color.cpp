@@ -41,7 +41,7 @@
 #include <math.h>
 #include <assert.h>
 
-#include "opj_apps_config.h"
+//#include "opj_apps_config.h"
 #include "openjpeg.h"
 #include "bim_jp2_color.h"
 

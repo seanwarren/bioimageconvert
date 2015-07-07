@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="libbioimg">
@@ -42,6 +42,9 @@
     </Filter>
     <Filter Include="libbioimg\Transforms\Wavelet">
       <UniqueIdentifier>{d3bd7c40-98cb-484f-bf17-fa569aafc299}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="libbioimg\Formats\JP2">
+      <UniqueIdentifier>{f1abf058-722e-45e3-8815-e2aa589c80e4}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -264,6 +267,15 @@
     <ClCompile Include="..\..\formats_api\bim_image_proxy.cpp">
       <Filter>libbioimg\FmtAPI</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\formats\jp2\bim_jp2_color.cpp">
+      <Filter>libbioimg\Formats\JP2</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\formats\jp2\bim_jp2_decompress.cpp">
+      <Filter>libbioimg\Formats\JP2</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\formats\jp2\bim_jp2_format.cpp">
+      <Filter>libbioimg\Formats\JP2</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\libbioimg\formats\bim_format_manager.h">
@@ -331,6 +343,15 @@
     </ClInclude>
     <ClInclude Include="..\..\formats_api\bim_image_proxy.h">
       <Filter>libbioimg\FmtAPI Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\formats\jp2\bim_jp2_color.h">
+      <Filter>libbioimg\Formats\JP2</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\formats\jp2\bim_jp2_decompress.h">
+      <Filter>libbioimg\Formats\JP2</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\formats\jp2\bim_jp2_format.h">
+      <Filter>libbioimg\Formats\JP2</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
