@@ -273,6 +273,7 @@ SOURCES += $$BIM_FMTS/bim_format_manager.cpp \
            $$BIM_FMTS/ole/zvi.cpp \
            $$BIM_FMTS/dcraw/bim_dcraw_format.cpp \
            $$BIM_FMTS/jp2/bim_jp2_color.cpp \
+           $$BIM_FMTS/jp2/bim_jp2_compress.cpp \
            $$BIM_FMTS/jp2/bim_jp2_decompress.cpp \
            $$BIM_FMTS/jp2/bim_jp2_format.cpp
 
@@ -312,7 +313,9 @@ HEADERS += $$BIM_FMTS/dcraw/bim_dcraw_format.h \
            $$BIM_FMTS/ome/bim_ome_format.h \
            $$BIM_FMTS/meta_format_manager.h \
            $$BIM_FMTS/jp2/bim_jp2_color.h \
+           $$BIM_FMTS/jp2/bim_jp2_compress.h \
            $$BIM_FMTS/jp2/bim_jp2_decompress.h \
+           $$BIM_FMTS/jp2/bim_jp2_format_io.h \
            $$BIM_FMTS/jp2/bim_jp2_format.h
 
 #---------------------------------------------------------------------

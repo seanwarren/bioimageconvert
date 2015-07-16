@@ -22,6 +22,7 @@
 #include <bim_exiv_parse.h>
 
 #include "bim_jp2_format.h"
+#include "bim_jp2_compress.h"
 #include "bim_jp2_decompress.h"
 
 
@@ -124,14 +125,7 @@ bool jp2GetImageInfo( bim::FormatHandle *fmtHndl )
 // WRITE PROC
 //****************************************************************************
 
-static int write_jp2_image( bim::FormatHandle *fmtHndl )
-{
-#ifdef DEBUG
-  std::cerr << "write_jp2_image() called" << std::endl;
-#endif
-
-  return 1;
-}
+// The WRITE PROC write_jp2_image() is defined in bim_jp2_compress.cpp
 
 
 //----------------------------------------------------------------------------
