@@ -499,11 +499,11 @@ dyn_gdcm {
 #---------------------------------------------------------------------
 
 stat_openjpeg {
-  INCLUDEPATH += $${OPENJPEGDIR}/src/lib
-  INCLUDEPATH += $${OPENJPEGDIR}/src/lib/openjp2
-  INCLUDEPATH += $${OPENJPEGDIR}/src/bin
-  INCLUDEPATH += $${OPENJPEGDIR}/src/bin/common
-  INCLUDEPATH += $${OPENJPEGDIR}/project/qt
+  INCLUDEPATH += $${BIM_LIB_OPENJPEG}/lib
+  INCLUDEPATH += $${BIM_LIB_OPENJPEG}/lib/openjp2
+  INCLUDEPATH += $${BIM_LIB_OPENJPEG}/bin
+  INCLUDEPATH += $${BIM_LIB_OPENJPEG}/bin/common
+  INCLUDEPATH += $${BIM_LIB_OPENJPEG}/../project/qt
 
 # there is a naming conflict with one source file:
 # 'image' is also a name in exiv. Exclude image here:
