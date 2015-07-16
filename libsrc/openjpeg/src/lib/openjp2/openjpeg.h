@@ -675,8 +675,8 @@ typedef struct opj_image {
 	OPJ_BYTE *icc_profile_buf;
 	/** size of ICC profile */
 	OPJ_UINT32 icc_profile_len;
-        /** header comments */
-        char* cp_comment;
+	/** header comments */
+	char* cp_comment;
 } opj_image_t;
 
 
