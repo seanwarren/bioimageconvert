@@ -276,6 +276,9 @@
     <ClCompile Include="..\..\formats\jp2\bim_jp2_format.cpp">
       <Filter>libbioimg\Formats\JP2</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\formats\jp2\bim_jp2_compress.cpp">
+      <Filter>libbioimg\Formats\JP2</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\libbioimg\formats\bim_format_manager.h">
@@ -351,6 +354,12 @@
       <Filter>libbioimg\Formats\JP2</Filter>
     </ClInclude>
     <ClInclude Include="..\..\formats\jp2\bim_jp2_format.h">
+      <Filter>libbioimg\Formats\JP2</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\formats\jp2\bim_jp2_format_io.h">
+      <Filter>libbioimg\Formats\JP2</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\formats\jp2\bim_jp2_compress.h">
       <Filter>libbioimg\Formats\JP2</Filter>
     </ClInclude>
   </ItemGroup>

@@ -1,5 +1,5 @@
 /*****************************************************************************
-  JPEG2000 support 
+  JPEG2000 support
   Copyright (c) 2015 by Mario Emmenlauer <mario@emmenlauer.de>
 
   IMPLEMENTATION
@@ -7,10 +7,10 @@
   Programmer: Mario Emmenlauer <mario@emmenlauer.de>
 
   History:
-    04/19/2015 14:20 - First creation
-        
+  04/19/2015 14:20 - First creation
+
   Ver : 1
-*****************************************************************************/
+  *****************************************************************************/
 #ifndef BIM_JP2_DECOMPRESS_H
 #define BIM_JP2_DECOMPRESS_H BIM_JP2_DECOMPRESS_H
 
@@ -23,6 +23,6 @@
 #define J2K_CODESTREAM_MAGIC "\xff\x4f\xff\x51"
 
 
-int read_jp2_image( bim::FormatHandle *fmtHndl );
+int read_jp2_image(bim::FormatHandle *fmtHndl);
 
 #endif

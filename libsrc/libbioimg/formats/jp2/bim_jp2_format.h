@@ -1,5 +1,5 @@
 /*****************************************************************************
-  JPEG2000 support 
+  JPEG2000 support
   Copyright (c) 2015 by Mario Emmenlauer <mario@emmenlauer.de>
 
   IMPLEMENTATION
@@ -7,10 +7,10 @@
   Programmer: Mario Emmenlauer <mario@emmenlauer.de>
 
   History:
-    04/19/2015 14:20 - First creation
-        
+  04/19/2015 14:20 - First creation
+
   Ver : 1
-*****************************************************************************/
+  *****************************************************************************/
 
 #ifndef BIM_JP2_FORMAT_H
 #define BIM_JP2_FORMAT_H
@@ -24,21 +24,21 @@
 
 // DLL EXPORT FUNCTION
 extern "C" {
-bim::FormatHeader* jp2GetFormatHeader(void);
+    bim::FormatHeader* jp2GetFormatHeader(void);
 }
 
 namespace bim {
 
-class Jp2Params {
-public:
-    Jp2Params();
-    ~Jp2Params();
+    class Jp2Params {
+    public:
+        Jp2Params();
+        ~Jp2Params();
 
-  ImageInfo i;
+        ImageInfo i;
 
-  // metadata
-  std::vector<std::string> comments;
-};
+        // metadata
+        std::vector<std::string> comments;
+    };
 
 } // namespace bim
 

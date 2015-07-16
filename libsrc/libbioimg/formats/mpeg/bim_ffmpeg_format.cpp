@@ -26,6 +26,7 @@ Ver : 2
 #include <xstring.h>
 #include "tag_map.h"
 #include <bim_metatags.h>
+#include <bim_exiv_parse.h>
 
 // Disables Visual Studio 2005 warnings for deprecated code
 #if ( defined(_MSC_VER) && (_MSC_VER >= 1400) )
@@ -687,19 +688,21 @@ bim::uint ffMpegWriteImageProc ( FormatHandle *fmtHndl ) {
 //----------------------------------------------------------------------------
 
 bim::uint ffmpeg_append_metadata (FormatHandle *fmtHndl, TagMap *hash ) {
+    if (!fmtHndl) return 1;
+    if (!fmtHndl->internalParams) return 1;
+    if (!hash) return 1;
 
-  if (fmtHndl == NULL) return 1;
-  if (fmtHndl->internalParams == NULL) return 1;
-  if (!hash) return 1;
+    FFMpegParams *par = (FFMpegParams *) fmtHndl->internalParams;
+    hash->append_tag( bim::VIDEO_FORMAT_NAME,             par->ff_in.formatName() );
+    hash->append_tag( bim::VIDEO_CODEC_NAME,              par->ff_in.codecName() );
+    hash->append_tag( bim::VIDEO_FRAMES_PER_SECOND,       par->ff_in.fps() );
+    hash->append_tag( bim::PIXEL_RESOLUTION_T,      (1.0/(double)par->ff_in.fps()) );
+    hash->append_tag( bim::PIXEL_RESOLUTION_UNIT_T, bim::PIXEL_RESOLUTION_UNIT_SECONDS );
 
-  FFMpegParams *par = (FFMpegParams *) fmtHndl->internalParams;
-  hash->append_tag( bim::VIDEO_FORMAT_NAME,             par->ff_in.formatName() );
-  hash->append_tag( bim::VIDEO_CODEC_NAME,              par->ff_in.codecName() );
-  hash->append_tag( bim::VIDEO_FRAMES_PER_SECOND,       par->ff_in.fps() );
-  hash->append_tag( bim::PIXEL_RESOLUTION_T,      (1.0/(double)par->ff_in.fps()) );
-  hash->append_tag( bim::PIXEL_RESOLUTION_UNIT_T, bim::PIXEL_RESOLUTION_UNIT_SECONDS );
+    // use EXIV2 to read metadata
+    exiv_append_metadata(fmtHndl, hash);
 
-  return 0;
+    return 0;
 }
 
 

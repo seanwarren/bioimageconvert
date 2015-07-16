@@ -331,6 +331,7 @@
     <ClCompile Include="..\..\..\pole\pole.cpp" />
     <ClCompile Include="..\..\formats\dicom\bim_dicom_format.cpp" />
     <ClCompile Include="..\..\formats\jp2\bim_jp2_color.cpp" />
+    <ClCompile Include="..\..\formats\jp2\bim_jp2_compress.cpp" />
     <ClCompile Include="..\..\formats\jp2\bim_jp2_decompress.cpp" />
     <ClCompile Include="..\..\formats\jp2\bim_jp2_format.cpp" />
     <ClCompile Include="..\..\formats\ole\bim_oib_format_io.cpp" />
@@ -388,8 +389,10 @@
     <ClInclude Include="..\..\..\libbioimg\formats_api\rotate.h" />
     <ClInclude Include="..\..\..\pole\pole.h" />
     <ClInclude Include="..\..\formats\jp2\bim_jp2_color.h" />
+    <ClInclude Include="..\..\formats\jp2\bim_jp2_compress.h" />
     <ClInclude Include="..\..\formats\jp2\bim_jp2_decompress.h" />
     <ClInclude Include="..\..\formats\jp2\bim_jp2_format.h" />
+    <ClInclude Include="..\..\formats\jp2\bim_jp2_format_io.h" />
     <ClInclude Include="..\..\formats_api\bim_image_5d.h" />
     <ClInclude Include="..\..\formats_api\bim_image_proxy.h" />
     <ClInclude Include="..\..\formats_api\bim_primitives.h" />
