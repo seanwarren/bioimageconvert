@@ -12,7 +12,7 @@
   Ver : 1
 *****************************************************************************/
 #ifndef BIM_JP2_DECOMPRESS_H
-#define BIM_JP2_DECOMPRESS_H
+#define BIM_JP2_DECOMPRESS_H BIM_JP2_DECOMPRESS_H
 
 #include "bim_jp2_format.h"
 
