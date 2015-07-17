@@ -1,0 +1,3 @@
+#!/bin/bash
+SCRIPTPATH=$(dirname `which $0`)
+$SCRIPTPATH/imgcnv.app/Contents/MacOS/imgcnv "$@"

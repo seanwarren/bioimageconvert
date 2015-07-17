@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="Windows-1252"?>
+<Project ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="../../../../\Source\DataStructureAndEncodingDefinition\gdcmTag.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\DataStructureAndEncodingDefinition\gdcmTagToVR.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\DataStructureAndEncodingDefinition\gdcmPrivateTag.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\DataStructureAndEncodingDefinition\gdcmCodeString.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\DataStructureAndEncodingDefinition\gdcmByteValue.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\DataStructureAndEncodingDefinition\gdcmValue.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\DataStructureAndEncodingDefinition\gdcmFileSet.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\DataStructureAndEncodingDefinition\gdcmDataSet.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\DataStructureAndEncodingDefinition\gdcmByteSwapFilter.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\DataStructureAndEncodingDefinition\gdcmUNExplicitImplicitDataElement.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\DataStructureAndEncodingDefinition\gdcmExplicitDataElement.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\DataStructureAndEncodingDefinition\gdcmFileMetaInformation.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\DataStructureAndEncodingDefinition\gdcmFragment.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\DataStructureAndEncodingDefinition\gdcmImplicitDataElement.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\DataStructureAndEncodingDefinition\gdcmItem.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\DataStructureAndEncodingDefinition\gdcmReader.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\DataStructureAndEncodingDefinition\gdcmWriter.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\DataStructureAndEncodingDefinition\gdcmCSAHeader.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\DataStructureAndEncodingDefinition\gdcmPDBHeader.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\DataStructureAndEncodingDefinition\gdcmSequenceOfFragments.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\DataStructureAndEncodingDefinition\gdcmSequenceOfItems.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\DataStructureAndEncodingDefinition\gdcmTransferSyntax.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\DataStructureAndEncodingDefinition\gdcmMediaStorage.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\DataStructureAndEncodingDefinition\gdcmVM.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\DataStructureAndEncodingDefinition\gdcmVR.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\DataStructureAndEncodingDefinition\gdcmFile.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\DataStructureAndEncodingDefinition\gdcmPreamble.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\DataStructureAndEncodingDefinition\gdcmParseException.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\DataStructureAndEncodingDefinition\gdcmDataElement.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\DataStructureAndEncodingDefinition\gdcmUNExplicitDataElement.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\DataStructureAndEncodingDefinition\gdcmCP246ExplicitDataElement.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\DataStructureAndEncodingDefinition\gdcmExplicitImplicitDataElement.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../\Source\DataStructureAndEncodingDefinition\gdcmVR16ExplicitDataElement.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="../../../../\Source\DataStructureAndEncodingDefinition\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{22A39A02-EF76-462A-89CB-3817F0B09EBA}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
