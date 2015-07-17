@@ -1005,7 +1005,7 @@ FormatItem tiffItems[D_TIFF_NUM_FORMATS] = {
 FormatHeader tiffHeader = {
 
   sizeof(FormatHeader),
-  "4.0.3",
+  "4.0.4",
   "BIM TIFF CODEC",
   "Tagged Image File Format variants",
   

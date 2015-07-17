@@ -30,6 +30,8 @@
 #include <nifti1_io.h>
 #include <fslio.h>
 
+#include <pugixml.hpp>
+
 using namespace bim;
 
 //****************************************************************************
@@ -389,6 +391,117 @@ bim::uint niftiWriteImageProc ( FormatHandle *fmtHndl ) {
 // Metadata hash
 //----------------------------------------------------------------------------
 
+void nifti_parse_extension_text(TagMap *hash, nifti1_extension *ex) {
+    xstring s;
+    s.resize(ex->esize);
+    memcpy(&s[0], ex->edata, ex->esize);
+    hash->set_value("NIFTI/extension_text", s);
+}
+
+void nifti_xml_add_tag_attr(TagMap *hash, pugi::xml_document *doc, const std::string &key, const std::string &xpath, const std::string &attr) {
+    try {
+        pugi::xpath_node node = doc->select_node(xpath.c_str());
+        bim::xstring v = node.node().attribute(attr.c_str()).value();
+        if (v.size()>0) hash->set_value(key, v);
+    } catch (pugi::xpath_exception& e) {
+        // do nothing
+    }
+}
+
+void nifti_xml_add_tag_text(TagMap *hash, pugi::xml_document *doc, const std::string &key, const std::string &xpath) {
+    try {
+        pugi::xpath_node node = doc->select_node(xpath.c_str());
+        bim::xstring v = node.node().first_child().value();
+        if (v.size()>0) hash->set_value(key, v);
+    }
+    catch (pugi::xpath_exception& e) {
+        // do nothing
+    }
+}
+
+void nifti_xml_add_subtag_text(TagMap *hash, const pugi::xpath_node &parent, const std::string &key, const std::string &xpath) {
+    try {
+        pugi::xpath_node node = parent.node().select_node(xpath.c_str());
+        bim::xstring v = node.node().first_child().value();
+        if (v.size()>0) hash->set_value(key, v);
+    }
+    catch (pugi::xpath_exception& e) {
+        // do nothing
+    }
+}
+
+void nifti_parse_extension_xcede(TagMap *hash, nifti1_extension *ex) {
+    pugi::xml_document doc;
+    if (doc.load_buffer(ex->edata, ex->esize)) {
+        nifti_xml_add_tag_text(hash, &doc, "XCEDE/subject/id", "/project/subject/subjectData/ID");
+        // read assesments
+        try {
+            pugi::xpath_node_set assessments = doc.select_nodes("/project/subject/visit/subjectVar/assessment");
+            int i = 0;
+            for (pugi::xpath_node_set::const_iterator it = assessments.begin(); it != assessments.end(); ++it) {
+                pugi::xpath_node node = *it;
+                xstring key = xstring::xprintf("XCEDE/subject/visit/assessment/%.4d", ++i);
+
+                nifti_xml_add_subtag_text(hash, node, key + "/name", "name");
+                nifti_xml_add_subtag_text(hash, node, key+"/description", "description");
+
+                std::vector<xstring> v;
+                pugi::xpath_node_set values = node.node().select_nodes("assessmentValue/summaryValue/actualValue");
+                for (pugi::xpath_node_set::const_iterator it = values.begin(); it != values.end(); ++it) {
+                    pugi::xpath_node node = *it;
+                    v.push_back(node.node().first_child().value());
+                }
+                hash->set_value(key + "/values", xstring::join(v, ","));
+            }
+        }
+        catch (pugi::xpath_exception& e) {
+            // do nothing
+        }
+
+        nifti_xml_add_tag_text(hash, &doc, "XCEDE/study/series/id", "/project/subject/visit/study/series/ID");
+        nifti_xml_add_tag_text(hash, &doc, "XCEDE/study/series/scanner/manufacturer", "/project/subject/visit/study/series/seriesData/scanner/manufacturer");
+        nifti_xml_add_tag_text(hash, &doc, "XCEDE/study/series/scanner/model", "/project/subject/visit/study/series/seriesData/scanner/model");
+        
+        nifti_xml_add_tag_text(hash, &doc, "XCEDE/study/series/experimental_protocol/name", "/project/subject/visit/study/series/expProtocol/name");
+        nifti_xml_add_tag_text(hash, &doc, "XCEDE/study/series/experimental_protocol/annotation", "/project/subject/visit/study/series/expProtocol/annotation/text");
+
+        // read acquisition protocol
+        try {
+            pugi::xpath_node_set nodes = doc.select_nodes("/project/subject/visit/study/series/acqProtocol/acqParam");
+            for (pugi::xpath_node_set::const_iterator it = nodes.begin(); it != nodes.end(); ++it) {
+                pugi::xpath_node node = *it;
+                bim::xstring n = node.node().attribute("name").value();
+                bim::xstring v = node.node().first_child().value();
+                hash->set_value(xstring("XCEDE/study/series/acquisition_protocol/parameters/") + n, v);
+            }
+        } catch (pugi::xpath_exception& e) {
+            // do nothing
+        }
+    }
+}
+
+void nifti_parse_extension_afni(TagMap *hash, nifti1_extension *ex) {
+    pugi::xml_document doc;
+    if (doc.load_buffer(ex->edata, ex->esize)) {
+        try {
+            pugi::xpath_node_set nodes = doc.select_nodes("/AFNI_attributes/AFNI_atr");
+            for (pugi::xpath_node_set::const_iterator it = nodes.begin(); it != nodes.end(); ++it) {
+                pugi::xpath_node node = *it;
+                bim::xstring n = node.node().attribute("atr_name").value();
+                bim::xstring v = node.node().first_child().value();
+                hash->set_value(xstring("AFNI/") + n, v);
+            }
+        }
+        catch (pugi::xpath_exception& e) {
+            // do nothing
+        }
+    }
+}
+
+void nifti_parse_extension_dicom(TagMap *hash, nifti1_extension *ex) {
+
+}
+
 bim::uint nifti_append_metadata (FormatHandle *fmtHndl, TagMap *hash ) {
     if (fmtHndl == NULL) return 1;
     if (isCustomReading(fmtHndl)) return 1;
@@ -475,6 +588,19 @@ bim::uint nifti_append_metadata (FormatHandle *fmtHndl, TagMap *hash ) {
                                                          h->srow_y[0], h->srow_y[1], h->srow_y[2], h->srow_y[3], \
                                                          h->srow_z[0], h->srow_z[1], h->srow_z[2], h->srow_z[3]));
     hash->set_value("NIFTI/intent_name", h->intent_name);
+
+
+    // read extensions
+    if (!par->nim)
+        par->nim = nifti_image_read((char*)fmtHndl->fileName, 1);
+
+    for (int i = 0; i < par->nim->num_ext; ++i) {
+        nifti1_extension *ex = &par->nim->ext_list[i];
+        if (ex->ecode == NIFTI_ECODE_XCEDE) nifti_parse_extension_xcede(hash, ex);
+        else if (ex->ecode == NIFTI_ECODE_AFNI) nifti_parse_extension_afni(hash, ex);
+        else if (ex->ecode == NIFTI_ECODE_DICOM) nifti_parse_extension_dicom(hash, ex);
+        else if (ex->ecode == NIFTI_ECODE_COMMENT) nifti_parse_extension_text(hash, ex);
+    }
 
     return 0;
 }

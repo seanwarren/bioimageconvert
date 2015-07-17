@@ -310,30 +310,6 @@ bim::ImageInfo jp2GetImageInfoProc(bim::FormatHandle *fmtHndl, bim::uint page_nu
 // METADATA
 //----------------------------------------------------------------------------
 
-bim::uint jp2AddMetaDataProc(bim::FormatHandle * /*fmtHndl*/) {
-#ifdef DEBUG
-    std::cerr << "jp2AddMetaDataProc() called" << std::endl;
-#endif
-
-    return 1;
-}
-
-bim::uint jp2ReadMetaDataProc(bim::FormatHandle * /*fmtHndl*/, bim::uint /*page*/, int /*group*/, int /*tag*/, int /*type*/) {
-#ifdef DEBUG
-    std::cerr << "jp2ReadMetaDataProc() called" << std::endl;
-#endif
-
-    return 1;
-}
-
-char* jp2ReadMetaDataAsTextProc(bim::FormatHandle *fmtHndl) {
-#ifdef DEBUG
-    std::cerr << "jp2ReadMetaDataAsTextProc() called" << std::endl;
-#endif
-
-    if (fmtHndl == NULL) return NULL;
-    return NULL;
-}
 
 //----------------------------------------------------------------------------
 // READ/WRITE
@@ -351,17 +327,15 @@ bim::uint jp2WriteImageProc(bim::FormatHandle *fmtHndl) {
 #ifdef DEBUG
     std::cerr << "jp2WriteImageProc() called" << std::endl;
 #endif
-
-    /*
-      if (fmtHndl == NULL) return 1;
-      bim::xopen(fmtHndl);
-      if (!fmtHndl->stream) return 1;
-      bim::uint res = write_jp2_image( fmtHndl );
-      xflush( fmtHndl );
-      xclose( fmtHndl );
-      return res;
-      */
     return 1;
+
+    if (fmtHndl == NULL) return 1;
+    bim::xopen(fmtHndl);
+    if (!fmtHndl->stream) return 1;
+    bim::uint res = write_jp2_image( fmtHndl );
+    xflush( fmtHndl );
+    xclose( fmtHndl );
+    return res;
 }
 
 
@@ -427,9 +401,9 @@ bim::FormatHeader jp2Header = {
     NULL, //jp2ReadImagePreviewProc, //ReadImagePreviewProc
 
     // meta data
-    jp2ReadMetaDataProc, //ReadMetaDataProc
-    jp2AddMetaDataProc,  //AddMetaDataProc
-    jp2ReadMetaDataAsTextProc, //ReadMetaDataAsTextProc
+    NULL, //ReadMetaDataProc
+    NULL,  //AddMetaDataProc
+    NULL, //ReadMetaDataAsTextProc
     jp2_append_metadata, //AppendMetaDataProc
 
     NULL,
