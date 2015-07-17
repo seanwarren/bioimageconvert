@@ -1,6 +1,6 @@
 // ***************************************************************** -*- C++ -*-
 /*
- * Copyright (C) 2004-2013 Andreas Huggel <ahuggel@gmx.net>
+ * Copyright (C) 2004-2015 Andreas Huggel <ahuggel@gmx.net>
  *
  * This program is part of the Exiv2 distribution.
  *
@@ -20,7 +20,7 @@
  */
 /*
   File:      pentaxmn.cpp
-  Version:   $Rev: 3199 $
+  Version:   $Rev: 3835 $
   Author(s): Michal Cihar <michal@cihar.com>
   Based on fujimn.cpp by:
              Andreas Huggel (ahu) <ahuggel@gmx.net>
@@ -30,7 +30,7 @@
  */
 // *****************************************************************************
 #include "rcsid_int.hpp"
-EXIV2_RCSID("@(#) $Id: pentaxmn.cpp 3199 2013-11-24 14:55:48Z nkbj $")
+EXIV2_RCSID("@(#) $Id: pentaxmn.cpp 3835 2015-05-22 03:18:31Z nkbj $")
 
 // *****************************************************************************
 // included header files
@@ -60,128 +60,138 @@ namespace Exiv2 {
 
     //! CameraModel, tag 0x0005
     extern const TagDetails pentaxModel[] = {
-        {    0x0000d, N_("Optio 330/430") },
-        {    0x12926, N_("Optio 230") },
-        {    0x12958, N_("Optio 330GS") },
-        {    0x12962, N_("Optio 450/550") },
-        {    0x1296c, N_("Optio S") },
-        {    0x12971, N_("Optio S V1.01") },
-        {    0x12994, N_("*ist D") },
-        {    0x129b2, N_("Optio 33L") },
-        {    0x129bc, N_("Optio 33LF") },
-        {    0x129c6, N_("Optio 33WR/43WR/555") },
-        {    0x129d5, N_("Optio S4") },
-        {    0x12a02, N_("Optio MX") },
-        {    0x12a0c, N_("Optio S40") },
-        {    0x12a16, N_("Optio S4i") },
-        {    0x12a34, N_("Optio 30") },
-        {    0x12a52, N_("Optio S30") },
-        {    0x12a66, N_("Optio 750Z") },
-        {    0x12a70, N_("Optio SV") },
-        {    0x12a75, N_("Optio SVi") },
-        {    0x12a7a, N_("Optio X") },
-        {    0x12a8e, N_("Optio S5i") },
-        {    0x12a98, N_("Optio S50") },
-        {    0x12aa2, N_("*ist DS") },
-        {    0x12ab6, N_("Optio MX4") },
-        {    0x12ac0, N_("Optio S5n") },
-        {    0x12aca, N_("Optio WP") },
-        {    0x12afc, N_("Optio S55") },
-        {    0x12b10, N_("Optio S5z") },
-        {    0x12b1a, N_("*ist DL") },
-        {    0x12b24, N_("Optio S60") },
-        {    0x12b2e, N_("Optio S45") },
-        {    0x12b38, N_("Optio S6") },
-        {    0x12b4c, N_("Optio WPi") },
-        {    0x12b56, N_("BenQ DC X600") },
-        {    0x12b60, N_("*ist DS2") },
-        {    0x12b62, N_("Samsung GX-1S") },
-        {    0x12b6a, N_("Optio A10") },
-        {    0x12b7e, N_("*ist DL2") },
-        {    0x12b80, N_("Samsung GX-1L") },
-        {    0x12b9c, N_("K100D") },
-        {    0x12b9d, N_("K110D") },
-        {    0x12ba2, N_("K100D Super") },
-        {    0x12bb0, N_("Optio T10/T20") },
-        {    0x12be2, N_("Optio W10") },
-        {    0x12bf6, N_("Optio M10") },
-        {    0x12c1e, N_("K10D") },
-        {    0x12c20, N_("Samsung GX10") },
-        {    0x12c28, N_("Optio S7") },
-        {    0x12c2d, N_("Optio L20") },
-        {    0x12c32, N_("Optio M20") },
-        {    0x12c3c, N_("Optio W20") },
-        {    0x12c46, N_("Optio A20") },
-        {    0x12c78, N_("Optio E30") },
-        {    0x12c7d, N_("Optio E35") },
-        {    0x12c82, N_("Optio T30") },
-        {    0x12c8c, N_("Optio M30") },
-        {    0x12c91, N_("Optio L30") },
-        {    0x12c96, N_("Optio W30") },
-        {    0x12ca0, N_("Optio A30") },
-        {    0x12cb4, N_("Optio E40") },
-        {    0x12cbe, N_("Optio M40") },
-        {    0x12cc3, N_("Optio L40") },
-        {    0x12cc5, N_("Optio L36") },
-        {    0x12cc8, N_("Optio Z10") },
-        {    0x12cd2, N_("K20D") },
-        {    0x12cd4, N_("Samsung GX20") },
-        {    0x12cdc, N_("Optio S10") },
-        {    0x12ce6, N_("Optio A40") },
-        {    0x12cf0, N_("Optio V10") },
-        {    0x12cfa, N_("K200D") },
-        {    0x12d04, N_("Optio S12") },
-        {    0x12d0e, N_("Optio E50") },
-        {    0x12d18, N_("Optio M50") },
-        {    0x12d22, N_("Optio L50") },
-        {    0x12d2c, N_("Optio V20") },
-        {    0x12d40, N_("Optio W60") },
-        {    0x12d4a, N_("Optio M60") },
-        {    0x12d68, N_("Optio E60/M90") },
-        {    0x12d72, N_("K2000") },
-        {    0x12d73, N_("K-m") },
-        {    0x12d86, N_("Optio P70") },
-        {    0x12d90, N_("Optio L70") },
-        {    0x12d9a, N_("Optio E70") },
-        {    0x12dae, N_("X70") },
-        {    0x12db8, N_("K-7") },
-        {    0x12dcc, N_("Optio W80") },
-        {    0x12dea, N_("Optio P80") },
-        {    0x12df4, N_("Optio WS80") },
-        {    0x12dfe, N_("K-x") },
-        {    0x12e08, N_("645D") },
-        {    0x12e12, N_("Optio E80") },
-        {    0x12e30, N_("Optio W90") },
-        {    0x12e3a, N_("Optio I-10") },
-        {    0x12e44, N_("Optio H90") },
-        {    0x12e4e, N_("Optio E90") },
-        {    0x12e58, N_("X90") },
-        {    0x12e6c, N_("K-r") },
-        {    0x12e76, N_("K-5") },
-        {    0x12e8a, N_("Optio RS1000/RS1500") },
-        {    0x12e94, N_("Optio RZ10") },
-        {    0x12e9e, N_("Optio LS1000") },
-        {    0x12ebc, N_("Optio WG-1 GPS") },
-        {    0x12ed0, N_("Optio S1") },
-        {    0x12ee4, N_("Q") },
-        {    0x12ef8, N_("K-01") },
-        {    0x12f0c, N_("Optio RZ18") },
-        {    0x12f16, N_("Optio VS20") },
-        {    0x12f2a, N_("Optio WG-2 GPS") },
-        {    0x12f48, N_("Optio LS465") },
-        {    0x12f52, N_("K-30") },
-        {    0x12f5c, N_("X-5") },
-        {    0x12f66, N_("Q10") },
-        {    0x12f70, N_("K-5 II") },
-        {    0x12f71, N_("K-5 II s") },
-        {    0x12f7a, N_("Q7") },
-        {    0x12f84, N_("MX-1") },
-        {    0x12f8e, N_("WG-3 GPS") },
-        {    0x12f98, N_("WG-3") },
-        {    0x12fa2, N_("WG-10") },
-        {    0x12fb6, N_("K-50") },
-        {    0x12fc0, N_("K-3") },
-        {    0x12fca, N_("K-500") },
+        {    0x0000d, "Optio 330/430" },
+        {    0x12926, "Optio 230" },
+        {    0x12958, "Optio 330GS" },
+        {    0x12962, "Optio 450/550" },
+        {    0x1296c, "Optio S" },
+        {    0x12971, "Optio S V1.01" },
+        {    0x12994, "*ist D" },
+        {    0x129b2, "Optio 33L" },
+        {    0x129bc, "Optio 33LF" },
+        {    0x129c6, "Optio 33WR/43WR/555" },
+        {    0x129d5, "Optio S4" },
+        {    0x12a02, "Optio MX" },
+        {    0x12a0c, "Optio S40" },
+        {    0x12a16, "Optio S4i" },
+        {    0x12a34, "Optio 30" },
+        {    0x12a52, "Optio S30" },
+        {    0x12a66, "Optio 750Z" },
+        {    0x12a70, "Optio SV" },
+        {    0x12a75, "Optio SVi" },
+        {    0x12a7a, "Optio X" },
+        {    0x12a8e, "Optio S5i" },
+        {    0x12a98, "Optio S50" },
+        {    0x12aa2, "*ist DS" },
+        {    0x12ab6, "Optio MX4" },
+        {    0x12ac0, "Optio S5n" },
+        {    0x12aca, "Optio WP" },
+        {    0x12afc, "Optio S55" },
+        {    0x12b10, "Optio S5z" },
+        {    0x12b1a, "*ist DL" },
+        {    0x12b24, "Optio S60" },
+        {    0x12b2e, "Optio S45" },
+        {    0x12b38, "Optio S6" },
+        {    0x12b4c, "Optio WPi" },
+        {    0x12b56, "BenQ DC X600" },
+        {    0x12b60, "*ist DS2" },
+        {    0x12b62, "Samsung GX-1S" },
+        {    0x12b6a, "Optio A10" },
+        {    0x12b7e, "*ist DL2" },
+        {    0x12b80, "Samsung GX-1L" },
+        {    0x12b9c, "K100D" },
+        {    0x12b9d, "K110D" },
+        {    0x12ba2, "K100D Super" },
+        {    0x12bb0, "Optio T10/T20" },
+        {    0x12be2, "Optio W10" },
+        {    0x12bf6, "Optio M10" },
+        {    0x12c1e, "K10D" },
+        {    0x12c20, "Samsung GX10" },
+        {    0x12c28, "Optio S7" },
+        {    0x12c2d, "Optio L20" },
+        {    0x12c32, "Optio M20" },
+        {    0x12c3c, "Optio W20" },
+        {    0x12c46, "Optio A20" },
+        {    0x12c78, "Optio E30" },
+        {    0x12c7d, "Optio E35" },
+        {    0x12c82, "Optio T30" },
+        {    0x12c8c, "Optio M30" },
+        {    0x12c91, "Optio L30" },
+        {    0x12c96, "Optio W30" },
+        {    0x12ca0, "Optio A30" },
+        {    0x12cb4, "Optio E40" },
+        {    0x12cbe, "Optio M40" },
+        {    0x12cc3, "Optio L40" },
+        {    0x12cc5, "Optio L36" },
+        {    0x12cc8, "Optio Z10" },
+        {    0x12cd2, "K20D" },
+        {    0x12cd4, "Samsung GX20" },
+        {    0x12cdc, "Optio S10" },
+        {    0x12ce6, "Optio A40" },
+        {    0x12cf0, "Optio V10" },
+        {    0x12cfa, "K200D" },
+        {    0x12d04, "Optio S12" },
+        {    0x12d0e, "Optio E50" },
+        {    0x12d18, "Optio M50" },
+        {    0x12d22, "Optio L50" },
+        {    0x12d2c, "Optio V20" },
+        {    0x12d40, "Optio W60" },
+        {    0x12d4a, "Optio M60" },
+        {    0x12d68, "Optio E60/M90" },
+        {    0x12d72, "K2000" },
+        {    0x12d73, "K-m" },
+        {    0x12d86, "Optio P70" },
+        {    0x12d90, "Optio L70" },
+        {    0x12d9a, "Optio E70" },
+        {    0x12dae, "X70" },
+        {    0x12db8, "K-7" },
+        {    0x12dcc, "Optio W80" },
+        {    0x12dea, "Optio P80" },
+        {    0x12df4, "Optio WS80" },
+        {    0x12dfe, "K-x" },
+        {    0x12e08, "645D" },
+        {    0x12e12, "Optio E80" },
+        {    0x12e30, "Optio W90" },
+        {    0x12e3a, "Optio I-10" },
+        {    0x12e44, "Optio H90" },
+        {    0x12e4e, "Optio E90" },
+        {    0x12e58, "X90" },
+        {    0x12e6c, "K-r" },
+        {    0x12e76, "K-5" },
+        {    0x12e8a, "Optio RS1000/RS1500" },
+        {    0x12e94, "Optio RZ10" },
+        {    0x12e9e, "Optio LS1000" },
+        {    0x12ebc, "Optio WG-1 GPS" },
+        {    0x12ed0, "Optio S1" },
+        {    0x12ee4, "Q" },
+        {    0x12ef8, "K-01" },
+        {    0x12f0c, "Optio RZ18" },
+        {    0x12f16, "Optio VS20" },
+        {    0x12f2a, "Optio WG-2 GPS" },
+        {    0x12f48, "Optio LS465" },
+        {    0x12f52, "K-30" },
+        {    0x12f5c, "X-5" },
+        {    0x12f66, "Q10" },
+        {    0x12f70, "K-5 II" },
+        {    0x12f71, "K-5 II s" },
+        {    0x12f7a, "Q7" },
+        {    0x12f84, "MX-1" },
+        {    0x12f8e, "WG-3 GPS" },
+        {    0x12f98, "WG-3" },
+        {    0x12fa2, "WG-10" },
+        {    0x12fb6, "K-50" },
+        {    0x12fc0, "K-3" },
+        {    0x12fca, "K-500" },
+        {    0x12fde, "WG-4 GPS" },
+        {    0x12fe8, "WG-4" },
+        {    0x13006, "WG-20" },
+        {    0x13010, "645Z" },
+        {    0x1301a, "K-S1" },
+        {    0x13024, "K-S2" },
+        {    0x1302e, "Q-S1" },
+        {    0x13056, "WG-30" },
+        {    0x13088, "WG-5 GPS" },
+        {    0x1309c, "K-3 II" },
     };
 
     //! Quality, tag 0x0008
@@ -197,28 +207,28 @@ namespace Exiv2 {
 
     //! Size, tag 0x0009
     extern const TagDetails pentaxSize[] = {
-        {    0, N_("640x480") },
+        {    0, "640x480" },
         {    1, N_("Full") },
-        {    2, N_("1024x768") },
-        {    3, N_("1280x960") },
-        {    4, N_("1600x1200") },
-        {    5, N_("2048x1536") },
+        {    2, "1024x768" },
+        {    3, "1280x960" },
+        {    4, "1600x1200" },
+        {    5, "2048x1536" },
         {    8, N_("2560x1920 or 2304x1728") },
-        {    9, N_("3072x2304") },
-        {    10, N_("3264x2448") },
-        {    19, N_("320x240") },
-        {    20, N_("2288x1712") },
-        {    21, N_("2592x1944") },
+        {    9, "3072x2304" },
+        {    10, "3264x2448" },
+        {    19, "320x240" },
+        {    20, "2288x1712" },
+        {    21, "2592x1944" },
         {    22, N_("2304x1728 or 2592x1944") },
-        {    23, N_("3056x2296") },
+        {    23, "3056x2296" },
         {    25, N_("2816x2212 or 2816x2112") },
-        {    27, N_("3648x2736") },
-        {    29, N_("4000x3000") },
-        {    30, N_("4288x3216") },
-        {    31, N_("4608x3456") },
-        {    129, N_("1920x1080") },
-        {    135, N_("4608x2592") },
-        {    257, N_("3216x3216") },
+        {    27, "3648x2736" },
+        {    29, "4000x3000" },
+        {    30, "4288x3216" },
+        {    31, "4608x3456" },
+        {    129, "1920x1080" },
+        {    135, "4608x2592" },
+        {    257, "3216x3216" },
 // not sure what to do with these values:
 //    '0 0' = 2304x1728
 //    '4 0' = 1600x1200
@@ -306,66 +316,72 @@ namespace Exiv2 {
 
     //! ISO, tag 0x0014
     extern const TagDetails pentaxISO[] = {
-        {    3, N_("50") },
-        {    4, N_("64") },
-        {    5, N_("80") },
-        {    6, N_("100") },
-        {    7, N_("125") },
-        {    8, N_("160") },
-        {    9, N_("200") },
-        {    10, N_("250") },
-        {    11, N_("320") },
-        {    12, N_("400") },
-        {    13, N_("500") },
-        {    14, N_("640") },
-        {    15, N_("800") },
-        {    16, N_("1000") },
-        {    17, N_("1250") },
-        {    18, N_("1600") },
-        {    19, N_("2000") },
-        {    20, N_("2500") },
-        {    21, N_("3200") },
-        {    22, N_("4000") },
-        {    23, N_("5000") },
-        {    24, N_("6400") },
-        {    25, N_("8000") },
-        {    26, N_("10000") },
-        {    27, N_("12800") },
-        {    28, N_("16000") },
-        {    29, N_("20000") },
-        {    30, N_("25600") },
-        {    31, N_("32000") },
-        {    32, N_("40000") },
-        {    33, N_("51200") },
-        {    50, N_("50") },
-        {    100, N_("100") },
-        {    200, N_("200") },
-//        {    268, N_("200") },
-        {    400, N_("400") },
-        {    800, N_("800") },
-        {    1600, N_("1600") },
-        {    3200, N_("3200") },
-        {    258, N_("50") },
-        {    259, N_("70") },
-        {    260, N_("100") },
-        {    261, N_("140") },
-        {    262, N_("200") },
-        {    263, N_("280") },
-        {    264, N_("400") },
-        {    265, N_("560") },
-        {    266, N_("800") },
-        {    267, N_("1100") },
-        {    268, N_("1600") },
-        {    269, N_("2200") },
-        {    270, N_("3200") },
-        {    271, N_("4500") },
-        {    272, N_("6400") },
-        {    273, N_("9000") },
-        {    274, N_("12800") },
-        {    275, N_("18000") },
-        {    276, N_("25600") },
-        {    277, N_("36000") },
-        {    278, N_("51200") },
+        {    3, "50" },
+        {    4, "64" },
+        {    5, "80" },
+        {    6, "100" },
+        {    7, "125" },
+        {    8, "160" },
+        {    9, "200" },
+        {    10, "250" },
+        {    11, "320" },
+        {    12, "400" },
+        {    13, "500" },
+        {    14, "640" },
+        {    15, "800" },
+        {    16, "1000" },
+        {    17, "1250" },
+        {    18, "1600" },
+        {    19, "2000" },
+        {    20, "2500" },
+        {    21, "3200" },
+        {    22, "4000" },
+        {    23, "5000" },
+        {    24, "6400" },
+        {    25, "8000" },
+        {    26, "10000" },
+        {    27, "12800" },
+        {    28, "16000" },
+        {    29, "20000" },
+        {    30, "25600" },
+        {    31, "32000" },
+        {    32, "40000" },
+        {    33, "51200" },
+        {    34, "64000" },
+        {    35, "80000" },
+        {    36, "102400" },
+        {    37, "128000" },
+        {    38, "160000" },
+        {    39, "204800" },
+        {    50, "50" },
+        {    100, "100" },
+        {    200, "200" },
+//        {    268, "200" },
+        {    400, "400" },
+        {    800, "800" },
+        {    1600, "1600" },
+        {    3200, "3200" },
+        {    258, "50" },
+        {    259, "70" },
+        {    260, "100" },
+        {    261, "140" },
+        {    262, "200" },
+        {    263, "280" },
+        {    264, "400" },
+        {    265, "560" },
+        {    266, "800" },
+        {    267, "1100" },
+        {    268, "1600" },
+        {    269, "2200" },
+        {    270, "3200" },
+        {    271, "4500" },
+        {    272, "6400" },
+        {    273, "9000" },
+        {    274, "12800" },
+        {    275, "18000" },
+        {    276, "25600" },
+        {    277, "36000" },
+        {    278, "51200" },
 
     };
 
@@ -388,8 +404,8 @@ namespace Exiv2 {
         {    2, N_("Spot") },
     };
 
-    //! WhiteBallance, tag 0x0019
-    extern const TagDetails pentaxWhiteBallance[] = {
+    //! WhiteBalance, tag 0x0019
+    extern const TagDetails pentaxWhiteBalance[] = {
         {    0, N_("Auto") },
         {    1, N_("Daylight") },
         {    2, N_("Shade") },
@@ -407,8 +423,8 @@ namespace Exiv2 {
         {    65535, N_("User Selected") },
     };
 
-    //! WhiteBallance, tag 0x001a
-    extern const TagDetails pentaxWhiteBallanceMode[] = {
+    //! WhiteBalance, tag 0x001a
+    extern const TagDetails pentaxWhiteBalanceMode[] = {
         {    1, N_("Auto (Daylight)") },
         {    2, N_("Auto (Shade)") },
         {    3, N_("Auto (Flash)") },
@@ -767,7 +783,7 @@ namespace Exiv2 {
         { 0x041d, "Tamron AF 28-200mm F/3.8-5.6 LD Super II Macro (371D)" },
         { 0x0422, "smc PENTAX-FA 24-90mm F3.5-4.5 AL[IF]" },
         { 0x0423, "smc PENTAX-FA 100-300mm F4.7-5.8" },
-        { 0x0424, "Tamron AF70-300mm F/4-5.6 LD Macro (572D/A17)" },
+        { 0x0424, "Tamron AF 70-300mm F/4-5.6 LD Macro 1:2 (572D/A17)" },
         { 0x0425, "Tamron SP AF 24-135mm F3.5-5.6 AD AL (190D)" },
         { 0x0426, "smc PENTAX-FA 28-105mm F3.2-4.5 AL[IF]" },
         { 0x0427, "smc PENTAX-FA 31mm F1.8AL Limited" },
@@ -779,7 +795,7 @@ namespace Exiv2 {
         { 0x042d, "Tamron AF 28-300mm F3.5-6.3 XR Di LD Aspherical [IF] Macro" },//2
         { 0x042e, "smc PENTAX-FA J 28-80mm F3.5-5.6 AL" },
         { 0x042f, "smc PENTAX-FA J 18-35mm F4-5.6 AL" },
-        { 0x0431, "Tamron SP AF 28-75mm F2.8 XR Di (A09)" },
+        { 0x0431, "Tamron SP AF 28-75mm F2.8 XR Di LD Aspherical [IF] Macro (A09)" },
         { 0x0433, "smc PENTAX-D FA 50mm F2.8 Macro" },
         { 0x0434, "smc PENTAX-D FA 100mm F2.8 Macro" },
         { 0x0437, "Samsung/Schneider D-XENOGON 35mm F2" },
@@ -836,7 +852,9 @@ namespace Exiv2 {
         { 0x0700, "smc PENTAX-DA 21mm F3.2 AL Limited" },
         { 0x073a, "smc PENTAX-D FA Macro 100mm F2.8 WR" },
         { 0x074b, "Tamron SP AF 70-200mm F2.8 Di LD [IF] Macro (A001)" },
+        { 0x07c9, "smc Pentax-DA L 50-200mm F4-5.6 ED WR" },
         { 0x07ca, "smc PENTAX-DA L 18-55mm F3.5-5.6 AL WR" },
+        { 0x07cb, "HD PENTAX-DA 55-300mm F4-5.8 ED WR" },
         { 0x07cc, "HD PENTAX-DA 15mm F4 ED AL Limited" },
         { 0x07cd, "HD PENTAX-DA 35mm F2.8 Macro Limited" },
         { 0x07ce, "HD PENTAX-DA 70mm F2.4 Limited" },
@@ -869,8 +887,10 @@ namespace Exiv2 {
         { 0x07f2, "smc PENTAX-DA* 16-50mm F2.8 ED AL [IF] SDM (SDM not used)" },
         { 0x07f3, "smc PENTAX-DA 70mm F2.4 Limited" },
         { 0x07f4, "smc PENTAX-DA 21mm F3.2 AL Limited" },
+        { 0x0800, "Sigma 50-150mm F2.8 II APO EX DC HSM" },
         { 0x0803, "Sigma AF 18-125mm F3.5-5.6 DC" },
         { 0x0804, "Sigma 50mm F1.4 EX DG HSM" },
+        { 0x0807, "Sigma 24-70mm F2.8 IF EX DG HSM" },
         { 0x0808, "Sigma 18-250mm F3.5-6.3 DC OS HSM" },
         { 0x080b, "Sigma 10-20mm F3.5 EX DC HSM" },
         { 0x080c, "Sigma 70-300mm F4-5.6 DG OS" },
@@ -886,7 +906,15 @@ namespace Exiv2 {
         { 0x0819, "Sigma 17-50mm F2.8 EX DC HSM" },
         { 0x081b, "Sigma 18-200mm F3.5-6.3 II DC HSM" },
         { 0x081c, "Sigma 18-250mm F3.5-6.3 DC Macro HSM" },
+        { 0x081d, "Sigma 35mm F1.4 DG HSM" },
         { 0x081e, "Sigma 17-70mm F2.8-4 DC Macro HSM Contemporary" },
+        { 0x081f, "Sigma 18-35mm F1.8 DC HSM" },
+        { 0x0820, "Sigma 30mm F1.4 DC HSM | A" },
+        { 0x083b, "HD PENTAX-D FA 150-450mm F4.5-5.6 ED DC AW" },
+        { 0x083c, "HD PENTAX-D FA* 70-200mm F2.8 ED DC AW" },
+        { 0x08c6, "smc PENTAX-DA L 18-50mm F4-5.6 DC WR RE" },
+        { 0x08c7, "HD PENTAX-DA 18-50mm F4-5.6 DC WR RE" },
+        { 0x08c8, "HD PENTAX-DA 16-85mm F3.5-5.6 ED DC WR" },
         { 0x08d1, "HD PENTAX-DA 20-40mm F2.8-4 ED Limited DC WR" },
         { 0x08d2, "smc PENTAX-DA 18-270mm F3.5-6.3 ED SDM" },
         { 0x08d3, "HD PENTAX-DA 560mm F5.6 ED AW" },
@@ -924,6 +952,7 @@ namespace Exiv2 {
         { 0x0d12, "smc PENTAX-D FA 645 55mm F2.8 AL [IF] SDM AW" },
         { 0x0d13, "smc PENTAX-D FA 645 25mm F4 AL [IF] SDM AW" },
         { 0x0d14, "HD PENTAX-D FA 645 90mm F2.8 ED AW SR" },
+        { 0x0dfd, "HD PENTAX-DA 645 28-45mm F4.5 ED AW SR" },
         { 0x1500, "Pentax Q Manual Lens" },
         { 0x1501, "01 Standard Prime 8.5mm F1.9" },
         { 0x1502, "02 Standard Zoom 5-15mm F2.8-4.5" },
@@ -999,11 +1028,13 @@ namespace Exiv2 {
 
     std::ostream& PentaxMakerNote::printPentaxTime(std::ostream& os, const Value& value, const ExifData*)
     {
+        std::ios::fmtflags f( os.flags() );
         os << std::setw(2) << std::setfill('0') << value.toLong(0);
         os << ":";
         os << std::setw(2) << std::setfill('0') << value.toLong(1);
         os << ":";
         os << std::setw(2) << std::setfill('0') << value.toLong(2);
+        os.flags(f);
         return os;
     }
 
@@ -1015,24 +1046,30 @@ namespace Exiv2 {
 
     std::ostream& PentaxMakerNote::printPentaxFValue(std::ostream& os, const Value& value, const ExifData*)
     {
+        std::ios::fmtflags f( os.flags() );
         os << "F" << std::setprecision(2)
            << static_cast<float>(value.toLong()) / 10;
+        os.flags(f);
         return os;
     }
 
     std::ostream& PentaxMakerNote::printPentaxFocalLength(std::ostream& os, const Value& value, const ExifData*)
     {
+        std::ios::fmtflags f( os.flags() );
         os << std::fixed << std::setprecision(1)
            << static_cast<float>(value.toLong()) / 100
            << " mm";
+        os.flags(f);
         return os;
     }
 
     std::ostream& PentaxMakerNote::printPentaxCompensation(std::ostream& os, const Value& value, const ExifData*)
     {
+        std::ios::fmtflags f( os.flags() );
         os << std::setprecision(2)
            << (static_cast<float>(value.toLong()) - 50) / 10
            << " EV";
+        os.flags(f);
         return os;
     }
 
@@ -1044,9 +1081,11 @@ namespace Exiv2 {
 
     std::ostream& PentaxMakerNote::printPentaxFlashCompensation(std::ostream& os, const Value& value, const ExifData*)
     {
+        std::ios::fmtflags f( os.flags() );
         os << std::setprecision(2)
            << static_cast<float>(value.toLong()) / 256
            << " EV";
+        os.flags(f);
         return os;
     }
 
@@ -1119,7 +1158,7 @@ namespace Exiv2 {
                 N_("Offset to an IFD containing a preview image"),
                 pentaxId, makerTags, undefined, -1, printValue),
         TagInfo(0x0005, "ModelID", N_("Model identification"),
-                N_("Pentax model idenfication"),
+                N_("Pentax model identification"),
                 pentaxId, makerTags, unsignedShort, -1, EXV_PRINT_TAG(pentaxModel)),
         TagInfo(0x0006, "Date", N_("Date"),
                 N_("Date"),
@@ -1167,12 +1206,12 @@ namespace Exiv2 {
         TagInfo(0x0018, "AutoBracketing", N_("AutoBracketing"),
                 N_("AutoBracketing"),
                 pentaxId, makerTags, undefined, -1, printPentaxBracketing),
-        TagInfo(0x0019, "WhiteBallance", N_("White ballance"),
-                N_("White ballance"),
-                pentaxId, makerTags, undefined, -1, EXV_PRINT_TAG(pentaxWhiteBallance)),
-        TagInfo(0x001a, "WhiteBallanceMode", N_("White ballance mode"),
-                N_("White ballance mode"),
-                pentaxId, makerTags, undefined, -1, EXV_PRINT_TAG(pentaxWhiteBallanceMode)),
+        TagInfo(0x0019, "WhiteBalance", N_("White balance"),
+                N_("White balance"),
+                pentaxId, makerTags, undefined, -1, EXV_PRINT_TAG(pentaxWhiteBalance)),
+        TagInfo(0x001a, "WhiteBalanceMode", N_("White balance mode"),
+                N_("White balance mode"),
+                pentaxId, makerTags, undefined, -1, EXV_PRINT_TAG(pentaxWhiteBalanceMode)),
         TagInfo(0x001b, "BlueBalance", N_("Blue balance"),
                 N_("Blue color balance"),
                 pentaxId, makerTags, unsignedLong, -1, printValue),
@@ -1273,8 +1312,8 @@ namespace Exiv2 {
         TagInfo(0x004f, "ImageTone", N_("Image tone"),
                 N_("Image tone"),
                 pentaxId, makerTags, unsignedShort, -1, EXV_PRINT_TAG(pentaxImageTone)),
-        TagInfo(0x0050, "ColorTemperature", N_("Colort temperature"),
-                N_("Colort temperature"),
+        TagInfo(0x0050, "ColorTemperature", N_("Color temperature"),
+                N_("Color temperature"),
                 pentaxId, makerTags, unsignedShort, -1, printValue),
         /* Some missing ! */
         TagInfo(0x005c, "ShakeReduction", N_("Shake reduction"),

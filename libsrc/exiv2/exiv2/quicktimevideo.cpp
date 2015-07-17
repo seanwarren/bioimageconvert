@@ -1,6 +1,6 @@
 // ***************************************************************** -*- C++ -*-
 /*
- * Copyright (C) 2004-2013 Andreas Huggel <ahuggel@gmx.net>
+ * Copyright (C) 2004-2015 Andreas Huggel <ahuggel@gmx.net>
  *
  * This program is part of the Exiv2 distribution.
  *
@@ -20,17 +20,20 @@
  */
 /*
   File:      quicktimevideo.cpp
-  Version:   $Rev$
+  Version:   $Rev: 3845 $
   Author(s): Abhinav Badola for GSoC 2012 (AB) <mail.abu.to@gmail.com>
   History:   28-Jun-12, AB: created
   Credits:   See header file
  */
 // *****************************************************************************
 #include "rcsid_int.hpp"
-EXIV2_RCSID("@(#) $Id$")
+EXIV2_RCSID("@(#) $Id: quicktimevideo.cpp 3845 2015-06-07 16:29:06Z ahuggel $")
 
 // *****************************************************************************
 // included header files
+#include "config.h"
+
+#ifdef EXV_ENABLE_VIDEO
 #include "quicktimevideo.hpp"
 #include "futils.hpp"
 #include "basicio.hpp"
@@ -559,7 +562,7 @@ namespace Exiv2 {
 #ifdef _MSC_VER
             temp = temp + static_cast<int64_t>(buf.pData_[i]*(pow(static_cast<float>(256), n-i-1)));
 #else
-	temp = temp + buf.pData_[i]*(pow((float)256,n-i-1));
+            temp = temp + buf.pData_[i]*(pow((float)256,n-i-1));
 #endif
 
         return temp;
@@ -575,9 +578,9 @@ namespace Exiv2 {
         uint64_t temp = 0;
         for(int i = n-1; i >= 0; i--)
 #if _MSC_VER
-			temp = temp + static_cast<uint64_t>(buf.pData_[i]*(pow(static_cast<float>(256), n-i-1)));
+            temp = temp + static_cast<uint64_t>(buf.pData_[i]*(pow(static_cast<float>(256), n-i-1)));
 #else
-	temp = temp + buf.pData_[i]*(pow((float)256,n-i-1));
+            temp = temp + buf.pData_[i]*(pow((float)256,n-i-1));
 #endif
 
         return temp;
@@ -610,6 +613,7 @@ namespace Exiv2 {
 
     QuickTimeVideo::QuickTimeVideo(BasicIo::AutoPtr io)
             : Image(ImageType::qtime, mdNone, io)
+            , timeScale_(1)
     {
     } // QuickTimeVideo::QuickTimeVideo
 
@@ -1252,7 +1256,7 @@ namespace Exiv2 {
                 break;
             }
         }
-        io_->read(buf.pData_, static_cast<long>(size % 4));	//cause size is so small, this cast should be right.
+        io_->read(buf.pData_, static_cast<long>(size % 4)); //cause size is so small, this cast should be right.
     } // QuickTimeVideo::audioDescDecoder
 
     void QuickTimeVideo::imageDescDecoder()
@@ -1300,7 +1304,7 @@ namespace Exiv2 {
                 break;
             }
         }
-        io_->read(buf.pData_, static_cast<long>(size % 4));	
+        io_->read(buf.pData_, static_cast<long>(size % 4));
         xmpData_["Xmp.video.BitDepth"] = returnBufValue(buf, 1);
     } // QuickTimeVideo::imageDescDecoder
 
@@ -1456,12 +1460,14 @@ namespace Exiv2 {
                 else if (currentStream_ == Audio)
                     xmpData_["Xmp.audio.MediaTimeScale"] = returnBufValue(buf);
                 time_scale = returnBufValue(buf);
+                if (time_scale <= 0)
+                    time_scale = 1;
                 break;
             case MediaDuration:
                 if(currentStream_ == Video)
-                    xmpData_["Xmp.video.MediaDuration"] = returnBufValue(buf)/time_scale;
+                    xmpData_["Xmp.video.MediaDuration"] = time_scale ? returnBufValue(buf)/time_scale : 0 ;
                 else if (currentStream_ == Audio)
-                    xmpData_["Xmp.audio.MediaDuration"] = returnBufValue(buf)/time_scale;
+                    xmpData_["Xmp.audio.MediaDuration"] = time_scale ? returnBufValue(buf)/time_scale : 0;
                 break;
             case MediaLanguageCode:
                 if(currentStream_ == Video)
@@ -1515,9 +1521,9 @@ namespace Exiv2 {
                 break;
             case TrackDuration:
                 if(currentStream_ == Video)
-                    xmpData_["Xmp.video.TrackDuration"] = returnBufValue(buf)/timeScale_;
+                    xmpData_["Xmp.video.TrackDuration"] = timeScale_ ? returnBufValue(buf)/timeScale_ : 0;
                 else if(currentStream_ == Audio)
-                    xmpData_["Xmp.audio.TrackDuration"] = returnBufValue(buf)/timeScale_;
+                    xmpData_["Xmp.audio.TrackDuration"] = timeScale_ ? returnBufValue(buf)/timeScale_ : 0;
                 break;
             case TrackLayer:
                 if(currentStream_ == Video)
@@ -1571,8 +1577,11 @@ namespace Exiv2 {
                 xmpData_["Xmp.video.ModificationDate"] = returnUnsignedBufValue(buf); break;
             case TimeScale:
                 xmpData_["Xmp.video.TimeScale"] = returnBufValue(buf);
-                timeScale_ = returnBufValue(buf); break;
+                timeScale_ = returnBufValue(buf);
+                if (timeScale_ <= 0) timeScale_ = 1;
+                break;
             case Duration:
+                if(timeScale_ != 0) // To prevent division by zero
                 xmpData_["Xmp.video.Duration"] = returnBufValue(buf) * 1000 / timeScale_; break;
             case PreferredRate:
                 xmpData_["Xmp.video.PreferredRate"] = returnBufValue(buf, 2) + ((buf.pData_[2] * 256 + buf.pData_[3]) * 0.01); break;
@@ -1607,18 +1616,18 @@ namespace Exiv2 {
         aspectRatio = floor(aspectRatio*10) / 10;
         xmpData_["Xmp.video.AspectRatio"] = aspectRatio;
 
-		int aR = (int) ((aspectRatio*10.0)+0.1);
+        int aR = (int) ((aspectRatio*10.0)+0.1);
 
-		switch  (aR) {
-			case 13 : xmpData_["Xmp.video.AspectRatio"] = "4:3"		; break;
-			case 17 : xmpData_["Xmp.video.AspectRatio"] = "16:9"	; break;
-			case 10 : xmpData_["Xmp.video.AspectRatio"] = "1:1"		; break;
-			case 16 : xmpData_["Xmp.video.AspectRatio"] = "16:10"	; break;
-			case 22 : xmpData_["Xmp.video.AspectRatio"] = "2.21:1"  ; break;
-			case 23 : xmpData_["Xmp.video.AspectRatio"] = "2.35:1"  ; break;
-			case 12 : xmpData_["Xmp.video.AspectRatio"] = "5:4"     ; break;
-			default : xmpData_["Xmp.video.AspectRatio"] = aspectRatio;break;
-		}
+        switch  (aR) {
+            case 13 : xmpData_["Xmp.video.AspectRatio"] = "4:3"     ; break;
+            case 17 : xmpData_["Xmp.video.AspectRatio"] = "16:9"    ; break;
+            case 10 : xmpData_["Xmp.video.AspectRatio"] = "1:1"     ; break;
+            case 16 : xmpData_["Xmp.video.AspectRatio"] = "16:10"   ; break;
+            case 22 : xmpData_["Xmp.video.AspectRatio"] = "2.21:1"  ; break;
+            case 23 : xmpData_["Xmp.video.AspectRatio"] = "2.35:1"  ; break;
+            case 12 : xmpData_["Xmp.video.AspectRatio"] = "5:4"     ; break;
+            default : xmpData_["Xmp.video.AspectRatio"] = aspectRatio;break;
+        }
     } // QuickTimeVideo::aspectRatio
 
 
@@ -1649,4 +1658,4 @@ namespace Exiv2 {
     }
 
 }                                       // namespace Exiv2
-
+#endif // EXV_ENABLE_VIDEO

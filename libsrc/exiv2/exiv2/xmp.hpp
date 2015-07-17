@@ -1,6 +1,6 @@
 // ***************************************************************** -*- C++ -*-
 /*
- * Copyright (C) 2004-2013 Andreas Huggel <ahuggel@gmx.net>
+ * Copyright (C) 2004-2015 Andreas Huggel <ahuggel@gmx.net>
  *
  * This program is part of the Exiv2 distribution.
  *
@@ -21,7 +21,7 @@
 /*!
   @file    xmp.hpp
   @brief   Encoding and decoding of XMP data
-  @version $Rev: 3201 $
+  @version $Rev: 3090 $
   @author  Andreas Huggel (ahu)
            <a href="mailto:ahuggel@gmx.net">ahuggel@gmx.net</a>
   @date    13-Jul-07, ahu: created

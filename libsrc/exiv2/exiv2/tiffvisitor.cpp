@@ -1,6 +1,6 @@
 // ***************************************************************** -*- C++ -*-
 /*
- * Copyright (C) 2004-2013 Andreas Huggel <ahuggel@gmx.net>
+ * Copyright (C) 2004-2015 Andreas Huggel <ahuggel@gmx.net>
  *
  * This program is part of the Exiv2 distribution.
  *
@@ -20,21 +20,16 @@
  */
 /*
   File:      tiffvisitor.cpp
-  Version:   $Rev: 3201 $
+  Version:   $Rev: 3846 $
   Author(s): Andreas Huggel (ahu) <ahuggel@gmx.net>
   History:   11-Apr-06, ahu: created
  */
 // *****************************************************************************
 #include "rcsid_int.hpp"
-EXIV2_RCSID("@(#) $Id: tiffvisitor.cpp 3201 2013-12-01 12:13:42Z ahuggel $")
+EXIV2_RCSID("@(#) $Id: tiffvisitor.cpp 3846 2015-06-08 14:39:59Z ahuggel $")
 
-// *****************************************************************************
 // included header files
-#ifdef _MSC_VER
-# include "exv_msvc.h"
-#else
-# include "exv_conf.h"
-#endif
+#include "config.h"
 
 #include "tiffcomposite_int.hpp" // Do not change the order of these 2 includes,
 #include "tiffvisitor_int.hpp"   // see bug #487
@@ -101,13 +96,13 @@ namespace Exiv2 {
 
     void TiffVisitor::setGo(GoEvent event, bool go)
     {
-        assert(event >= 0 && event < events_);
+        assert(event >= 0 && static_cast<int>(event) < events_);
         go_[event] = go;
     }
 
     bool TiffVisitor::go(GoEvent event) const
     {
-        assert(event >= 0 && event < events_);
+        assert(event >= 0 && static_cast<int>(event) < events_);
         return go_[event];
     }
 
@@ -524,7 +519,7 @@ namespace Exiv2 {
           pRoot_(pRoot),
           isNewImage_(isNewImage),
           pPrimaryGroups_(pPrimaryGroups),
-          pSourceTree_(0),          
+          pSourceTree_(0),
           findEncoderFct_(findEncoderFct),
           dirty_(false),
           writeMethod_(wmNonIntrusive)
@@ -614,6 +609,7 @@ namespace Exiv2 {
 
     void TiffEncoder::encodeXmp()
     {
+#ifdef EXV_HAVE_XMP_TOOLKIT
         ExifKey xmpKey("Exif.Image.XMLPacket");
         // Remove any existing XMP Exif tag
         ExifData::iterator pos = exifData_.findKey(xmpKey);
@@ -636,6 +632,7 @@ namespace Exiv2 {
             Exifdatum xmpDatum(xmpKey, value.get());
             exifData_.add(xmpDatum);
         }
+#endif
     } // TiffEncoder::encodeXmp
 
     void TiffEncoder::setDirty(bool flag)
@@ -1135,15 +1132,16 @@ namespace Exiv2 {
     TiffReader::TiffReader(const byte*    pData,
                            uint32_t       size,
                            TiffComponent* pRoot,
-                           TiffRwState::AutoPtr state)
+                           TiffRwState    state)
         : pData_(pData),
           size_(size),
           pLast_(pData + size),
           pRoot_(pRoot),
-          pState_(state.release()),
-          pOrigState_(pState_),
+          origState_(state),
+          mnState_(state),
           postProc_(false)
     {
+        pState_ = &origState_;
         assert(pData_);
         assert(size_ > 0);
 
@@ -1151,35 +1149,37 @@ namespace Exiv2 {
 
     TiffReader::~TiffReader()
     {
-        if (pOrigState_ != pState_) delete pOrigState_;
-        delete pState_;
     }
 
-    void TiffReader::resetState() {
-        if (pOrigState_ != pState_) delete pState_;
-        pState_ = pOrigState_;
-    }
-
-    void TiffReader::changeState(TiffRwState::AutoPtr state)
+    void TiffReader::setOrigState()
     {
-        if (state.get() != 0) {
+        pState_ = &origState_;
+    }
+
+    void TiffReader::setMnState(const TiffRwState* state)
+    {
+        if (state != 0) {
             // invalidByteOrder indicates 'no change'
-            if (state->byteOrder_ == invalidByteOrder) state->byteOrder_ = pState_->byteOrder_;
-            if (pOrigState_ != pState_) delete pState_;
-            pState_ = state.release();
+            if (state->byteOrder() == invalidByteOrder) {
+                mnState_ = TiffRwState(origState_.byteOrder(), state->baseOffset());
+            }
+            else {
+                mnState_ = *state;
+            }
         }
+        pState_ = &mnState_;
     }
 
     ByteOrder TiffReader::byteOrder() const
     {
         assert(pState_);
-        return pState_->byteOrder_;
+        return pState_->byteOrder();
     }
 
     uint32_t TiffReader::baseOffset() const
     {
         assert(pState_);
-        return pState_->baseOffset_;
+        return pState_->baseOffset();
     }
 
     void TiffReader::readDataEntryBase(TiffDataEntryBase* object)
@@ -1244,11 +1244,13 @@ namespace Exiv2 {
 
     void TiffReader::postProcess()
     {
+        setMnState(); // All components to be post-processed must be from the Makernote
         postProc_ = true;
         for (PostList::const_iterator pos = postList_.begin(); pos != postList_.end(); ++pos) {
             (*pos)->accept(*this);
         }
         postProc_ = false;
+        setOrigState();
     }
 
     void TiffReader::visitDirectory(TiffDirectory* object)
@@ -1432,17 +1434,15 @@ namespace Exiv2 {
 
         // Modify reader for Makernote peculiarities, byte order and offset
         object->mnOffset_ = static_cast<uint32_t>(object->start() - pData_);
-        TiffRwState::AutoPtr state(
-            new TiffRwState(object->byteOrder(), object->baseOffset())
-        );
-        changeState(state);
+        TiffRwState state(object->byteOrder(), object->baseOffset());
+        setMnState(&state);
 
     } // TiffReader::visitIfdMakernote
 
     void TiffReader::visitIfdMakernoteEnd(TiffIfdMakernote* /*object*/)
     {
         // Reset state (byte order, create function, offset) back to that for the image
-        resetState();
+        setOrigState();
     } // TiffReader::visitIfdMakernoteEnd
 
     void TiffReader::readTiffEntry(TiffEntryBase* object)

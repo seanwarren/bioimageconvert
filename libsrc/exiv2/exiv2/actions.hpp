@@ -1,6 +1,6 @@
 // ***************************************************************** -*- C++ -*-
 /*
- * Copyright (C) 2004-2013 Andreas Huggel <ahuggel@gmx.net>
+ * Copyright (C) 2004-2015 Andreas Huggel <ahuggel@gmx.net>
  *
  * This program is part of the Exiv2 distribution.
  *
@@ -134,7 +134,7 @@ namespace Action {
           prototype is replaced.
 
           @param type Task type.
-          @param task Pointer to the prototype. Ownership is transfered to the
+          @param task Pointer to the prototype. Ownership is transferred to the
                  task factory. That's what the auto pointer indicates.
         */
         void registerTask(TaskType type, Task::AutoPtr task);
@@ -172,12 +172,16 @@ namespace Action {
         int printList();
         //! Return true if key should be printed, else false
         bool grepTag(const std::string& key);
+        //! Return true if key should be printed, else false
+        bool keyTag(const std::string& key);
         //! Print all metadata in a user defined format
         int printMetadata(const Exiv2::Image* image);
         //! Print a metadatum in a user defined format
         void printMetadatum(const Exiv2::Metadatum& md, const Exiv2::Image* image);
         //! Print the label for a summary line
         void printLabel(const std::string& label) const;
+        //! Print image Structure information
+        int printStructure(std::ostream& out, Exiv2::PrintStructureOption option);
         /*!
           @brief Print one summary line with a label (if provided) and requested
                  data. A line break is printed only if a label is provided.
@@ -356,7 +360,7 @@ namespace Action {
 
     private:
         virtual Modify* clone_() const;
-        //! Copy contructor needed because of AutoPtr member
+        //! Copy constructor needed because of AutoPtr member
         Modify(const Modify& /*src*/) : Task() {}
 
         //! Add a metadatum to \em pImage according to \em modifyCmd

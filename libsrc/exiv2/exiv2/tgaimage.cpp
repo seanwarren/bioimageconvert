@@ -1,6 +1,6 @@
 // ***************************************************************** -*- C++ -*-
 /*
- * Copyright (C) 2004-2013 Andreas Huggel <ahuggel@gmx.net>
+ * Copyright (C) 2004-2015 Andreas Huggel <ahuggel@gmx.net>
  *
  * This program is part of the Exiv2 distribution.
  *
@@ -20,23 +20,17 @@
  */
 /*
   File:      tgaimage.cpp
-  Version:   $Rev: 3201 $
+  Version:   $Rev: 3777 $
   Author(s): Marco Piovanelli, Ovolab (marco)
   History:   05-Mar-2007, marco: created
  */
 // *****************************************************************************
 #include "rcsid_int.hpp"
-EXIV2_RCSID("@(#) $Id: tgaimage.cpp 3201 2013-12-01 12:13:42Z ahuggel $")
+EXIV2_RCSID("@(#) $Id: tgaimage.cpp 3777 2015-05-02 11:55:40Z ahuggel $")
 
-//#define DEBUG 1
-
-// *****************************************************************************
 // included header files
-#ifdef _MSC_VER
-# include "exv_msvc.h"
-#else
-# include "exv_conf.h"
-#endif
+#include "config.h"
+
 #include "tgaimage.hpp"
 #include "image.hpp"
 #include "basicio.hpp"

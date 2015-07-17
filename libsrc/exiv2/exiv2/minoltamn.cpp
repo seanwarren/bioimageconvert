@@ -1,6 +1,6 @@
 // ***************************************************************** -*- C++ -*-
 /*
- * Copyright (C) 2004-2013 Andreas Huggel <ahuggel@gmx.net>
+ * Copyright (C) 2004-2015 Andreas Huggel <ahuggel@gmx.net>
  *
  * This program is part of the Exiv2 distribution.
  *
@@ -20,7 +20,7 @@
  */
 /*
   File:      minoltamn.cpp
-  Version:   $Rev: 3191 $
+  Version:   $Rev: 3835 $
   Author(s): Gilles Caulier (cgilles) <caulier dot gilles at gmail dot com>
              Andreas Huggel (ahu) <ahuggel@gmx.net>
   History:   06-May-06, gc: submitted
@@ -29,7 +29,7 @@
 
 // *****************************************************************************
 #include "rcsid_int.hpp"
-EXIV2_RCSID("@(#) $Id: minoltamn.cpp 3191 2013-10-08 03:17:13Z nkbj $")
+EXIV2_RCSID("@(#) $Id: minoltamn.cpp 3835 2015-05-22 03:18:31Z nkbj $")
 
 // *****************************************************************************
 // included header files
@@ -960,22 +960,26 @@ namespace Exiv2 {
     {
         // From Xavier Raynaud: the value is converted from 0:256 to -5.33:5.33
 
+        std::ios::fmtflags f( os.flags() );
         std::ostringstream oss;
         oss.copyfmt(os);
         os << std::fixed << std::setprecision(2)
            << (float (value.toLong()-128)/24);
         os.copyfmt(oss);
+        os.flags(f);
         return os;
     }
 
     //! Method to convert Minolta Dynax 5D exposure compensation values.
     std::ostream& MinoltaMakerNote::printMinoltaExposureCompensation5D(std::ostream& os, const Value& value, const ExifData*)
     {
+        std::ios::fmtflags f( os.flags() );
         std::ostringstream oss;
         oss.copyfmt(os);
         os << std::fixed << std::setprecision(2)
            << (float (value.toLong()-300)/100);
         os.copyfmt(oss);
+        os.flags(f);
         return os;
     }
 
@@ -1638,7 +1642,7 @@ namespace Exiv2 {
                  "Sigma 20-40mm F2.8 EX DG Aspherical IF | "
                  "Sigma 18-200mm F3.5-6.3 DC | "
                  "Sigma DC 18-125mm F4-5,6 D | "
-                 "Tamron SP AF 28-75mm F2.8 XR Di (IF) Macro" },
+                 "Tamron SP AF 28-75mm F2.8 XR Di LD Aspherical [IF] Macro" },
         { 25,    "Minolta AF 100-300mm F4.5-5.6 APO (D) | "
                  "Sigma 100-300mm F4 EX (APO (D) or D IF) | "
                  "Sigma 70mm F2.8 EX DG Macro | "
@@ -1648,7 +1652,7 @@ namespace Exiv2 {
         { 27,    "Minolta AF 85mm F1.4 G (D)" },
         { 28,    "Minolta/Sony AF 100mm F2.8 Macro (D) | "
                  "Tamron SP AF 90mm F2.8 Di Macro | "
-                 "Tamron AF 180mm F3.5 SP Di LD [IF] Macro" },
+                 "Tamron SP AF 180mm F3.5 SP Di LD [IF] Macro" },
         { 29,    "Minolta/Sony AF 75-300mm F4.5-5.6 (D) " },
         { 30,    "Minolta AF 28-80mm F3.5-5.6 (D) | "
                  "Sigma AF 10-20mm F4-5.6 EX DC | "
@@ -1674,16 +1678,20 @@ namespace Exiv2 {
         { 45,    "Carl Zeiss Planar T* 85mm F1.4 ZA (SAL85F14Z)" },
         { 46,    "Carl Zeiss Vario-Sonnar T* DT 16-80mm F3.5-4.5 ZA (SAL1680Z)" },
         { 47,    "Carl Zeiss Sonnar T* 135mm F1.8 ZA (SAL135F18Z)" },
-        { 48,    "Carl Zeiss Vario-Sonnar T* 24-70mm F2.8 ZA SSM (SAL2470Z)" },
+        { 48,    "Carl Zeiss Vario-Sonnar T* 24-70mm F2.8 ZA SSM (SAL2470Z) | "
+                 "Carl Zeiss Vario-Sonnar T* 24-70mm F2.8 ZA SSM II (SAL2470Z2)" },
         { 49,    "Sony AF DT 55-200mm F4-5.6 (SAL55200)" },
         { 50,    "Sony AF DT 18-250mm F3.5-6.3 (SAL18250)" },
         { 51,    "Sony AF DT 16-105mm F3.5-5.6 (SAL16105)" },
 //      { 51,    "Sony AF DT 55-200mm F4-5.5" }, // Anomaly? - unconfirmed.
         { 52,    "Sony 70-300mm F4.5-5.6 G SSM (SAL70300G) | "
-                 "Tamron SP 70-300mm F4-5.6 Di VC USD" },
+                 "Sony 70-300mm F4.5-5.6 G SSM II (SAL70300G2) | "
+                 "Tamron SP 70-300mm F4-5.6 Di USD" },
         { 53,    "Sony AF 70-400mm F4.5-5.6 G SSM (SAL70400G)" },
-        { 54,    "Carl Zeiss Vario-Sonnar T* 16-35mm F2.8 ZA SSM (SAL1635Z)" },
-        { 55,    "Sony DT 18-55mm F3.5-5.6 SAM [II] (SAL1855)" },
+        { 54,    "Carl Zeiss Vario-Sonnar T* 16-35mm F2.8 ZA SSM (SAL1635Z) | "
+                 "Carl Zeiss Vario-Sonnar T* 16-35mm F2.8 ZA SSM II (SAL1635Z2)" },
+        { 55,    "Sony DT 18-55mm F3.5-5.6 SAM (SAL1855) | "
+                 "Sony DT 18-55mm F3.5-5.6 SAM II (SAL18552)" },
         { 56,    "Sony AF DT 55-200mm F4-5.6 SAM (SAL55200-2)" },
         { 57,    "Sony DT 50mm F1.8 SAM (SAL50F18) | "
                  "Tamron SP AF 60mm F2 Di II LD [IF] Macro 1:1 | "
@@ -1697,12 +1705,13 @@ namespace Exiv2 {
         { 64,    "Sony 500mm F4.0 G SSM (SAL500F40G)" },
         { 65,    "Sony DT 18-135mm F3.5-5.6 SAM (SAL18135)" },
         { 66,    "Sony 300mm F2.8 G SSM II (SAL300F28G2)" },
+        { 67,    "Sony 70-200mm F2.8 G SSM II (SAL70200G2)" },
         { 68,    "Sony DT 55-300mm F4.5-5.6 SAM (SAL55300)" },
         { 69,    "Sony 70-400mm F4-5.6 G SSM II (SAL70400G2)" },
         { 70,    "Sony Carl Zeiss Planar T* 50mm F1.4 ZA SSM (SALF0F14Z)" },
         { 128,   "Sigma 70-200mm F2.8 APO EX DG MACRO | "
-                 "Tamron 18-200mm F3.5-6.3 | "
-                 "Tamron 28-300mm F3.5-6.3 | "
+                 "Tamron AF 18-200mm F3.5-6.3 XR Di II LD Aspherical [IF] Macro | "
+                 "Tamron AF 28-300mm F3.5-6.3 XR Di LD Aspherical [IF] Macro | "
                  "Tamron 80-300mm F3.5-6.3 | "
                  "Tamron AF 28-200mm F3.8-5.6 XR Di Aspherical [IF] MACRO | "
                  "Tamron SP AF 17-35mm F2.8-4 Di LD Aspherical IF | "
@@ -1715,7 +1724,12 @@ namespace Exiv2 {
                  "Sigma 24-70mm F2.8 IF EX DG HSM | "
                  "Sigma 18-250mm F3.5-6.3 DC OS HSM | "
                  "Sigma 17-50mm F2.8 EX DC HSM | "
-                 "Sigma 17-50mm F2.8-4 DC Macro HSM" },
+                 "Sigma 17-70mm F2.8-4 DC Macro HSM | "
+                 "Sigma 150mm F2.8 EX DG OS HSM APO Macro | "
+                 "Sigma 150-500mm F5-6.3 APO DG OS HSM | "
+                 "Tamron AF 28-105mm F4-5.6 [IF] | "
+                 "Sigma 35mm F1.4 DG HSM | "
+                 "Sigma 18-35mm F1.8 DC HSM" },
         { 129,   "Tamron 200-400mm F5.6 LD | "
                  "Tamron 70-300mm F4-5.6 LD" },
         { 131,   "Tamron 20-40mm F2.7-3.5 SP Aspherical IF" },
@@ -1723,18 +1737,25 @@ namespace Exiv2 {
         { 136,   "Tokina EMZ M100 AF 100mm F3.5" },
         { 137,   "Cosina 70-210mm F2.8-4 AF" },
         { 138,   "Soligor 19-35mm F3.5-4.5" },
+        { 139,   "Tokina AF 28-300mm F4-6.3" },
         { 142,   "Voigtlander 70-300mm F4.5-5.6" },
         { 146,   "Voigtlander Macro APO-Lanthar 125mm F2.5 SL" },
         { 193,   "Minolta AF 1.4x APO II" },
         { 194,   "Tamron SP AF 17-50mm F2.8 XR Di II LD Aspherical [IF]" },
+        { 203,   "Tamron SP 70-200mm F2.8 Di USD" },
+        { 204,   "Tamron SP 24-70mm F2.8 Di USD" },
+        { 213,   "Tamron 16-300mm F3.5-6.3 Di II PZD" },
+        { 214,   "Tamron Tamron SP 150-600mm F5-6.3 Di USD" },
+        { 224,   "Tamron SP 90mm F2.8 Di Macro 1:1 USD" },
         { 255,   "Tamron SP AF 17-50mm F2.8 XR Di II LD Aspherical | "
                  "Tamron AF 18-250mm F3.5-6.3 XR Di II LD | "
-                 "Tamron AF 55-200mm F4-5.6 Di II | "
-                 "Tamron AF 70-300mm F4-5.6 Di LD MACRO 1:2 | "
+                 "Tamron AF 55-200mm F4-5.6 Di II LD Macro | "
+                 "Tamron AF 70-300mm F4-5.6 Di LD Macro 1:2 | "
                  "Tamron SP AF 200-500mm F5.0-6.3 Di LD IF | "
                  "Tamron SP AF 10-24mm F3.5-4.5 Di II LD Aspherical IF | "
                  "Tamron SP AF 70-200mm F2.8 Di LD IF Macro | "
-                 "Tamron SP AF 28-75mm F2.8 XR Di LD Aspherical IF" },
+                 "Tamron SP AF 28-75mm F2.8 XR Di LD Aspherical IF | "
+                 "Tamron AF 90-300mm F4.5-5.6 Telemacro" },
         { 25500, "Minolta AF 50mm F1.7" },
         { 25501, "Minolta AF 50mm F1.7" },
         { 25510, "Minolta AF 35-70mm F4" },
@@ -1742,17 +1763,19 @@ namespace Exiv2 {
                  "Sigma UC AF 28-70mm F3.5-4.5 | "
                  "Sigma AF 28-70mm F2.8 | "
                  "Sigma M-AF 70-200mm F2.8 EX Aspherical | "
-                 "Quantaray M-AF 35-80mm F4-5.6 " },
+                 "Quantaray M-AF 35-80mm F4-5.6 | "
+                 "Tokina 28-70mm F2.8-4.5 AF" },
         { 25520, "Minolta AF 28-85mm F3.5-4.5" },
         { 25521, "Minolta AF 28-85mm F3.5-4.5 | "
                  "Tokina 19-35mm F3.5-4.5 | "
                  "Tokina 28-70mm F2.8 AT-X | "
                  "Tokina 80-400mm F4.5-5.6 AT-X AF II 840 | "
                  "Tokina AF PRO 28-80mm F2.8 AT-X 280 | "
-                 "Tokina AT-X PRO II AF 28-70mm F2.6-2.8 270 | "
+                 "Tokina AT-X PRO [II] AF 28-70mm F2.6-2.8 270 | "
                  "Tamron AF 19-35mm F3.5-4.5 | "
                  "Angenieux AF 28-70mm F2.6 | "
-                 "Tokina AT-X 17 AF 17mm F3.5" },
+                 "Tokina AT-X 17 AF 17mm F3.5 | "
+                 "Tokina 20-35mm F3.5-4.5 II AF" },
         { 25530, "Minolta AF 28-135mm F4-4.5" },
         { 25531, "Minolta AF 28-135mm F4-4.5 | "
                  "Sigma ZOOM-alpha 35-135mm F3.5-4.5 | "
@@ -1808,7 +1831,7 @@ namespace Exiv2 {
                  "Sigma 14mm F3.5 | "
                  "Sigma 15mm F2.8 Fisheye" },
         { 25790, "Minolta AF 20mm F2.8" },
-        { 25791, "Minolta/Sony AF 20mm F2.8 | " 
+        { 25791, "Minolta/Sony AF 20mm F2.8 | "
                  "Tokina AT-X 116 PRO DX AF 11-16mm F2.8" },
         { 25810, "Minolta AF 100mm F2.8 Macro" },
         { 25811, "Minolta AF 100mm F2.8 Macro [New] | "
@@ -1890,14 +1913,16 @@ namespace Exiv2 {
         { 26681, "Minolta AF 28mm F2 New" },
         { 26721, "Minolta AF 24-105mm F3.5-4.5 (D)" },
         { 45671, "Tokina 70-210mm F4-5.6" },
+        { 45711, "Vivitar 70-210mm F4.5-5.6" },
         { 45741, "Minolta AF200mm F2.8G x2 | "
                  "Tokina 300mm F2.8 x2 | "
                  "Tokina RF 500mm F8.0 x2 | "
                  "Tamron SP AF 90mm F2.5"},
         { 45751, "1.4x Teleconverter " },
         { 45851, "Tamron SP AF 300mm F2.8 LD IF" },
+        { 45861, "Tamron SP AF 35-105mm F2.8 LD Aspherical IF" },
         { 45871, "Tamron AF 70-210mm F2.8 SP LD" },
-        { 65535, "E-Mount, T-Mount, Other Lens or No Lens" }
+        { 65535, "Manual lens" }
     };
 
     std::ostream& printMinoltaSonyLensID(std::ostream& os, const Value& value, const ExifData* metadata)
@@ -2147,10 +2172,13 @@ namespace Exiv2 {
 
     std::ostream& printMinoltaSonyFlashExposureComp(std::ostream& os, const Value& value, const ExifData*)
     {
+        std::ios::fmtflags f( os.flags() );
         if (value.count() != 1 || value.typeId() != signedRational) {
             return os << "(" << value << ")";
         }
-        return os << std::fixed << std::setprecision(2) << value.toFloat(0) << " EV";
+        os << std::fixed << std::setprecision(2) << value.toFloat(0) << " EV";
+        os.flags(f);
+        return os;
     }
 
 }}                                      // namespace Internal, Exiv2

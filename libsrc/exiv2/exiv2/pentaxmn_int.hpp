@@ -1,6 +1,6 @@
 // ***************************************************************** -*- C++ -*-
 /*
- * Copyright (C) 2004-2013 Andreas Huggel <ahuggel@gmx.net>
+ * Copyright (C) 2004-2015 Andreas Huggel <ahuggel@gmx.net>
  *
  * This program is part of the Exiv2 distribution.
  *
@@ -24,7 +24,7 @@
            http://www.gvsoft.homedns.org/exif/makernote-pentax-type3.html and
            based on ExifTool implementation and
            <a href="http://www.sno.phy.queensu.ca/~phil/exiftool/TagNames/Pentax.html">Pentax Makernote list</a> by Phil Harvey<br>
-  @version $Rev: 3091 $
+  @version $Rev: 3777 $
   @author  Michal Cihar
            <a href="mailto:michal@cihar.com">michal@cihar.com</a>
   @date    27-Sep-07
@@ -93,6 +93,7 @@ namespace Exiv2 {
     template <int N, const TagDetails (&array)[N], int count, int ignoredcount, int ignoredcountmax>
     std::ostream& printCombiTag(std::ostream& os, const Value& value, const ExifData* metadata)
     {
+        std::ios::fmtflags f( os.flags() );
         if ((value.count() != count && (value.count() < (count + ignoredcount) || value.count() > (count + ignoredcountmax))) || count > 4) {
             return printValue(os, value, metadata);
         }
@@ -113,6 +114,7 @@ namespace Exiv2 {
                << std::hex << l << std::dec << ")";
         }
 
+        os.flags(f);
         return os;
     }
 

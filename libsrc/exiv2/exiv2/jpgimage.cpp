@@ -1,6 +1,6 @@
 // ***************************************************************** -*- C++ -*-
 /*
- * Copyright (C) 2004-2013 Andreas Huggel <ahuggel@gmx.net>
+ * Copyright (C) 2004-2015 Andreas Huggel <ahuggel@gmx.net>
  *
  * This program is part of the Exiv2 distribution.
  *
@@ -20,7 +20,7 @@
  */
 /*
   File:      jpgimage.cpp
-  Version:   $Rev: 3091 $
+  Version:   $Rev: 3815 $
   Author(s): Andreas Huggel (ahu) <ahuggel@gmx.net>
              Brad Schick (brad) <brad@robotbattle.com>
              Volker Grabsch (vog) <vog@notjusthosting.com>
@@ -29,17 +29,13 @@
  */
 // *****************************************************************************
 #include "rcsid_int.hpp"
-EXIV2_RCSID("@(#) $Id: jpgimage.cpp 3091 2013-07-24 05:15:04Z robinwmills $")
+EXIV2_RCSID("@(#) $Id: jpgimage.cpp 3815 2015-05-10 09:37:34Z ahuggel $")
 
-// *****************************************************************************
 // included header files
-#ifdef _MSC_VER
-# include "exv_msvc.h"
-#else
-# include "exv_conf.h"
-#endif
+#include "config.h"
 
 #include "jpgimage.hpp"
+#include "image_int.hpp"
 #include "error.hpp"
 #include "futils.hpp"
 
@@ -53,6 +49,9 @@ EXIV2_RCSID("@(#) $Id: jpgimage.cpp 3091 2013-07-24 05:15:04Z robinwmills $")
 
 namespace Exiv2 {
 
+    const byte     JpegBase::dht_      = 0xc4;
+    const byte     JpegBase::dqt_      = 0xdb;
+    const byte     JpegBase::dri_      = 0xdd;
     const byte     JpegBase::sos_      = 0xda;
     const byte     JpegBase::eoi_      = 0xd9;
     const byte     JpegBase::app0_     = 0xe0;
@@ -509,6 +508,148 @@ namespace Exiv2 {
         }
     } // JpegBase::readMetadata
 
+    bool isBlank(std::string& s)
+    {
+        for ( std::size_t i = 0 ; i < s.length() ; i++ )
+            if ( s[i] != ' ' )
+                return false ;
+        return true ;
+    }
+
+#define REPORT_MARKER if ( option == kpsBasic ) out << Internal::stringFormat("%8ld | %#02x %-5s",io_->tell(), marker,nm[marker].c_str())
+
+    void JpegBase::printStructure(std::ostream& out, PrintStructureOption option)
+    {
+        if (io_->open() != 0) throw Error(9, io_->path(), strError());
+        // Ensure that this is the correct image type
+        if (!isThisType(*io_, false)) {
+            if (io_->error() || io_->eof()) throw Error(14);
+            throw Error(15);
+        }
+
+        if ( option == kpsBasic || option == kpsXMP ) {
+
+            // nmonic for markers
+            std::string nm[256] ;
+            nm[0xd8]="SOI"  ;
+            nm[0xd9]="EOI"  ;
+            nm[0xda]="SOS"  ;
+            nm[0xdb]="DQT"  ;
+            nm[0xdd]="DRI"  ;
+            nm[0xfe]="COM"  ;
+
+            // 0xe0 .. 0xef are APPn
+            // 0xc0 .. 0xcf are SOFn (except 4)
+            nm[0xc4]="DHT"  ;
+            for ( int i = 0 ; i <= 15 ; i++ ) {
+                char MN[10];
+                sprintf(MN,"APP%d",i);
+                nm[0xe0+i] = MN;
+                if ( i != 4 ) {
+                    sprintf(MN,"SOF%d",i);
+                    nm[0xc0+i] = MN;
+                }
+            }
+
+            // Container for the signature
+            bool        bExtXMP    = false;
+            long        bufRead    =  0;
+            const long  bufMinSize = 36;
+            DataBuf     buf(bufMinSize);
+
+            // Read section marker
+            int marker = advanceToMarker();
+            if (marker < 0) throw Error(15);
+
+            bool    done = false;
+            bool    first= true;
+            while (!done) {
+                // print marker bytes
+                if ( first && option == kpsBasic ) {
+                    out << "STRUCTURE OF JPEG FILE: " << io_->path() << std::endl;
+                    out << " address | marker     | length  | data" << std::endl ;
+                    REPORT_MARKER;
+                }
+                first = false;
+
+                // Read size and signature
+                std::memset(buf.pData_, 0x0, buf.size_);
+                bufRead = io_->read(buf.pData_, bufMinSize);
+                if (io_->error()) throw Error(14);
+                if (bufRead < 2) throw Error(15);
+                uint16_t size = 0;
+
+                // not all markers have size field.
+                if( ( marker >= sof0_ && marker <= sof15_)
+                ||  ( marker >= app0_ && marker <= (app0_ | 0x0F))
+                ||    marker == dht_
+                ||    marker == dqt_
+                ||    marker == dri_
+                ||    marker == com_
+                ||    marker == sos_
+                ){
+                    size = getUShort(buf.pData_, bigEndian);
+                }
+                if ( option == kpsBasic ) out << Internal::stringFormat(" | %7d ", size);
+
+                // only print the signature for appn
+                if (marker >= app0_ && marker <= (app0_ | 0x0F)) {
+                    char http[5];
+                    http[4]=0;
+                    memcpy(http,buf.pData_+2,4);
+                    if ( option == kpsXMP && std::strcmp(http,"http") == 0 ) {
+                        // http://ns.adobe.com/xap/1.0/
+                        if ( size > 0 ) {
+                            io_->seek(-bufRead , BasicIo::cur);
+                            byte* xmp  = new byte[size+1];
+                            io_->read(xmp,size);
+                            int start = 0 ;
+
+                            // http://wwwimages.adobe.com/content/dam/Adobe/en/devnet/xmp/pdfs/XMPSpecificationPart3.pdf
+                            // if we find HasExtendedXMP, set the flag and ignore this block
+                            // the first extended block is a copy of the Standard block.
+                            // a robust implementation enables extended blocks to be out of sequence
+                            if ( ! bExtXMP ) {
+                                while (xmp[start]) start++; start++;
+                                if ( ::strstr((char*)xmp+start,"HasExtendedXMP") ) {
+                                    start  = size ; // ignore this packet, we'll get on the next time around
+                                    bExtXMP = true;
+                                }
+                            } else {
+                                start = 2+35+32+4+4; // Adobe Spec, p19
+                            }
+                            xmp[size]=0;
+
+                            out << xmp + start; // this is all we need to output without the blank line dance.
+                            delete [] xmp;
+                            bufRead = size;
+                        }
+                    } else if ( option == kpsBasic ) {
+                        out << "| " << Internal::binaryToString(buf,32,size>0?2:0);
+                    }
+                }
+
+                // Skip the segment if the size is known
+                if (io_->seek(size - bufRead, BasicIo::cur)) throw Error(14);
+
+                if ( option == kpsBasic ) out << std::endl;
+
+                if (marker == sos_)
+                    // sos_ is immediately followed by entropy-coded data & eoi_
+                    done = true;
+                else {
+                    // Read the beginning of the next segment
+                    marker = advanceToMarker();
+                    REPORT_MARKER;
+                    if ( marker == eoi_ ) {
+                        if ( option == kpsBasic ) out << std::endl;
+                        done = true;
+                    }
+                }
+            }
+        }
+    }
+
     void JpegBase::writeMetadata()
     {
         if (io_->open() != 0) {
@@ -824,6 +965,10 @@ namespace Exiv2 {
             if (marker < 0) throw Error(22);
             ++count;
         }
+
+        // Populate the fake data, only make sense for remoteio, httpio and sshio.
+        // it avoids allocating memory for parts of the file that contain image-date.
+        io_->populateFakeData();
 
         // Copy rest of the Io
         io_->seek(-2, BasicIo::cur);

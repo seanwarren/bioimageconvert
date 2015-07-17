@@ -161,6 +161,27 @@
     <ClCompile Include="..\exiv2\xmpsidecar.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\exiv2\asfvideo.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\exiv2\matroskavideo.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\exiv2\quicktimevideo.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\exiv2\riffvideo.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\exiv2\casiomn.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\exiv2\http.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\exiv2\ssh.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\exiv2\actions.hpp">
@@ -233,9 +254,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\exiv2\makernote_int.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\exiv2\metacopy.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\exiv2\metadatum.hpp">
@@ -344,6 +362,18 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\exiv2\xmpsidecar.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\exiv2\asfvideo.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\exiv2\matroskavideo.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\exiv2\quicktimevideo.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\exiv2\riffvideo.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

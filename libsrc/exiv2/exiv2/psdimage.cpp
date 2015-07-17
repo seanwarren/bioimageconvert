@@ -1,6 +1,6 @@
 // ***************************************************************** -*- C++ -*-
 /*
- * Copyright (C) 2004-2013 Andreas Huggel <ahuggel@gmx.net>
+ * Copyright (C) 2004-2015 Andreas Huggel <ahuggel@gmx.net>
  *
  * This program is part of the Exiv2 distribution.
  *
@@ -20,24 +20,18 @@
  */
 /*
   File:      psdimage.cpp
-  Version:   $Rev: 3091 $
+  Version:   $Rev: 3777 $
   Author(s): Marco Piovanelli, Ovolab (marco)
              Michael Ulbrich (mul)
   History:   05-Mar-2007, marco: created
  */
 // *****************************************************************************
 #include "rcsid_int.hpp"
-EXIV2_RCSID("@(#) $Id: psdimage.cpp 3091 2013-07-24 05:15:04Z robinwmills $")
+EXIV2_RCSID("@(#) $Id: psdimage.cpp 3777 2015-05-02 11:55:40Z ahuggel $")
 
-//#define DEBUG 1
-
-// *****************************************************************************
 // included header files
-#ifdef _MSC_VER
-# include "exv_msvc.h"
-#else
-# include "exv_conf.h"
-#endif
+#include "config.h"
+
 #include "psdimage.hpp"
 #include "jpgimage.hpp"
 #include "image.hpp"
@@ -201,7 +195,7 @@ namespace Exiv2 {
             throw Error(3, "Photoshop");
         }
 
-        // after the color data section, comes a list of resource blocks, preceeded by the total byte size
+        // after the color data section, comes a list of resource blocks, preceded by the total byte size
         if (io_->read(buf, 4) != 4)
         {
             throw Error(3, "Photoshop");
@@ -545,6 +539,10 @@ namespace Exiv2 {
             newResLength += writeXmpData(xmpData_, outIo);
             xmpDone = true;
         }
+
+        // Populate the fake data, only make sense for remoteio, httpio and sshio.
+        // it avoids allocating memory for parts of the file that contain image-date.
+        io_->populateFakeData();
 
         // Copy remaining data
         long readSize = 0;

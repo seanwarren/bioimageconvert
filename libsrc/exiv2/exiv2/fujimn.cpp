@@ -1,6 +1,6 @@
 // ***************************************************************** -*- C++ -*-
 /*
- * Copyright (C) 2004-2013 Andreas Huggel <ahuggel@gmx.net>
+ * Copyright (C) 2004-2015 Andreas Huggel <ahuggel@gmx.net>
  *
  * This program is part of the Exiv2 distribution.
  *
@@ -20,7 +20,7 @@
  */
 /*
   File:      fujimn.cpp
-  Version:   $Rev: 3091 $
+  Version:   $Rev: 3831 $
   Author(s): Andreas Huggel (ahu) <ahuggel@gmx.net>
              Gilles Caulier (gc) <caulier dot gilles at gmail dot com>
   History:   18-Feb-04, ahu: created
@@ -29,7 +29,7 @@
  */
 // *****************************************************************************
 #include "rcsid_int.hpp"
-EXIV2_RCSID("@(#) $Id: fujimn.cpp 3091 2013-07-24 05:15:04Z robinwmills $")
+EXIV2_RCSID("@(#) $Id: fujimn.cpp 3831 2015-05-20 01:27:32Z asp $")
 
 // *****************************************************************************
 // included header files
@@ -261,11 +261,11 @@ namespace Exiv2 {
         TagInfo(0x1405, "MaxFocalLength", N_("Maximum Focal Length"),
                 N_("Maximum focal length"),
                 fujiId, makerTags, unsignedRational, -1, printValue),
-        TagInfo(0x1406, "MaxApertureAtMinFocal", N_("Maximum Aperture at Mininimum Focal"),
-                N_("Maximum aperture at mininimum focal"),
+        TagInfo(0x1406, "MaxApertureAtMinFocal", N_("Maximum Aperture at Minimum Focal"),
+                N_("Maximum aperture at minimum focal"),
                 fujiId, makerTags, unsignedRational, -1, printValue),
-        TagInfo(0x1407, "MaxApertureAtMaxFocal", N_("Maximum Aperture at Maxinimum Focal"),
-                N_("Maximum aperture at maxinimum focal"),
+        TagInfo(0x1407, "MaxApertureAtMaxFocal", N_("Maximum Aperture at Maximum Focal"),
+                N_("Maximum aperture at maximum focal"),
                 fujiId, makerTags, unsignedRational, -1, printValue),
         TagInfo(0x8000, "FileSource", N_("File Source"),
                 N_("File source"),

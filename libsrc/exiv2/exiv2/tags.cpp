@@ -1,6 +1,6 @@
 // ***************************************************************** -*- C++ -*-
 /*
- * Copyright (C) 2004-2013 Andreas Huggel <ahuggel@gmx.net>
+ * Copyright (C) 2004-2015 Andreas Huggel <ahuggel@gmx.net>
  *
  * This program is part of the Exiv2 distribution.
  *
@@ -20,7 +20,7 @@
  */
 /*
   File:      tags.cpp
-  Version:   $Rev: 3201 $
+  Version:   $Rev: 3831 $
   Author(s): Andreas Huggel (ahu) <ahuggel@gmx.net>
              Gilles Caulier (gc) <caulier dot gilles at gmail dot com>
   History:   15-Jan-04, ahu: created
@@ -28,7 +28,7 @@
  */
 // *****************************************************************************
 #include "rcsid_int.hpp"
-EXIV2_RCSID("@(#) $Id: tags.cpp 3201 2013-12-01 12:13:42Z ahuggel $")
+EXIV2_RCSID("@(#) $Id: tags.cpp 3831 2015-05-20 01:27:32Z asp $")
 
 // *****************************************************************************
 // included header files
@@ -42,6 +42,7 @@ EXIV2_RCSID("@(#) $Id: tags.cpp 3201 2013-12-01 12:13:42Z ahuggel $")
 #include "i18n.h"                // NLS support.
 
 #include "canonmn_int.hpp"
+#include "casiomn_int.hpp"
 #include "fujimn_int.hpp"
 #include "minoltamn_int.hpp"
 #include "nikonmn_int.hpp"
@@ -104,6 +105,8 @@ namespace Exiv2 {
         { canonFiId,       "Makernote", "CanonFi",      CanonMakerNote::tagListFi      },
         { canonPaId,       "Makernote", "CanonPa",      CanonMakerNote::tagListPa      },
         { canonPrId,       "Makernote", "CanonPr",      CanonMakerNote::tagListPr      },
+        { casioId,         "Makernote", "Casio",        CasioMakerNote::tagList        },
+        { casio2Id,        "Makernote", "Casio2",       Casio2MakerNote::tagList       },
         { fujiId,          "Makernote", "Fujifilm",     FujiMakerNote::tagList         },
         { minoltaId,       "Makernote", "Minolta",      MinoltaMakerNote::tagList      },
         { minoltaCs5DId,   "Makernote", "MinoltaCs5D",  MinoltaMakerNote::tagListCs5D  },
@@ -296,8 +299,8 @@ namespace Exiv2 {
         { 34892, N_("Linear Raw")         }
     };
 
-    //! Threshholding, tag 0x0107
-    extern const TagDetails exifThreshholding[] = {
+    //! Thresholding, tag 0x0107
+    extern const TagDetails exifThresholding[] = {
         { 1, N_("No dithering or halftoning")           },
         { 2, N_("Ordered dither or halftone technique") },
         { 3, N_("Randomized process")                   }
@@ -438,10 +441,10 @@ namespace Exiv2 {
                 N_("The pixel composition. In JPEG compressed data a JPEG "
                 "marker is used instead of this tag."),
                 ifd0Id, imgStruct, unsignedShort, 1, EXV_PRINT_TAG(exifPhotometricInterpretation)),
-        TagInfo(0x0107, "Threshholding", N_("Threshholding"),
+        TagInfo(0x0107, "Thresholding", N_("Thresholding"),
                 N_("For black and white TIFF files that represent shades of gray, "
                    "the technique used to convert from gray to black and white pixels."),
-                ifd0Id, imgStruct, unsignedShort, 1, EXV_PRINT_TAG(exifThreshholding)), // TIFF tag
+                ifd0Id, imgStruct, unsignedShort, 1, EXV_PRINT_TAG(exifThresholding)), // TIFF tag
         TagInfo(0x0108, "CellWidth", N_("Cell Width"),
                 N_("The width of the dithering or halftoning matrix used to create a "
                    "dithered or halftoned bilevel file."),
@@ -655,7 +658,7 @@ namespace Exiv2 {
                    "table, the ColorMap."),
                 ifd0Id, tiffPm6, unsignedShort, 1, EXV_PRINT_TAG(exifIndexed)), // TIFF&PM6 tag
         TagInfo(0x015b, "JPEGTables", N_("JPEG tables"),
-                N_("This optional tag may be used to encode the JPEG quantization and"
+                N_("This optional tag may be used to encode the JPEG quantization and "
                    "Huffman tables for subsequent use by the JPEG decompression process."),
                 ifd0Id, imgStruct, undefined, 0, printValue), // TIFF/EP tag
         TagInfo(0x015F, "OPIProxy", N_("OPI Proxy"),
@@ -777,7 +780,7 @@ namespace Exiv2 {
                 "written in the order of photographer followed by editor copyright, "
                 "separated by NULL (in this case since the statement also ends with "
                 "a NULL, there are two NULL codes). When only the photographer "
-                "copyright is given, it is terminated by one NULL code . When only "
+                "copyright is given, it is terminated by one NULL code. When only "
                 "the editor copyright is given, the photographer copyright part "
                 "consists of one space followed by a terminating NULL code, then "
                 "the editor copyright is given. When the field is left blank, it is "
@@ -972,7 +975,7 @@ namespace Exiv2 {
                    "scan order."),
                 ifd0Id, dngTags, signedRational, -1, printValue), // DNG tag
         TagInfo(0xc623, "CameraCalibration1", N_("Camera Calibration 1"),
-                N_("CameraClalibration1 defines a calibration matrix that transforms "
+                N_("CameraCalibration1 defines a calibration matrix that transforms "
                    "reference camera native space values to individual camera native "
                    "space values under the first calibration illuminant. The matrix is "
                    "stored in row scan order. This matrix is stored separately from the "
@@ -1568,8 +1571,8 @@ namespace Exiv2 {
                 "the camera optical input and the image values."),
                 exifId, captureCond, undefined, 0, printValue),
         TagInfo(0x8830, "SensitivityType", N_("Sensitivity Type"),
-                N_("The SensitivityType tag indicates PhotographicSensitivity tag. which "
-                "one of the parameters of ISO12232 is the Although it is an optional tag, "
+                N_("The SensitivityType tag indicates which one of the parameters of "
+                "ISO12232 is the PhotographicSensitivity tag. Although it is an optional tag, "
                 "it should be recorded when a PhotographicSensitivity tag is recorded. "
                 "Value = 4, 5, 6, or 7 may be used in case that the values of plural "
                 "parameters are the same."),
@@ -2023,7 +2026,7 @@ namespace Exiv2 {
                 N_("Indicates the geodetic survey data used by the GPS receiver. If the survey data "
                 "is restricted to Japan, the value of this tag is \"TOKYO\" or \"WGS-84\"."),
                 gpsId, gpsTags, asciiString, 0, printValue),
-        TagInfo(0x0013, "GPSDestLatitudeRef", N_("GPS Destination Latitude Refeference"),
+        TagInfo(0x0013, "GPSDestLatitudeRef", N_("GPS Destination Latitude Reference"),
                 N_("Indicates whether the latitude of the destination point is north or south latitude. "
                 "The ASCII value \"N\" indicates north latitude, and \"S\" is south latitude."),
                 gpsId, gpsTags, asciiString, 2, EXV_PRINT_TAG(exifGPSLatitudeRef)),
@@ -2277,6 +2280,7 @@ namespace Exiv2 {
 
     std::ostream& printDegrees(std::ostream& os, const Value& value, const ExifData*)
     {
+        std::ios::fmtflags f( os.flags() );
         if (value.count() == 3) {
             std::ostringstream oss;
             oss.copyfmt(os);
@@ -2289,7 +2293,12 @@ namespace Exiv2 {
             for (int i = 0; i < n + 1; ++i) {
                 const int32_t z = value.toRational(i).first;
                 const int32_t d = value.toRational(i).second;
-                if (d == 0) return os << "(" << value << ")";
+                if (d == 0)
+                {
+                    os << "(" << value << ")";
+                    os.flags(f);
+                    return os;
+                }
                 // Hack: Need Value::toDouble
                 double b = static_cast<double>(z)/d;
                 const int p = z % d == 0 ? 0 : prec[i];
@@ -2301,7 +2310,7 @@ namespace Exiv2 {
         else {
             os << value;
         }
-
+        os.flags(f);
         return os;
     } // printDegrees
 
@@ -2348,6 +2357,7 @@ namespace Exiv2 {
 
     std::ostream& print0x0006(std::ostream& os, const Value& value, const ExifData*)
     {
+        std::ios::fmtflags f( os.flags() );
         std::ostringstream oss;
         oss.copyfmt(os);
         const int32_t d = value.toRational().second;
@@ -2356,11 +2366,13 @@ namespace Exiv2 {
         os << std::fixed << std::setprecision(p) << value.toFloat() << " m";
         os.copyfmt(oss);
 
+        os.flags(f);
         return os;
     }
 
     std::ostream& print0x0007(std::ostream& os, const Value& value, const ExifData*)
     {
+        std::ios::fmtflags f( os.flags() );
         if (value.count() == 3) {
             for (int i = 0; i < 3; ++i) {
                 if (value.toRational(i).second == 0) {
@@ -2390,6 +2402,7 @@ namespace Exiv2 {
             os << value;
         }
 
+        os.flags(f);
         return os;
     }
 
@@ -2472,6 +2485,7 @@ namespace Exiv2 {
 
     std::ostream& print0x829d(std::ostream& os, const Value& value, const ExifData*)
     {
+        std::ios::fmtflags f( os.flags() );
         Rational fnumber = value.toRational();
         if (fnumber.second != 0) {
             std::ostringstream oss;
@@ -2483,6 +2497,7 @@ namespace Exiv2 {
         else {
             os << "(" << value << ")";
         }
+        os.flags(f);
         return os;
     }
 
@@ -2529,6 +2544,7 @@ namespace Exiv2 {
 
     std::ostream& print0x9202(std::ostream& os, const Value& value, const ExifData*)
     {
+        std::ios::fmtflags f( os.flags() );
         if (   value.count() == 0
             || value.toRational().second == 0) {
             return os << "(" << value << ")";
@@ -2537,6 +2553,7 @@ namespace Exiv2 {
         oss.copyfmt(os);
         os << "F" << std::setprecision(2) << fnumber(value.toFloat());
         os.copyfmt(oss);
+        os.flags(f);
         return os;
     }
 
@@ -2564,6 +2581,7 @@ namespace Exiv2 {
 
     std::ostream& print0x9206(std::ostream& os, const Value& value, const ExifData*)
     {
+        std::ios::fmtflags f( os.flags() );
         Rational distance = value.toRational();
         if (distance.first == 0) {
             os << _("Unknown");
@@ -2582,6 +2600,7 @@ namespace Exiv2 {
         else {
             os << "(" << value << ")";
         }
+        os.flags(f);
         return os;
     }
 
@@ -2597,6 +2616,7 @@ namespace Exiv2 {
 
     std::ostream& print0x920a(std::ostream& os, const Value& value, const ExifData*)
     {
+        std::ios::fmtflags f( os.flags() );
         Rational length = value.toRational();
         if (length.second != 0) {
             std::ostringstream oss;
@@ -2609,6 +2629,7 @@ namespace Exiv2 {
         else {
             os << "(" << value << ")";
         }
+        os.flags(f);
         return os;
     }
 
@@ -2661,6 +2682,7 @@ namespace Exiv2 {
 
     std::ostream& print0xa404(std::ostream& os, const Value& value, const ExifData*)
     {
+        std::ios::fmtflags f( os.flags() );
         Rational zoom = value.toRational();
         if (zoom.second == 0) {
             os << _("Digital zoom not used");
@@ -2672,6 +2694,7 @@ namespace Exiv2 {
                << (float)zoom.first / zoom.second;
             os.copyfmt(oss);
         }
+        os.flags(f);
         return os;
     }
 
@@ -3109,15 +3132,19 @@ namespace Exiv2 {
 
     std::ostream& operator<<(std::ostream& os, const TagInfo& ti)
     {
+        std::ios::fmtflags f( os.flags() );
         ExifKey exifKey(ti);
-        return os << exifKey.tagName() << ",\t"
-                  << std::dec << exifKey.tag() << ",\t"
-                  << "0x" << std::setw(4) << std::setfill('0')
-                  << std::right << std::hex << exifKey.tag() << ",\t"
-                  << exifKey.groupName() << ",\t"
-                  << exifKey.key() << ",\t"
-                  << TypeInfo::typeName(exifKey.defaultTypeId()) << ",\t"
-                  << exifKey.tagDesc();
+        os << exifKey.tagName() << ",\t"
+           << std::dec << exifKey.tag() << ",\t"
+           << "0x" << std::setw(4) << std::setfill('0')
+           << std::right << std::hex << exifKey.tag() << ",\t"
+           << exifKey.groupName() << ",\t"
+           << exifKey.key() << ",\t"
+           << TypeInfo::typeName(exifKey.defaultTypeId()) << ",\t"
+           << exifKey.tagDesc();
+
+        os.flags(f);
+        return os;
     }
 
 }                                       // namespace Exiv2

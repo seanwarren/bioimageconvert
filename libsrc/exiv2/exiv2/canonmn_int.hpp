@@ -1,6 +1,6 @@
 // ***************************************************************** -*- C++ -*-
 /*
- * Copyright (C) 2004-2013 Andreas Huggel <ahuggel@gmx.net>
+ * Copyright (C) 2004-2015 Andreas Huggel <ahuggel@gmx.net>
  *
  * This program is part of the Exiv2 distribution.
  *
@@ -23,7 +23,7 @@
   @brief   Canon makernote tags.<BR>References:<BR>
            [1] <a href="http://www.burren.cx/david/canon.html">EXIF MakerNote of Canon</a> by David Burren<br>
            [2] <a href="http://www.sno.phy.queensu.ca/~phil/exiftool/TagNames/Canon.html">Canon makernote tags</a> by Phil Harvey
-  @version $Rev: 3091 $
+  @version $Rev: 3777 $
   @author  <a href="mailto:ahuggel@gmx.net">Andreas Huggel (ahu)</a><br>
            <a href="mailto:david@edeca.net">David Cannings (dc)</a>
            <a href="mailto:andi.clemens@gmx.net">Andi Clemens (ac)</a>
@@ -106,6 +106,8 @@ namespace Exiv2 {
         static std::ostream& printSi0x0016(std::ostream& os, const Value& value, const ExifData*);
         //! MeasuredEV2
         static std::ostream& printSi0x0017(std::ostream& os, const Value& value, const ExifData*);
+        //! Focus Distance
+        static std::ostream& printFiFocusDistance(std::ostream& os, const Value& value, const ExifData*);
         //@}
 
     private:

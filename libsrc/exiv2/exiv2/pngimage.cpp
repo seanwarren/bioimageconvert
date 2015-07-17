@@ -1,6 +1,6 @@
 // ***************************************************************** -*- C++ -*-
 /*
- * Copyright (C) 2004-2013 Andreas Huggel <ahuggel@gmx.net>
+ * Copyright (C) 2004-2015 Andreas Huggel <ahuggel@gmx.net>
  *
  * This program is part of the Exiv2 distribution.
  *
@@ -20,32 +20,24 @@
  */
 /*
   File:    pngimage.cpp
-  Version: $Rev: 3091 $
+  Version: $Rev: 3815 $
   Author(s): Gilles Caulier (cgilles) <caulier dot gilles at gmail dot com>
   History: 12-Jun-06, gc: submitted
   Credits: See header file
  */
 // *****************************************************************************
 #include "rcsid_int.hpp"
-EXIV2_RCSID("@(#) $Id: pngimage.cpp 3091 2013-07-24 05:15:04Z robinwmills $")
+EXIV2_RCSID("@(#) $Id: pngimage.cpp 3815 2015-05-10 09:37:34Z ahuggel $")
 
-// *****************************************************************************
-
-//#define DEBUG 1
-
-// *****************************************************************************
 // included header files
-#ifdef _MSC_VER
-# include "exv_msvc.h"
-#else
-# include "exv_conf.h"
-#endif
+#include "config.h"
 
-#ifdef EXV_HAVE_LIBZ
+#ifdef   EXV_HAVE_LIBZ
 #include "pngchunk_int.hpp"
 #include "pngimage.hpp"
 #include "jpgimage.hpp"
 #include "image.hpp"
+#include "image_int.hpp"
 #include "basicio.hpp"
 #include "error.hpp"
 #include "futils.hpp"
@@ -98,6 +90,90 @@ namespace Exiv2 {
     std::string PngImage::mimeType() const
     {
         return "image/png";
+    }
+
+    void PngImage::printStructure(std::ostream& out, PrintStructureOption option)
+    {
+        if (io_->open() != 0) {
+            throw Error(9, io_->path(), strError());
+        }
+        IoCloser closer(*io_);
+        // Ensure that this is the correct image type
+        if (!isPngType(*io_, true)) {
+            if (io_->error() || io_->eof()) throw Error(14);
+            throw Error(3, "PNG");
+        }
+
+        char    chType[5];
+        chType[0]=0;
+        chType[4]=0;
+
+        if ( option == kpsBasic || option == kpsXMP ) {
+
+            if ( option == kpsBasic ) {
+                out << "STRUCTURE OF PNG FILE: " << io_->path() << std::endl;
+                out << " address | index | chunk_type |  length | data" << std::endl;
+            }
+
+            long       index   = 0;
+            const long imgSize = io_->size();
+            DataBuf    cheaderBuf(8);
+
+            while( !io_->eof() && ::strcmp(chType,"IEND") ) {
+                size_t address = io_->tell();
+
+                std::memset(cheaderBuf.pData_, 0x0, cheaderBuf.size_);
+                long bufRead = io_->read(cheaderBuf.pData_, cheaderBuf.size_);
+                if (io_->error()) throw Error(14);
+                if (bufRead != cheaderBuf.size_) throw Error(20);
+
+                // Decode chunk data length.
+                uint32_t dataOffset = Exiv2::getULong(cheaderBuf.pData_, Exiv2::bigEndian);
+                long pos = io_->tell();
+                if (   pos == -1
+                    || dataOffset > uint32_t(0x7FFFFFFF)
+                    || static_cast<long>(dataOffset) > imgSize - pos) throw Exiv2::Error(14);
+
+                for (int i = 4; i < 8; i++) {
+                    chType[i-4]=cheaderBuf.pData_[i];
+                }
+
+                uint32_t    blen = 32   ;
+                uint32_t    dOff = dataOffset;
+                std::string dataString ;
+
+                if ( dataOffset > blen ) {
+                    DataBuf buff(blen+1);
+                    io_->read(buff.pData_,blen);
+                    dataOffset -=  blen ;
+                    dataString  = Internal::binaryToString(buff, blen);
+                }
+
+                if ( option == kpsBasic ) out << Internal::stringFormat("%8d | %5d | %10s |%8d | ",(uint32_t)address, index++,chType,dOff) << dataString << std::endl;
+                // for XMP, back up and read the whole block
+                const char* key = "XML:com.adobe.xmp" ;
+                size_t      start = ::strlen(key);
+
+                if ( option == kpsXMP && dataString.find(key)==0 ) {
+#if defined(_MSC_VER)
+                    io_->seek(-static_cast<int64_t>(blen) , BasicIo::cur);
+#else
+                    io_->seek(-static_cast<long>(blen) , BasicIo::cur);
+#endif
+                    dataOffset = dOff ;
+                    byte* xmp  = new byte[dataOffset+5];
+                    io_->read(xmp,dataOffset+4);
+                    xmp[dataOffset]=0;
+                    while ( xmp[start] == 0 ) start++; // crawl over the '\0' bytes between XML:....\0\0<xml stuff
+                    out << xmp+start;                  // output the xml
+                    delete [] xmp;
+                    dataOffset = 0;
+                }
+
+                if ( dataOffset ) io_->seek(dataOffset + 4 , BasicIo::cur);
+                if (io_->error()) throw Error(14);
+            }
+        }
     }
 
     void PngImage::readMetadata()

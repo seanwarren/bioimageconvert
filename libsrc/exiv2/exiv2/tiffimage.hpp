@@ -1,6 +1,6 @@
 // ***************************************************************** -*- C++ -*-
 /*
- * Copyright (C) 2004-2013 Andreas Huggel <ahuggel@gmx.net>
+ * Copyright (C) 2004-2015 Andreas Huggel <ahuggel@gmx.net>
  *
  * This program is part of the Exiv2 distribution.
  *
@@ -21,7 +21,7 @@
 /*!
   @file    tiffimage.hpp
   @brief   Class TiffImage
-  @version $Rev: 3201 $
+  @version $Rev: 3090 $
   @author  Andreas Huggel (ahu)
            <a href="mailto:ahuggel@gmx.net">ahuggel@gmx.net</a>
   @date    15-Mar-06, ahu: created
@@ -86,6 +86,15 @@ namespace Exiv2 {
         //@{
         void readMetadata();
         void writeMetadata();
+
+        /*!
+          @brief Print out the structure of image file.
+          @throw Error if reading of the file fails or the image data is
+                not valid (does not look like data of the specific image type).
+          @caution This function is not thread safe and intended for exiv2 -pS for debugging.
+         */
+        void printStructure(std::ostream& out, PrintStructureOption option);
+
         /*!
           @brief Not supported. TIFF format does not contain a comment.
               Calling this function will throw an Error(32).
@@ -119,8 +128,8 @@ namespace Exiv2 {
         // DATA
         mutable std::string primaryGroup_;     //!< The primary group
         mutable std::string mimeType_;         //!< The MIME type
-        mutable int pixelWidth_;               //!< Width of the primary image in pixels 
-        mutable int pixelHeight_;              //!< Height of the primary image in pixels 
+        mutable int pixelWidth_;               //!< Width of the primary image in pixels
+        mutable int pixelHeight_;              //!< Height of the primary image in pixels
 
     }; // class TiffImage
 

@@ -1,6 +1,6 @@
 // ***************************************************************** -*- C++ -*-
 /*
- * Copyright (C) 2004-2013 Andreas Huggel <ahuggel@gmx.net>
+ * Copyright (C) 2004-2015 Andreas Huggel <ahuggel@gmx.net>
  *
  * This program is part of the Exiv2 distribution.
  *
@@ -43,6 +43,7 @@
 #include "exif.hpp"
 #include "futils.hpp"
 #include "gifimage.hpp"
+#include "http.hpp"
 #include "image.hpp"
 #include "iptc.hpp"
 #include "jp2image.hpp"
@@ -57,6 +58,9 @@
 #include "psdimage.hpp"
 #include "rafimage.hpp"
 #include "rw2image.hpp"
+#if EXV_USE_SSH == 1
+#include "ssh.hpp"
+#endif
 #include "tags.hpp"
 #include "tgaimage.hpp"
 #include "tiffimage.hpp"

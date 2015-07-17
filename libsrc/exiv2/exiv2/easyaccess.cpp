@@ -1,6 +1,6 @@
 // ***************************************************************** -*- C++ -*-
 /*
- * Copyright (C) 2004-2013 Andreas Huggel <ahuggel@gmx.net>
+ * Copyright (C) 2004-2015 Andreas Huggel <ahuggel@gmx.net>
  *
  * This program is part of the Exiv2 distribution.
  *
@@ -20,14 +20,14 @@
  */
 /*
   File:      easyaccess.cpp
-  Version:   $Rev: 3091 $
+  Version:   $Rev: 3777 $
   Author(s): Carsten Pfeiffer <pfeiffer@kde.org>
              Andreas Huggel (ahu) <ahuggel@gmx.net>
   History:   28-Feb-09, gis: created
  */
 // *****************************************************************************
 #include "rcsid_int.hpp"
-EXIV2_RCSID("@(#) $Id: easyaccess.cpp 3091 2013-07-24 05:15:04Z robinwmills $")
+EXIV2_RCSID("@(#) $Id: easyaccess.cpp 3777 2015-05-02 11:55:40Z ahuggel $")
 
 // *****************************************************************************
 // included header files
@@ -106,7 +106,10 @@ namespace Exiv2 {
             "Exif.Pentax.ISO",
             "Exif.PentaxDng.ISO",
             "Exif.Olympus.ISOSpeed",
-            "Exif.Samsung2.ISO"
+            "Exif.Samsung2.ISO",
+            "Exif.Casio.ISO",
+            "Exif.Casio2.ISO",
+            "Exif.Casio2.ISOSpeed"
         };
 
         // Find the first ISO value which is not "0"
@@ -220,7 +223,10 @@ namespace Exiv2 {
             "Exif.Sony1Cs.Quality",
             "Exif.Sony2.JPEGQuality",
             "Exif.Sony2.Quality",
-            "Exif.Sony2Cs.Quality"
+            "Exif.Sony2Cs.Quality",
+            "Exif.Casio.Quality",
+            "Exif.Casio2.QualityMode",
+            "Exif.Casio2.Quality"
         };
         return findMetadatum(ed, keys, EXV_COUNTOF(keys));
     }
@@ -248,6 +254,9 @@ namespace Exiv2 {
             "Exif.Sony2.WhiteBalance",
             "Exif.Sony1.WhiteBalance2",
             "Exif.Sony2.WhiteBalance2",
+            "Exif.Casio.WhiteBalance",
+            "Exif.Casio2.WhiteBalance",
+            "Exif.Casio2.WhiteBalance2",
             "Exif.Photo.WhiteBalance"
         };
         return findMetadatum(ed, keys, EXV_COUNTOF(keys));
@@ -290,7 +299,10 @@ namespace Exiv2 {
             "Exif.Panasonic.Saturation",
             "Exif.Pentax.Saturation",
             "Exif.PentaxDng.Saturation",
-            "Exif.Sigma.Saturation"
+            "Exif.Sigma.Saturation",
+            "Exif.Casio.Saturation",
+            "Exif.Casio2.Saturation",
+            "Exif.Casio2.Saturation2"
         };
         return findMetadatum(ed, keys, EXV_COUNTOF(keys));
     }
@@ -309,7 +321,10 @@ namespace Exiv2 {
             "Exif.Panasonic.Sharpness",
             "Exif.Pentax.Sharpness",
             "Exif.PentaxDng.Sharpness",
-            "Exif.Sigma.Sharpness"
+            "Exif.Sigma.Sharpness",
+            "Exif.Casio.Sharpness",
+            "Exif.Casio2.Sharpness",
+            "Exif.Casio2.Sharpness2"
         };
         return findMetadatum(ed, keys, EXV_COUNTOF(keys));
     }
@@ -328,7 +343,11 @@ namespace Exiv2 {
             "Exif.Panasonic.Contrast",
             "Exif.Pentax.Contrast",
             "Exif.PentaxDng.Contrast",
-            "Exif.Sigma.Contrast"
+            "Exif.Sigma.Contrast",
+            "Exif.Casio.Contrast",
+            "Exif.Casio2.Contrast",
+            "Exif.Casio2.Contrast2"
+
         };
         return findMetadatum(ed, keys, EXV_COUNTOF(keys));
     }
@@ -395,13 +414,17 @@ namespace Exiv2 {
             "Exif.Photo.SubjectDistance",
             "Exif.Image.SubjectDistance",
             "Exif.CanonSi.SubjectDistance",
+            "Exif.CanonFi.FocusDistanceUpper",
+            "Exif.CanonFi.FocusDistanceLower",
             "Exif.MinoltaCsNew.FocusDistance",
             "Exif.Nikon1.FocusDistance",
             "Exif.Nikon3.FocusDistance",
             "Exif.NikonLd2.FocusDistance",
             "Exif.NikonLd3.FocusDistance",
             "Exif.Olympus.FocusDistance",
-            "Exif.OlympusFi.FocusDistance"
+            "Exif.OlympusFi.FocusDistance",
+            "Exif.Casio.ObjectDistance",
+            "Exif.Casio2.ObjectDistance"
         };
         return findMetadatum(ed, keys, EXV_COUNTOF(keys));
     }
@@ -430,7 +453,8 @@ namespace Exiv2 {
             "Exif.NikonLd3.FocalLength",
             "Exif.MinoltaCsNew.FocalLength",
             "Exif.Pentax.FocalLength",
-            "Exif.PentaxDng.FocalLength"
+            "Exif.PentaxDng.FocalLength",
+            "Exif.Casio2.FocalLength"
         };
         return findMetadatum(ed, keys, EXV_COUNTOF(keys));
     }
@@ -457,7 +481,9 @@ namespace Exiv2 {
             "Exif.Sony2Cs.LocalAFAreaPoint",
             "Exif.Sony1Cs2.LocalAFAreaPoint",
             "Exif.Sony2Cs2.LocalAFAreaPoint",
-            "Exif.Sony1MltCsA100.LocalAFAreaPoint"
+            "Exif.Sony1MltCsA100.LocalAFAreaPoint",
+            "Exif.Casio.AFPoint",
+            "Exif.Casio2.AFPointPosition"
         };
         return findMetadatum(ed, keys, EXV_COUNTOF(keys));
     }

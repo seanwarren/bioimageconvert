@@ -1,6 +1,6 @@
 /* **************************************************************** -*- C -*- */
 /*
- * Copyright (C) 2004-2013 Andreas Huggel <ahuggel@gmx.net>
+ * Copyright (C) 2004-2015 Andreas Huggel <ahuggel@gmx.net>
  *
  * This program is part of the Exiv2 distribution.
  *
@@ -21,18 +21,14 @@
 /*
   File:      i18n.h
   Brief:     i18n definitions. Do not use. This is an Exiv2 internal header.
-  Version:   $Rev: 3201 $
+  Version:   $Rev: 2681 $
   Author(s): Gilles Caulier (gc) <caulier.gilles@kdemail.net>
   History:   01-Nov-06, gc: created
  */
 #ifndef I18N_H_
 #define I18N_H_
 
-#ifdef _MSC_VER
-# include "exv_msvc.h"
-#else
-# include "exv_conf.h"
-#endif
+#include "config.h"
 
 /* NLS can be disabled through the configure --disable-nls option. */
 #ifdef EXV_ENABLE_NLS

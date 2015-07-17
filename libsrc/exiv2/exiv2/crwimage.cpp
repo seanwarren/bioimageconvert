@@ -1,6 +1,6 @@
 // ***************************************************************** -*- C++ -*-
 /*
- * Copyright (C) 2004-2013 Andreas Huggel <ahuggel@gmx.net>
+ * Copyright (C) 2004-2015 Andreas Huggel <ahuggel@gmx.net>
  *
  * This program is part of the Exiv2 distribution.
  *
@@ -20,26 +20,17 @@
  */
 /*
   File:      crwimage.cpp
-  Version:   $Rev: 3091 $
+  Version:   $Rev: 3777 $
   Author(s): Andreas Huggel (ahu) <ahuggel@gmx.net>
   History:   28-Aug-05, ahu: created
 
  */
 // *****************************************************************************
 #include "rcsid_int.hpp"
-EXIV2_RCSID("@(#) $Id: crwimage.cpp 3091 2013-07-24 05:15:04Z robinwmills $")
+EXIV2_RCSID("@(#) $Id: crwimage.cpp 3777 2015-05-02 11:55:40Z ahuggel $")
 
-// Define DEBUG to output debug information to std::cerr, e.g, by calling make
-// like this: make DEFS=-DDEBUG crwimage.o
-//#define DEBUG 1
-
-// *****************************************************************************
 // included header files
-#ifdef _MSC_VER
-# include "exv_msvc.h"
-#else
-# include "exv_conf.h"
-#endif
+#include "config.h"
 
 #include "crwimage.hpp"
 #include "crwimage_int.hpp"
@@ -660,10 +651,12 @@ namespace Exiv2 {
 
     void CiffHeader::print(std::ostream& os, const std::string& prefix) const
     {
+        std::ios::fmtflags f( os.flags() );
         os << prefix
            << _("Header, offset") << " = 0x" << std::setw(8) << std::setfill('0')
            << std::hex << std::right << offset_ << "\n";
         if (pRootDir_) pRootDir_->print(os, byteOrder_, prefix);
+        os.flags(f);
     } // CiffHeader::print
 
     void CiffComponent::print(std::ostream&      os,
@@ -779,11 +772,11 @@ namespace Exiv2 {
     CiffComponent* CiffDirectory::doFindComponent(uint16_t crwTagId,
                                                   uint16_t crwDir) const
     {
-        CiffComponent* cc = 0;
+    	CiffComponent* cc = NULL;
         const Components::const_iterator b = components_.begin();
         const Components::const_iterator e = components_.end();
         for (Components::const_iterator i = b; i != e; ++i) {
-            cc = (*i)->findComponent(crwTagId, crwDir);
+        	cc = (*i)->findComponent(crwTagId, crwDir);
             if (cc) return cc;
         }
         return 0;
@@ -797,8 +790,7 @@ namespace Exiv2 {
         assert(rootDirectory == 0x0000);
         crwDirs.pop();
         if (!pRootDir_) pRootDir_ = new CiffDirectory;
-        CiffComponent* cc = pRootDir_->add(crwDirs, crwTagId);
-        cc->setValue(buf);
+        if ( pRootDir_) pRootDir_->add(crwDirs, crwTagId)->setValue(buf);
     } // CiffHeader::add
 
     CiffComponent* CiffComponent::add(CrwDirs& crwDirs, uint16_t crwTagId)
@@ -825,8 +817,6 @@ namespace Exiv2 {
               if not found, create it
               set value
         */
-        AutoPtr m;
-        CiffComponent* cc = 0;
         const Components::iterator b = components_.begin();
         const Components::iterator e = components_.end();
 
@@ -836,35 +826,35 @@ namespace Exiv2 {
             // Find the directory
             for (Components::iterator i = b; i != e; ++i) {
                 if ((*i)->tag() == csd.crwDir_) {
-                    cc = *i;
+                    cc_ = *i;
                     break;
                 }
             }
-            if (cc == 0) {
+            if (cc_ == 0) {
                 // Directory doesn't exist yet, add it
-                m = AutoPtr(new CiffDirectory(csd.crwDir_, csd.parent_));
-                cc = m.get();
-                add(m);
+                m_ = AutoPtr(new CiffDirectory(csd.crwDir_, csd.parent_));
+                cc_ = m_.get();
+                add(m_);
             }
             // Recursive call to next lower level directory
-            cc = cc->add(crwDirs, crwTagId);
+            cc_ = cc_->add(crwDirs, crwTagId);
         }
         else {
             // Find the tag
             for (Components::iterator i = b; i != e; ++i) {
                 if ((*i)->tagId() == crwTagId) {
-                    cc = *i;
+                    cc_ = *i;
                     break;
                 }
             }
-            if (cc == 0) {
+            if (cc_ == 0) {
                 // Tag doesn't exist yet, add it
-                m = AutoPtr(new CiffEntry(crwTagId, tag()));
-                cc = m.get();
-                add(m);
+                m_ = AutoPtr(new CiffEntry(crwTagId, tag()));
+                cc_ = m_.get();
+                add(m_);
             }
         }
-        return cc;
+        return cc_;
     } // CiffDirectory::doAdd
 
     void CiffHeader::remove(uint16_t crwTagId, uint16_t crwDir)

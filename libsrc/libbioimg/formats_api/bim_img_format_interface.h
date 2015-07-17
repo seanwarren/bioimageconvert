@@ -88,7 +88,8 @@ typedef enum {
   FMT_UNDEFINED   = 0,  // placeholder type
   FMT_UNSIGNED    = 1,  // unsigned integer
   FMT_SIGNED      = 2,  // signed integer
-  FMT_FLOAT       = 3   // floating point
+  FMT_FLOAT       = 3,  // floating point
+  FMT_COMPLEX     = 4   // complex number containing two values 
 } DataFormat;
 
 // modes are declared similarry to Adobe Photoshop, but there are differences

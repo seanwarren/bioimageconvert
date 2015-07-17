@@ -1,6 +1,6 @@
 // ***************************************************************** -*- C++ -*-
 /*
- * Copyright (C) 2004-2013 Andreas Huggel <ahuggel@gmx.net>
+ * Copyright (C) 2004-2015 Andreas Huggel <ahuggel@gmx.net>
  *
  * This program is part of the Exiv2 distribution.
  *
@@ -40,13 +40,25 @@
 #include <set>
 #include <iostream>
 
+#if EXV_HAVE_REGEX
+#include <regex.h>
+#endif
+
 // *****************************************************************************
 // class definitions
 
 //! Command identifiers
 enum CmdId { invalidCmdId, add, set, del, reg };
 //! Metadata identifiers
-enum MetadataId { invalidMetadataId, iptc, exif, xmp };
+// enum MetadataId { invalidMetadataId, iptc, exif, xmp };
+//! Metadata identifiers
+// mdNone=0, mdExif=1, mdIptc=2, mdComment=4, mdXmp=8
+enum MetadataId { invalidMetadataId = Exiv2::mdNone
+                , iptc = Exiv2::mdIptc
+                , exif = Exiv2::mdExif
+                , xmp  = Exiv2::mdXmp
+                } ;
+
 //! Structure for one parsed modification command
 struct ModifyCmd {
     //! C'tor
@@ -116,6 +128,8 @@ public:
     typedef std::vector<std::string> Files;
     //! Container for preview image numbers
     typedef std::set<int> PreviewNumbers;
+    //! Container for greps
+    typedef  exv_grep_keys_t Greps;
     //! Container for keys
     typedef std::vector<std::string> Keys;
 
@@ -132,7 +146,9 @@ public:
         pmSummary,
         pmList,
         pmComment,
-        pmPreview
+        pmPreview,
+		pmStructure,
+		pmXMP
     };
 
     //! Individual items to print, bitmap
@@ -204,7 +220,8 @@ public:
     std::string suffix_;                //!< File extension of the file to insert
     Files files_;                       //!< List of non-option arguments.
     PreviewNumbers previewNumbers_;     //!< List of preview numbers
-    Keys keys_;                         //!< List of keys to 'grep' from the metadata
+    Greps greps_;                       //!< List of keys to 'grep' from the metadata
+    Keys  keys_;                        //!< List of keys to match from the metadata
     std::string charset_;               //!< Charset to use for UNICODE Exif user comment
 
 private:
@@ -220,7 +237,7 @@ private:
       @brief Default constructor. Note that optstring_ is initialized here.
              The c'tor is private to force instantiation through instance().
      */
-    Params() : optstring_(":hVvqfbuktTFa:Y:O:D:r:p:P:d:e:i:c:m:M:l:S:g:n:Q:"),
+    Params() : optstring_(":hVvqfbuktTFa:Y:O:D:r:p:P:d:e:i:c:m:M:l:S:g:K:n:Q:"),
                help_(false),
                version_(false),
                verbose_(false),
@@ -253,6 +270,8 @@ private:
     //! @name Helpers
     //@{
     int setLogLevel(const std::string& optarg);
+    int evalGrep( const std::string& optarg);
+    int evalKey( const std::string& optarg);
     int evalRename(int opt, const std::string& optarg);
     int evalAdjust(const std::string& optarg);
     int evalYodAdjust(const Yod& yod, const std::string& optarg);

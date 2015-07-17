@@ -1,6 +1,6 @@
 // ***************************************************************** -*- C++ -*-
 /*
- * Copyright (C) 2004-2013 Andreas Huggel <ahuggel@gmx.net>
+ * Copyright (C) 2004-2015 Andreas Huggel <ahuggel@gmx.net>
  *
  * This program is part of the Exiv2 distribution.
  *
@@ -20,7 +20,7 @@
  */
 /*
   File:      sigmamn.cpp
-  Version:   $Rev: 3201 $
+  Version:   $Rev: 3777 $
   Author(s): Andreas Huggel (ahu) <ahuggel@gmx.net>
   History:   02-Apr-04, ahu: created
   Credits:   Sigma and Foveon MakerNote implemented according to the specification
@@ -29,7 +29,7 @@
  */
 // *****************************************************************************
 #include "rcsid_int.hpp"
-EXIV2_RCSID("@(#) $Id: sigmamn.cpp 3201 2013-12-01 12:13:42Z ahuggel $")
+EXIV2_RCSID("@(#) $Id: sigmamn.cpp 3777 2015-05-02 11:55:40Z ahuggel $")
 
 // *****************************************************************************
 // included header files

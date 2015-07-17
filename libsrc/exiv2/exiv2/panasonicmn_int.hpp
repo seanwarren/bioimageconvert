@@ -1,6 +1,6 @@
 // ***************************************************************** -*- C++ -*-
 /*
- * Copyright (C) 2004-2013 Andreas Huggel <ahuggel@gmx.net>
+ * Copyright (C) 2004-2015 Andreas Huggel <ahuggel@gmx.net>
  *
  * This program is part of the Exiv2 distribution.
  *
@@ -24,7 +24,7 @@
            <a href="http://www.compton.nu/panasonic.html">Panasonic MakerNote Information</a> by Tom Hughes,
            Panasonic.pm of <a href="http://www.sno.phy.queensu.ca/~phil/exiftool/">ExifTool</a> by Phil Harvey,
            <a href="http://www.ozhiker.com/electronics/pjmt/jpeg_info/panasonic_mn.html">Panasonic Makernote Format Specification</a> by Evan Hunter.
-  @version $Rev: 3091 $
+  @version $Rev: 3777 $
   @author  Andreas Huggel (ahu)
            <a href="mailto:ahuggel@gmx.net">ahuggel@gmx.net</a>
   @author  Gilles Caulier (gc)
@@ -65,6 +65,22 @@ namespace Exiv2 {
         static std::ostream& print0x000f(std::ostream& os, const Value& value, const ExifData*);
         //! Print WhiteBalanceBias
         static std::ostream& print0x0023(std::ostream& os, const Value& value, const ExifData*);
+        //! Print TimeSincePowerOn
+        static std::ostream& print0x0029(std::ostream& os, const Value& value, const ExifData*);
+        //! Print Baby age
+        static std::ostream& print0x0033(std::ostream& os, const Value& value, const ExifData*);
+        //! Print Travel days
+        static std::ostream& print0x0036(std::ostream& os, const Value& value, const ExifData*);
+        //! Print ISO
+        static std::ostream& print0x003c(std::ostream& os, const Value& value, const ExifData*);
+        //! Print special text values: title, landmark, county and so on
+        static std::ostream& printPanasonicText(std::ostream& os, const Value& value, const ExifData*);
+        //! Print accerometer readings
+        static std::ostream& printAccelerometer(std::ostream& os, const Value& value, const ExifData*);
+        //! Print roll angle
+        static std::ostream& printRollAngle(std::ostream& os, const Value& value, const ExifData*);
+        //! Print pitch angle
+        static std::ostream& printPitchAngle(std::ostream& os, const Value& value, const ExifData*);
         //@}
 
     private:

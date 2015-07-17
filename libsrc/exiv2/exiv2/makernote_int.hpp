@@ -1,6 +1,6 @@
 // ***************************************************************** -*- C++ -*-
 /*
- * Copyright (C) 2004-2013 Andreas Huggel <ahuggel@gmx.net>
+ * Copyright (C) 2004-2015 Andreas Huggel <ahuggel@gmx.net>
  *
  * This program is part of the Exiv2 distribution.
  *
@@ -24,7 +24,7 @@
            vendor specific makernote implementations.<BR>References:<BR>
   [1] <a href="http://www.sno.phy.queensu.ca/~phil/exiftool/">ExifTool</a> by Phil Harvey<BR>
   [2] <a href="http://www.cybercom.net/~dcoffin/dcraw/">Decoding raw digital photos in Linux</a> by Dave Coffin
-  @version $Rev: 3091 $
+  @version $Rev: 3777 $
   @author  Andreas Huggel (ahu)
            <a href="mailto:ahuggel@gmx.net">ahuggel@gmx.net</a>
   @date    11-Apr-06, ahu: created
@@ -518,7 +518,41 @@ namespace Exiv2 {
 
     }; // class SonyMnHeader
 
-// *****************************************************************************
+    //! Header of a Casio2 Makernote
+    class Casio2MnHeader : public MnHeader {
+    public:
+        //! @name Creators
+        //@{
+        //! Default constructor
+        Casio2MnHeader();
+        //! Virtual destructor.
+        virtual ~Casio2MnHeader();
+        //@}
+        //! @name Manipulators
+        //@{
+        virtual bool read(const byte* pData,
+                          uint32_t    size,
+                          ByteOrder   byteOrder);
+        //@}
+        //! @name Accessors
+        //@{
+        virtual uint32_t size() const;
+        virtual uint32_t write(IoWrapper& ioWrapper, ByteOrder byteOrder) const;
+        virtual uint32_t ifdOffset() const;
+        virtual ByteOrder byteOrder() const;
+        //@}
+        //! Return the size of the makernote header signature
+        static uint32_t sizeOfSignature();
+
+    private:
+        DataBuf buf_;                   //!< Raw header data
+        uint32_t start_;                //!< Start of the mn IFD rel. to mn start
+        static const byte signature_[]; //!< Casio makernote header signature
+        static const ByteOrder byteOrder_; //!< Byteorder for makernote (always big endian)
+
+    }; // class Casio2MnHeader
+
+    // *****************************************************************************
 // template, inline and free functions
 
     //! Function to create a simple IFD makernote (Canon, Minolta, Nikon1)
@@ -658,6 +692,19 @@ namespace Exiv2 {
 
     //! Function to create a Sony2 makernote
     TiffComponent* newSony2Mn2(uint16_t tag,
+                               IfdId    group,
+                               IfdId    mnGroup);
+
+    //! Function to create a Casio2 makernote
+    TiffComponent* newCasioMn(uint16_t    tag,
+                             IfdId       group,
+                             IfdId       mnGroup,
+                             const byte* pData,
+                             uint32_t    size,
+                             ByteOrder   byteOrder);
+
+    //! Function to create a Casio2 makernote
+    TiffComponent* newCasio2Mn2(uint16_t tag,
                                IfdId    group,
                                IfdId    mnGroup);
 

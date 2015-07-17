@@ -1,6 +1,6 @@
 // ***************************************************************** -*- C++ -*-
 /*
- * Copyright (C) 2004-2013 Andreas Huggel <ahuggel@gmx.net>
+ * Copyright (C) 2004-2015 Andreas Huggel <ahuggel@gmx.net>
  *
  * This program is part of the Exiv2 distribution.
  *
@@ -20,22 +20,17 @@
  */
 /*
   File:      orfimage.cpp
-  Version:   $Rev: 3190 $
+  Version:   $Rev: 3846 $
   Author(s): Andreas Huggel (ahu) <ahuggel@gmx.net>
   History:   13-May-06, ahu: created
   Credits:   See header file
  */
 // *****************************************************************************
 #include "rcsid_int.hpp"
-EXIV2_RCSID("@(#) $Id: orfimage.cpp 3190 2013-10-06 14:04:48Z ahuggel $")
+EXIV2_RCSID("@(#) $Id: orfimage.cpp 3846 2015-06-08 14:39:59Z ahuggel $")
 
-// *****************************************************************************
 // included header files
-#ifdef _MSC_VER
-# include "exv_msvc.h"
-#else
-# include "exv_conf.h"
-#endif
+#include "config.h"
 
 #include "orfimage.hpp"
 #include "orfimage_int.hpp"

@@ -1,6 +1,6 @@
 // ********************************************************* -*- C++ -*-
 /*
- * Copyright (C) 2004-2013 Andreas Huggel <ahuggel@gmx.net>
+ * Copyright (C) 2004-2015 Andreas Huggel <ahuggel@gmx.net>
  *
  * This program is part of the Exiv2 distribution.
  *
@@ -21,7 +21,7 @@
 /*!
   @file    utils.hpp
   @brief   A collection of utility functions
-  @version $Rev: 3201 $
+  @version $Rev: 3090 $
   @author  Andreas Huggel (ahu)
            <a href="mailto:ahuggel@gmx.net">ahuggel@gmx.net</a>
   @date    12-Dec-03, ahu: created
@@ -31,6 +31,8 @@
 
 // *********************************************************************
 // included header files
+#include "futils.hpp"
+
 // + standard includes
 #include <string>
 
@@ -161,7 +163,7 @@ private:
     bool strtol(const char* nptr, long& n);
 
     /*!
-      @brief Replaces all occurences of \em searchText in the \em text string
+      @brief Replaces all occurrences of \em searchText in the \em text string
              by \em replaceText.
      */
     void replace(std::string& text, const std::string& searchText, const std::string& replaceText);

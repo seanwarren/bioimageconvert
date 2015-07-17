@@ -6,7 +6,7 @@
   <ItemDefinitionGroup>
     <ClCompile>
       <PreprocessorDefinitions>__STDC_CONSTANT_MACROS;TIF_PLATFORM_CONSOLE;BIM_FFMPEG_FORMAT;FFMPEG_VIDEO_DISABLE_MATLAB;LIBRAW_BUILDLIB;LIBRAW_NODLL;USE_JPEG;BIM_USE_EIGEN;BIM_USE_OPENMP;BIM_USE_OPENCV;BIM_USE_TRANSFORMS;BIM_USE_FILTERS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\..\libbioimg;..\..\..\libbioimg\formats;..\..\..\libbioimg\formats_api;..\..\..\libbioimg\core_lib;..\..\..\libjpeg-turbo;..\..\..\libpng;..\..\..\libtiff;..\..\..\zlib;..\..\..\ffmpeg\include;..\..\..\ffmpeg\include-win;..\..\..\libraw;..\..\..\pole;..\..\..\exiv2;..\..\..\libgeotiff;..\..\..\openjpeg\src\lib\openjp2;..\..\..\openjpeg\src\bin\common;..\..\..\eigen;..\..\..\jzon;..\..\..\libfftw\src\api;..\..\..\opencv\build\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\libbioimg;..\..\..\libbioimg\formats;..\..\..\libbioimg\formats_api;..\..\..\libbioimg\core_lib;..\..\..\libjpeg-turbo;..\..\..\libpng;..\..\..\libtiff;..\..\..\zlib;..\..\..\ffmpeg\include;..\..\..\ffmpeg\include-win;..\..\..\libraw;..\..\..\pole;..\..\..\nifti\niftilib;..\..\..\nifti\znzlib;..\..\..\nifti\fsliolib;..\..\..\exiv2;..\..\..\libgeotiff;..\..\..\openjpeg\src\lib\openjp2;..\..\..\openjpeg\src\bin\common;..\..\..\eigen;..\..\..\jzon;..\..\..\libfftw\src\api;..\..\..\opencv\build\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup />

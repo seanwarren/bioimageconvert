@@ -1,6 +1,6 @@
 // ***************************************************************** -*- C++ -*-
 /*
- * Copyright (C) 2004-2013 Andreas Huggel <ahuggel@gmx.net>
+ * Copyright (C) 2004-2015 Andreas Huggel <ahuggel@gmx.net>
  *
  * This program is part of the Exiv2 distribution.
  *
@@ -20,26 +20,17 @@
  */
 /*
   File:    pgfimage.cpp
-  Version: $Rev: 3091 $
+  Version: $Rev: 3777 $
   Author(s): Gilles Caulier (cgilles) <caulier dot gilles at gmail dot com>
   History: 16-Jun-09, gc: submitted
   Credits: See header file
  */
 // *****************************************************************************
 #include "rcsid_int.hpp"
-EXIV2_RCSID("@(#) $Id: pgfimage.cpp 3091 2013-07-24 05:15:04Z robinwmills $")
+EXIV2_RCSID("@(#) $Id: pgfimage.cpp 3777 2015-05-02 11:55:40Z ahuggel $")
 
-// *****************************************************************************
-
-//#define DEBUG 1
-
-// *****************************************************************************
 // included header files
-#ifdef _MSC_VER
-# include "exv_msvc.h"
-#else
-# include "exv_conf.h"
-#endif
+#include "config.h"
 
 #include "pgfimage.hpp"
 #include "image.hpp"

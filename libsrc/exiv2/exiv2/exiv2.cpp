@@ -1,6 +1,6 @@
 // ***************************************************************** -*- C++ -*-
 /*
- * Copyright (C) 2004-2013 Andreas Huggel <ahuggel@gmx.net>
+ * Copyright (C) 2004-2015 Andreas Huggel <ahuggel@gmx.net>
  *
  * This program is part of the Exiv2 distribution.
  *
@@ -22,21 +22,16 @@
   Abstract:  Command line program to display and manipulate image metadata.
 
   File:      exiv2.cpp
-  Version:   $Rev: 3091 $
+  Version:   $Rev: 3777 $
   Author(s): Andreas Huggel (ahu) <ahuggel@gmx.net>
   History:   10-Dec-03, ahu: created
  */
 // *****************************************************************************
 #include "rcsid_int.hpp"
-EXIV2_RCSID("@(#) $Id: exiv2.cpp 3091 2013-07-24 05:15:04Z robinwmills $")
+EXIV2_RCSID("@(#) $Id: exiv2.cpp 3777 2015-05-02 11:55:40Z ahuggel $")
 
-// *****************************************************************************
 // included header files
-#ifdef _MSC_VER
-# include "exv_msvc.h"
-#else
-# include "exv_conf.h"
-#endif
+#include "config.h"
 
 #include "exiv2app.hpp"
 #include "actions.hpp"
@@ -52,6 +47,11 @@ EXIV2_RCSID("@(#) $Id: exiv2.cpp 3091 2013-07-24 05:15:04Z robinwmills $")
 #include <cstring>
 #include <cassert>
 #include <cctype>
+
+#if EXV_HAVE_REGEX
+#include <regex.h>
+#endif
+
 
 // *****************************************************************************
 // local declarations
@@ -147,7 +147,7 @@ int main(int argc, char* const argv[])
         return 0;
     }
     if (params.version_) {
-		params.version(params.verbose_);
+        params.version(params.verbose_);
         return 0;
     }
 
@@ -208,8 +208,9 @@ void Params::version(bool verbose,std::ostream& os) const
 {
     bool  b64    = sizeof(void*)==8;
     const char* sBuild = b64 ? "(64 bit build)" : "(32 bit build)" ;
-    os << EXV_PACKAGE_STRING << " " << Exiv2::versionNumberHexString() << " " << sBuild << "\n"
-       << _("Copyright (C) 2004-2013 Andreas Huggel.\n")
+    os << EXV_PACKAGE_STRING << " " << Exiv2::versionNumberHexString() << " " << sBuild << "\n";
+    if ( Params::instance().greps_.empty() ) {
+    os << _("Copyright (C) 2004-2015 Andreas Huggel.\n")
        << "\n"
        << _("This program is free software; you can redistribute it and/or\n"
             "modify it under the terms of the GNU General Public License\n"
@@ -225,8 +226,9 @@ void Params::version(bool verbose,std::ostream& os) const
             "License along with this program; if not, write to the Free\n"
             "Software Foundation, Inc., 51 Franklin Street, Fifth Floor,\n"
             "Boston, MA 02110-1301 USA\n");
-	
-	if ( verbose ) dumpLibraryInfo(os);
+    }
+
+    if ( verbose ) Exiv2::dumpLibraryInfo(os,Params::instance().greps_);
 }
 
 void Params::usage(std::ostream& os) const
@@ -266,6 +268,7 @@ void Params::help(std::ostream& os) const
        << _("   -b      Show large binary values.\n")
        << _("   -u      Show unknown tags.\n")
        << _("   -g key  Only output info for this key (grep).\n")
+       << _("   -K key  Only output info for this key (exact match).\n")
        << _("   -n enc  Charset to use to decode UNICODE Exif user comments.\n")
        << _("   -k      Preserve file timestamps (keep).\n")
        << _("   -t      Also set the file timestamp in 'rename' action (overrides -k).\n")
@@ -288,6 +291,8 @@ void Params::help(std::ostream& os) const
        << _("             x : XMP properties (-PXkyct)\n")
        << _("             c : JPEG comment\n")
        << _("             p : list available previews\n")
+       << _("             S : print structure of image\n")
+       << _("             X : extract XMP from image\n")
        << _("   -P flgs Print flags for fine control of tag lists ('print' action):\n")
        << _("             E : include Exif tags in the list\n")
        << _("             I : IPTC datasets\n")
@@ -350,7 +355,8 @@ int Params::option(int opt, const std::string& optarg, int optopt)
     case 'u': unknown_ = false; break;
     case 'f': force_ = true; fileExistsPolicy_ = overwritePolicy; break;
     case 'F': force_ = true; fileExistsPolicy_ = renamePolicy; break;
-    case 'g': keys_.push_back(optarg); printMode_ = pmList; break;
+    case 'g': rc = evalGrep(optarg); printMode_ = pmList; break;
+    case 'K': rc = evalKey(optarg); printMode_ = pmList; break;
     case 'n': charset_ = optarg; break;
     case 'r': rc = evalRename(opt, optarg); break;
     case 't': rc = evalRename(opt, optarg); break;
@@ -407,6 +413,44 @@ int Params::setLogLevel(const std::string& optarg)
     }
     return rc;
 } // Params::setLogLevel
+
+int Params::evalGrep( const std::string& optarg)
+{
+    int result=0;
+#if EXV_HAVE_REGEX
+    // try to compile a reg-exp from the input argument and store it in the vector
+    const size_t i = greps_.size();
+    greps_.resize(i + 1);
+    regex_t *pRegex = &greps_[i];
+    int errcode = regcomp( pRegex, optarg.c_str(), REG_NOSUB);
+
+    // there was an error compiling the regexp
+    if( errcode ) {
+        size_t length = regerror (errcode, pRegex, NULL, 0);
+        char *buffer = new char[ length];
+        regerror (errcode, pRegex, buffer, length);
+        std::cerr << progname()
+              << ": " << _("Option") << " -g: "
+              << _("Invalid regexp") << " \"" << optarg << "\": " << buffer << "\n";
+
+        // free the memory and drop the regexp
+        delete[] buffer;
+        regfree( pRegex);
+        greps_.resize(i);
+        result=1;
+    }
+#else
+    greps_.push_back(optarg);
+#endif
+    return result;
+} // Params::evalGrep
+
+int Params::evalKey( const std::string& optarg)
+{
+    int result=0;
+    keys_.push_back(optarg);
+    return result;
+} // Params::evalKey
 
 int Params::evalRename(int opt, const std::string& optarg)
 {
@@ -516,8 +560,10 @@ int Params::evalPrint(const std::string& optarg)
         case 'h': rc = evalPrintFlags("Exgnycsh"); break;
         case 'i': rc = evalPrintFlags("Ikyct"); break;
         case 'x': rc = evalPrintFlags("Xkyct"); break;
-        case 'c': action_ = Action::print; printMode_ = pmComment; break;
-        case 'p': action_ = Action::print; printMode_ = pmPreview; break;
+        case 'c': action_ = Action::print; printMode_ = pmComment  ; break;
+        case 'p': action_ = Action::print; printMode_ = pmPreview  ; break;
+        case 'S': action_ = Action::print; printMode_ = pmStructure; break;
+        case 'X': action_ = Action::print; printMode_ = pmXMP      ; break;
         default:
             std::cerr << progname() << ": " << _("Unrecognized print mode") << " `"
                       << optarg << "'\n";
@@ -792,8 +838,55 @@ int Params::nonoption(const std::string& argv)
     return rc;
 } // Params::nonoption
 
-int Params::getopt(int argc, char* const argv[])
+typedef std::map<std::string,std::string> long_t;
+
+int Params::getopt(int argc, char* const Argv[])
 {
+	char** argv = new char* [argc+1];
+	argv[argc] = NULL;
+	long_t longs;
+
+	longs["--adjust"   ] = "-a";
+	longs["--binary"   ] = "-b";
+	longs["--comment"  ] = "-c";
+	longs["--delete"   ] = "-d";
+	longs["--days"     ] = "-D";
+	longs["--force"    ] = "-f";
+	longs["--Force"    ] = "-F";
+	longs["--grep"     ] = "-g";
+	longs["--help"     ] = "-h";
+	longs["--insert"   ] = "-i";
+	longs["--keep"     ] = "-k";
+	longs["--key"      ] = "-K";
+	longs["--location" ] = "-l";
+	longs["--modify"   ] = "-m";
+	longs["--Modify"   ] = "-M";
+	longs["--encode"   ] = "-n";
+	longs["--months"   ] = "-O";
+	longs["--print"    ] = "-p";
+	longs["--Print"    ] = "-P";
+	longs["--quiet"    ] = "-q";
+	longs["--log"      ] = "-Q";
+	longs["--rename"   ] = "-r";
+	longs["--suffix"   ] = "-S";
+	longs["--timestamp"] = "-t";
+	longs["--Timestamp"] = "-T";
+	longs["--unknown"  ] = "-u";
+	longs["--verbose"  ] = "-v";
+	longs["--Version"  ] = "-V";
+	longs["--version"  ] = "-V";
+	longs["--years"    ] = "-Y";
+
+	for ( int i = 0 ; i < argc ; i++ ) {
+		std::string* arg = new std::string(Argv[i]);
+		if (longs.find(*arg) != longs.end() ) {
+			argv[i] = ::strdup(longs[*arg].c_str());
+		} else {
+			argv[i] = ::strdup(Argv[i]);
+		}
+		delete arg;
+	}
+
     int rc = Util::Getopt::getopt(argc, argv, optstring_);
     // Further consistency checks
     if (help_ || version_) return 0;
@@ -860,6 +953,11 @@ int Params::getopt(int argc, char* const argv[])
                   << _("-T option can only be used with rename action\n");
         rc = 1;
     }
+
+	// cleanup the argument vector
+	for ( int i = 0 ; i < argc ; i++ ) ::free((void*)argv[i]);
+    delete [] argv;
+
     return rc;
 } // Params::getopt
 
@@ -1034,8 +1132,30 @@ namespace {
         catch (const Exiv2::AnyError& error) {
             std::cerr << _("-M option") << " " << error << "\n";
             return false;
-	}
+        }
     } // parseCmdLines
+
+#if defined(_MSC_VER) || defined(__MINGW__)
+    static std::string formatArg(const char* arg)
+    {
+        std::string result = "";
+        char        b  = ' ' ;
+        char        e  = '\\'; std::string E = std::string("\\");
+        char        q  = '\''; std::string Q = std::string("'" );
+        bool        qt = false;
+        char* a    = (char*) arg;
+        while  ( *a ) {
+            if ( *a == b || *a == e || *a == q ) qt = true;
+            if ( *a == q ) result += E;
+            if ( *a == e ) result += E;
+            result += std::string(a,1);
+            a++ ;
+        }
+        if (qt) result = Q + result + Q;
+
+        return result;
+    }
+#endif
 
     bool parseLine(ModifyCmd& modifyCmd, const std::string& line, int num)
     {
@@ -1052,8 +1172,12 @@ namespace {
         if (   cmdStart == std::string::npos
             || cmdEnd == std::string::npos
             || keyStart == std::string::npos) {
+            std::string cmdLine ;
+#if defined(_MSC_VER) || defined(__MINGW__)
+            for ( int i = 1 ; i < __argc ; i++ ) { cmdLine += std::string(" ") + formatArg(__argv[i]) ; }
+#endif
             throw Exiv2::Error(1, Exiv2::toString(num)
-                               + ": " + _("Invalid command line"));
+                               + ": " + _("Invalid command line:") + cmdLine);
         }
 
         std::string cmd(line.substr(cmdStart, cmdEnd-cmdStart));
@@ -1165,7 +1289,7 @@ namespace {
         return cmdIdAndString[i].cmdId_;
     }
 
-    std::string parseEscapes(const std::string& input) 
+    std::string parseEscapes(const std::string& input)
     {
         std::string result = "";
         for (unsigned int i = 0; i < input.length(); ++i) {
@@ -1242,4 +1366,4 @@ namespace {
     }
 
 }
-        
+

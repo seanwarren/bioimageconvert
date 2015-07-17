@@ -46,6 +46,18 @@
     <Filter Include="libbioimg\Formats\JP2">
       <UniqueIdentifier>{f1abf058-722e-45e3-8815-e2aa589c80e4}</UniqueIdentifier>
     </Filter>
+    <Filter Include="NIfTI">
+      <UniqueIdentifier>{1051c5a1-f743-43ea-97b9-ffc8aec3efad}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="NIfTI\niftilib">
+      <UniqueIdentifier>{e8f38741-d092-46cf-8ce0-62a7b417b3a0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="NIfTI\znzlib">
+      <UniqueIdentifier>{d78d8a05-fe57-49f0-8f09-fc1bd032d45d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="NIfTI\fsliolib">
+      <UniqueIdentifier>{ece83047-c8c7-471a-ba58-134f817b9af9}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\libbioimg\core_lib\tag_map.cpp">
@@ -279,6 +291,18 @@
     <ClCompile Include="..\..\formats\jp2\bim_jp2_compress.cpp">
       <Filter>libbioimg\Formats\JP2</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\nifti\niftilib\nifti1_io.c">
+      <Filter>NIfTI\niftilib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\nifti\znzlib\znzlib.c">
+      <Filter>NIfTI\znzlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\nifti\fsliolib\fslio.c">
+      <Filter>NIfTI\fsliolib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\formats\nifti\bim_nifti_format.cpp">
+      <Filter>libbioimg\Formats</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\libbioimg\formats\bim_format_manager.h">
@@ -361,6 +385,21 @@
     </ClInclude>
     <ClInclude Include="..\..\formats\jp2\bim_jp2_compress.h">
       <Filter>libbioimg\Formats\JP2</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\nifti\niftilib\nifti1.h">
+      <Filter>NIfTI\niftilib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\nifti\niftilib\nifti1_io.h">
+      <Filter>NIfTI\niftilib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\nifti\znzlib\znzlib.h">
+      <Filter>NIfTI\znzlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\nifti\fsliolib\dbh.h">
+      <Filter>NIfTI\fsliolib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\nifti\fsliolib\fslio.h">
+      <Filter>NIfTI\fsliolib</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

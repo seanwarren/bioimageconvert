@@ -275,7 +275,8 @@ SOURCES += $$BIM_FMTS/bim_format_manager.cpp \
            $$BIM_FMTS/jp2/bim_jp2_color.cpp \
            $$BIM_FMTS/jp2/bim_jp2_compress.cpp \
            $$BIM_FMTS/jp2/bim_jp2_decompress.cpp \
-           $$BIM_FMTS/jp2/bim_jp2_format.cpp
+           $$BIM_FMTS/jp2/bim_jp2_format.cpp \
+           $$BIM_FMTS/nifti/bim_nifti_format.cpp
 
 HEADERS += $$BIM_FMTS/dcraw/bim_dcraw_format.h \
            $$BIM_FMTS/bmp/bim_bmp_format.h \
@@ -384,6 +385,30 @@ stat_pugixml {
   INCLUDEPATH += $$BIM_LIB_PUGIXML
   SOURCES += $$BIM_LIB_PUGIXML/pugixml.cpp
 }
+
+#---------------------------------------------------------------------
+# NifTI
+#---------------------------------------------------------------------
+
+D_LIB_NIFTI_LIB = $$BIM_LSRC/nifti/niftilib
+D_LIB_NIFTI_ZNZ = $$BIM_LSRC/nifti/znzlib
+D_LIB_NIFTI_FSL = $$BIM_LSRC/nifti/fsliolib
+INCLUDEPATH += $$D_LIB_NIFTI_LIB
+INCLUDEPATH += $$D_LIB_NIFTI_ZNZ
+INCLUDEPATH += $$D_LIB_NIFTI_FSL
+
+# niftilib
+SOURCES += $$D_LIB_NIFTI_LIB/nifti1_io.c
+HEADERS += $$D_LIB_NIFTI_LIB/nifti1_io.h \
+           $$D_LIB_NIFTI_LIB/nifti1.h
+
+# znzlib
+SOURCES += $$D_LIB_NIFTI_ZNZ/znzlib.c
+HEADERS += $$D_LIB_NIFTI_ZNZ/znzlib.h
+
+# fsliolib
+SOURCES += $$D_LIB_NIFTI_FSL/fslio.c
+HEADERS += $$D_LIB_NIFTI_FSL/fslio.h
 
 #---------------------------------------------------------------------
 # ffmpeg
@@ -819,13 +844,13 @@ stat_exiv2 {
   INCLUDEPATH += $$BIM_LIB_EXIV2
   INCLUDEPATH += $$BIM_LIB_EXIV2/exiv2
   SOURCES += $$BIM_LIB_EXIV2/exiv2/asfvideo.cpp $$BIM_LIB_EXIV2/exiv2/basicio.cpp \
-             $$BIM_LIB_EXIV2/exiv2/bmpimage.cpp $$BIM_LIB_EXIV2/exiv2/canonmn.cpp \
+             $$BIM_LIB_EXIV2/exiv2/bmpimage.cpp $$BIM_LIB_EXIV2/exiv2/canonmn.cpp $$BIM_LIB_EXIV2/exiv2/casiomn.cpp \
              $$BIM_LIB_EXIV2/exiv2/convert.cpp $$BIM_LIB_EXIV2/exiv2/cr2image.cpp \
              $$BIM_LIB_EXIV2/exiv2/crwimage.cpp $$BIM_LIB_EXIV2/exiv2/datasets.cpp \
              $$BIM_LIB_EXIV2/exiv2/easyaccess.cpp $$BIM_LIB_EXIV2/exiv2/epsimage.cpp \
              $$BIM_LIB_EXIV2/exiv2/error.cpp $$BIM_LIB_EXIV2/exiv2/exif.cpp \
              $$BIM_LIB_EXIV2/exiv2/fujimn.cpp $$BIM_LIB_EXIV2/exiv2/futils.cpp \
-             $$BIM_LIB_EXIV2/exiv2/gifimage.cpp $$BIM_LIB_EXIV2/exiv2/image.cpp \
+             $$BIM_LIB_EXIV2/exiv2/gifimage.cpp $$BIM_LIB_EXIV2/exiv2/http.cpp $$BIM_LIB_EXIV2/exiv2/image.cpp \
              $$BIM_LIB_EXIV2/exiv2/iptc.cpp $$BIM_LIB_EXIV2/exiv2/jp2image.cpp \
              $$BIM_LIB_EXIV2/exiv2/jpgimage.cpp $$BIM_LIB_EXIV2/exiv2/makernote.cpp \
              $$BIM_LIB_EXIV2/exiv2/matroskavideo.cpp $$BIM_LIB_EXIV2/exiv2/metadatum.cpp \
@@ -838,7 +863,7 @@ stat_exiv2 {
              $$BIM_LIB_EXIV2/exiv2/quicktimevideo.cpp $$BIM_LIB_EXIV2/exiv2/psdimage.cpp \
              $$BIM_LIB_EXIV2/exiv2/rafimage.cpp $$BIM_LIB_EXIV2/exiv2/riffvideo.cpp \
              $$BIM_LIB_EXIV2/exiv2/rw2image.cpp $$BIM_LIB_EXIV2/exiv2/sigmamn.cpp \
-             $$BIM_LIB_EXIV2/exiv2/samsungmn.cpp $$BIM_LIB_EXIV2/exiv2/sonymn.cpp \
+             $$BIM_LIB_EXIV2/exiv2/samsungmn.cpp $$BIM_LIB_EXIV2/exiv2/sonymn.cpp $$BIM_LIB_EXIV2/exiv2/ssh.cpp \
              $$BIM_LIB_EXIV2/exiv2/tags.cpp $$BIM_LIB_EXIV2/exiv2/tgaimage.cpp \
              $$BIM_LIB_EXIV2/exiv2/tiffcomposite.cpp $$BIM_LIB_EXIV2/exiv2/tiffimage.cpp \
              $$BIM_LIB_EXIV2/exiv2/tiffvisitor.cpp $$BIM_LIB_EXIV2/exiv2/types.cpp \

@@ -1,6 +1,6 @@
 // ***************************************************************** -*- C++ -*-
 /*
- * Copyright (C) 2004-2013 Andreas Huggel <ahuggel@gmx.net>
+ * Copyright (C) 2004-2015 Andreas Huggel <ahuggel@gmx.net>
  *
  * This program is part of the Exiv2 distribution.
  *
@@ -20,17 +20,20 @@
  */
 /*
   File:      matroskavideo.cpp
-  Version:   $Rev$
+  Version:   $Rev: 3845 $
   Author(s): Abhinav Badola for GSoC 2012 (AB) <mail.abu.to@gmail.com>
   History:   18-Jun-12, AB: created
   Credits:   See header file
  */
 // *****************************************************************************
 #include "rcsid_int.hpp"
-EXIV2_RCSID("@(#) $Id$")
+EXIV2_RCSID("@(#) $Id: matroskavideo.cpp 3845 2015-06-07 16:29:06Z ahuggel $")
 
 // *****************************************************************************
 // included header files
+#include "config.h"
+
+#ifdef EXV_ENABLE_VIDEO
 #include "matroskavideo.hpp"
 #include "futils.hpp"
 #include "basicio.hpp"
@@ -531,6 +534,10 @@ namespace Exiv2 {
         if (sz > 0) io_->read(buf + 1, sz - 1);
 
         const MatroskaTags* mt = find(matroskaTags, returnTagValue(buf, sz));
+        if ( !mt ) {
+            continueTraversing_ = false;
+            return;
+        }
 
         if(mt->val_ == 0xc53bb6b || mt->val_ == 0xf43b675) {
             continueTraversing_ = false;
@@ -564,7 +571,7 @@ namespace Exiv2 {
 
         DataBuf buf2(bufMinSize+1);
         std::memset(buf2.pData_, 0x0, buf2.size_);
-		long s = static_cast<long>(size) ;
+        long s = static_cast<long>(size) ;
         io_->read(buf2.pData_,s);
         contentManagement(mt, buf2.pData_,s);
     } // MatroskaVideo::decodeBlock
@@ -707,18 +714,18 @@ namespace Exiv2 {
         aspectRatio = floor(aspectRatio*10) / 10;
         xmpData_["Xmp.video.AspectRatio"] = aspectRatio;
 
-		int aR = (int) ((aspectRatio*10.0)+0.1);
+        int aR = (int) ((aspectRatio*10.0)+0.1);
 
-		switch  (aR) {
-			case 13 : xmpData_["Xmp.video.AspectRatio"] = "4:3"		; break;
-			case 17 : xmpData_["Xmp.video.AspectRatio"] = "16:9"	; break;
-			case 10 : xmpData_["Xmp.video.AspectRatio"] = "1:1"		; break;
-			case 16 : xmpData_["Xmp.video.AspectRatio"] = "16:10"	; break;
-			case 22 : xmpData_["Xmp.video.AspectRatio"] = "2.21:1"  ; break;
-			case 23 : xmpData_["Xmp.video.AspectRatio"] = "2.35:1"  ; break;
-			case 12 : xmpData_["Xmp.video.AspectRatio"] = "5:4"     ; break;
-			default : xmpData_["Xmp.video.AspectRatio"] = aspectRatio;break;
-		}
+        switch  (aR) {
+            case 13 : xmpData_["Xmp.video.AspectRatio"] = "4:3"     ; break;
+            case 17 : xmpData_["Xmp.video.AspectRatio"] = "16:9"    ; break;
+            case 10 : xmpData_["Xmp.video.AspectRatio"] = "1:1"     ; break;
+            case 16 : xmpData_["Xmp.video.AspectRatio"] = "16:10"   ; break;
+            case 22 : xmpData_["Xmp.video.AspectRatio"] = "2.21:1"  ; break;
+            case 23 : xmpData_["Xmp.video.AspectRatio"] = "2.35:1"  ; break;
+            case 12 : xmpData_["Xmp.video.AspectRatio"] = "5:4"     ; break;
+            default : xmpData_["Xmp.video.AspectRatio"] = aspectRatio;break;
+        }
     } // MatroskaVideo::aspectRatio
 
     uint32_t MatroskaVideo::findBlockSize(byte b)
@@ -760,3 +767,4 @@ namespace Exiv2 {
     }
 
 }                                       // namespace Exiv2
+#endif // EXV_ENABLE_VIDEO

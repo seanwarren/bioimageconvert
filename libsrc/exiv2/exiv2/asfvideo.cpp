@@ -1,6 +1,6 @@
 // ***************************************************************** -*- C++ -*-
 /*
- * Copyright (C) 2004-2013 Andreas Huggel <ahuggel@gmx.net>
+ * Copyright (C) 2004-2015 Andreas Huggel <ahuggel@gmx.net>
  *
  * This program is part of the Exiv2 distribution.
  *
@@ -20,17 +20,20 @@
  */
 /*
   File:      asfvideo.cpp
-  Version:   $Rev$
+  Version:   $Rev: 3845 $
   Author(s): Abhinav Badola for GSoC 2012 (AB) <mail.abu.to@gmail.com>
   History:   08-Aug-12, AB: created
   Credits:   See header file
  */
 // *****************************************************************************
 #include "rcsid_int.hpp"
-EXIV2_RCSID("@(#) $Id$")
+EXIV2_RCSID("@(#) $Id: asfvideo.cpp 3845 2015-06-07 16:29:06Z ahuggel $")
 
 // *****************************************************************************
 // included header files
+#include "config.h"
+
+#ifdef EXV_ENABLE_VIDEO
 #include "asfvideo.hpp"
 #include "futils.hpp"
 #include "basicio.hpp"
@@ -281,9 +284,9 @@ namespace Exiv2 {
     uint64_t getUint64_t(Exiv2::DataBuf& buf) {
         uint64_t temp = 0;
 
-		for(int i = 0; i < 8; ++i){
-			temp = temp + static_cast<uint64_t>(buf.pData_[i]*(pow(static_cast<float>(256), i)));
-		}
+        for(int i = 0; i < 8; ++i){
+            temp = temp + static_cast<uint64_t>(buf.pData_[i]*(pow(static_cast<float>(256), i)));
+        }
         return temp;
     }
 
@@ -349,7 +352,7 @@ namespace Exiv2 {
             return;
         }
 
-        char GUID[37] = "";	//the getGUID function write the GUID[36], 
+        char GUID[37] = ""; //the getGUID function write the GUID[36],
 
         getGUID(guidBuf, GUID);
         tv = find( GUIDReferenceTags, GUID);
@@ -772,18 +775,18 @@ namespace Exiv2 {
         aspectRatio = floor(aspectRatio*10) / 10;
         xmpData_["Xmp.video.AspectRatio"] = aspectRatio;
 
-		int aR = (int) ((aspectRatio*10.0)+0.1);
+        int aR = (int) ((aspectRatio*10.0)+0.1);
 
-		switch  (aR) {
-			case 13 : xmpData_["Xmp.video.AspectRatio"] = "4:3"		; break;
-			case 17 : xmpData_["Xmp.video.AspectRatio"] = "16:9"	; break;
-			case 10 : xmpData_["Xmp.video.AspectRatio"] = "1:1"		; break;
-			case 16 : xmpData_["Xmp.video.AspectRatio"] = "16:10"	; break;
-			case 22 : xmpData_["Xmp.video.AspectRatio"] = "2.21:1"  ; break;
-			case 23 : xmpData_["Xmp.video.AspectRatio"] = "2.35:1"  ; break;
-			case 12 : xmpData_["Xmp.video.AspectRatio"] = "5:4"     ; break;
-			default : xmpData_["Xmp.video.AspectRatio"] = aspectRatio;break;
-		}
+        switch  (aR) {
+            case 13 : xmpData_["Xmp.video.AspectRatio"] = "4:3"     ; break;
+            case 17 : xmpData_["Xmp.video.AspectRatio"] = "16:9"    ; break;
+            case 10 : xmpData_["Xmp.video.AspectRatio"] = "1:1"     ; break;
+            case 16 : xmpData_["Xmp.video.AspectRatio"] = "16:10"   ; break;
+            case 22 : xmpData_["Xmp.video.AspectRatio"] = "2.21:1"  ; break;
+            case 23 : xmpData_["Xmp.video.AspectRatio"] = "2.35:1"  ; break;
+            case 12 : xmpData_["Xmp.video.AspectRatio"] = "5:4"     ; break;
+            default : xmpData_["Xmp.video.AspectRatio"] = aspectRatio;break;
+        }
     } // AsfVideo::aspectRatio
 
 
@@ -815,3 +818,4 @@ namespace Exiv2 {
     }
 
 }                                       // namespace Exiv2
+#endif // EXV_ENABLE_VIDEO

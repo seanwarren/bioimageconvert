@@ -47,6 +47,7 @@ DECLARE_STR( PIXEL_RESOLUTION_UNIT_X, "pixel_resolution_unit_x" )
 DECLARE_STR( PIXEL_RESOLUTION_UNIT_Y, "pixel_resolution_unit_y" )
 DECLARE_STR( PIXEL_RESOLUTION_UNIT_Z, "pixel_resolution_unit_z" )
 DECLARE_STR( PIXEL_RESOLUTION_UNIT_T, "pixel_resolution_unit_t" )
+DECLARE_STR( PIXEL_RESOLUTION_UNIT_C, "pixel_resolution_unit_c" )
 
 DECLARE_STR( PIXEL_RESOLUTION_UNIT_MICRONS, "microns" )
 DECLARE_STR( PIXEL_RESOLUTION_UNIT_SECONDS, "seconds" )

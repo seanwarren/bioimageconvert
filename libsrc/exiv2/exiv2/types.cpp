@@ -1,6 +1,6 @@
 // ***************************************************************** -*- C++ -*-
 /*
- * Copyright (C) 2004-2013 Andreas Huggel <ahuggel@gmx.net>
+ * Copyright (C) 2004-2015 Andreas Huggel <ahuggel@gmx.net>
  *
  * This program is part of the Exiv2 distribution.
  *
@@ -20,14 +20,14 @@
  */
 /*
   File:      types.cpp
-  Version:   $Rev: 3201 $
+  Version:   $Rev: 3777 $
   Author(s): Andreas Huggel (ahu) <ahuggel@gmx.net>
   History:   26-Jan-04, ahu: created
              11-Feb-04, ahu: isolated as a component
  */
 // *****************************************************************************
 #include "rcsid_int.hpp"
-EXIV2_RCSID("@(#) $Id: types.cpp 3201 2013-12-01 12:13:42Z ahuggel $")
+EXIV2_RCSID("@(#) $Id: types.cpp 3777 2015-05-02 11:55:40Z ahuggel $")
 
 // *****************************************************************************
 // included header files
@@ -49,6 +49,7 @@ EXIV2_RCSID("@(#) $Id: types.cpp 3201 2013-12-01 12:13:42Z ahuggel $")
 #include <cstdlib>
 #include <cassert>
 #include <cstring>
+#include <cmath>
 
 // *****************************************************************************
 namespace {
@@ -186,12 +187,21 @@ namespace Exiv2 {
 
     std::istream& operator>>(std::istream& is, Rational& r)
     {
-        int32_t nominator;
-        int32_t denominator;
-        char c('\0');
-        is >> nominator >> c >> denominator;
-        if (c != '/') is.setstate(std::ios::failbit);
-        if (is) r = std::make_pair(nominator, denominator);
+        // http://dev.exiv2.org/boards/3/topics/1912?r=1915
+        if ( std::tolower(is.peek()) == 'f' ) {
+            char  F;
+            float f;
+            is >> F >> f ;
+            f  = 2.0f * std::log(f) / std::log(2.0f) ;
+            r  = Exiv2::floatToRationalCast(f);
+        } else {
+            int32_t nominator;
+            int32_t denominator;
+            char c('\0');
+            is >> nominator >> c >> denominator;
+            if (c != '/') is.setstate(std::ios::failbit);
+            if (is) r = std::make_pair(nominator, denominator);
+        }
         return is;
     }
 
@@ -202,12 +212,21 @@ namespace Exiv2 {
 
     std::istream& operator>>(std::istream& is, URational& r)
     {
-        uint32_t nominator;
-        uint32_t denominator;
-        char c('\0');
-        is >> nominator >> c >> denominator;
-        if (c != '/') is.setstate(std::ios::failbit);
-        if (is) r = std::make_pair(nominator, denominator);
+        // http://dev.exiv2.org/boards/3/topics/1912?r=1915
+        if ( std::tolower(is.peek()) == 'f' ) {
+            char  F;
+            float f;
+            is >> F >> f ;
+            f  = 2.0f * std::log(f) / std::log(2.0f) ;
+            r  = Exiv2::floatToRationalCast(f);
+        } else {
+            uint32_t nominator;
+            uint32_t denominator;
+            char c('\0');
+            is >> nominator >> c >> denominator;
+            if (c != '/') is.setstate(std::ios::failbit);
+            if (is) r = std::make_pair(nominator, denominator);
+        }
         return is;
     }
 
@@ -444,6 +463,7 @@ namespace Exiv2 {
     {
         const std::string::size_type pos = 8 + 16 * 3 + 2;
         const std::string align(pos, ' ');
+        std::ios::fmtflags f( os.flags() );
 
         long i = 0;
         while (i < len) {
@@ -461,6 +481,7 @@ namespace Exiv2 {
             os << (width > pos ? "" : align.substr(width)) << ss.str() << "\n";
         }
         os << std::dec << std::setfill(' ');
+        os.flags(f);
     } // hexdump
 
     bool isHex(const std::string& str, size_t size, const std::string& prefix)

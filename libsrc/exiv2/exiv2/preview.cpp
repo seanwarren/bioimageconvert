@@ -1,6 +1,6 @@
 // ***************************************************************** -*- C++ -*-
 /*
- * Copyright (C) 2004-2013 Andreas Huggel <ahuggel@gmx.net>
+ * Copyright (C) 2004-2015 Andreas Huggel <ahuggel@gmx.net>
  *
  * This program is part of the Exiv2 distribution.
  *
@@ -20,21 +20,16 @@
  */
 /*
   File:      preview.cpp
-  Version:   $Rev: 3091 $
+  Version:   $Rev: 3777 $
   Author(s): Vladimir Nadvornik (vn) <nadvornik@suse.cz>
   History:   18-Sep-08, vn: created
  */
 // *****************************************************************************
 #include "rcsid_int.hpp"
-EXIV2_RCSID("@(#) $Id: preview.cpp 3091 2013-07-24 05:15:04Z robinwmills $")
+EXIV2_RCSID("@(#) $Id: preview.cpp 3777 2015-05-02 11:55:40Z ahuggel $")
 
-// *****************************************************************************
 // included header files
-#ifdef _MSC_VER
-# include "exv_msvc.h"
-#else
-# include "exv_conf.h"
-#endif
+#include "config.h"
 
 #include <climits>
 #include <string>
@@ -324,6 +319,7 @@ namespace {
         { 0,                       createLoaderExifDataJpeg, 8 },
         { "image/x-panasonic-rw2", createLoaderExifDataJpeg, 9 },
         { 0,                       createLoaderExifDataJpeg,10 },
+        { 0,                       createLoaderExifDataJpeg,11 },
         { 0,                       createLoaderTiff,         0 },
         { 0,                       createLoaderTiff,         1 },
         { 0,                       createLoaderTiff,         2 },
@@ -367,7 +363,8 @@ namespace {
         { "Exif.Olympus2.ThumbnailImage",              0                                                 }, //  7
         { "Exif.Minolta.Thumbnail",                    0                                                 }, //  8
         { "Exif.PanasonicRaw.PreviewImage",            0                                                 }, //  9
-        { "Exif.SamsungPreview.JPEGInterchangeFormat", "Exif.SamsungPreview.JPEGInterchangeFormatLength" }  // 10
+        { "Exif.SamsungPreview.JPEGInterchangeFormat", "Exif.SamsungPreview.JPEGInterchangeFormatLength" }, // 10
+        { "Exif.Casio2.PreviewImage",                  0                                                 }  // 11
     };
 
     const LoaderTiff::Param LoaderTiff::param_[] = {
@@ -770,7 +767,7 @@ namespace {
         for (ExifData::const_iterator pos = exifData.begin(); pos != exifData.end(); ++pos) {
             if (pos->groupName() == group_) {
                 /*
-                   Write only the neccessary TIFF image tags
+                   Write only the necessary TIFF image tags
                    tags that especially could cause problems are:
                    "NewSubfileType" - the result is no longer a thumbnail, it is a standalone image
                    "Orientation" - this tag typically appears only in the "Image" group. Deleting it ensures

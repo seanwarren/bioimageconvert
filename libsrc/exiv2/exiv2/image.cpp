@@ -1,6 +1,6 @@
 // ***************************************************************** -*- C++ -*-
 /*
- * Copyright (C) 2004-2013 Andreas Huggel <ahuggel@gmx.net>
+ * Copyright (C) 2004-2015 Andreas Huggel <ahuggel@gmx.net>
  *
  * This program is part of the Exiv2 distribution.
  *
@@ -20,7 +20,7 @@
  */
 /*
   File:      image.cpp
-  Version:   $Rev: 3091 $
+  Version:   $Rev: 3846 $
   Author(s): Andreas Huggel (ahu) <ahuggel@gmx.net>
              Brad Schick (brad) <brad@robotbattle.com>
   History:   26-Jan-04, ahu: created
@@ -30,17 +30,13 @@
  */
 // *****************************************************************************
 #include "rcsid_int.hpp"
-EXIV2_RCSID("@(#) $Id: image.cpp 3091 2013-07-24 05:15:04Z robinwmills $")
+EXIV2_RCSID("@(#) $Id: image.cpp 3846 2015-06-08 14:39:59Z ahuggel $")
 
-// *****************************************************************************
 // included header files
-#ifdef _MSC_VER
-# include "exv_msvc.h"
-#else
-# include "exv_conf.h"
-#endif
+#include "config.h"
 
 #include "image.hpp"
+#include "image_int.hpp"
 #include "error.hpp"
 #include "futils.hpp"
 
@@ -60,10 +56,12 @@ EXIV2_RCSID("@(#) $Id: image.cpp 3091 2013-07-24 05:15:04Z robinwmills $")
 #include "tgaimage.hpp"
 #include "bmpimage.hpp"
 #include "jp2image.hpp"
+#ifdef EXV_ENABLE_VIDEO
 #include "matroskavideo.hpp"
 #include "quicktimevideo.hpp"
 #include "riffvideo.hpp"
 #include "asfvideo.hpp"
+#endif // EXV_ENABLE_VIDEO
 #include "rw2image.hpp"
 #include "pgfimage.hpp"
 #include "xmpsidecar.hpp"
@@ -73,8 +71,11 @@ EXIV2_RCSID("@(#) $Id: image.cpp 3091 2013-07-24 05:15:04Z robinwmills $")
 #include <cstdio>
 #include <cstring>
 #include <cassert>
+#include <iostream>
+
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <stdarg.h>
 #ifdef _MSC_VER
 # define S_ISREG(m)      (((m) & S_IFMT) == S_IFREG)
 #endif
@@ -131,10 +132,12 @@ namespace {
         { ImageType::tga,  newTgaInstance,  isTgaType,  amNone,      amNone,      amNone,      amNone      },
         { ImageType::bmp,  newBmpInstance,  isBmpType,  amNone,      amNone,      amNone,      amNone      },
         { ImageType::jp2,  newJp2Instance,  isJp2Type,  amReadWrite, amReadWrite, amReadWrite, amNone      },
+#ifdef EXV_ENABLE_VIDEO
         { ImageType::qtime,newQTimeInstance,isQTimeType,amRead,      amNone,      amRead,      amNone      },
         { ImageType::riff, newRiffInstance, isRiffType, amRead,      amNone,      amRead,      amNone      },
         { ImageType::asf,  newAsfInstance,  isAsfType,  amNone,      amNone,      amRead,      amNone      },
         { ImageType::mkv,  newMkvInstance,  isMkvType,  amNone,      amNone,      amRead,      amNone      },
+#endif // EXV_ENABLE_VIDEO
         // End of list marker
         { ImageType::none, 0,               0,          amNone,      amNone,      amNone,      amNone      }
     };
@@ -164,6 +167,11 @@ namespace Exiv2 {
 
     Image::~Image()
     {
+    }
+
+    void Image::printStructure(std::ostream&, PrintStructureOption)
+    {
+        throw Error(13, io_->path());
     }
 
     void Image::clearMetadata()
@@ -416,19 +424,65 @@ namespace Exiv2 {
         return ImageType::none;
     } // ImageFactory::getType
 
-    Image::AutoPtr ImageFactory::open(const std::string& path)
+    BasicIo::AutoPtr ImageFactory::createIo(const std::string& path, bool useCurl)
     {
-        BasicIo::AutoPtr io(new FileIo(path));
-        Image::AutoPtr image = open(io); // may throw
+        Protocol fProt = fileProtocol(path);
+#if EXV_USE_SSH == 1
+        if (fProt == pSsh || fProt == pSftp) {
+            return BasicIo::AutoPtr(new SshIo(path)); // may throw
+        }
+#endif
+#if EXV_USE_CURL == 1
+        if (useCurl && (fProt == pHttp || fProt == pHttps || fProt == pFtp)) {
+            return BasicIo::AutoPtr(new CurlIo(path)); // may throw
+        }
+#endif
+        if (fProt == pHttp)
+            return BasicIo::AutoPtr(new HttpIo(path)); // may throw
+        if (fProt == pFileUri)
+            return BasicIo::AutoPtr(new FileIo(pathOfFileUrl(path)));
+        if (fProt == pStdin || fProt == pDataUri)
+            return BasicIo::AutoPtr(new XPathIo(path)); // may throw
+
+        return BasicIo::AutoPtr(new FileIo(path));
+
+        (void)(useCurl);
+    } // ImageFactory::createIo
+
+#ifdef EXV_UNICODE_PATH
+    BasicIo::AutoPtr ImageFactory::createIo(const std::wstring& wpath, bool useCurl)
+    {
+        Protocol fProt = fileProtocol(wpath);
+#if EXV_USE_SSH == 1
+        if (fProt == pSsh || fProt == pSftp) {
+            return BasicIo::AutoPtr(new SshIo(wpath));
+        }
+#endif
+#if EXV_USE_CURL == 1
+        if (useCurl && (fProt == pHttp || fProt == pHttps || fProt == pFtp)) {
+            return BasicIo::AutoPtr(new CurlIo(wpath));
+        }
+#endif
+        if (fProt == pHttp)
+            return BasicIo::AutoPtr(new HttpIo(wpath));
+        if (fProt == pFileUri)
+            return BasicIo::AutoPtr(new FileIo(pathOfFileUrl(wpath)));
+        if (fProt == pStdin || fProt == pDataUri)
+            return BasicIo::AutoPtr(new XPathIo(wpath)); // may throw
+        return BasicIo::AutoPtr(new FileIo(wpath));
+    } // ImageFactory::createIo
+#endif
+    Image::AutoPtr ImageFactory::open(const std::string& path, bool useCurl)
+    {
+        Image::AutoPtr image = open(ImageFactory::createIo(path, useCurl)); // may throw
         if (image.get() == 0) throw Error(11, path);
         return image;
     }
 
 #ifdef EXV_UNICODE_PATH
-    Image::AutoPtr ImageFactory::open(const std::wstring& wpath)
+    Image::AutoPtr ImageFactory::open(const std::wstring& wpath, bool useCurl)
     {
-        BasicIo::AutoPtr io(new FileIo(wpath));
-        Image::AutoPtr image = open(io); // may throw
+        Image::AutoPtr image = open(ImageFactory::createIo(wpath, useCurl)); // may throw
         if (image.get() == 0) throw WError(11, wpath);
         return image;
     }
@@ -523,3 +577,52 @@ namespace Exiv2 {
     } // append
 
 }                                       // namespace Exiv2
+
+namespace Exiv2 {
+    namespace Internal {
+
+    std::string stringFormat(const char* format, ...)
+    {
+        std::string result;
+
+        int     need   = (int) std::strlen(format)*2;          // initial guess
+        char*   buffer = NULL;
+        int     again  =    4;
+        int     rc     =   -1;
+
+        while (rc < 0 && again--) {
+            if ( buffer ) delete[] buffer;
+            need  *= 2 ;
+            buffer = new char[need];
+            if ( buffer ) {
+                va_list  args;                                 // variable arg list
+                va_start(args, format);                        // args start after format
+                rc=vsnprintf(buffer,(unsigned int)need, format, args);
+                va_end(args);                                  // free the args
+            }
+        }
+
+        if ( rc > 0 ) result = std::string(buffer) ;
+        if ( buffer ) delete[] buffer;                         // free buffer
+        return result;
+    }
+
+    std::string binaryToString(DataBuf& buf, size_t size, size_t start /*=0*/)
+    {
+        std::string result = "";
+        byte* buff = buf.pData_;
+
+        size += start;
+
+        while (start < size) {
+            int   c             = (int) buff[start++] ;
+            bool  bTrailingNull = c == 0 && start == size;
+            if ( !bTrailingNull ) {
+                if (c < ' ' || c > 127) c = '.' ;
+                result +=  (char) c ;
+            }
+        }
+        return result;
+    }
+
+}}                                      // namespace Internal, Exiv2

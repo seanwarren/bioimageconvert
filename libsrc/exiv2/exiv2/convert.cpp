@@ -1,6 +1,6 @@
 // ***************************************************************** -*- C++ -*-
 /*
- * Copyright (C) 2004-2013 Andreas Huggel <ahuggel@gmx.net>
+ * Copyright (C) 2004-2015 Andreas Huggel <ahuggel@gmx.net>
  *
  * This program is part of the Exiv2 distribution.
  *
@@ -20,7 +20,7 @@
  */
 /*
   File:      convert.cpp
-  Version:   $Rev: 3091 $
+  Version:   $Rev: 3777 $
   Author(s): Andreas Huggel (ahu) <ahuggel@gmx.net>
              Vladimir Nadvornik (vn) <nadvornik@suse.cz>
   History:   17-Mar-08, ahu: created basic converter framework
@@ -28,7 +28,7 @@
  */
 // *****************************************************************************
 #include "rcsid_int.hpp"
-EXIV2_RCSID("@(#) $Id: convert.cpp 3091 2013-07-24 05:15:04Z robinwmills $")
+EXIV2_RCSID("@(#) $Id: convert.cpp 3777 2015-05-02 11:55:40Z ahuggel $")
 
 // *****************************************************************************
 // included header files
@@ -143,6 +143,12 @@ namespace Exiv2 {
 
         //! @name Conversion functions (manipulators)
         //@{
+        /*!
+          @brief Do nothing conversion function.
+
+          Use when, for example, a one-way conversion is needed.
+         */
+        void cnvNone(const char*, const char*);
         /*!
           @brief Simple Exif to XMP conversion function.
 
@@ -322,12 +328,13 @@ namespace Exiv2 {
         { mdExif, "Exif.Image.PrimaryChromaticities",     "Xmp.tiff.PrimaryChromaticities",     &Converter::cnvExifValue, &Converter::cnvXmpValue },
         { mdExif, "Exif.Image.YCbCrCoefficients",         "Xmp.tiff.YCbCrCoefficients",         &Converter::cnvExifValue, &Converter::cnvXmpValue },
         { mdExif, "Exif.Image.ReferenceBlackWhite",       "Xmp.tiff.ReferenceBlackWhite",       &Converter::cnvExifValue, &Converter::cnvXmpValue },
-        { mdExif, "Exif.Image.DateTime",                  "Xmp.tiff.DateTime",                  &Converter::cnvExifDate , &Converter::cnvXmpDate  },
+        { mdExif, "Exif.Image.DateTime",                  "Xmp.xmp.ModifyDate",                 &Converter::cnvExifDate , &Converter::cnvXmpDate  }, // MWG Guidelines
         { mdExif, "Exif.Image.ImageDescription",          "Xmp.dc.description",                 &Converter::cnvExifValue, &Converter::cnvXmpValue },
         { mdExif, "Exif.Image.Make",                      "Xmp.tiff.Make",                      &Converter::cnvExifValue, &Converter::cnvXmpValue },
         { mdExif, "Exif.Image.Model",                     "Xmp.tiff.Model",                     &Converter::cnvExifValue, &Converter::cnvXmpValue },
         { mdExif, "Exif.Image.Software",                  "Xmp.tiff.Software",                  &Converter::cnvExifValue, &Converter::cnvXmpValue },
         { mdExif, "Exif.Image.Artist",                    "Xmp.dc.creator",                     &Converter::cnvExifValue, &Converter::cnvXmpValue },
+        { mdExif, "Exif.Image.Rating",                    "Xmp.xmp.Rating",                     &Converter::cnvExifValue, &Converter::cnvXmpValue },
         { mdExif, "Exif.Image.Copyright",                 "Xmp.dc.rights",                      &Converter::cnvExifValue, &Converter::cnvXmpValue },
         { mdExif, "Exif.Photo.ExifVersion",               "Xmp.exif.ExifVersion",               &Converter::cnvExifVersion, &Converter::cnvXmpVersion },
         { mdExif, "Exif.Photo.FlashpixVersion",           "Xmp.exif.FlashpixVersion",           &Converter::cnvExifVersion, &Converter::cnvXmpVersion },
@@ -338,8 +345,8 @@ namespace Exiv2 {
         { mdExif, "Exif.Photo.PixelYDimension",           "Xmp.exif.PixelYDimension",           &Converter::cnvExifValue, &Converter::cnvXmpValue },
         { mdExif, "Exif.Photo.UserComment",               "Xmp.exif.UserComment",               &Converter::cnvExifComment, &Converter::cnvXmpComment },
         { mdExif, "Exif.Photo.RelatedSoundFile",          "Xmp.exif.RelatedSoundFile",          &Converter::cnvExifValue, &Converter::cnvXmpValue },
-        { mdExif, "Exif.Photo.DateTimeOriginal",          "Xmp.exif.DateTimeOriginal",          &Converter::cnvExifDate,  &Converter::cnvXmpDate  },
-        { mdExif, "Exif.Photo.DateTimeDigitized",         "Xmp.exif.DateTimeDigitized",         &Converter::cnvExifDate,  &Converter::cnvXmpDate  },
+        { mdExif, "Exif.Photo.DateTimeOriginal",          "Xmp.photoshop.DateCreated",          &Converter::cnvExifDate,  &Converter::cnvXmpDate  }, // MWG Guidelines
+        { mdExif, "Exif.Photo.DateTimeDigitized",         "Xmp.xmp.CreateDate",                 &Converter::cnvExifDate,  &Converter::cnvXmpDate  }, // MWG Guidelines
         { mdExif, "Exif.Photo.ExposureTime",              "Xmp.exif.ExposureTime",              &Converter::cnvExifValue, &Converter::cnvXmpValue },
         { mdExif, "Exif.Photo.FNumber",                   "Xmp.exif.FNumber",                   &Converter::cnvExifValue, &Converter::cnvXmpValue },
         { mdExif, "Exif.Photo.ExposureProgram",           "Xmp.exif.ExposureProgram",           &Converter::cnvExifValue, &Converter::cnvXmpValue },
@@ -408,6 +415,7 @@ namespace Exiv2 {
         { mdExif, "Exif.GPSInfo.GPSAreaInformation",      "Xmp.exif.GPSAreaInformation",        &Converter::cnvExifValue, &Converter::cnvXmpValue }, // FIXME ?
         { mdExif, "Exif.GPSInfo.GPSDifferential",         "Xmp.exif.GPSDifferential",           &Converter::cnvExifValue, &Converter::cnvXmpValue },
 
+        { mdIptc, "Iptc.Application2.RecordVersion",      "Xmp.xmp.Rating",                     &Converter::cnvIptcValue, &Converter::cnvXmpValueToIptc },
         { mdIptc, "Iptc.Application2.ObjectName",         "Xmp.dc.title",                       &Converter::cnvIptcValue, &Converter::cnvXmpValueToIptc },
         { mdIptc, "Iptc.Application2.Urgency",            "Xmp.photoshop.Urgency",              &Converter::cnvIptcValue, &Converter::cnvXmpValueToIptc },
         { mdIptc, "Iptc.Application2.Category",           "Xmp.photoshop.Category",             &Converter::cnvIptcValue, &Converter::cnvXmpValueToIptc },
@@ -415,7 +423,8 @@ namespace Exiv2 {
         { mdIptc, "Iptc.Application2.Keywords",           "Xmp.dc.subject",                     &Converter::cnvIptcValue, &Converter::cnvXmpValueToIptc },
         { mdIptc, "Iptc.Application2.SubLocation",        "Xmp.iptc.Location",                  &Converter::cnvIptcValue, &Converter::cnvXmpValueToIptc },
         { mdIptc, "Iptc.Application2.SpecialInstructions","Xmp.photoshop.Instructions",         &Converter::cnvIptcValue, &Converter::cnvXmpValueToIptc },
-        { mdIptc, "Iptc.Application2.DateCreated",        "Xmp.photoshop.DateCreated",          &Converter::cnvIptcValue, &Converter::cnvXmpValueToIptc },
+        { mdIptc, "Iptc.Application2.DateCreated",        "Xmp.photoshop.DateCreated",          &Converter::cnvNone, &Converter::cnvXmpValueToIptc }, // FIXME to IPTC Date and IPTC Time
+        { mdIptc, "Iptc.Application2.DigitizationDate",   "Xmp.xmp.CreateDate",                 &Converter::cnvNone, &Converter::cnvXmpValueToIptc }, // FIXME to IPTC Date and IPTC Time
         { mdIptc, "Iptc.Application2.Byline",             "Xmp.dc.creator",                     &Converter::cnvIptcValue, &Converter::cnvXmpValueToIptc },
         { mdIptc, "Iptc.Application2.BylineTitle",        "Xmp.photoshop.AuthorsPosition",      &Converter::cnvIptcValue, &Converter::cnvXmpValueToIptc },
         { mdIptc, "Iptc.Application2.City",               "Xmp.photoshop.City",                 &Converter::cnvIptcValue, &Converter::cnvXmpValueToIptc },
@@ -462,6 +471,11 @@ namespace Exiv2 {
                 EXV_CALL_MEMBER_FN(*this, c.key2ToKey1_)(c.key2_, c.key1_);
             }
         }
+    }
+
+    void Converter::cnvNone(const char*, const char*)
+    {
+        return;
     }
 
     bool Converter::prepareExifTarget(const char* to, bool force)

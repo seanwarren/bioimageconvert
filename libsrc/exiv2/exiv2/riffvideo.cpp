@@ -1,6 +1,6 @@
 // ***************************************************************** -*- C++ -*-
 /*
- * Copyright (C) 2004-2013 Andreas Huggel <ahuggel@gmx.net>
+ * Copyright (C) 2004-2015 Andreas Huggel <ahuggel@gmx.net>
  *
  * This program is part of the Exiv2 distribution.
  *
@@ -20,17 +20,20 @@
  */
 /*
   File:      riffvideo.cpp
-  Version:   $Rev$
+  Version:   $Rev: 3845 $
   Author(s): Abhinav Badola for GSoC 2012 (AB) <mail.abu.to@gmail.com>
   History:   18-Jun-12, AB: created
   Credits:   See header file
  */
 // *****************************************************************************
 #include "rcsid_int.hpp"
-EXIV2_RCSID("@(#) $Id$")
+EXIV2_RCSID("@(#) $Id: riffvideo.cpp 3845 2015-06-07 16:29:06Z ahuggel $")
 
 // *****************************************************************************
 // included header files
+#include "config.h"
+
+#ifdef EXV_ENABLE_VIDEO
 #include "riffvideo.hpp"
 #include "futils.hpp"
 #include "basicio.hpp"
@@ -111,7 +114,7 @@ namespace Exiv2 {
         {   "ICOP", "Xmp.video.Copyright" },
         {   "ICRD", "Xmp.video.DateTimeDigitized" },
         {   "ICRP", "Xmp.video.Cropped" },
-        {   "IDIM", "Xmp.video.Dimensions	" },
+        {   "IDIM", "Xmp.video.Dimensions" },
         {   "IDPI", "Xmp.video.DotsPerInch" },
         {   "IDST", "Xmp.video.DistributedBy" },
         {   "IEDT", "Xmp.video.EditedBy" },
@@ -856,7 +859,7 @@ namespace Exiv2 {
 
     void RiffVideo::infoTagsHandler()
     {
-        const long bufMinSize = 100;
+        const long bufMinSize = 10000;
         DataBuf buf(bufMinSize);
         buf.pData_[4] = '\0';
         io_->seek(-12, BasicIo::cur);
@@ -879,10 +882,14 @@ namespace Exiv2 {
             if(infoSize >= 0) {
                 size -= infoSize;
                 io_->read(buf.pData_, infoSize);
+                if(infoSize < 4)
+                    buf.pData_[infoSize] = '\0';
             }
 
             if(tv)
                 xmpData_[exvGettext(tv->label_)] = buf.pData_;
+            else
+                continue;
         }
         io_->seek(cur_pos + size_external, BasicIo::beg);
     } // RiffVideo::infoTagsHandler
@@ -1195,18 +1202,18 @@ namespace Exiv2 {
         aspectRatio = floor(aspectRatio*10) / 10;
         xmpData_["Xmp.video.AspectRatio"] = aspectRatio;
 
-		int aR = (int) ((aspectRatio*10.0)+0.1);
+        int aR = (int) ((aspectRatio*10.0)+0.1);
 
-		switch  (aR) {
-			case 13 : xmpData_["Xmp.video.AspectRatio"] = "4:3"		; break;
-			case 17 : xmpData_["Xmp.video.AspectRatio"] = "16:9"	; break;
-			case 10 : xmpData_["Xmp.video.AspectRatio"] = "1:1"		; break;
-			case 16 : xmpData_["Xmp.video.AspectRatio"] = "16:10"	; break;
-			case 22 : xmpData_["Xmp.video.AspectRatio"] = "2.21:1"  ; break;
-			case 23 : xmpData_["Xmp.video.AspectRatio"] = "2.35:1"  ; break;
-			case 12 : xmpData_["Xmp.video.AspectRatio"] = "5:4"     ; break;
-			default : xmpData_["Xmp.video.AspectRatio"] = aspectRatio;break;
-		}
+        switch  (aR) {
+            case 13 : xmpData_["Xmp.video.AspectRatio"] = "4:3"     ; break;
+            case 17 : xmpData_["Xmp.video.AspectRatio"] = "16:9"    ; break;
+            case 10 : xmpData_["Xmp.video.AspectRatio"] = "1:1"     ; break;
+            case 16 : xmpData_["Xmp.video.AspectRatio"] = "16:10"   ; break;
+            case 22 : xmpData_["Xmp.video.AspectRatio"] = "2.21:1"  ; break;
+            case 23 : xmpData_["Xmp.video.AspectRatio"] = "2.35:1"  ; break;
+            case 12 : xmpData_["Xmp.video.AspectRatio"] = "5:4"     ; break;
+            default : xmpData_["Xmp.video.AspectRatio"] = aspectRatio;break;
+        }
     } // RiffVideo::fillAspectRatio
 
     void RiffVideo::fillDuration(double frame_rate, long frame_count)
@@ -1245,3 +1252,4 @@ namespace Exiv2 {
     }
 
 }                                       // namespace Exiv2
+#endif // EXV_ENABLE_VIDEO

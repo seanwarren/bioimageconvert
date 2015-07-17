@@ -1,5 +1,16 @@
 /* ./config/config.h.  Generated from config.h.in by configure.  */
-/* config.h.in.  Generated from configure.ac by autoheader.  */
+#ifndef __CONFIG__H__
+#define __CONFIG__H__
+
+#ifdef _MSC_VER
+# include "exv_msvc.h"
+#else
+
+/* Define to 1 if you want to use libssh */
+/* #undef EXV_USE_SSH */
+
+/* Define to 1 if you want to use libcurl in httpIo */
+/* #undef EXV_USE_CURL */
 
 /* Define to 1 if you have the `alarm' function. */
 /* #undef EXV_HAVE_ALARM */
@@ -24,18 +35,27 @@
 
 /* Define to 1 if translation of program messages to the user's
    native language is requested. */
-//#define EXV_ENABLE_NLS 1
+#define EXV_ENABLE_NLS 1
 
 #endif /* !EXV_COMMERCIAL_VERSION */
 
+/* Define to 1 to include video code in the library */
+#define EXV_ENABLE_VIDEO 1
+
+/* Define to 1 to include webready code in the library */
+/* #undef EXV_ENABLE_WEBREADY */
+
 /* Define to 1 if you have the `iconv' function. */
-// #define EXV_HAVE_ICONV 1
+#define EXV_HAVE_ICONV 1
 
 /* Define to `const' or to empty, depending on the second argument of `iconv'. */
 #define EXV_ICONV_CONST 
 
 /* Define to 1 if you have the <libintl.h> header file. */
 #define EXV_HAVE_LIBINTL_H 1
+
+/* Define to 1 if you have the <regex.h> header file. */
+#define EXV_HAVE_REGEX 1
 
 /* Define to 1 if your system has a GNU libc compatible `malloc' function, and
    to 0 otherwise. */
@@ -118,7 +138,7 @@
 #define EXV_HAVE_LIBZ 1
 
 /* Define to 1 if you have the Adobe XMP Toolkit. */
-//#define EXV_HAVE_XMP_TOOLKIT 1
+#define EXV_HAVE_XMP_TOOLKIT 1
 
 /* Define to 1 if the system has the type `_Bool'. */
 #define EXV_HAVE__BOOL 1
@@ -127,11 +147,11 @@
    slash. */
 /* #undef EXV_LSTAT_FOLLOWS_SLASHED_SYMLINK */
 
-/* Define if g++ supports C++ visibility features */
-#define EXV_HAVE_GXXCLASSVISIBILITY 1
+/* Define if C++ visibility support is enabled */
+#define EXV_WANT_VISIBILITY_SUPPORT 1
 
 /* Define if we have / are building a shared library (DLL) */
-//#define EXV_HAVE_DLL 1
+#define EXV_HAVE_DLL 1
 
 /* Define to the address where bug reports for this package should be sent. */
 #define EXV_PACKAGE_BUGREPORT "ahuggel@gmx.net"
@@ -143,13 +163,13 @@
 #define EXV_PACKAGE_NAME "exiv2"
 
 /* Define to the full name and version of this package. */
-#define EXV_PACKAGE_STRING "exiv2 0.20"
+#define EXV_PACKAGE_STRING "exiv2 0.25"
 
 /* Define to the one symbol short name of this package. */
 #define EXV_PACKAGE_TARNAME "exiv2"
 
 /* Define to the version of this package. */
-#define EXV_PACKAGE_VERSION "0.20"
+#define EXV_PACKAGE_VERSION "0.25"
 
 /* Define to 1 if you have the ANSI C header files. */
 #define EXV_STDC_HEADERS 1
@@ -190,39 +210,57 @@
       we can rely on checking just for that macro. */
 #define __CYGWIN__  __CYGWIN32__
 #endif
-     
-/* File path seperator */
+
+#if defined __MINGW32__ || defined __MINGW64__
+#ifndef     __MINGW__
+#define     __MINGW__ 1
+#endif
+#endif
+
+/* File path separator */
 #if defined WIN32 && !defined __CYGWIN__
-#define EXV_SEPERATOR_STR "\\"
-#define EXV_SEPERATOR_CHR '\\'
+#define EXV_SEPARATOR_STR "\\"
+#define EXV_SEPARATOR_CHR '\\'
 #else
-#define EXV_SEPERATOR_STR "/"
-#define EXV_SEPERATOR_CHR '/'
+#define EXV_SEPARATOR_STR "/"
+#define EXV_SEPARATOR_CHR '/'
 #endif
 
 /* Windows unicode path support */
-#if defined WIN32 && !defined __CYGWIN__
-# define EXV_UNICODE_PATH
+#if defined WIN32 && !defined __CYGWIN__ && !defined __MINGW__
+# define EXV_UNICODE_PATH 1
 #endif
 
-/* Shared library support, see http://gcc.gnu.org/wiki/Visibility */
+/* Symbol visibility support */
 #ifdef WIN32
 # define EXV_IMPORT __declspec(dllimport)
 # define EXV_EXPORT __declspec(dllexport)
 # define EXV_DLLLOCAL
 # define EXV_DLLPUBLIC
 #else
-# ifdef EXV_HAVE_GXXCLASSVISIBILITY
-#  define EXV_IMPORT __attribute__ ((visibility("default")))
-#  define EXV_EXPORT __attribute__ ((visibility("default")))
-#  define EXV_DLLLOCAL __attribute__ ((visibility("hidden")))
-#  define EXV_DLLPUBLIC __attribute__ ((visibility("default")))
-# else
+# ifdef EXV_WANT_VISIBILITY_SUPPORT
+#  if defined(__GNUC__) && (__GNUC__ >= 4)
+#   define EXV_IMPORT __attribute__ ((visibility("default")))
+#   define EXV_EXPORT __attribute__ ((visibility("default")))
+#   define EXV_DLLLOCAL __attribute__ ((visibility("hidden")))
+#   define EXV_DLLPUBLIC __attribute__ ((visibility("default")))
+#  elif defined(__SUNPRO_C) && (__SUNPRO_C >= 0x550)
+#   define EXV_IMPORT __global
+#   define EXV_EXPORT __global
+#   define EXV_DLLLOCAL __hidden
+#   define EXV_DLLPUBLIC __global
+#  else
+#   define EXV_IMPORT
+#   define EXV_EXPORT
+#   define EXV_DLLLOCAL
+#   define EXV_DLLPUBLIC
+#  endif
+# else /* ! EXV_WANT_VISIBILITY_SUPPORT */
 #  define EXV_IMPORT
 #  define EXV_EXPORT
 #  define EXV_DLLLOCAL
 #  define EXV_DLLPUBLIC
-# endif /* ! EXV_HAVE_GXXCLASSVISIBILITY */
+# endif /* ! EXV_WANT_VISIBILITY_SUPPORT */
 #endif /* ! WIN32 */
 
 /* Define EXIV2API for DLL builds */
@@ -235,3 +273,22 @@
 #else
 # define EXIV2API
 #endif /* ! EXV_HAVE_DLL */
+
+/*
+  If you're using Solaris and the Solaris Studio compiler, then you really
+  do need to use -library=stdcxx4 along with these inclusions below
+*/
+#if defined(OS_SOLARIS)
+#include <stdio.h>
+#include <string.h>
+#include <strings.h>
+#include <stdlib.h>
+#include <math.h>
+#if defined(__cplusplus)
+#include <ios>
+#include <fstream>
+#endif
+#endif
+
+#endif
+#endif

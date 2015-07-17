@@ -1,6 +1,6 @@
 // ***************************************************************** -*- C++ -*-
 /*
- * Copyright (C) 2004-2013 Andreas Huggel <ahuggel@gmx.net>
+ * Copyright (C) 2004-2015 Andreas Huggel <ahuggel@gmx.net>
  *
  * This program is part of the Exiv2 distribution.
  *
@@ -21,7 +21,7 @@
 /*!
   @file    xmpsidecar.hpp
   @brief   An Image subclass to support XMP sidecar files
-  @version $Rev: 3201 $
+  @version $Rev: 3090 $
   @author  Andreas Huggel
            <a href="mailto:ahuggel@gmx.net">ahuggel@gmx.net</a>
   @date    07-Mar-08, ahu: created

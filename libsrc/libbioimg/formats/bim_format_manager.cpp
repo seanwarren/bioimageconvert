@@ -44,6 +44,7 @@
 #ifdef BIM_GDCM_FORMAT
 #include "dicom/bim_dicom_format.h"
 #endif
+#include "nifti/bim_nifti_format.h"
 
 using namespace bim;
 
@@ -79,6 +80,7 @@ FormatManager::FormatManager() {
   #ifdef BIM_GDCM_FORMAT
   addNewFormatHeader ( dicomGetFormatHeader() );
   #endif  
+  addNewFormatHeader(niftiGetFormatHeader());
 }
 
 

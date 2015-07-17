@@ -1,6 +1,6 @@
 // ***************************************************************** -*- C++ -*-
 /*
- * Copyright (C) 2004-2013 Andreas Huggel <ahuggel@gmx.net>
+ * Copyright (C) 2004-2015 Andreas Huggel <ahuggel@gmx.net>
  *
  * This program is part of the Exiv2 distribution.
  *
@@ -20,22 +20,17 @@
  */
 /*
   File:      actions.cpp
-  Version:   $Rev: 3091 $
+  Version:   $Rev: 3815 $
   Author(s): Andreas Huggel (ahu) <ahuggel@gmx.net>
   History:   08-Dec-03, ahu: created
              30-Apr-06, Roger Larsson: Print filename if processing multiple files
  */
 // *****************************************************************************
 #include "rcsid_int.hpp"
-EXIV2_RCSID("@(#) $Id: actions.cpp 3091 2013-07-24 05:15:04Z robinwmills $")
+EXIV2_RCSID("@(#) $Id: actions.cpp 3815 2015-05-10 09:37:34Z ahuggel $")
 
-// *****************************************************************************
 // included header files
-#ifdef _MSC_VER
-# include "exv_msvc.h"
-#else
-# include "exv_conf.h"
-#endif
+#include "config.h"
 
 #ifndef EXV_HAVE_TIMEGM
 # include "timegm.h"
@@ -154,6 +149,15 @@ namespace {
              exists and shouldn't be overwritten, else 0.
      */
     int dontOverwrite(const std::string& path);
+
+    /*!
+      @brief Output a text with a given minimum number of chars, honoring
+             multi-byte characters correctly. Replace code in the form
+             os << setw(width) << myString
+             with
+             os << make_pair( myString, width)
+     */
+    std::ostream& operator<<( std::ostream& os, std::pair<std::string, int> strAndWidth);
 }
 
 // *****************************************************************************
@@ -233,10 +237,12 @@ namespace Action {
         path_ = path;
         int rc = 0;
         switch (Params::instance().printMode_) {
-        case Params::pmSummary: rc = printSummary();     break;
-        case Params::pmList:    rc = printList();        break;
-        case Params::pmComment: rc = printComment();     break;
-        case Params::pmPreview: rc = printPreviewList(); break;
+        case Params::pmSummary:   rc = printSummary();     break;
+        case Params::pmList:      rc = printList();        break;
+        case Params::pmComment:   rc = printComment();     break;
+        case Params::pmPreview:   rc = printPreviewList(); break;
+        case Params::pmStructure: rc = printStructure(std::cout,Exiv2::kpsBasic); break;
+        case Params::pmXMP:       rc = printStructure(std::cout,Exiv2::kpsXMP);   break;
         }
         return rc;
     }
@@ -245,6 +251,19 @@ namespace Action {
                   << path << ":\n" << e << "\n";
         return 1;
     } // Print::run
+
+    int Print::printStructure(std::ostream& out, Exiv2::PrintStructureOption option)
+    {
+        if (!Exiv2::fileExists(path_, true)) {
+            std::cerr << path_ << ": "
+                      << _("Failed to open the file\n");
+            return -1;
+        }
+        Exiv2::Image::AutoPtr image = Exiv2::ImageFactory::open(path_);
+        assert(image.get() != 0);
+        image->printStructure(out,option);
+        return 0;
+    }
 
     int Print::printSummary()
     {
@@ -311,52 +330,58 @@ namespace Action {
 
         // Aperture
         // Get if from FNumber and, failing that, try ApertureValue
-        done = false;
-        printLabel(_("Aperture"));
-        if (!done) {
-            done = 0 != printTag(exifData, "Exif.Photo.FNumber");
-        }
-        if (!done) {
-            done = 0 != printTag(exifData, "Exif.Photo.ApertureValue");
-        }
-        std::cout << std::endl;
-
-        // Exposure bias
-        printTag(exifData, "Exif.Photo.ExposureBiasValue", _("Exposure bias"));
-
-        // Flash
-        printTag(exifData, "Exif.Photo.Flash", _("Flash"));
-
-        // Flash bias
-        printTag(exifData, Exiv2::flashBias, _("Flash bias"));
-
-        // Actual focal length and 35 mm equivalent
-        // Todo: Calculate 35 mm equivalent a la jhead
-        Exiv2::ExifData::const_iterator md;
-        printLabel(_("Focal length"));
-        if (1 == printTag(exifData, "Exif.Photo.FocalLength")) {
-            md = exifData.findKey(
-                Exiv2::ExifKey("Exif.Photo.FocalLengthIn35mmFilm"));
-            if (md != exifData.end()) {
-                std::cout << " ("<< _("35 mm equivalent") << ": "
-                          << md->print(&exifData) << ")";
+        {
+            printLabel(_("Aperture"));
+            bool done = false;
+            if (!done) {
+                done = 0 != printTag(exifData, "Exif.Photo.FNumber");
             }
+            if (!done) {
+                done = 0 != printTag(exifData, "Exif.Photo.ApertureValue");
+            }
+            std::cout << std::endl;
+
+            // Exposure bias
+            printTag(exifData, "Exif.Photo.ExposureBiasValue", _("Exposure bias"));
+
+            // Flash
+            printTag(exifData, "Exif.Photo.Flash", _("Flash"));
+
+            // Flash bias
+            printTag(exifData, Exiv2::flashBias, _("Flash bias"));
+
+            // Actual focal length and 35 mm equivalent
+            // Todo: Calculate 35 mm equivalent a la jhead
+            Exiv2::ExifData::const_iterator md;
+            printLabel(_("Focal length"));
+            if (1 == printTag(exifData, "Exif.Photo.FocalLength")) {
+                md = exifData.findKey(
+                    Exiv2::ExifKey("Exif.Photo.FocalLengthIn35mmFilm"));
+                if (md != exifData.end()) {
+                    std::cout << " ("<< _("35 mm equivalent") << ": "
+                              << md->print(&exifData) << ")";
+                }
+            }
+            else {
+                printTag(exifData, "Exif.Canon.FocalLength");
+            }
+            std::cout << std::endl;
         }
-        else {
-            printTag(exifData, "Exif.Canon.FocalLength");
-        }
-        std::cout << std::endl;
 
         // Subject distance
-        printLabel(_("Subject distance"));
-        done = false;
-        if (!done) {
-            done = 0 != printTag(exifData, "Exif.Photo.SubjectDistance");
+        {
+            printLabel(_("Subject distance"));
+            bool done = false;
+            if (!done) {
+                done = 0 != printTag(exifData, "Exif.Photo.SubjectDistance");
+            }
+            if (!done) {
+                done = 0 != printTag(exifData, "Exif.CanonSi.SubjectDistance");
+                done = 0 != printTag(exifData, "Exif.CanonFi.FocusDistanceLower");
+                done = 0 != printTag(exifData, "Exif.CanonFi.FocusDistanceUpper");
+            }
+            std::cout << std::endl;
         }
-        if (!done) {
-            done = 0 != printTag(exifData, "Exif.CanonSi.SubjectDistance");
-        }
-        std::cout << std::endl;
 
         // ISO speed
         printTag(exifData, Exiv2::isoSpeed, _("ISO speed"));
@@ -374,33 +399,35 @@ namespace Action {
         printTag(exifData, Exiv2::imageQuality, _("Image quality"));
 
         // Exif Resolution
-        printLabel(_("Exif Resolution"));
-        long xdim = 0;
-        long ydim = 0;
-        if (image->mimeType() == "image/tiff") {
-            xdim = image->pixelWidth();
-            ydim = image->pixelHeight();
+        {
+            printLabel(_("Exif Resolution"));
+            long xdim = 0;
+            long ydim = 0;
+            if (image->mimeType() == "image/tiff") {
+                xdim = image->pixelWidth();
+                ydim = image->pixelHeight();
+            }
+            else {
+                Exiv2::ExifData::const_iterator md = exifData.findKey(Exiv2::ExifKey("Exif.Image.ImageWidth"));
+                if (md == exifData.end()) {
+                    md = exifData.findKey(Exiv2::ExifKey("Exif.Photo.PixelXDimension"));
+                }
+                if (md != exifData.end() && md->count() > 0) {
+                    xdim = md->toLong();
+                }
+                md = exifData.findKey(Exiv2::ExifKey("Exif.Image.ImageLength"));
+                if (md == exifData.end()) {
+                    md = exifData.findKey(Exiv2::ExifKey("Exif.Photo.PixelYDimension"));
+                }
+                if (md != exifData.end() && md->count() > 0) {
+                    ydim = md->toLong();
+                }
+            }
+            if (xdim != 0 && ydim != 0) {
+                std::cout << xdim << " x " << ydim;
+            }
+            std::cout << std::endl;
         }
-        else {
-            md = exifData.findKey(Exiv2::ExifKey("Exif.Image.ImageWidth"));
-            if (md == exifData.end()) {
-                md = exifData.findKey(Exiv2::ExifKey("Exif.Photo.PixelXDimension"));
-            }
-            if (md != exifData.end() && md->count() > 0) {
-                xdim = md->toLong();
-            }
-            md = exifData.findKey(Exiv2::ExifKey("Exif.Image.ImageLength"));
-            if (md == exifData.end()) {
-                md = exifData.findKey(Exiv2::ExifKey("Exif.Photo.PixelYDimension"));
-            }
-            if (md != exifData.end() && md->count() > 0) {
-                ydim = md->toLong();
-            }
-        }
-        if (xdim != 0 && ydim != 0) {
-            std::cout << xdim << " x " << ydim;
-        }
-        std::cout << std::endl;
 
         // White balance
         printTag(exifData, Exiv2::whiteBalance, _("White balance"));
@@ -440,8 +467,8 @@ namespace Action {
         if (Params::instance().files_.size() > 1) {
             std::cout << std::setw(20) << path_ << " ";
         }
-        std::cout << std::setw(align_)
-                  << label << ": ";
+        std::cout << std::make_pair( label, align_)
+                  << ": ";
     }
 
     int Print::printTag(const Exiv2::ExifData& exifData,
@@ -501,56 +528,64 @@ namespace Action {
 
     int Print::printMetadata(const Exiv2::Image* image)
     {
-        int rc = 0;
+        std::string sMissing;
         if (Params::instance().printTags_ & Exiv2::mdExif) {
             const Exiv2::ExifData& exifData = image->exifData();
             for (Exiv2::ExifData::const_iterator md = exifData.begin();
                  md != exifData.end(); ++md) {
                 printMetadatum(*md, image);
             }
-            if (exifData.empty()) {
-                if (Params::instance().verbose_) {
-                    std::cerr << path_ << ": " << _("No Exif data found in the file\n");
-                }
-                rc = -3;
-            }
+            if (exifData.empty()) sMissing = "Exif" ;
         }
+
         if (Params::instance().printTags_ & Exiv2::mdIptc) {
             const Exiv2::IptcData& iptcData = image->iptcData();
             for (Exiv2::IptcData::const_iterator md = iptcData.begin();
                  md != iptcData.end(); ++md) {
                 printMetadatum(*md, image);
             }
-            if (iptcData.empty()) {
-                if (Params::instance().verbose_) {
-                    std::cerr << path_ << ": " << _("No IPTC data found in the file\n");
-                }
-                rc = -3;
-            }
+            if (iptcData.empty()) sMissing = "IPTC" ;
         }
+
         if (Params::instance().printTags_ & Exiv2::mdXmp) {
             const Exiv2::XmpData& xmpData = image->xmpData();
             for (Exiv2::XmpData::const_iterator md = xmpData.begin();
                  md != xmpData.end(); ++md) {
                 printMetadatum(*md, image);
             }
-            if (xmpData.empty()) {
-                if (Params::instance().verbose_) {
-                    std::cerr << path_ << ": " << _("No XMP data found in the file\n");
-                }
-                rc = -3;
-            }
+            if (xmpData.empty()) sMissing = "XMP" ;
         }
-        return rc;
+
+        bool bTagFilterGiven = !Params::instance().greps_.empty();  // were tag filters given with -g?
+        int  result = ( sMissing.empty() || bTagFilterGiven ) ? 0 : -3;
+        if ( result ) {
+            std::cerr << path_ << ": " << "(No " << sMissing << " data found in the file)\n";
+        }
+        return result;
     } // Print::printMetadata
 
     bool Print::grepTag(const std::string& key)
     {
+        bool result=Params::instance().greps_.empty();
+        for (Params::Greps::const_iterator g = Params::instance().greps_.begin();
+                !result && g != Params::instance().greps_.end(); ++g)
+        {
+#if EXV_HAVE_REGEX
+            result = regexec( &(*g), key.c_str(), 0, NULL, 0) == 0 ;
+#else
+            result = key.find(*g) != std::string::npos;
+#endif
+        }
+        return result ;
+    }
+
+    bool Print::keyTag(const std::string& key)
+    {
         bool result=Params::instance().keys_.empty();
-		if (!result) 
-			for (Params::Keys::const_iterator k = Params::instance().keys_.begin();
-				!result && k != Params::instance().keys_.end(); ++k) {
-					result = key.find(*k) != std::string::npos;
+        for (Params::Keys::const_iterator k = Params::instance().keys_.begin();
+                !result && k != Params::instance().keys_.end(); ++k)
+        {
+            result = key.compare(*k) == 0;
         }
         return result ;
     }
@@ -558,6 +593,7 @@ namespace Action {
     void Print::printMetadatum(const Exiv2::Metadatum& md, const Exiv2::Image* pImage)
     {
         if (!grepTag(md.key())) return;
+        if (!keyTag (md.key())) return;
 
         if (   Params::instance().unknown_
             && md.tagName().substr(0, 2) == "0x") {
@@ -1907,7 +1943,7 @@ namespace {
                       << path << "\n";
             return 1;
         }
-        newPath =   Util::dirname(path) + EXV_SEPERATOR_STR
+        newPath =   Util::dirname(path) + EXV_SEPARATOR_STR
                   + basename + Util::suffix(path);
         if (   Util::dirname(newPath)  == Util::dirname(path)
             && Util::basename(newPath) == Util::basename(path)) {
@@ -1930,7 +1966,7 @@ namespace {
                     break;
                 case Params::renamePolicy:
                     newPath = Util::dirname(path)
-                        + EXV_SEPERATOR_STR + basename
+                        + EXV_SEPARATOR_STR + basename
                         + "_" + Exiv2::toString(seq++)
                         + Util::suffix(path);
                     break;
@@ -1949,7 +1985,7 @@ namespace {
                     case 'R':
                         fileExistsPolicy = Params::renamePolicy;
                         newPath = Util::dirname(path)
-                            + EXV_SEPERATOR_STR + basename
+                            + EXV_SEPARATOR_STR + basename
                             + "_" + Exiv2::toString(seq++)
                             + Util::suffix(path);
                         break;
@@ -1989,7 +2025,7 @@ namespace {
     {
         std::string directory = Params::instance().directory_;
         if (directory.empty()) directory = Util::dirname(path);
-        std::string newPath =   directory + EXV_SEPERATOR_STR
+        std::string newPath =   directory + EXV_SEPARATOR_STR
                               + Util::basename(path, true) + ext;
         return newPath;
     }
@@ -2004,6 +2040,18 @@ namespace {
             if (s[0] != 'y' && s[0] != 'Y') return 1;
         }
         return 0;
+    }
+
+    std::ostream& operator<<( std::ostream& os, std::pair<std::string, int> strAndWidth)
+    {
+      const std::string& str( strAndWidth.first);
+      size_t minChCount( strAndWidth.second);
+      size_t count = mbstowcs( NULL, str.c_str(), 0); // returns 0xFFFFFFFF on error
+      if( count < minChCount)
+      {
+        minChCount += str.size() - count;
+      }
+      return os << std::setw( minChCount) << str;
     }
 
 }

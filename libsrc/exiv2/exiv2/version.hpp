@@ -1,6 +1,6 @@
 // ***************************************************************** -*- C++ -*-
 /*
- * Copyright (C) 2004-2013 Andreas Huggel <ahuggel@gmx.net>
+ * Copyright (C) 2004-2015 Andreas Huggel <ahuggel@gmx.net>
  *
  * This program is part of the Exiv2 distribution.
  *
@@ -24,7 +24,7 @@
            References: Similar versioning defines are used in KDE, GTK and other
            libraries. See http://apr.apache.org/versioning.html for accompanying
            guidelines.
-  @version $Rev: 3201 $
+  @version $Rev: 3371 $
   @author  Andreas Huggel (ahu)
            <a href="mailto:ahuggel@gmx.net">ahuggel@gmx.net</a>
   @date    31-May-06, ahu: created
@@ -36,6 +36,13 @@
 // included header files
 // + standard includes
 #include <string>
+#include <vector>
+#if EXV_HAVE_REGEX
+#include <regex.h>
+typedef std::vector<regex_t> exv_grep_keys_t ;
+#else
+typedef std::vector<std::string> exv_grep_keys_t ;
+#endif
 
 /*!
   @brief %Exiv2 MAJOR version number of the library used at compile-time.
@@ -44,7 +51,7 @@
 /*!
   @brief %Exiv2 MINOR version number of the library used at compile-time.
  */
-#define EXIV2_MINOR_VERSION (24)
+#define EXIV2_MINOR_VERSION (25)
 /*!
   @brief %Exiv2 PATCH version number of the library used at compile-time.
  */
@@ -122,7 +129,7 @@ namespace Exiv2 {
     */
     EXIV2API int versionNumber();
     /*!
-      @brief Return the version string Example: "0.24.0" (major.minor.patch)
+      @brief Return the version string Example: "0.25.0" (major.minor.patch)
     */
     EXIV2API std::string versionString();
     /*!
@@ -176,11 +183,14 @@ namespace Exiv2 {
       @endcode
      */
     EXIV2API bool testVersion(int major, int minor, int patch);
+
+    /*!
+      @brief dumpLibraryInfo implements the exiv2 option --version --verbose
+             used by exiv2 test suite to inspect libraries loaded at run-time
+     */
+    EXIV2API void dumpLibraryInfo(std::ostream& os,const exv_grep_keys_t& keys);
 }                                       // namespace Exiv2
 
-// dumpLibraryInfo is general purpose and not in the Exiv2 namespace
-// used by exiv2 test suite to inspect libraries loaded at run-time
-EXIV2API void dumpLibraryInfo(std::ostream& os);
 
 
 #endif                                  // VERSION_HPP_

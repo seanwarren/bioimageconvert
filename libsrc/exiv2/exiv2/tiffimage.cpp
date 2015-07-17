@@ -1,6 +1,6 @@
 // ***************************************************************** -*- C++ -*-
 /*
- * Copyright (C) 2004-2013 Andreas Huggel <ahuggel@gmx.net>
+ * Copyright (C) 2004-2015 Andreas Huggel <ahuggel@gmx.net>
  *
  * This program is part of the Exiv2 distribution.
  *
@@ -20,22 +20,17 @@
  */
 /*
   File:      tiffimage.cpp
-  Version:   $Rev: 3201 $
+  Version:   $Rev: 3846 $
   Author(s): Andreas Huggel (ahu) <ahuggel@gmx.net>
   History:   15-Mar-06, ahu: created
 
  */
 // *****************************************************************************
 #include "rcsid_int.hpp"
-EXIV2_RCSID("@(#) $Id: tiffimage.cpp 3201 2013-12-01 12:13:42Z ahuggel $")
+EXIV2_RCSID("@(#) $Id: tiffimage.cpp 3846 2015-06-08 14:39:59Z ahuggel $")
 
-// *****************************************************************************
 // included header files
-#ifdef _MSC_VER
-# include "exv_msvc.h"
-#else
-# include "exv_conf.h"
-#endif
+#include "config.h"
 
 #include "tiffimage.hpp"
 #include "tiffimage_int.hpp"
@@ -43,6 +38,7 @@ EXIV2_RCSID("@(#) $Id: tiffimage.cpp 3201 2013-12-01 12:13:42Z ahuggel $")
 #include "tiffvisitor_int.hpp"
 #include "makernote_int.hpp"
 #include "image.hpp"
+#include "image_int.hpp"
 #include "error.hpp"
 #include "futils.hpp"
 #include "types.hpp"
@@ -53,7 +49,7 @@ EXIV2_RCSID("@(#) $Id: tiffimage.cpp 3201 2013-12-01 12:13:42Z ahuggel $")
 #include <iostream>
 #include <iomanip>
 #include <cassert>
-#include <memory>
+#include <cstdarg>
 
 /* --------------------------------------------------------------------------
 
@@ -307,6 +303,263 @@ namespace Exiv2 {
         return rc;
     }
 
+    bool isBigEndian()
+    {
+        union {
+            uint32_t i;
+            char c[4];
+        } e = { 0x01000000 };
+
+        return e.c[0]?true:false;
+    }
+    bool isLittleEndian() { return !isBigEndian(); }
+
+
+    // http://en.wikipedia.org/wiki/Endianness
+    static uint32_t byteSwap(uint32_t value,bool bSwap)
+    {
+        uint32_t result = 0;
+        result |= (value & 0x000000FF) << 24;
+        result |= (value & 0x0000FF00) << 8;
+        result |= (value & 0x00FF0000) >> 8;
+        result |= (value & 0xFF000000) >> 24;
+        return bSwap ? result : value;
+    }
+
+    static uint16_t byteSwap(uint16_t value,bool bSwap)
+    {
+        uint16_t result = 0;
+        result |= (value & 0x00FF) << 8;
+        result |= (value & 0xFF00) >> 8;
+        return bSwap ? result : value;
+    }
+
+    static uint16_t byteSwap2(DataBuf& buf,size_t offset,bool bSwap)
+    {
+        uint16_t v;
+        char*    p = (char*) &v;
+        p[0] = buf.pData_[offset];
+        p[1] = buf.pData_[offset+1];
+        return byteSwap(v,bSwap);
+    }
+
+    static uint32_t byteSwap4(DataBuf& buf,size_t offset,bool bSwap)
+    {
+        uint32_t v;
+        char*    p = (char*) &v;
+        p[0] = buf.pData_[offset];
+        p[1] = buf.pData_[offset+1];
+        p[2] = buf.pData_[offset+2];
+        p[3] = buf.pData_[offset+3];
+        return byteSwap(v,bSwap);
+    }
+
+    static const char* typeName(uint16_t tag)
+    {
+        //! List of TIFF image tags
+        const char* result = NULL;
+        switch (tag ) {
+            case Exiv2::unsignedByte     : result = "BYTE"      ; break;
+            case Exiv2::asciiString      : result = "ASCII"     ; break;
+            case Exiv2::unsignedShort    : result = "SHORT"     ; break;
+            case Exiv2::unsignedLong     : result = "LONG"      ; break;
+            case Exiv2::unsignedRational : result = "RATIONAL"  ; break;
+            case Exiv2::signedByte       : result = "SBYTE"     ; break;
+            case Exiv2::undefined        : result = "UNDEFINED" ; break;
+            case Exiv2::signedShort      : result = "SSHORT"    ; break;
+            case Exiv2::signedLong       : result = "SLONG"     ; break;
+            case Exiv2::signedRational   : result = "SRATIONAL" ; break;
+            case Exiv2::tiffFloat        : result = "FLOAT"     ; break;
+            case Exiv2::tiffDouble       : result = "DOUBLE"    ; break;
+            default                      : result = "unknown"   ; break;
+        }
+        return result;
+    }
+
+    static const char* tagName(uint16_t tag,size_t nMaxLength)
+    {
+        const char* result = NULL;
+
+        // build a static map of tags for fast search
+        static std::map<int,std::string> tags;
+        static bool init  = true;
+        static char buffer[80];
+
+        if ( init ) {
+            int idx;
+            const TagInfo* ti ;
+            for (ti = Exiv2::  mnTagList(), idx = 0; ti[idx].tag_ != 0xffff; ++idx) tags[ti[idx].tag_] = ti[idx].name_;
+            for (ti = Exiv2:: iopTagList(), idx = 0; ti[idx].tag_ != 0xffff; ++idx) tags[ti[idx].tag_] = ti[idx].name_;
+            for (ti = Exiv2:: gpsTagList(), idx = 0; ti[idx].tag_ != 0xffff; ++idx) tags[ti[idx].tag_] = ti[idx].name_;
+            for (ti = Exiv2:: ifdTagList(), idx = 0; ti[idx].tag_ != 0xffff; ++idx) tags[ti[idx].tag_] = ti[idx].name_;
+            for (ti = Exiv2::exifTagList(), idx = 0; ti[idx].tag_ != 0xffff; ++idx) tags[ti[idx].tag_] = ti[idx].name_;
+        }
+        init = false;
+
+        try {
+            result = tags[tag].c_str();
+            if ( nMaxLength > sizeof(buffer) -2 )
+                 nMaxLength = sizeof(buffer) -2;
+            strncpy(buffer,result,nMaxLength);
+            result = buffer;
+        } catch ( ... ) {}
+
+        return result ;
+    }
+
+    static bool isStringType(uint16_t type)
+    {
+        return type == Exiv2::asciiString
+            || type == Exiv2::unsignedByte
+            || type == Exiv2::signedByte
+            ;
+    }
+    static bool isShortType(uint16_t type) {
+         return type == Exiv2::unsignedShort
+             || type == Exiv2::signedShort
+             ;
+    }
+    static bool isLongType(uint16_t type) {
+         return type == Exiv2::unsignedLong
+             || type == Exiv2::signedLong
+             ;
+    }
+    static bool isRationalType(uint16_t type) {
+         return type == Exiv2::unsignedRational
+             || type == Exiv2::signedRational
+             ;
+    }
+    static bool is2ByteType(uint16_t type)
+    {
+        return isShortType(type);
+    }
+    static bool is4ByteType(uint16_t type)
+    {
+        return isLongType(type)
+            || isRationalType(type)
+            ;
+    }
+    static bool isPrintXMP(uint16_t type, Exiv2::PrintStructureOption option)
+    {
+        return type == 700 && option == kpsXMP;
+    }
+
+#define MIN(a,b) ((a)<(b))?(b):(a)
+
+    void TiffImage::printStructure(std::ostream& out, Exiv2::PrintStructureOption option)
+    {
+        if (io_->open() != 0) throw Error(9, io_->path(), strError());
+        // Ensure that this is the correct image type
+        if (!isTiffType(*io_, false)) {
+            if (io_->error() || io_->eof()) throw Error(14);
+            throw Error(15);
+        }
+
+        if ( option == kpsBasic || option == kpsXMP ) {
+            io_->seek(0,BasicIo::beg);
+            // buffer
+            const size_t dirSize = 32;
+            DataBuf  dir(dirSize);
+
+            // read header (we already know for certain that we have a Tiff file)
+            io_->read(dir.pData_,  8);
+            char c = (char) dir.pData_[0] ;
+            bool bSwap   = ( c == 'M' && isLittleEndian() )
+                        || ( c == 'I' && isBigEndian()    )
+                        ;
+
+            if ( option == kpsBasic ) {
+                out << Internal::stringFormat("STRUCTURE OF TIFF FILE (%c%c): ",c,c) << io_->path() << std::endl;
+                out << " address |    tag                           |      type |    count |   offset | value\n";
+            }
+
+            uint32_t start = byteSwap4(dir,4,bSwap);
+            while  ( start ) {
+                // if ( option == kpsBasic ) out << Internal::stringFormat("bSwap, start = %d %u\n",bSwap,offset);
+
+                // Read top of directory
+                io_->seek(start,BasicIo::beg);
+                io_->read(dir.pData_, 2);
+                uint16_t   dirLength = byteSwap2(dir,0,bSwap);
+
+                // Read the dictionary
+                for ( int i = 0 ; i < dirLength ; i ++ ) {
+                    io_->read(dir.pData_, 12);
+                    uint16_t tag    = byteSwap2(dir,0,bSwap);
+                    uint16_t type   = byteSwap2(dir,2,bSwap);
+                    uint32_t count  = byteSwap4(dir,4,bSwap);
+                    uint32_t offset = byteSwap4(dir,8,bSwap);
+
+                    std::string sp = "" ; // output spacer
+
+                    //prepare to print the value
+                    uint16_t kount = isPrintXMP(tag,option) ? count // restrict long arrays
+                                   : isStringType(type)     ? (count > 32 ? 32 : count)
+                                   : count > 5              ? 5
+                                   : count
+                                   ;
+                    uint32_t pad   = isStringType(type) ? 1 : 0;
+                    uint32_t size  = isStringType(type) ? 1
+                                   : is2ByteType(type)  ? 2
+                                   : is4ByteType(type)  ? 4
+                                   : 1
+                                   ;
+
+                    DataBuf  buf(MIN(size*kount + pad,48));  // allocate a buffer
+                    if ( isStringType(type) || count*size > 4 ) {          // data is in the directory => read into buffer
+                        size_t   restore = io_->tell();  // save
+                        io_->seek(offset,BasicIo::beg);  // position
+                        io_->read(buf.pData_,kount*size);// read
+                        io_->seek(restore,BasicIo::beg); // restore
+                    } else {                         // move data from directory to the buffer
+                        std::memcpy(buf.pData_,dir.pData_+8,12);
+                    }
+
+                    if ( option == kpsBasic ) {
+                        uint32_t address = start + 2 + i*12 ;
+                        out << Internal::stringFormat("%8u | %#06x %-25s |%10s |%9u |%9u | ",address,tag,tagName(tag,25),typeName(type),count,offset);
+
+                        if ( isShortType(type) ){
+                            for ( uint16_t k = 0 ; k < kount ; k++ ) {
+                                out << sp << byteSwap2(buf,k*size,bSwap);
+                                sp = " ";
+                            }
+                        } else if ( isLongType(type) ){
+                            for ( uint16_t k = 0 ; k < kount ; k++ ) {
+                                out << sp << byteSwap4(buf,k*size,bSwap);
+                                sp = " ";
+                            }
+                        } else if ( isRationalType(type) ){
+                            for ( uint16_t k = 0 ; k < kount ; k++ ) {
+                            	uint16_t a = byteSwap2(buf,k*size+0,bSwap);
+                            	uint16_t b = byteSwap2(buf,k*size+2,bSwap);
+                            	if ( isLittleEndian() ) {
+                                	if ( bSwap ) out << sp << b << "/" << a;
+                                	else         out << sp << a << "/" << b;
+                                } else {
+                                	if ( bSwap ) out << sp << a << "/" << b;
+                                	else         out << sp << b << "/" << a;
+                                }
+                                sp = " ";
+                            }
+                        } else if ( isStringType(type) ) {
+                            out << sp << Internal::binaryToString(buf, kount);
+                        }
+                        sp = kount == count ? "" : " ...";
+                        out << sp << std::endl;
+                    }
+
+                    if ( isPrintXMP(tag,option) ) {
+                        buf.pData_[count]=0;
+                        out << (char*) buf.pData_;
+                    }
+                }
+                io_->read(dir.pData_, 4);
+                start = byteSwap4(dir,0,bSwap);
+            } // while offset
+        }
+    }
+
 }                                       // namespace Exiv2
 
 // Shortcuts for the newTiffBinaryArray templates.
@@ -540,7 +793,7 @@ namespace Exiv2 {
         { 26, ttUnsignedShort, 1 }, // AFAreaHeight
         { 28, ttUnsignedShort, 1 }, // ContrastDetectAFInFocus
     };
-    
+
     //! Nikon AF Fine Tune binary array - configuration
     extern const ArrayCfg nikonAFTCfg = {
         nikonAFTId,       // Group for the elements
@@ -1252,6 +1505,8 @@ namespace Exiv2 {
         { Tag::root, minoltaCsNewId,   minoltaId,        0x0003    },
         { Tag::root, minoltaCs7DId,    minoltaId,        0x0004    },
         { Tag::root, minoltaCs5DId,    minoltaId,        0x0114    },
+        { Tag::root, casioId,          exifId,           0x927c    },
+        { Tag::root, casio2Id,         exifId,           0x927c    },
         // ---------------------------------------------------------
         // Panasonic RW2 raw images
         { Tag::pana, ifdIdNotSet,      ifdIdNotSet,      Tag::pana },
@@ -1585,13 +1840,13 @@ namespace Exiv2 {
 
         // Nikon3 auto focus
         {  Tag::all, nikonAfId,        newTiffBinaryElement                      },
-        
+
         // Nikon3 auto focus 2
         {  Tag::all, nikonAf2Id,       newTiffBinaryElement                      },
-        
+
         // Nikon3 AF Fine Tune
         {  Tag::all, nikonAFTId,       newTiffBinaryElement                      },
-        
+
         // Nikon3 file info
         {  Tag::all, nikonFiId,        newTiffBinaryElement                      },
 
@@ -1721,6 +1976,14 @@ namespace Exiv2 {
 //        {    0x0117, panaRawId,        newTiffImageSize<0x0111, panaRawId>       },
         { Tag::next, panaRawId,        newTiffDirectory<ignoreId>                },
         {  Tag::all, panaRawId,        newTiffEntry                              },
+
+        // Casio makernote
+        { Tag::next, casioId,          newTiffDirectory<ignoreId>                },
+        {  Tag::all, casioId,          newTiffEntry                              },
+
+        // Casio2 makernote
+        { Tag::next, casio2Id,          newTiffDirectory<ignoreId>                },
+        {  Tag::all, casio2Id,          newTiffEntry                              },
 
         // -----------------------------------------------------------------------
         // Tags which are not de/encoded
@@ -1939,8 +2202,7 @@ namespace Exiv2 {
         TiffComponent::AutoPtr rootDir = TiffCreator::create(root, ifdIdNotSet);
         if (0 != rootDir.get()) {
             rootDir->setStart(pData + pHeader->offset());
-            TiffRwState::AutoPtr state(
-                new TiffRwState(pHeader->byteOrder(), 0));
+            TiffRwState state(pHeader->byteOrder(), 0);
             TiffReader reader(pData, size, rootDir.get(), state);
             rootDir->accept(reader);
             reader.postProcess();
@@ -2041,6 +2303,7 @@ namespace Exiv2 {
 
     void TiffHeaderBase::print(std::ostream& os, const std::string& prefix) const
     {
+        std::ios::fmtflags f( os.flags() );
         os << prefix
            << _("TIFF header, offset") << " = 0x"
            << std::setw(8) << std::setfill('0') << std::hex << std::right
@@ -2052,6 +2315,7 @@ namespace Exiv2 {
         case invalidByteOrder: break;
         }
         os << "\n";
+        os.flags(f);
     } // TiffHeaderBase::print
 
     ByteOrder TiffHeaderBase::byteOrder() const

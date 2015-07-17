@@ -1,6 +1,6 @@
 // ***************************************************************** -*- C++ -*-
 /*
- * Copyright (C) 2004-2013 Andreas Huggel <ahuggel@gmx.net>
+ * Copyright (C) 2004-2015 Andreas Huggel <ahuggel@gmx.net>
  *
  * This program is part of the Exiv2 distribution.
  *
@@ -21,7 +21,7 @@
 /*!
   @file    value.hpp
   @brief   Value interface and concrete subclasses
-  @version $Rev: 3201 $
+  @version $Rev: 3090 $
   @author  Andreas Huggel (ahu)
            <a href="mailto:ahuggel@gmx.net">ahuggel@gmx.net</a>
   @date    09-Jan-04, ahu: created
@@ -872,6 +872,35 @@ namespace Exiv2 {
     }; // class XmpArrayValue
 
     /*!
+      @brief %LangAltValueComparator
+
+      #1058
+	  https://www.adobe.com/content/dam/Adobe/en/devnet/xmp/pdfs/XMPSpecificationPart1.pdf
+	  XMP spec chapter B.4 (page 42) the xml:lang qualifier is to be compared case insensitive.
+      */
+	struct LangAltValueComparator {
+		bool operator() (const std::string& str1, const std::string& str2) const
+		{
+    		int result = str1.size() < str2.size() ?  1
+    		           : str1.size() > str2.size() ? -1
+    		           : 0
+    		           ;
+    		std::string::const_iterator c1 = str1.begin();
+    		std::string::const_iterator c2 = str2.begin();
+    		if (  result==0 ) for (
+    		    ; result==0 && c1 != str1.end()
+    		    ; ++c1, ++c2
+    		    ) {
+        		result = tolower(*c1) < tolower(*c2) ?  1
+        		       : tolower(*c1) > tolower(*c2) ? -1
+        		       : 0
+        		       ;
+    		}
+    		return result < 0 ;
+    	}
+	};
+
+    /*!
       @brief %Value type for XMP language alternative properties.
 
       A language alternative is an array consisting of simple text values,
@@ -949,7 +978,7 @@ namespace Exiv2 {
 
     public:
         //! Type used to store language alternative arrays.
-        typedef std::map<std::string, std::string> ValueType;
+        typedef std::map<std::string, std::string,LangAltValueComparator>  ValueType;
         // DATA
         /*!
           @brief Map to store the language alternative values. The language
@@ -1062,8 +1091,8 @@ namespace Exiv2 {
      @brief %Value for simple ISO 8601 times.
 
      This class is limited to handling simple time strings in the ISO 8601
-     format HHMMSS±HHMM where HHMMSS refers to local hour, minute and
-     seconds and ±HHMM refers to hours and minutes ahead or behind
+     format HHMMSSï¿½HHMM where HHMMSS refers to local hour, minute and
+     seconds and ï¿½HHMM refers to hours and minutes ahead or behind
      Universal Coordinated Time.
      */
     class EXIV2API TimeValue : public Value {
@@ -1550,7 +1579,8 @@ namespace Exiv2 {
     {
         value_.clear();
         long ts = TypeInfo::typeSize(typeId());
-        if (len % ts != 0) len = (len / ts) * ts;
+        if (ts != 0)
+            if (len % ts != 0) len = (len / ts) * ts;
         for (long i = 0; i < len; i += ts) {
             value_.push_back(getValue<T>(buf + i, byteOrder));
         }

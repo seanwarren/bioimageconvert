@@ -464,6 +464,7 @@
     <ClCompile Include="..\exiv2\basicio.cpp" />
     <ClCompile Include="..\exiv2\bmpimage.cpp" />
     <ClCompile Include="..\exiv2\canonmn.cpp" />
+    <ClCompile Include="..\exiv2\casiomn.cpp" />
     <ClCompile Include="..\exiv2\convert.cpp" />
     <ClCompile Include="..\exiv2\cr2image.cpp" />
     <ClCompile Include="..\exiv2\crwimage.cpp" />
@@ -475,6 +476,7 @@
     <ClCompile Include="..\exiv2\fujimn.cpp" />
     <ClCompile Include="..\exiv2\futils.cpp" />
     <ClCompile Include="..\exiv2\gifimage.cpp" />
+    <ClCompile Include="..\exiv2\http.cpp" />
     <ClCompile Include="..\exiv2\image.cpp" />
     <ClCompile Include="..\exiv2\iptc.cpp" />
     <ClCompile Include="..\exiv2\jp2image.cpp" />
@@ -502,6 +504,7 @@
     <ClCompile Include="..\exiv2\samsungmn.cpp" />
     <ClCompile Include="..\exiv2\sigmamn.cpp" />
     <ClCompile Include="..\exiv2\sonymn.cpp" />
+    <ClCompile Include="..\exiv2\ssh.cpp" />
     <ClCompile Include="..\exiv2\tags.cpp" />
     <ClCompile Include="..\exiv2\tgaimage.cpp" />
     <ClCompile Include="..\exiv2\tiffcomposite.cpp" />

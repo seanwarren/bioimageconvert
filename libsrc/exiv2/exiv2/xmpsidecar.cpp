@@ -1,6 +1,6 @@
 // ***************************************************************** -*- C++ -*-
 /*
- * Copyright (C) 2004-2013 Andreas Huggel <ahuggel@gmx.net>
+ * Copyright (C) 2004-2015 Andreas Huggel <ahuggel@gmx.net>
  *
  * This program is part of the Exiv2 distribution.
  *
@@ -20,22 +20,17 @@
  */
 /*
   File:      xmpsidecar.cpp
-  Version:   $Rev: 3201 $
+  Version:   $Rev: 3777 $
   Author(s): Andreas Huggel (ahu) <ahuggel@gmx.net>
   History:   07-Mar-08, ahu: created
   Credits:   See header file
  */
 // *****************************************************************************
 #include "rcsid_int.hpp"
-EXIV2_RCSID("@(#) $Id: xmpsidecar.cpp 3201 2013-12-01 12:13:42Z ahuggel $")
+EXIV2_RCSID("@(#) $Id: xmpsidecar.cpp 3777 2015-05-02 11:55:40Z ahuggel $")
 
-// *****************************************************************************
 // included header files
-#ifdef _MSC_VER
-# include "exv_msvc.h"
-#else
-# include "exv_conf.h"
-#endif
+#include "config.h"
 
 #include "xmpsidecar.hpp"
 #include "image.hpp"
@@ -52,8 +47,9 @@ EXIV2_RCSID("@(#) $Id: xmpsidecar.cpp 3201 2013-12-01 12:13:42Z ahuggel $")
 
 // *****************************************************************************
 namespace {
-    const char* xmlHeader = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
-    const long  xmlHdrCnt = 39; // without the trailing 0-character
+    const char* xmlHeader = "<?xpacket begin=\"\xef\xbb\xbf\" id=\"W5M0MpCehiHzreSzNTczkc9d\"?>\n";
+    const long  xmlHdrCnt = (long) std::strlen(xmlHeader); // without the trailing 0-character
+    const char* xmlFooter = "<?xpacket end=\"w\"?>";
 }
 
 // class member definitions
@@ -135,7 +131,7 @@ namespace Exiv2 {
         }
         if (xmpPacket_.size() > 0) {
             if (xmpPacket_.substr(0, 5)  != "<?xml") {
-                xmpPacket_ = xmlHeader + xmpPacket_;
+                xmpPacket_ = xmlHeader + xmpPacket_ + xmlFooter;
             }
             BasicIo::AutoPtr tempIo(io_->temporary()); // may throw
             assert(tempIo.get() != 0);

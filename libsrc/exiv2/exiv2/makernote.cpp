@@ -1,6 +1,6 @@
 // ***************************************************************** -*- C++ -*-
 /*
- * Copyright (C) 2004-2013 Andreas Huggel <ahuggel@gmx.net>
+ * Copyright (C) 2004-2015 Andreas Huggel <ahuggel@gmx.net>
  *
  * This program is part of the Exiv2 distribution.
  *
@@ -20,21 +20,16 @@
  */
 /*
   File:      makernote.cpp
-  Version:   $Rev: 3091 $
+  Version:   $Rev: 3777 $
   Author(s): Andreas Huggel (ahu) <ahuggel@gmx.net>
   History:   11-Apr-06, ahu: created
  */
 // *****************************************************************************
 #include "rcsid_int.hpp"
-EXIV2_RCSID("@(#) $Id: makernote.cpp 3091 2013-07-24 05:15:04Z robinwmills $")
+EXIV2_RCSID("@(#) $Id: makernote.cpp 3777 2015-05-02 11:55:40Z ahuggel $")
 
-// *****************************************************************************
 // included header files
-#ifdef _MSC_VER
-# include "exv_msvc.h"
-#else
-# include "exv_conf.h"
-#endif
+#include "config.h"
 
 #include "makernote_int.hpp"
 #include "tiffcomposite_int.hpp"
@@ -70,9 +65,11 @@ namespace Exiv2 {
         { "OLYMPUS",        ifdIdNotSet, newOlympusMn,   0               }, // mnGroup_ is not used
         { "Panasonic",      panasonicId, newPanasonicMn, newPanasonicMn2 },
         { "PENTAX",         ifdIdNotSet, newPentaxMn,    0               }, // mnGroup_ is not used
+        { "RICOH",          ifdIdNotSet, newPentaxMn,    0               }, // mnGroup_ is not used
         { "SAMSUNG",        samsung2Id,  newSamsungMn,   newSamsungMn2   },
         { "SIGMA",          sigmaId,     newSigmaMn,     newSigmaMn2     },
         { "SONY",           ifdIdNotSet, newSonyMn,      0               }, // mnGroup_ is not used
+        { "CASIO",          ifdIdNotSet, newCasioMn,     0               }, // mnGroup_ is not used
         // Entries below are only used for lookup by group
         { "-",              nikon1Id,    0,              newIfdMn2       },
         { "-",              nikon2Id,    0,              newNikon2Mn2    },
@@ -727,6 +724,59 @@ namespace Exiv2 {
         return sizeOfSignature();
     } // SonyMnHeader::write
 
+    const byte Casio2MnHeader::signature_[] = {
+        'Q', 'V', 'C', '\0', '\0', '\0'
+    };
+    const ByteOrder Casio2MnHeader::byteOrder_ = bigEndian;
+
+    uint32_t Casio2MnHeader::sizeOfSignature()
+    {
+        return sizeof(signature_);
+    }
+
+    Casio2MnHeader::Casio2MnHeader()
+    {
+        read(signature_, sizeOfSignature(), invalidByteOrder );
+    }
+
+    Casio2MnHeader::~Casio2MnHeader()
+    {
+    }
+
+    uint32_t Casio2MnHeader::size() const
+    {
+        return sizeOfSignature();
+    }
+
+    uint32_t Casio2MnHeader::ifdOffset() const
+    {
+        return start_;
+    }
+
+    ByteOrder Casio2MnHeader::byteOrder() const
+    {
+        return byteOrder_;
+    }
+
+    bool Casio2MnHeader::read(const byte* pData,
+                            uint32_t    size,
+                            ByteOrder   /*byteOrder*/)
+    {
+        if (!pData || size < sizeOfSignature()) return false;
+        if (0 != memcmp(pData, signature_, sizeOfSignature())) return false;
+        buf_.alloc(sizeOfSignature());
+        std::memcpy(buf_.pData_, pData, buf_.size_);
+        start_ = sizeOfSignature();
+        return true;
+    } // Casio2MnHeader::read
+
+    uint32_t Casio2MnHeader::write(IoWrapper& ioWrapper,
+                                 ByteOrder /*byteOrder*/) const
+    {
+        ioWrapper.write(signature_, sizeOfSignature());
+        return sizeOfSignature();
+    } // Casio2MnHeader::write
+
     // *************************************************************************
     // free functions
 
@@ -902,13 +952,23 @@ namespace Exiv2 {
     TiffComponent* newSamsungMn(uint16_t    tag,
                                 IfdId       group,
                                 IfdId       mnGroup,
-                                const byte* /*pData*/,
+                                const byte* pData,
                                 uint32_t    size,
                                 ByteOrder   /*byteOrder*/)
     {
-        // Require at least an IFD with 1 entry
-        if (size < 18) return 0;
-        return newSamsungMn2(tag, group, mnGroup);
+        if (   size > 4
+            && std::string(reinterpret_cast<const char*>(pData), 4) == std::string("AOC\0", 4)) {
+            // Samsung branded Pentax camera:
+            // Require at least the header and an IFD with 1 entry
+            if (size < PentaxMnHeader::sizeOfSignature() + 18) return 0;
+            return newPentaxMn2(tag, group, pentaxId);
+        }
+        else {
+            // Genuine Samsung camera:
+            // Require at least an IFD with 1 entry
+            if (size < 18) return 0;
+            return newSamsungMn2(tag, group, mnGroup);
+        }
     }
 
     TiffComponent* newSamsungMn2(uint16_t tag,
@@ -968,6 +1028,29 @@ namespace Exiv2 {
                                IfdId    mnGroup)
     {
         return new TiffIfdMakernote(tag, group, mnGroup, 0, true);
+    }
+
+    TiffComponent* newCasioMn(uint16_t    tag,
+                             IfdId       group,
+                             IfdId    /* mnGroup*/,
+                             const byte* pData,
+                             uint32_t    size,
+                             ByteOrder/* byteOrder */ )
+    {
+        if (size > 6 && std::string(reinterpret_cast<const char*>(pData), 6)
+                        == std::string("QVC\0\0\0", 6)) {
+            return newCasio2Mn2(tag, group, casio2Id);
+        };
+        // Require at least an IFD with 1 entry, but not necessarily a next pointer
+        if (size < 14) return 0;
+        return newIfdMn2(tag, group, casioId);
+    }
+
+    TiffComponent* newCasio2Mn2(uint16_t tag,
+                               IfdId    group,
+                               IfdId    mnGroup)
+    {
+        return new TiffIfdMakernote(tag, group, mnGroup, new Casio2MnHeader);
     }
 
     //! Structure for an index into the array set of complex binary arrays.
