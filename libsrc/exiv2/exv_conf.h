@@ -35,7 +35,7 @@
 
 /* Define to 1 if translation of program messages to the user's
    native language is requested. */
-#define EXV_ENABLE_NLS 1
+/* #undef EXV_ENABLE_NLS */
 
 #endif /* !EXV_COMMERCIAL_VERSION */
 
@@ -138,7 +138,7 @@
 #define EXV_HAVE_LIBZ 1
 
 /* Define to 1 if you have the Adobe XMP Toolkit. */
-#define EXV_HAVE_XMP_TOOLKIT 1
+/* #undef EXV_HAVE_XMP_TOOLKIT */
 
 /* Define to 1 if the system has the type `_Bool'. */
 #define EXV_HAVE__BOOL 1
