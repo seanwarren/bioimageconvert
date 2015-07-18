@@ -844,13 +844,15 @@ stat_exiv2 {
   INCLUDEPATH += $$BIM_LIB_EXIV2
   INCLUDEPATH += $$BIM_LIB_EXIV2/exiv2
   SOURCES += $$BIM_LIB_EXIV2/exiv2/asfvideo.cpp $$BIM_LIB_EXIV2/exiv2/basicio.cpp \
-             $$BIM_LIB_EXIV2/exiv2/bmpimage.cpp $$BIM_LIB_EXIV2/exiv2/canonmn.cpp $$BIM_LIB_EXIV2/exiv2/casiomn.cpp \
+             $$BIM_LIB_EXIV2/exiv2/bmpimage.cpp $$BIM_LIB_EXIV2/exiv2/canonmn.cpp \
+             $$BIM_LIB_EXIV2/exiv2/casiomn.cpp \
              $$BIM_LIB_EXIV2/exiv2/convert.cpp $$BIM_LIB_EXIV2/exiv2/cr2image.cpp \
              $$BIM_LIB_EXIV2/exiv2/crwimage.cpp $$BIM_LIB_EXIV2/exiv2/datasets.cpp \
              $$BIM_LIB_EXIV2/exiv2/easyaccess.cpp $$BIM_LIB_EXIV2/exiv2/epsimage.cpp \
              $$BIM_LIB_EXIV2/exiv2/error.cpp $$BIM_LIB_EXIV2/exiv2/exif.cpp \
              $$BIM_LIB_EXIV2/exiv2/fujimn.cpp $$BIM_LIB_EXIV2/exiv2/futils.cpp \
-             $$BIM_LIB_EXIV2/exiv2/gifimage.cpp $$BIM_LIB_EXIV2/exiv2/http.cpp $$BIM_LIB_EXIV2/exiv2/image.cpp \
+             $$BIM_LIB_EXIV2/exiv2/gifimage.cpp $$BIM_LIB_EXIV2/exiv2/http.cpp \
+             $$BIM_LIB_EXIV2/exiv2/image.cpp \
              $$BIM_LIB_EXIV2/exiv2/iptc.cpp $$BIM_LIB_EXIV2/exiv2/jp2image.cpp \
              $$BIM_LIB_EXIV2/exiv2/jpgimage.cpp $$BIM_LIB_EXIV2/exiv2/makernote.cpp \
              $$BIM_LIB_EXIV2/exiv2/matroskavideo.cpp $$BIM_LIB_EXIV2/exiv2/metadatum.cpp \
@@ -863,7 +865,8 @@ stat_exiv2 {
              $$BIM_LIB_EXIV2/exiv2/quicktimevideo.cpp $$BIM_LIB_EXIV2/exiv2/psdimage.cpp \
              $$BIM_LIB_EXIV2/exiv2/rafimage.cpp $$BIM_LIB_EXIV2/exiv2/riffvideo.cpp \
              $$BIM_LIB_EXIV2/exiv2/rw2image.cpp $$BIM_LIB_EXIV2/exiv2/sigmamn.cpp \
-             $$BIM_LIB_EXIV2/exiv2/samsungmn.cpp $$BIM_LIB_EXIV2/exiv2/sonymn.cpp $$BIM_LIB_EXIV2/exiv2/ssh.cpp \
+             $$BIM_LIB_EXIV2/exiv2/samsungmn.cpp $$BIM_LIB_EXIV2/exiv2/sonymn.cpp \
+             $$BIM_LIB_EXIV2/exiv2/ssh.cpp \
              $$BIM_LIB_EXIV2/exiv2/tags.cpp $$BIM_LIB_EXIV2/exiv2/tgaimage.cpp \
              $$BIM_LIB_EXIV2/exiv2/tiffcomposite.cpp $$BIM_LIB_EXIV2/exiv2/tiffimage.cpp \
              $$BIM_LIB_EXIV2/exiv2/tiffvisitor.cpp $$BIM_LIB_EXIV2/exiv2/types.cpp \
