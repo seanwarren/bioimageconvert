@@ -370,7 +370,7 @@ char* dicomReadMetaDataAsTextProc ( FormatHandle *fmtHndl ) {
 //----------------------------------------------------------------------------
 // READ/WRITE
 //----------------------------------------------------------------------------
-
+/*
 template <typename T>
 void copy_channel(bim::uint64 W, bim::uint64 H, int samples, int sample, const void *in, void *out) {
     T *raw = (T *) in;
@@ -382,6 +382,27 @@ void copy_channel(bim::uint64 W, bim::uint64 H, int samples, int sample, const v
         T *rr = raw + x*samples;
         *pp = *rr;
     } // for x
+}
+*/
+
+template <typename T>
+void copy_channel(bim::uint64 W, bim::uint64 H, int samples, int sample, const void *in, void *out) {
+    T *raw = (T *)in + sample;
+    T *p = (T *)out;
+    int step = sizeof(T)*samples;
+    size_t inrowsz = sizeof(T)*samples*W;
+    size_t ourowsz = sizeof(T)*W;
+
+    #pragma omp parallel for default(shared)
+    for (bim::int64 y = 0; y < H; ++y) {
+        T *lin = raw + y*inrowsz;
+        T *lou = p + y*ourowsz;
+        for (bim::int64 x = 0; x < W; ++x) {
+            *lou = *lin;
+            lou++;
+            lin += step;
+        } // for x
+    } // for y
 }
 
 bim::uint dicomReadImageProc  ( FormatHandle *fmtHndl, bim::uint page ) {

@@ -45,6 +45,8 @@
 #include "dicom/bim_dicom_format.h"
 #endif
 #include "nifti/bim_nifti_format.h"
+#include "jxr/bim_jxr_format.h"
+#include "webp/bim_webp_format.h"
 
 using namespace bim;
 
@@ -81,6 +83,8 @@ FormatManager::FormatManager() {
   addNewFormatHeader ( dicomGetFormatHeader() );
   #endif  
   addNewFormatHeader(niftiGetFormatHeader());
+  addNewFormatHeader(jxrGetFormatHeader());
+  addNewFormatHeader(webpGetFormatHeader());
 }
 
 
@@ -1011,16 +1015,20 @@ int FormatManager::sessionGetCurrentPage ()
 char* FormatManager::sessionGetTextMetaData ()
 {
   if (session_active != true) return NULL;
-  FormatHeader *selectedFmt = formatList.at( sessionFormatIndex );  
-  return selectedFmt->readMetaDataAsTextProc ( &sessionHandle );
+  FormatHeader *selectedFmt = formatList.at( sessionFormatIndex );
+  if (selectedFmt->readMetaDataAsTextProc)
+      return selectedFmt->readMetaDataAsTextProc(&sessionHandle);
+  else
+      return NULL;
 }
 
 TagList* FormatManager::sessionReadMetaData ( bim::uint page, int group, int tag, int type)
 {
   if (session_active != true) return NULL;
   sessionCurrentPage = page;
-  FormatHeader *selectedFmt = formatList.at( sessionFormatIndex );    
-  selectedFmt->readMetaDataProc ( &sessionHandle, page, group, tag, type);
+  FormatHeader *selectedFmt = formatList.at( sessionFormatIndex );
+  if (selectedFmt->readMetaDataProc)
+      selectedFmt->readMetaDataProc ( &sessionHandle, page, group, tag, type);
   return &sessionHandle.metaData;
 }
 
