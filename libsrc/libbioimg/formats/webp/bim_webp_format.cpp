@@ -296,7 +296,7 @@ bim::uint webpWriteImageProc(FormatHandle *fmtHndl) {
     float quality_factor = fmtHndl->quality;
     uint8_t *webp_image = 0;
     size_t imagesz;
-    int stride = 0;
+    int stride = getLineSizeInBytes(bmp) * out_samples;
     if (out_samples == 4 && quality_factor < 100)
         imagesz = WebPEncodeRGBA((const uint8_t *)&buffer[0], info->width, info->height, stride, quality_factor, &webp_image);
     else if (out_samples == 4 && quality_factor >= 100)
@@ -353,13 +353,11 @@ FormatItem webpItems[BIM_WEBP_NUM_FORMATS] = {
         1, //canWriteMeta; // 0 - NO, 1 - YES
         0, //canWriteMultiPage;   // 0 - NO, 1 - YES
         //TDivFormatConstrains constrains ( w, h, pages, minsampl, maxsampl, minbitsampl, maxbitsampl, noLut )
-        { 16384, 16384, 1, 3, 4, 8, 8, 1 }
+        { 16383, 16383, 1, 3, 4, 8, 8, 1 }
     }
 };
 
-
 FormatHeader webpHeader = {
-
     sizeof(FormatHeader),
     "0.4.3",
     "WebP",

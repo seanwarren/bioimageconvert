@@ -303,6 +303,12 @@
     <ClCompile Include="..\..\formats\nifti\bim_nifti_format.cpp">
       <Filter>libbioimg\Formats</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\formats\jxr\bim_jxr_format.cpp">
+      <Filter>libbioimg\Formats</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\formats\webp\bim_webp_format.cpp">
+      <Filter>libbioimg\Formats</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\libbioimg\formats\bim_format_manager.h">

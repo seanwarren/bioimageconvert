@@ -337,6 +337,7 @@
     <ClCompile Include="..\..\formats\jp2\bim_jp2_compress.cpp" />
     <ClCompile Include="..\..\formats\jp2\bim_jp2_decompress.cpp" />
     <ClCompile Include="..\..\formats\jp2\bim_jp2_format.cpp" />
+    <ClCompile Include="..\..\formats\jxr\bim_jxr_format.cpp" />
     <ClCompile Include="..\..\formats\nifti\bim_nifti_format.cpp" />
     <ClCompile Include="..\..\formats\ole\bim_oib_format_io.cpp" />
     <ClCompile Include="..\..\formats\ole\bim_zvi_format_io.cpp" />
@@ -346,6 +347,7 @@
     <ClCompile Include="..\..\formats\tiff\bim_psia_format_io.cpp" />
     <ClCompile Include="..\..\formats\tiff\bim_stk_format_io.cpp" />
     <ClCompile Include="..\..\formats\tiff\bim_tiff_format_io.cpp" />
+    <ClCompile Include="..\..\formats\webp\bim_webp_format.cpp" />
     <ClCompile Include="..\..\formats_api\bim_image_5d.cpp" />
     <ClCompile Include="..\..\formats_api\bim_image_eigen.cpp" />
     <ClCompile Include="..\..\formats_api\bim_image_filters.cpp" />
