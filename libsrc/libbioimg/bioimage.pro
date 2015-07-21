@@ -57,6 +57,9 @@ CONFIG += stat_pugixml
 CONFIG += stat_gdcm
 #CONFIG += dyn_gdcm
 CONFIG += stat_openjpeg
+CONFIG += stat_jxrlib
+CONFIG += stat_libwebp
+CONFIG += stat_lcms2
 
 CONFIG(debug, debug|release) {
   message(Building in DEBUG mode!)
@@ -136,6 +139,9 @@ BIM_LIB_PUGIXML  = $$BIM_LSRC/pugixml/src
 BIM_LIB_GDCM     = $$BIM_LSRC/gdcm
 BIM_FMT_DICOM    = $$BIM_FMTS/dicom
 BIM_LIB_OPENJPEG = $$BIM_LSRC/openjpeg/src
+BIM_LIB_JXRLIB   = $$BIM_LSRC/jxrlib
+BIM_LIB_LIBWEBP  = $$BIM_LSRC/libwebp
+BIM_LIB_LCMS2    = $$BIM_LSRC/lcms2
 
 #---------------------------------------------------------------------
 # configuration: automatic
@@ -884,5 +890,30 @@ stat_exiv2 {
 
 stat_eigen {
   INCLUDEPATH += $$BIM_LIB_EIGEN
+}
+
+#---------------------------------------------------------------------
+# jxrlib
+#---------------------------------------------------------------------
+
+stat_jxrlib {
+  INCLUDEPATH += $$BIM_LIB_JXRLIB/jxrgluelib
+  INCLUDEPATH += $$BIM_LIB_JXRLIB/jxrlib/image/sys  
+}
+
+#---------------------------------------------------------------------
+# libwebp
+#---------------------------------------------------------------------
+
+stat_libwebp {
+  INCLUDEPATH += $$BIM_LIB_LIBWEBP/src
+}
+
+#---------------------------------------------------------------------
+# lcms2
+#---------------------------------------------------------------------
+
+stat_lcms2 {
+  INCLUDEPATH += $$BIM_LIB_LCMS2/include
 }
 

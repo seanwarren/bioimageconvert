@@ -5,6 +5,9 @@ MAKEFLAGS += -j 4
 LIBBIM=libsrc/libbioimg
 LIBRAW=libsrc/libraw
 LIBVPX=libsrc/libvpx
+LIBWEBP=libsrc/libwebp
+LIBJXR=libsrc/jxrlib
+LCMS2=libsrc/lcms2
 LIBX264=libsrc/libx264
 LIBX265=libsrc/libx265
 LIBOGG=libsrc/libogg
@@ -138,6 +141,36 @@ full:
 	(cd $(LIBVPX); ./configure --enable-vp8 --enable-vp9 --enable-pic --disable-examples --disable-unit-tests --extra-cflags="-Wa,-q" )
 	(cd $(LIBVPX); $(MAKE))
 	(cp $(LIBVPX)/libvpx.a $(LIBS)/)
+
+	@echo
+	@echo
+	@echo "Building libwebp 0.4.3 in $(LIBWEBP)"
+	(cd $(LIBWEBP); chmod -f u+x configure)
+	(cd $(LIBWEBP); chmod -f u+x autogen.sh)
+	(cd $(LIBWEBP); chmod -f u+x config.guess)
+	(cd $(LIBWEBP); chmod -f u+x config.sub)
+	(cd $(LIBWEBP); chmod -f u+x config.status)
+	(cd $(LIBWEBP); ./configure --with-pic )
+	(cd $(LIBWEBP); $(MAKE))
+	(cp $(LIBWEBP)/src/.libs/libwebp.a $(LIBS)/)
+
+	@echo
+	@echo
+	@echo "Building jxrlib 1.1.0 in $(LIBJXR)"
+	(cd $(LIBJXR); $(MAKE))
+	(cp $(LIBJXR)/libjpegxr.a $(LIBS)/)
+	(cp $(LIBJXR)/libjxrglue.a $(LIBS)/)
+
+	@echo
+	@echo
+	@echo "Building lcms 2.7.0 in $(LCMS2)"
+	(cd $(LCMS2); chmod -f u+x configure)
+	(cd $(LCMS2); chmod -f u+x autogen.sh)
+	(cd $(LCMS2); chmod -f u+x config.guess)
+	(cd $(LCMS2); chmod -f u+x config.sub)
+	(cd $(LCMS2); ./configure --with-pic )
+	(cd $(LCMS2); $(MAKE))
+	(cp $(LCMS2)/src/.libs/liblcms2.a $(LIBS)/)
 
 	@echo
 	@echo

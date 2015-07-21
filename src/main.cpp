@@ -109,7 +109,7 @@
                 
 *******************************************************************************/
 
-#define IMGCNV_VER "2.0.2"
+#define IMGCNV_VER "2.0.3"
 
 #include <cmath>
 #include <cstdio>
@@ -605,6 +605,10 @@ void DConf::init() {
   tmp += "  compression N - where N can be: none, packbits, lzw, fax, ex: -options \"compression none\"\n";
   tmp += "  tiles N - write tiled TIFF where N defined tile size, ex: tiles -options \"512\"\n";
   tmp += "  pyramid N - writes TIFF pyramid where N is a storage type: subdirs, topdirs, ex: -options \"compression lzw tiles 512 pyramid subdirs\"\n\n";
+  tmp += "JPEG-XR encoder options:\n";
+  tmp += "  quality N - specify encoding quality 0-100, where 100 is lossless, ex: -options \"quality 90\"\n";
+  tmp += "WebP encoder options:\n";
+  tmp += "  quality N - specify encoding quality 0-100, where 100 is lossless, ex: -options \"quality 90\"\n";
   appendArgumentDefinition( "-options", 1, tmp );
 
   

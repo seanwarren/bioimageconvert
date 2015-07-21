@@ -5,6 +5,9 @@ MAKEFLAGS += -j 4
 LIBBIM=libsrc/libbioimg
 LIBRAW=libsrc/libraw
 LIBVPX=libsrc/libvpx
+LIBWEBP=libsrc/libwebp
+LIBJXR=libsrc/jxrlib
+LCMS2=libsrc/lcms2
 LIBX264=libsrc/libx264
 LIBX265=libsrc/libx265
 FFMPEG=libsrc/ffmpeg
@@ -12,7 +15,7 @@ LIBJPEGTURBO=libsrc/libjpeg-turbo
 LIBGDCM=libsrc/gdcm
 LIBGDCMBIN=libsrc/gdcmbin
 LIBS=libs/linux
-PKG_CONFIG_PATH=$LIBVPX/vpx.pc:$LIBX264/x264.pc:$LIBX265/build/linux/x265.pc
+PKG_CONFIG_PATH=$LIBVPX:$LIBX264:$LIBX265/build/linux
 QMAKEOPTS=
 VERSION=2.0.0
 
@@ -28,22 +31,22 @@ install:
 
 imgcnv:
 	-mkdir -p .generated/obj
-	
-	@echo
-	@echo   
-	@echo "Building libbioimage in $(LIBBIM)"
-	(cd $(LIBBIM); qmake $(QMAKEOPTS) bioimage.pro)
-	(cd $(LIBBIM); $(MAKE)) 
 
 	@echo
 	@echo
-	@echo "Building imgcnv"        
+	@echo "Building libbioimage in $(LIBBIM)"
+	(cd $(LIBBIM); qmake $(QMAKEOPTS) bioimage.pro)
+	(cd $(LIBBIM); $(MAKE))
+
+	@echo
+	@echo
+	@echo "Building imgcnv"
 	(cd src; qmake $(QMAKEOPTS) imgcnv.pro)
 	(cd src; $(MAKE))
 
 	@echo
 	@echo
-	@echo "Building libimgcnv"   
+	@echo "Building libimgcnv"
 	(cd src_dylib; qmake $(QMAKEOPTS) libimgcnv.pro)
 	(cd src_dylib; $(MAKE))
 
@@ -56,7 +59,7 @@ full:
 	@echo "Building libbioimage in $(LIBBIM)"
 	(cd $(LIBBIM); qmake $(QMAKEOPTS) bioimage.pro)
 	(cd $(LIBBIM); $(MAKE))
-	
+
 	@echo
 	@echo
 	@echo "Building libvpx 1.4.0 in $(LIBVPX)"
@@ -64,11 +67,41 @@ full:
 	(cd $(LIBVPX); chmod -f u+x build/make/version.sh)
 	(cd $(LIBVPX); chmod -f u+x build/make/rtcd.sh)
 	(cd $(LIBVPX); chmod -f u+x build/make/gen_asm_deps.sh)
-	(cd $(LIBVPX); chmod -f u+x build/make/gen_asm_deps.sh)     
+	(cd $(LIBVPX); chmod -f u+x build/make/gen_asm_deps.sh)
 	(cd $(LIBVPX); ./configure --enable-vp8 --enable-vp9 --enable-pic --disable-examples --disable-unit-tests )
 	(cd $(LIBVPX); $(MAKE))
 	(cp $(LIBVPX)/libvpx.a $(LIBS)/)
-	
+
+	@echo
+	@echo
+	@echo "Building libwebp 0.4.3 in $(LIBWEBP)"
+	(cd $(LIBWEBP); chmod -f u+x configure)
+	(cd $(LIBWEBP); chmod -f u+x autogen.sh)
+	(cd $(LIBWEBP); chmod -f u+x config.guess)
+	(cd $(LIBWEBP); chmod -f u+x config.sub)
+	(cd $(LIBWEBP); chmod -f u+x config.status)
+	(cd $(LIBWEBP); ./configure --with-pic )
+	(cd $(LIBWEBP); $(MAKE))
+	(cp $(LIBWEBP)/src/.libs/libwebp.a $(LIBS)/)
+
+	@echo
+	@echo
+	@echo "Building jxrlib 1.1.0 in $(LIBJXR)"
+	(cd $(LIBJXR); $(MAKE))
+	(cp $(LIBJXR)/libjpegxr.a $(LIBS)/)
+	(cp $(LIBJXR)/libjxrglue.a $(LIBS)/)
+
+	@echo
+	@echo
+	@echo "Building lcms 2.7.0 in $(LCMS2)"
+	(cd $(LCMS2); chmod -f u+x configure)
+	(cd $(LCMS2); chmod -f u+x autogen.sh)
+	(cd $(LCMS2); chmod -f u+x config.guess)
+	(cd $(LCMS2); chmod -f u+x config.sub)
+	(cd $(LCMS2); ./configure --with-pic )
+	(cd $(LCMS2); $(MAKE))
+	(cp $(LCMS2)/src/.libs/liblcms2.a $(LIBS)/)
+
 	@echo
 	@echo
 	@echo "Building libx264 20150223 in $(LIBX264)"
@@ -78,11 +111,11 @@ full:
 	(cd $(LIBX264); chmod -f u+x config.sub)
 	(cd $(LIBX264); ./configure --enable-pic --enable-static --disable-opencl )
 	(cd $(LIBX264); $(MAKE))
-	(cp $(LIBX264)/libx264.a $(LIBS)/) 
-	
+	(cp $(LIBX264)/libx264.a $(LIBS)/)
+
 	@echo
 	@echo
-	@echo "Building libx265 1.4 in $(LIBX265)"
+	@echo "Building libx265 20150509 in $(LIBX265)"
 	#(cd $(LIBX265)/build/linux; chmod -f u+x make-Makefiles.bash)
 	#(cd $(LIBX265)/build/linux; bash make-Makefiles.bash )
 	(cd $(LIBX265)/build/linux; cmake -G "Unix Makefiles" ../../source -DCMAKE_CXX_FLAGS=-fPIC -DCMAKE_C_FLAGS=-fPIC )
@@ -97,8 +130,8 @@ full:
 	(cd $(LIBJPEGTURBO); chmod -f u+x config.sub)
 	(cd $(LIBJPEGTURBO); ./configure --enable-pic --enable-static --enable-shared=no )
 	(cd $(LIBJPEGTURBO); $(MAKE))
-	(cp $(LIBJPEGTURBO)/.libs/libturbojpeg.a $(LIBS)/) 
-	
+	(cp $(LIBJPEGTURBO)/.libs/libturbojpeg.a $(LIBS)/)
+
 	@echo
 	@echo
 	@echo "Building libGDCM 2.4.4 in $(LIBGDCM)"
@@ -106,9 +139,9 @@ full:
 	(cd $(LIBGDCMBIN); cmake ../gdcm -DCMAKE_CXX_FLAGS=-fPIC -DCMAKE_C_FLAGS=-fPIC -DGDCM_USE_OPENJPEG_V2=ON )
 	(cd $(LIBGDCMBIN); $(MAKE))
 	(cp $(LIBGDCMBIN)/bin/*.a $(LIBS)/gdcm/)
-	
+
 	@echo
-	@echo     
+	@echo
 	@echo "Building ffmpeg 2.6.3 in $(FFMPEG)"
 	(cd $(FFMPEG)/ffmpeg; chmod -f u+x configure)
 	(cd $(FFMPEG)/ffmpeg; chmod -f u+x version.sh)
@@ -128,29 +161,29 @@ full:
 		--disable-libopenjpeg --disable-libschroedinger \
 		--enable-libtheora --enable-libvpx --enable-libx264 --enable-encoder=libx264 --enable-libx265 --enable-libxvid \
 		--disable-libvo-aacenc --disable-libvo-amrwbenc )
-	
+
 	(cd $(FFMPEG)/ffmpeg-obj; $(MAKE) all install)
-	
-	(cp -f $(FFMPEG)/ffmpeg-out/lib/libavcodec.a $(LIBS)/) 
-	(cp -f $(FFMPEG)/ffmpeg-out/lib/libavformat.a $(LIBS)/) 
-	(cp -f $(FFMPEG)/ffmpeg-out/lib/libavutil.a $(LIBS)/) 
-	(cp -f $(FFMPEG)/ffmpeg-out/lib/libswscale.a $(LIBS)/)  
+
+	(cp -f $(FFMPEG)/ffmpeg-out/lib/libavcodec.a $(LIBS)/)
+	(cp -f $(FFMPEG)/ffmpeg-out/lib/libavformat.a $(LIBS)/)
+	(cp -f $(FFMPEG)/ffmpeg-out/lib/libavutil.a $(LIBS)/)
+	(cp -f $(FFMPEG)/ffmpeg-out/lib/libswscale.a $(LIBS)/)
 	-mkdir -p $(FFMPEG)/include
 	(cp -Rf $(FFMPEG)/ffmpeg-out/include/libavcodec $(FFMPEG)/include/)
 	(cp -Rf $(FFMPEG)/ffmpeg-out/include/libavformat $(FFMPEG)/include/)
 	(cp -Rf $(FFMPEG)/ffmpeg-out/include/libavutil $(FFMPEG)/include/)
 	(cp -Rf $(FFMPEG)/ffmpeg-out/include/libswscale $(FFMPEG)/include/)
-	
-	
+
+
 	@echo
 	@echo
-	@echo "Building imgcnv"   
+	@echo "Building imgcnv"
 	(cd src; qmake $(QMAKEOPTS) imgcnv.pro)
 	(cd src; $(MAKE))
 
 	@echo
 	@echo
-	@echo "Building libimgcnv"   
+	@echo "Building libimgcnv"
 	(cd src_dylib; qmake $(QMAKEOPTS) libimgcnv.pro)
 	(cd src_dylib; $(MAKE))
 
@@ -165,12 +198,12 @@ cleanfull:
 	(cd src; $(MAKE) clean)
 	rm -rf .generated *.o *~
 	rm -rf $(LIBBIM)/.generated $(LIBBIM)/*.o $(LIBBIM)/*~ $(LIBBIM)/.qmake.stash
-	(cd $(LIBBIM); $(MAKE) clean)   
+	(cd $(LIBBIM); $(MAKE) clean)
 	(cd $(LIBVPX); $(MAKE) clean)
 	(cd $(LIBX264); $(MAKE) clean)
 	rm -rf $(FFMPEG)/ffmpeg-obj
 	rm -rf $(FFMPEG)/ffmpeg-out
-	#(cd $(FFMPEG)/ffmpeg; $(MAKE) clean)           
+	#(cd $(FFMPEG)/ffmpeg; $(MAKE) clean)
 
 realclean: clean
 	rm -f imgcnv
