@@ -26,11 +26,9 @@ extern "C" {
     bim::FormatHeader* jxrGetFormatHeader(void);
 }
 
-namespace gdcm {
-    class Image;
-    class ImageReader;
-    class ImageRegionReader;
-}
+struct WMPStream;
+struct tagPKImageDecode;
+typedef struct tagPKImageDecode PKImageDecode;
 
 namespace bim {
     //----------------------------------------------------------------------------
@@ -43,7 +41,13 @@ namespace bim {
         ~JXRParams();
 
         ImageInfo i;
-        //gdcm::ImageRegionReader *reader;
+        std::fstream *file;
+        WMPStream *pStream;
+        PKImageDecode *pDecoder;
+        
+        //PKImageDecode *pDecoder;
+        
+        void open(const char *filename, bim::ImageIOModes mode);
     };
 
 } // namespace bim
