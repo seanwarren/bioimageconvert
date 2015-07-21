@@ -104,7 +104,11 @@ typedef enum {
   IM_RGBA      = 7,  // 32-bit
   IM_ABGR      = 8,  // 32-bit
   IM_CMYK      = 9,  // 32-bit
-  IM_MULTI     = 12  // undefined - image with many separate grayscale channels
+  IM_MULTI     = 12, // undefined - image with many separate grayscale channels
+  IM_RGBE      = 13, // Radiance RGBE format definign floating RGB by division with the Exponent
+  IM_YUV       = 14, // YUV444 chromaticity
+  IM_XYZ       = 15, // CIEXYZ
+  IM_LAB       = 16, // CIELab
 } ImageModes;
 
 typedef enum {
