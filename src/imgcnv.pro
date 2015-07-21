@@ -49,6 +49,9 @@ CONFIG += stat_eigen
 CONFIG += libraw
 CONFIG += stat_gdcm
 #CONFIG += dyn_gdcm
+CONFIG += stat_jxrlib
+CONFIG += stat_libwebp
+CONFIG += stat_lcms2
 
 CONFIG(debug, debug|release) {
    message(Building in DEBUG mode!)
@@ -337,3 +340,35 @@ dyn_gdcm {
   }
 
 } # System GDCM
+
+#---------------------------------------------------------------------
+# jxrlib
+#---------------------------------------------------------------------
+
+stat_jxrlib {
+  unix {
+    LIBS += $$BIM_LIBS_PLTFM/libjpegxr.a
+    LIBS += $$BIM_LIBS_PLTFM/libjxrglue.a
+  }
+}
+
+#---------------------------------------------------------------------
+# libwebp
+#---------------------------------------------------------------------
+
+stat_libwebp {
+  unix {
+    LIBS += $$BIM_LIBS_PLTFM/libwebp.a
+  }
+}
+
+#---------------------------------------------------------------------
+# lcms2
+#---------------------------------------------------------------------
+
+stat_lcms2 {
+  unix {
+    LIBS += $$BIM_LIBS_PLTFM/liblcms2.a
+  }
+}
+
