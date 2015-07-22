@@ -50,6 +50,7 @@ CONFIG += libraw
 CONFIG += sys_bzlib
 CONFIG += stat_gdcm
 #CONFIG += dyn_gdcm
+CONFIG += stat_openjpeg
 CONFIG += stat_jxrlib
 CONFIG += stat_libwebp
 CONFIG += stat_lcms2
@@ -470,13 +471,24 @@ dyn_gdcm {
 } # System GDCM
 
 #---------------------------------------------------------------------
+# openjpeg
+#---------------------------------------------------------------------
+
+stat_openjpeg {
+  unix {
+    LIBS += $$BIM_LIBS_PLTFM/libopenjp2.a
+  }
+}
+
+#---------------------------------------------------------------------
 # jxrlib
 #---------------------------------------------------------------------
 
 stat_jxrlib {
   unix {
-    LIBS += $$BIM_LIBS_PLTFM/libjpegxr.a
     LIBS += $$BIM_LIBS_PLTFM/libjxrglue.a
+    LIBS += $$BIM_LIBS_PLTFM/libjpegxr.a
+    LIBS += -lm
   }
 }
 
@@ -499,4 +511,3 @@ stat_lcms2 {
     LIBS += $$BIM_LIBS_PLTFM/liblcms2.a
   }
 }
-

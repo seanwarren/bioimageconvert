@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -495,6 +495,21 @@
     <ProjectReference Include="..\libsrc\exiv2\msvc2013\libexiv2.vcxproj">
       <Project>{dfd43cd4-5206-44a4-b584-285ecf0a528a}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\libsrc\jxrlib\image\vc2013\CommonLib.vcxproj">
+      <Project>{4b4c055c-170e-4dcf-8f73-bed91be7cfa4}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\libsrc\jxrlib\image\vc2013\DecodeLib.vcxproj">
+      <Project>{f3ded308-7a6f-4b9f-8edf-af99dec8bde3}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\libsrc\jxrlib\image\vc2013\EncodeLib.vcxproj">
+      <Project>{f99f7b19-47a6-4677-94f2-93c12cf1fb97}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\libsrc\jxrlib\jxrgluelib\JXRGlueLib.vcxproj">
+      <Project>{a69603cc-65e8-443f-8e31-737dbd6bb0db}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\libsrc\lcms2\Projects\VC2013\lcms2_static\lcms2_static.vcxproj">
+      <Project>{71dede59-3f1e-486b-a899-4283000f76b5}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\libsrc\libbioimg\projects\msvc2013\libbioimage.vcxproj">
       <Project>{9f06b8fc-1699-42be-889a-13761112c365}</Project>
     </ProjectReference>
@@ -515,6 +530,15 @@
     </ProjectReference>
     <ProjectReference Include="..\libsrc\libtiff\projects\vc2013\libtiff.vcxproj">
       <Project>{4f69756a-2106-408b-bab5-6dc294fdf3fe}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\libsrc\libwebp\projects\vc2013\libwebp.vcxproj">
+      <Project>{2c377d5e-2c20-4b3a-b87d-96580d24c787}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\libsrc\libwebp\projects\vc2013\libwebp_encode.vcxproj">
+      <Project>{c6db2bf8-dae6-43a5-8bf2-c4f448f299fc}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\libsrc\openjpeg\projects\vc2013\openjpeg.vcxproj">
+      <Project>{d8b08d9a-ac16-4e2d-9baa-e7548350ad12}</Project>
     </ProjectReference>
     <ProjectReference Include="..\libsrc\proj4\projects\vc2013\proj4.vcxproj">
       <Project>{e092533a-6dd8-4d75-a5e8-aec82393e75d}</Project>

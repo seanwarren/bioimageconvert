@@ -10,6 +10,7 @@ LIBJXR=libsrc/jxrlib
 LCMS2=libsrc/lcms2
 LIBX264=libsrc/libx264
 LIBX265=libsrc/libx265
+LIBOPENJPEG=libsrc/openjpeg
 FFMPEG=libsrc/ffmpeg
 LIBJPEGTURBO=libsrc/libjpeg-turbo
 LIBGDCM=libsrc/gdcm
@@ -101,6 +102,13 @@ full:
 	(cd $(LCMS2); ./configure --with-pic )
 	(cd $(LCMS2); $(MAKE))
 	(cp $(LCMS2)/src/.libs/liblcms2.a $(LIBS)/)
+	
+	@echo
+	@echo
+	@echo "Building openjpeg 2.1.0 in $(LIBOPENJPEG)"
+	(cd $(LIBOPENJPEG); cmake . -DCMAKE_C_FLAGS=-fPIC -DBUILD_SHARED_LIBS:bool=off )
+	(cd $(LIBOPENJPEG); $(MAKE))
+	(cp $(LIBOPENJPEG)/bin/libopenjp2.a $(LIBS)/)
 
 	@echo
 	@echo

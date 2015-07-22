@@ -281,8 +281,7 @@ SOURCES += $$BIM_FMTS/bim_format_manager.cpp \
            $$BIM_FMTS/jp2/bim_jp2_color.cpp \
            $$BIM_FMTS/jp2/bim_jp2_compress.cpp \
            $$BIM_FMTS/jp2/bim_jp2_decompress.cpp \
-           $$BIM_FMTS/jp2/bim_jp2_format.cpp \
-           $$BIM_FMTS/nifti/bim_nifti_format.cpp
+           $$BIM_FMTS/jp2/bim_jp2_format.cpp
 
 HEADERS += $$BIM_FMTS/dcraw/bim_dcraw_format.h \
            $$BIM_FMTS/bmp/bim_bmp_format.h \
@@ -416,6 +415,8 @@ HEADERS += $$D_LIB_NIFTI_ZNZ/znzlib.h
 SOURCES += $$D_LIB_NIFTI_FSL/fslio.c
 HEADERS += $$D_LIB_NIFTI_FSL/fslio.h
 
+SOURCES += $$BIM_FMTS/nifti/bim_nifti_format.cpp
+
 #---------------------------------------------------------------------
 # ffmpeg
 #---------------------------------------------------------------------
@@ -537,54 +538,54 @@ stat_openjpeg {
   INCLUDEPATH += $${BIM_LIB_OPENJPEG}/lib/openjp2
   INCLUDEPATH += $${BIM_LIB_OPENJPEG}/bin
   INCLUDEPATH += $${BIM_LIB_OPENJPEG}/bin/common
-  INCLUDEPATH += $${BIM_LIB_OPENJPEG}/../project/qt
-
+#  INCLUDEPATH += $${BIM_LIB_OPENJPEG}/../project/qt
+#
 # there is a naming conflict with one source file:
 # 'image' is also a name in exiv. Exclude image here:
 # SOURCES += $${BIM_LIB_OPENJPEG}/lib/openjp2/image.c
-
-  SOURCES += $${BIM_LIB_OPENJPEG}/lib/openjp2/bio.c \
-             $${BIM_LIB_OPENJPEG}/lib/openjp2/cio.c \
-             $${BIM_LIB_OPENJPEG}/lib/openjp2/dwt.c \
-             $${BIM_LIB_OPENJPEG}/lib/openjp2/event.c \
-             $${BIM_LIB_OPENJPEG}/lib/openjp2/invert.c \
-             $${BIM_LIB_OPENJPEG}/lib/openjp2/j2k.c \
-             $${BIM_LIB_OPENJPEG}/lib/openjp2/jp2.c \
-             $${BIM_LIB_OPENJPEG}/lib/openjp2/mct.c \
-             $${BIM_LIB_OPENJPEG}/lib/openjp2/mqc.c \
-             $${BIM_LIB_OPENJPEG}/lib/openjp2/openjpeg.c \
-             $${BIM_LIB_OPENJPEG}/lib/openjp2/opj_clock.c \
-             $${BIM_LIB_OPENJPEG}/lib/openjp2/pi.c \
-             $${BIM_LIB_OPENJPEG}/lib/openjp2/raw.c \
-             $${BIM_LIB_OPENJPEG}/lib/openjp2/t1.c \
-             $${BIM_LIB_OPENJPEG}/lib/openjp2/t2.c \
-             $${BIM_LIB_OPENJPEG}/lib/openjp2/tcd.c \
-             $${BIM_LIB_OPENJPEG}/lib/openjp2/tgt.c \
-             $${BIM_LIB_OPENJPEG}/lib/openjp2/function_list.c
-
-  HEADERS += $${BIM_LIB_OPENJPEG}/lib/openjp2/t2.h \
-             $${BIM_LIB_OPENJPEG}/lib/openjp2/raw.h \
-             $${BIM_LIB_OPENJPEG}/lib/openjp2/openjpeg.h \
-             $${BIM_LIB_OPENJPEG}/lib/openjp2/dwt.h \
-             $${BIM_LIB_OPENJPEG}/lib/openjp2/event.h \
-             $${BIM_LIB_OPENJPEG}/lib/openjp2/mct.h \
-             $${BIM_LIB_OPENJPEG}/lib/openjp2/t1.h \
-             $${BIM_LIB_OPENJPEG}/lib/openjp2/indexbox_manager.h \
-             $${BIM_LIB_OPENJPEG}/lib/openjp2/mqc.h \
-             $${BIM_LIB_OPENJPEG}/lib/openjp2/opj_includes.h \
-             $${BIM_LIB_OPENJPEG}/lib/openjp2/tcd.h \
-             $${BIM_LIB_OPENJPEG}/lib/openjp2/t1_luts.h \
-             $${BIM_LIB_OPENJPEG}/lib/openjp2/opj_malloc.h \
-             $${BIM_LIB_OPENJPEG}/lib/openjp2/cio.h \
-             $${BIM_LIB_OPENJPEG}/lib/openjp2/pi.h \
-             $${BIM_LIB_OPENJPEG}/lib/openjp2/jp2.h \
-             $${BIM_LIB_OPENJPEG}/lib/openjp2/tgt.h \
-             $${BIM_LIB_OPENJPEG}/lib/openjp2/cidx_manager.h \
-             $${BIM_LIB_OPENJPEG}/lib/openjp2/j2k.h \
-             $${BIM_LIB_OPENJPEG}/lib/openjp2/bio.h \
-             $${BIM_LIB_OPENJPEG}/lib/openjp2/image.h \
-             $${BIM_LIB_OPENJPEG}/lib/openjp2/opj_config_private.h \
-             $${BIM_LIB_OPENJPEG}/lib/openjp2/opj_config.h
+#
+#  SOURCES += $${BIM_LIB_OPENJPEG}/lib/openjp2/bio.c \
+#             $${BIM_LIB_OPENJPEG}/lib/openjp2/cio.c \
+#             $${BIM_LIB_OPENJPEG}/lib/openjp2/dwt.c \
+#             $${BIM_LIB_OPENJPEG}/lib/openjp2/event.c \
+#             $${BIM_LIB_OPENJPEG}/lib/openjp2/invert.c \
+#             $${BIM_LIB_OPENJPEG}/lib/openjp2/j2k.c \
+#             $${BIM_LIB_OPENJPEG}/lib/openjp2/jp2.c \
+#             $${BIM_LIB_OPENJPEG}/lib/openjp2/mct.c \
+#             $${BIM_LIB_OPENJPEG}/lib/openjp2/mqc.c \
+#             $${BIM_LIB_OPENJPEG}/lib/openjp2/openjpeg.c \
+#             $${BIM_LIB_OPENJPEG}/lib/openjp2/opj_clock.c \
+#             $${BIM_LIB_OPENJPEG}/lib/openjp2/pi.c \
+#             $${BIM_LIB_OPENJPEG}/lib/openjp2/raw.c \
+#             $${BIM_LIB_OPENJPEG}/lib/openjp2/t1.c \
+#             $${BIM_LIB_OPENJPEG}/lib/openjp2/t2.c \
+#             $${BIM_LIB_OPENJPEG}/lib/openjp2/tcd.c \
+#             $${BIM_LIB_OPENJPEG}/lib/openjp2/tgt.c \
+#             $${BIM_LIB_OPENJPEG}/lib/openjp2/function_list.c
+#
+#  HEADERS += $${BIM_LIB_OPENJPEG}/lib/openjp2/t2.h \
+#             $${BIM_LIB_OPENJPEG}/lib/openjp2/raw.h \
+#             $${BIM_LIB_OPENJPEG}/lib/openjp2/openjpeg.h \
+#             $${BIM_LIB_OPENJPEG}/lib/openjp2/dwt.h \
+#             $${BIM_LIB_OPENJPEG}/lib/openjp2/event.h \
+#             $${BIM_LIB_OPENJPEG}/lib/openjp2/mct.h \
+#             $${BIM_LIB_OPENJPEG}/lib/openjp2/t1.h \
+#             $${BIM_LIB_OPENJPEG}/lib/openjp2/indexbox_manager.h \
+#             $${BIM_LIB_OPENJPEG}/lib/openjp2/mqc.h \
+#             $${BIM_LIB_OPENJPEG}/lib/openjp2/opj_includes.h \
+#             $${BIM_LIB_OPENJPEG}/lib/openjp2/tcd.h \
+#             $${BIM_LIB_OPENJPEG}/lib/openjp2/t1_luts.h \
+#             $${BIM_LIB_OPENJPEG}/lib/openjp2/opj_malloc.h \
+#             $${BIM_LIB_OPENJPEG}/lib/openjp2/cio.h \
+#             $${BIM_LIB_OPENJPEG}/lib/openjp2/pi.h \
+#             $${BIM_LIB_OPENJPEG}/lib/openjp2/jp2.h \
+#             $${BIM_LIB_OPENJPEG}/lib/openjp2/tgt.h \
+#             $${BIM_LIB_OPENJPEG}/lib/openjp2/cidx_manager.h \
+#             $${BIM_LIB_OPENJPEG}/lib/openjp2/j2k.h \
+#             $${BIM_LIB_OPENJPEG}/lib/openjp2/bio.h \
+#             $${BIM_LIB_OPENJPEG}/lib/openjp2/image.h \
+#             $${BIM_LIB_OPENJPEG}/lib/openjp2/opj_config_private.h \
+#             $${BIM_LIB_OPENJPEG}/lib/openjp2/opj_config.h
 }
 
 dyn_openjpeg {
@@ -897,8 +898,11 @@ stat_eigen {
 #---------------------------------------------------------------------
 
 stat_jxrlib {
+  DEFINES += __ANSI__ DISABLE_PERF_MEASUREMENT
+  INCLUDEPATH += $$BIM_LIB_JXRLIB/image/sys
+  INCLUDEPATH += $$BIM_LIB_JXRLIB/common/include
   INCLUDEPATH += $$BIM_LIB_JXRLIB/jxrgluelib
-  INCLUDEPATH += $$BIM_LIB_JXRLIB/jxrlib/image/sys  
+  SOURCES += $$BIM_FMTS/jxr/bim_jxr_format.cpp
 }
 
 #---------------------------------------------------------------------
@@ -907,6 +911,7 @@ stat_jxrlib {
 
 stat_libwebp {
   INCLUDEPATH += $$BIM_LIB_LIBWEBP/src
+  SOURCES += $$BIM_FMTS/webp/bim_webp_format.cpp
 }
 
 #---------------------------------------------------------------------
