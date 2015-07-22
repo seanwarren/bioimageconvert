@@ -23,7 +23,7 @@ import zipfile
 
 url_libs_store = 'http://bitbucket.org/dimin/bioimageconvert/downloads/'
 local_store_libs  = 'libs'
-lib_version = '2-0-0'
+lib_version = '2-1-0'
 
 if os.name == 'nt':
     sys_libs_dif = 'vc2013_x64'
