@@ -26,7 +26,7 @@ import urllib
 import posixpath
 
 IMGCNV = './imgcnv'
-IMGCNVVER = '2.0'
+IMGCNVVER = '2.0.3'
 url_image_store = 'http://hammer.ece.ucsb.edu/~bisque/test_data/images/'
 local_store_images  = 'images'
 local_store_tests   = 'tests'
@@ -560,6 +560,17 @@ fetch_file('BetSog_20040312_Goebel_C2-0001-0001-0001.dcm')
 fetch_file('IM-0001-0001.dcm')
 fetch_file('test4.tif')
 
+fetch_file('16_day1_1_patient_29C93FK6_1.nii')
+fetch_file('filtered_func_data.nii')
+fetch_file('newsirp_final_XML.nii')
+fetch_file('avg152T1_LR_nifti.hdr')
+fetch_file('avg152T1_LR_nifti.img')
+fetch_file('219j_q050.jxr')
+fetch_file('219j_q100.jxr')
+fetch_file('219j_q080.webp')
+fetch_file('219j_q100.webp')
+fetch_file('219j.jp2')
+
 
 
 
@@ -602,10 +613,22 @@ if 'all' in mode or 'reading' in mode:
     test_image_read( "ZVI", "0022.zvi" )
     test_image_read( "Adobe DNG", "CRW_0136_COMPR.dng" )
 
+    test_image_read( "JPEG-XR", "219j_q050.jxr" )
+    test_image_read( "JPEG-XR LOSSLESS", "219j_q100.jxr" )
+    test_image_read( "JPEG-2000", "219j.jp2" )
+    test_image_read( "WEBP", "219j_q080.webp" )
+    test_image_read( "WEBP LOSSLESS", "219j_q100.webp" )
+    
     # DICOM
     test_image_read( "DICOM", "10" )
     test_image_read( "DICOM", "0015.DCM" )
     test_image_read( "DICOM", "IM-0001-0001.dcm" )
+
+    # INFTI
+    test_image_read( "NIFTI", "16_day1_1_patient_29C93FK6_1.nii" )
+    test_image_read( "NIFTI", "filtered_func_data.nii" )
+    test_image_read( "NIFTI", "newsirp_final_XML.nii" )
+    test_image_read( "NIFTI", "avg152T1_LR_nifti.hdr" )
 
     # video formats
     test_image_read( "QuickTime", "3Dstack.tif.3D.mov" )
@@ -637,6 +660,9 @@ if 'all' in mode or 'writing' in mode:
     test_image_write( "OME-TIFF", "161pkcvampz1Live2-17-2004_11-57-21_AM.tif" )
     test_image_write( "BigTIFF", "161pkcvampz1Live2-17-2004_11-57-21_AM.tif" )
     test_image_write( "OME-BigTIFF", "161pkcvampz1Live2-17-2004_11-57-21_AM.tif" )
+    test_image_write( "JXR", "flowers_24bit_nointr.png" )
+    test_image_write( "WEBP", "flowers_24bit_nointr.png" )
+    test_image_write( "J2K", "flowers_24bit_nointr.png" )
 
 if 'all' in mode or 'writingvideo' in mode:
     print
@@ -1093,6 +1119,34 @@ if 'all' in mode or 'readmeta' in mode:
     meta_test['Geo/Coordinates/upper_left_model'] = '719865.329,9859359.126'
     test_metadata_read( "GeoTIFF", "test4.tif", meta_test )
 
+
+    meta_test = {}
+    meta_test['image_num_x'] = '1200'
+    meta_test['image_num_y'] = '1650'
+    meta_test['image_num_c'] = '3'
+    meta_test['image_num_t'] = '1'
+    meta_test['image_num_z'] = '1'
+    meta_test['image_pixel_depth'] = '8'
+    test_metadata_read( "JPEG-XR", "219j_q050.jxr", meta_test )
+
+    meta_test = {}
+    meta_test['image_num_x'] = '1200'
+    meta_test['image_num_y'] = '1650'
+    meta_test['image_num_c'] = '3'
+    meta_test['image_num_t'] = '1'
+    meta_test['image_num_z'] = '1'
+    meta_test['image_pixel_depth'] = '8'
+    test_metadata_read( "JPEG-2000", "219j.jp2", meta_test )
+    
+    meta_test = {}
+    meta_test['image_num_x'] = '1200'
+    meta_test['image_num_y'] = '1650'
+    meta_test['image_num_c'] = '3'
+    meta_test['image_num_t'] = '1'
+    meta_test['image_num_z'] = '1'
+    meta_test['image_pixel_depth'] = '8'
+    test_metadata_read( "WEBP", "219j_q080.webp", meta_test )    
+
     # DICOMs
 
     meta_test = {}
@@ -1277,6 +1331,64 @@ if 'all' in mode or 'readmeta' in mode:
     meta_test['DICOM/Window Center (0028,1050)'] = '400\\\\700'
     meta_test['DICOM/Window Width (0028,1051)'] = '2000\\\\4000'
     test_metadata_read( "DICOM CT", "IM-0001-0001.dcm", meta_test )
+
+    meta_test = {}
+    meta_test['image_num_x'] = '64'
+    meta_test['image_num_y'] = '64'
+    meta_test['image_num_z'] = '21'
+    meta_test['image_num_t'] = '180'
+    meta_test['image_num_c'] = '1'
+    meta_test['format']      = 'NIFTI'
+    meta_test['image_pixel_depth'] = '16'
+    meta_test['image_pixel_format'] = 'signed integer'
+    meta_test['pixel_resolution_x'] = '4.000000'
+    meta_test['pixel_resolution_y'] = '4.000000'
+    meta_test['pixel_resolution_z'] = '6.000000'
+    meta_test['pixel_resolution_unit_x'] = 'mm'
+    meta_test['pixel_resolution_unit_y'] = 'mm'
+    meta_test['pixel_resolution_unit_z'] = 'mm'
+    test_metadata_read( "NIFTI functional", "filtered_func_data.nii", meta_test )
+
+    meta_test = {}
+    meta_test['image_num_x'] = '512'
+    meta_test['image_num_y'] = '512'
+    meta_test['image_num_z'] = '32'
+    meta_test['image_num_t'] = '1'
+    meta_test['image_num_c'] = '1'
+    meta_test['format']      = 'NIFTI'
+    meta_test['image_pixel_depth'] = '16'
+    meta_test['image_pixel_format'] = 'unsigned integer'
+    meta_test['pixel_resolution_x'] = '0.439453'
+    meta_test['pixel_resolution_y'] = '0.439453'
+    meta_test['pixel_resolution_z'] = '5.000000'
+    meta_test['pixel_resolution_unit_x'] = 'm'
+    meta_test['pixel_resolution_unit_y'] = 'm'
+    meta_test['pixel_resolution_unit_z'] = 'm'
+    meta_test['NIFTI/affine_transform'] = '0.439453,0.000000,0.000000,-112.060516;0.000000,0.439453,0.000000,-112.060516;0.000000,0.000000,5.000000,-75.000000'
+    test_metadata_read( "NIFTI transforms", "16_day1_1_patient_29C93FK6_1.nii", meta_test )
+
+    meta_test = {}
+    meta_test['image_num_x'] = '64'
+    meta_test['image_num_y'] = '64'
+    meta_test['image_num_z'] = '35'
+    meta_test['image_num_t'] = '147'
+    meta_test['image_num_c'] = '1'
+    meta_test['format']      = 'NIFTI'
+    meta_test['image_pixel_depth'] = '16'
+    meta_test['image_pixel_format'] = 'signed integer'
+    meta_test['pixel_resolution_x'] = '3.437500'
+    meta_test['pixel_resolution_y'] = '3.437500'
+    meta_test['pixel_resolution_z'] = '3.999421'
+    meta_test['pixel_resolution_unit_x'] = 'm'
+    meta_test['pixel_resolution_unit_y'] = 'm'
+    meta_test['pixel_resolution_unit_z'] = 'm'
+    meta_test['NIFTI/quaternion'] = '0.000000,0.025615,0.999672;108.281250,103.739151,-83.445091'
+    meta_test['XCEDE/study/series/acquisition_protocol/parameters/receivecoilname'] = 'HEAD'
+    meta_test['XCEDE/study/series/id'] = '1'
+    meta_test['XCEDE/subject/id'] = '103'
+    meta_test['XCEDE/study/series/scanner/manufacturer'] = 'GE'
+    meta_test['XCEDE/study/series/scanner/model'] = 'LX NVi 4T'
+    test_metadata_read( "NIFTI XCEDE", "newsirp_final_XML.nii", meta_test )
 
 
 if 'all' in mode or 'video' in mode:
