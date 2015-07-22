@@ -28,7 +28,9 @@ extern "C" {
 
 struct WMPStream;
 struct tagPKImageDecode;
+struct tagPKImageEncode;
 typedef struct tagPKImageDecode PKImageDecode;
+typedef struct tagPKImageEncode PKImageEncode;
 
 namespace bim {
     //----------------------------------------------------------------------------
@@ -44,8 +46,8 @@ namespace bim {
         std::fstream *file;
         WMPStream *pStream;
         PKImageDecode *pDecoder;
-        
-        //PKImageDecode *pDecoder;
+        PKImageEncode *pEncoder;
+        int frames_written;
         
         void open(const char *filename, bim::ImageIOModes mode);
     };

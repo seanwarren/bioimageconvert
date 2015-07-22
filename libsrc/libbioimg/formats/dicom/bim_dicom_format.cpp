@@ -372,12 +372,12 @@ char* dicomReadMetaDataAsTextProc ( FormatHandle *fmtHndl ) {
 //----------------------------------------------------------------------------
 
 template <typename T>
-void copy_channel(bim::uint64 W, bim::uint64 H, int samples, int sample, const void *in, void *out) {
+void copy_channel(bim::uint64 W, bim::uint64 H, int samples, int sample, const void *in, void *out, int stride = 0) {
     T *raw = (T *)in + sample;
     T *p = (T *)out;
-    int step = sizeof(T)*samples;
-    size_t inrowsz = sizeof(T)*samples*W;
-    size_t ourowsz = sizeof(T)*W;
+    int step = samples;
+    size_t inrowsz = stride == 0 ? samples*W : stride;
+    size_t ourowsz = W;
 
     #pragma omp parallel for default(shared)
     for (bim::int64 y = 0; y < H; ++y) {
@@ -429,38 +429,14 @@ bim::uint dicomReadImageProc  ( FormatHandle *fmtHndl, bim::uint page ) {
     } else {
         // in multi-channel interleaved case read into appropriate channels
         for (int s = 0; s < info->samples; ++s) {
-            if (bmp->i.depth == 8 && bmp->i.pixelType == FMT_UNSIGNED)
-                copy_channel<uint8>(info->width, info->height, info->samples, s, buf, bmp->bits[s]);
-            else
-            if (bmp->i.depth == 16 && bmp->i.pixelType == FMT_UNSIGNED)
-                copy_channel<uint16>(info->width, info->height, info->samples, s, buf, bmp->bits[s]);
-            else
-            if (bmp->i.depth == 32 && bmp->i.pixelType == FMT_UNSIGNED)
-                copy_channel<uint32>(info->width, info->height, info->samples, s, buf, bmp->bits[s]);
-            else
-            if (bmp->i.depth == 64 && bmp->i.pixelType == FMT_UNSIGNED)
-                copy_channel<uint64>(info->width, info->height, info->samples, s, buf, bmp->bits[s]);
-            else
-            if (bmp->i.depth == 8 && bmp->i.pixelType == FMT_SIGNED)
-                copy_channel<int8>(info->width, info->height, info->samples, s, buf, bmp->bits[s]);
-            else
-            if (bmp->i.depth == 16 && bmp->i.pixelType == FMT_SIGNED)
-                copy_channel<int16>(info->width, info->height, info->samples, s, buf, bmp->bits[s]);
-            else
-            if (bmp->i.depth == 32 && bmp->i.pixelType == FMT_SIGNED)
-                copy_channel<int32>(info->width, info->height, info->samples, s, buf, bmp->bits[s]);
-            else
-            if (bmp->i.depth == 64 && bmp->i.pixelType == FMT_SIGNED)
-                copy_channel<int64>(info->width, info->height, info->samples, s, buf, bmp->bits[s]);
-            else
-            //if (bmp->i.depth == 16 && bmp->i.pixelType == FMT_FLOAT)
-            //    copy_channel<float16>(info->width, info->height, info->samples, s, buf, bmp->bits[s]);
-            //else
-            if (bmp->i.depth == 32 && bmp->i.pixelType == FMT_FLOAT)
-                copy_channel<float32>(info->width, info->height, info->samples, s, buf, bmp->bits[s]);
-            else
-            if (bmp->i.depth == 64 && bmp->i.pixelType == FMT_FLOAT)
-                copy_channel<float64>(info->width, info->height, info->samples, s, buf, bmp->bits[s]);
+            if (bmp->i.depth == 8)
+                copy_channel<bim::uint8>(info->width, info->height, info->samples, s, buf, bmp->bits[s]);
+            else if (bmp->i.depth == 16)
+                copy_channel<bim::uint16>(info->width, info->height, info->samples, s, buf, bmp->bits[s]);
+            else if (bmp->i.depth == 32)
+                copy_channel<bim::uint32>(info->width, info->height, info->samples, s, buf, bmp->bits[s]);
+            else if (bmp->i.depth == 64)
+                copy_channel<bim::uint64>(info->width, info->height, info->samples, s, buf, bmp->bits[s]);
         } // for sample
 
     }

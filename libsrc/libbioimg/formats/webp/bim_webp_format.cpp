@@ -201,12 +201,12 @@ ImageInfo webpGetImageInfoProc(FormatHandle *fmtHndl, bim::uint page_num) {
 //----------------------------------------------------------------------------
 
 template <typename T>
-void copy_channel(bim::uint64 W, bim::uint64 H, int samples, int sample, const void *in, void *out) {
+void copy_channel(bim::uint64 W, bim::uint64 H, int samples, int sample, const void *in, void *out, int stride = 0) {
     T *raw = (T *)in + sample;
     T *p = (T *)out;
-    int step = sizeof(T)*samples;
-    size_t inrowsz = sizeof(T)*samples*W;
-    size_t ourowsz = sizeof(T)*W;
+    int step = samples;
+    size_t inrowsz = stride == 0 ? samples*W : stride;
+    size_t ourowsz = W;
 
     #pragma omp parallel for default(shared)
     for (bim::int64 y = 0; y < H; ++y) {
@@ -261,9 +261,9 @@ template <typename T>
 void copy_from_channel(bim::uint64 W, bim::uint64 H, int samples, int sample, const void *in, void *out) {
     T *raw = (T *)in;
     T *p = (T *)out + sample;
-    int step = sizeof(T)*samples;
-    size_t inrowsz = sizeof(T)*W;
-    size_t ourowsz = sizeof(T)*samples*W;
+    int step = samples;
+    size_t inrowsz = W;
+    size_t ourowsz = samples*W;
 
     #pragma omp parallel for default(shared)
     for (bim::int64 y = 0; y < H; ++y) {
