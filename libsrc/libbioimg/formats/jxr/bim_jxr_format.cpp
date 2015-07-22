@@ -18,6 +18,7 @@
 #include <string>
 #include <fstream>
 #include <sstream>
+#include <iostream>
 
 #include <xtypes.h>
 #include <xstring.h>
@@ -87,10 +88,13 @@ bim::JXRParams::JXRParams() {
     i = initImageInfo();
     pStream = NULL;
     pDecoder = NULL;
+    pEncoder = NULL;
+    frames_written = 0;
 }
 
 bim::JXRParams::~JXRParams() {
     if (pDecoder) pDecoder->Release(&pDecoder);
+    if (pEncoder) pEncoder->Release(&pEncoder);
     if (pStream) free(pStream);
     if (file) delete file;
 }
@@ -180,8 +184,47 @@ void jxrSetWriteParameters(FormatHandle *fmtHndl) {
     } // while
 }
 
+static const char* JXR_ErrorMessage(const int error) {
+    switch (error) {
+    case WMP_errNotYetImplemented:
+    case WMP_errAbstractMethod:
+        return "Not yet implemented";
+    case WMP_errOutOfMemory:
+        return "Out of memory";
+    case WMP_errFileIO:
+        return "File I/O error";
+    case WMP_errBufferOverflow:
+        return "Buffer overflow";
+    case WMP_errInvalidParameter:
+        return "Invalid parameter";
+    case WMP_errInvalidArgument:
+        return "Invalid argument";
+    case WMP_errUnsupportedFormat:
+        return "Unsupported format";
+    case WMP_errIncorrectCodecVersion:
+        return "Incorrect codec version";
+    case WMP_errIndexNotFound:
+        return "Format converter: Index not found";
+    case WMP_errOutOfSequence:
+        return "Metadata: Out of sequence";
+    case WMP_errMustBeMultipleOf16LinesUntilLastCall:
+        return "Must be multiple of 16 lines until last call";
+    case WMP_errPlanarAlphaBandedEncRequiresTempFile:
+        return "Planar alpha banded encoder requires temp files";
+    case WMP_errAlphaModeCannotBeTranscoded:
+        return "Alpha mode cannot be transcoded";
+    case WMP_errIncorrectCodecSubVersion:
+        return "Incorrect codec subversion";
+    case WMP_errFail:
+    case WMP_errNotInitialized:
+    default:
+        return "Invalid instruction - please contact the FreeImage team";
+    }
+}
+
 #define JXR_CHECK(error_code) \
-if(error_code < 0) { \
+if (error_code < 0) { \
+    std::cerr << "[JXR codec] " << JXR_ErrorMessage(error_code); \
     throw error_code; \
 }
 
@@ -420,9 +463,9 @@ template <typename T>
 void copy_channel(bim::uint64 W, bim::uint64 H, int samples, int sample, const void *in, void *out, int stride = 0 ) {
     T *raw = (T *)in + sample;
     T *p = (T *)out;
-    int step = sizeof(T)*samples;
-    size_t inrowsz = stride == 0 ? sizeof(T)*samples*W : stride;
-    size_t ourowsz = sizeof(T)*W;
+    int step = samples;
+    size_t inrowsz = stride == 0 ? samples*W : stride;
+    size_t ourowsz = W;
 
     #pragma omp parallel for default(shared)
     for (bim::int64 y = 0; y < H; ++y) {
@@ -732,9 +775,9 @@ template <typename T>
 void copy_from_channel(bim::uint64 W, bim::uint64 H, int samples, int sample, const void *in, void *out) {
     T *raw = (T *)in;
     T *p = (T *)out + sample;
-    int step = sizeof(T)*samples;
-    size_t inrowsz = sizeof(T)*W;
-    size_t ourowsz = sizeof(T)*samples*W;
+    int step = samples;
+    size_t inrowsz = W;
+    size_t ourowsz = samples*W;
 
     #pragma omp parallel for default(shared)
     for (bim::int64 y = 0; y < H; ++y) {
@@ -904,34 +947,42 @@ bim::uint jxrWriteImageProc(FormatHandle *fmtHndl) {
     PKPixelFormatGUID guid_format = initGUIDPixelFormat(info);
     if (guid_format == GUID_PKPixelFormatDontCare) return 1;
 
-	PKImageEncode *pEncoder = NULL;
-	ERR error_code = 0;
-	try {
+    //PKImageEncode *pEncoder = NULL;
+    ERR error_code = 0;
+    try {
         PKPixelInfo pixelInfo;
-		pixelInfo.pGUIDPixFmt = &guid_format;
-		error_code = PixelFormatLookup(&pixelInfo, LOOKUP_FORWARD);
-		JXR_CHECK(error_code);
+        pixelInfo.pGUIDPixFmt = &guid_format;
+        error_code = PixelFormatLookup(&pixelInfo, LOOKUP_FORWARD);
+        JXR_CHECK(error_code);
 
-		// create a JXR encoder interface and initialize function pointers with *_WMP functions
-		error_code = PKImageEncode_Create_WMP(&pEncoder);
-		JXR_CHECK(error_code);
+        if (!par->pEncoder) {
+            // create a JXR encoder interface and initialize function pointers with *_WMP functions
+            error_code = PKImageEncode_Create_WMP(&par->pEncoder);
+            JXR_CHECK(error_code);
 
-		// attach the stream to the encoder and set all encoder parameters to zero
-        error_code = pEncoder->Initialize(pEncoder, par->pStream, &pEncoder->WMP.wmiSCP, sizeof(CWMIStrCodecParam));
-		JXR_CHECK(error_code);
+            // attach the stream to the encoder and set all encoder parameters to zero
+            error_code = par->pEncoder->Initialize(par->pEncoder, par->pStream, &par->pEncoder->WMP.wmiSCP, sizeof(CWMIStrCodecParam));
+            JXR_CHECK(error_code);
 
-        SetEncoderParameters(&pEncoder->WMP.wmiSCP, &pixelInfo, fmtHndl, info);
-		pEncoder->SetPixelFormat(pEncoder, guid_format);
-        pEncoder->SetSize(pEncoder, info->width, info->height);
-		
+            SetEncoderParameters(&par->pEncoder->WMP.wmiSCP, &pixelInfo, fmtHndl, info);
+        } else {
+            // writing multi-page is not implemented in jxrlib 1.1.0, codec is disabeled from writing MP for now
+            // once implemented, change canWriteMultiPage to 1 in the codec definition
+            error_code = par->pEncoder->CreateNewFrame(par->pEncoder, &par->pEncoder->WMP.wmiSCP, sizeof(CWMIStrCodecParam));
+            JXR_CHECK(error_code);
+        }
+
+        par->pEncoder->SetPixelFormat(par->pEncoder, guid_format);
+        par->pEncoder->SetSize(par->pEncoder, info->width, info->height);
+        
         // write metadata
-        //error_code = WriteMetadata(pEncoder, info, hash);
+        //error_code = WriteMetadata(par->pEncoder, info, hash);
         //JXR_CHECK(error_code);
 
         // encode image
         int stride = getLineSizeInBytes(bmp) * info->samples;
         size_t plane_sz = getImgSizeInBytes(bmp) * info->samples;
-        std::vector<unsigned char> buffer(plane_sz, 0);
+        std::vector<unsigned char> buffer(plane_sz);
         if (buffer.size() < plane_sz) return 1;
 
         for (int s = 0; s<info->samples; ++s) {
@@ -943,15 +994,15 @@ bim::uint jxrWriteImageProc(FormatHandle *fmtHndl) {
                 copy_from_channel<bim::uint32>(info->width, info->height, info->samples, s, bmp->bits[s], &buffer[0]);
         } // for sample
         
-        error_code = pEncoder->WritePixels(pEncoder, info->height, &buffer[0], stride);
-		JXR_CHECK(error_code);
-
-		pEncoder->Release(&pEncoder);
-		return 0;
-	} catch (...) {
-		if (pEncoder) pEncoder->Release(&pEncoder);
+        error_code = par->pEncoder->WritePixels(par->pEncoder, info->height, &buffer[0], stride);
+        JXR_CHECK(error_code);
+        par->frames_written++;
+        //par->pEncoder->Release(&par->pEncoder);
+        return 0;
+    } catch (...) {
+        //if (par->pEncoder) par->pEncoder->Release(&par->pEncoder);
         return 1;
-	}
+    }
 }
 
 //----------------------------------------------------------------------------
