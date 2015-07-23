@@ -282,13 +282,7 @@
     <ClCompile Include="..\..\formats\jp2\bim_jp2_color.cpp">
       <Filter>libbioimg\Formats\JP2</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\formats\jp2\bim_jp2_decompress.cpp">
-      <Filter>libbioimg\Formats\JP2</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\formats\jp2\bim_jp2_format.cpp">
-      <Filter>libbioimg\Formats\JP2</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\formats\jp2\bim_jp2_compress.cpp">
       <Filter>libbioimg\Formats\JP2</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\nifti\niftilib\nifti1_io.c">
@@ -380,16 +374,7 @@
     <ClInclude Include="..\..\formats\jp2\bim_jp2_color.h">
       <Filter>libbioimg\Formats\JP2</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\formats\jp2\bim_jp2_decompress.h">
-      <Filter>libbioimg\Formats\JP2</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\formats\jp2\bim_jp2_format.h">
-      <Filter>libbioimg\Formats\JP2</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\formats\jp2\bim_jp2_format_io.h">
-      <Filter>libbioimg\Formats\JP2</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\formats\jp2\bim_jp2_compress.h">
       <Filter>libbioimg\Formats\JP2</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\nifti\niftilib\nifti1.h">
