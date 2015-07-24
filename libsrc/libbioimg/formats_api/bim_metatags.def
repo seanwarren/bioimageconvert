@@ -28,6 +28,10 @@ DECLARE_STR( IMAGE_NUM_RES_L, "image_num_resolution_levels" )
 DECLARE_STR( IMAGE_RES_L_SCALES, "image_resolution_level_scales" )
 DECLARE_STR( TILE_NUM_X, "tile_num_x" )
 DECLARE_STR( TILE_NUM_Y, "tile_num_y" )
+DECLARE_STR( IMAGE_RES_STRUCTURE, "image_resolution_level_structure" )
+// there are two possible structures:
+DECLARE_STR( IMAGE_RES_STRUCTURE_HIERARCHICAL, "hierarchical" ) // default: structure where tile sizes remain constant
+DECLARE_STR( IMAGE_RES_STRUCTURE_FLAT, "flat" ) // structure where tiles get progressively smaller
 
 // image pixels - describes pixel parameters
 DECLARE_STR( PIXEL_DEPTH, "image_pixel_depth" ) // bit depth of one pixel in a channel
