@@ -34,6 +34,8 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE
 //#include <iostream>
 //using namespace std;
 
+#include "xtypes.h"
+
 int dwt_buffer_length(int input_len, int filter_len, int mode){
 	if(input_len < 1 || filter_len < 1)
 		return 0;
@@ -473,7 +475,7 @@ int upsampling_convolution_full(const DTYPE* input, const int N, const double* f
 		//                f1 -> o1
 		//             f1 f2 -> o2
 		//          f1 f2 f3 -> o3
-        #pragma omp parallel for default(shared)  
+        #pragma omp parallel for default(shared) BIM_OMP_SCHEDULE if (F>BIM_OMP_FOR2)
         for(j = 0; j < F; ++j)		
 			ptr_out[j] += input[i] * filter[j]; // input[i] - const in loop
 		ptr_out -= 2;

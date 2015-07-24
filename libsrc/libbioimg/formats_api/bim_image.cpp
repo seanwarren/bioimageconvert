@@ -650,7 +650,7 @@ void render_roi_replace(bim::uint64 x, bim::uint64 y, const Image &img, const Im
     for (unsigned int sample = 0; sample<img.samples(); ++sample) {
         unsigned char *pl = (unsigned char *)roi.bits(sample);
         unsigned char *plo = ((unsigned char *)img.bits(sample)) + y*oldLineSize + x*Bpp;
-        #pragma omp parallel for default(shared)
+        #pragma omp parallel for default(shared) BIM_OMP_SCHEDULE if (h>BIM_OMP_FOR2)
         for (bim::int64 yi = 0; yi<h; yi++) {
             unsigned char *ppl = pl + yi*newLineSize;
             unsigned char *pplo = plo + yi*oldLineSize;
@@ -680,7 +680,7 @@ void render_roi(bim::uint64 x, bim::uint64 y, const Image &img, const Image &roi
         unsigned char *pl = (unsigned char *)roi.bits(sample);
         unsigned char *plo = ((unsigned char *)img.bits(sample)) + y*oldLineSize + x*Bpp;
         unsigned char *m = (unsigned char *)mask.bits(0);
-        #pragma omp parallel for default(shared)
+        #pragma omp parallel for default(shared) BIM_OMP_SCHEDULE if (h>BIM_OMP_FOR2)
         for (bim::int64 yi = 0; yi<h; yi++) {
             unsigned char *ppl = pl + yi*newLineSize;
             unsigned char *pplo = plo + yi*oldLineSize;
@@ -817,7 +817,7 @@ bool Image::toFile( const char *fileName, const char *formatName, const char *op
 
 template <typename T>
 void fill_channel ( T *p, const T &v, const unsigned int &num_points ) {
-    #pragma omp parallel for default(shared)
+    #pragma omp parallel for default(shared) BIM_OMP_SCHEDULE if (num_points>BIM_OMP_FOR1)
     for (bim::int64 x=0; x<num_points; ++x)
         p[x] = v;
 }
@@ -1073,7 +1073,7 @@ Image Image::downSampleBy2x( ) const {
   if (img.alloc( w, h, bmp->i.samples, bmp->i.depth )!=0) return img;
 
   for (int sample=0; sample<(int)bmp->i.samples; ++sample ) {
-    #pragma omp parallel for default(shared)
+    #pragma omp parallel for default(shared) BIM_OMP_SCHEDULE if (h>BIM_OMP_FOR2)
     for (int y=0; y<(int)h; ++y ) {
       unsigned int y2 = y*2;
       void *dest = img.scanLine( sample, y ); 
@@ -1482,7 +1482,7 @@ bool image_arithmetic(const Image &img, const Image &ar, F func, const Image &ma
     bim::uint64 h = (bim::uint64) img.height();
 
     for (unsigned int sample = 0; sample<img.samples(); ++sample) {
-        #pragma omp parallel for default(shared)
+        #pragma omp parallel for default(shared) BIM_OMP_SCHEDULE if (h>BIM_OMP_FOR2)
         for (bim::int64 y = 0; y<(bim::int64)h; ++y) {
             void *src = ar.scanLine(sample, y);
             void *dest = img.scanLine(sample, y);
@@ -1679,7 +1679,7 @@ void image_negative ( void *pdest, void *psrc, unsigned int &w ) {
     T *src = (T*) psrc;
     T *dest = (T*) pdest;
     T max_val = std::numeric_limits<T>::max();
-    #pragma omp parallel for default(shared)
+    #pragma omp parallel for default(shared) BIM_OMP_SCHEDULE if (w>BIM_OMP_FOR1)
     for (bim::int64 x=0; x<w; ++x)
         dest[x] = max_val - src[x];
 }
@@ -1733,7 +1733,7 @@ template <typename T>
 void image_trim ( void *pdest, void *psrc, unsigned int &w, double min_v, double max_v ) {
     T *src = (T*) psrc;
     T *dest = (T*) pdest;
-    #pragma omp parallel for default(shared)
+    #pragma omp parallel for default(shared) BIM_OMP_SCHEDULE if (w>BIM_OMP_FOR1)
     for (bim::int64 x=0; x<w; ++x)
         dest[x] = bim::trim<T>(src[x], min_v, max_v);
 }
@@ -1789,7 +1789,7 @@ void image_color_levels ( void *pdest, void *psrc, unsigned int &w, double val_m
 
     T *src = (T*) psrc;
     T *dest = (T*) pdest;
-    #pragma omp parallel for default(shared)
+    #pragma omp parallel for default(shared) BIM_OMP_SCHEDULE if (w>BIM_OMP_FOR1)
     for (bim::int64 x=0; x<w; ++x) {
         double px = (pow((double)src[x], gamma)-val_min)*out_range/range;
         dest[x] = bim::trim<T,double>(px);
@@ -1870,7 +1870,7 @@ void image_brightness_contrast ( void *pdest, void *psrc, unsigned int &w, doubl
 
     T *src = (T*) psrc;
     T *dest = (T*) pdest;
-    #pragma omp parallel for default(shared)
+    #pragma omp parallel for default(shared) BIM_OMP_SCHEDULE if (w>BIM_OMP_FOR1)
     for (bim::int64 x=0; x<w; ++x) {
         double px = ((double)src[x]);
         px = (px-mu) * c + mu;
@@ -1938,7 +1938,7 @@ Image operation_brightnesscontrast(Image &img, const bim::xstring &arguments, co
 template <typename T>
 bim::uint64 image_pixel_counter ( const Image &img, const unsigned int &sample, const double &threshold_above ) {
     std::vector<bim::uint64> c(img.height(), 0);
-    #pragma omp parallel for default(shared)
+    #pragma omp parallel for default(shared) BIM_OMP_SCHEDULE if (img.height()>BIM_OMP_FOR2)
     for (bim::int64 y=0; y<(bim::int64)img.height(); ++y) {
         T *src = (T*) img.scanLine( sample, y );
         for (bim::int64 x=0; x<(bim::int64)img.width(); ++x) {
@@ -1998,7 +1998,7 @@ std::vector<bim::uint64> Image::pixel_counter( const double &threshold_above ) {
 template <typename T>
 void image_row_scan ( void *pdest, const Image &img, bim::uint64 &sample, bim::uint64 &x ) {
     T *dest = (T*) pdest;
-    #pragma omp parallel for default(shared)
+    #pragma omp parallel for default(shared) BIM_OMP_SCHEDULE if (img.height()>BIM_OMP_FOR2)
     for (bim::int64 y=0; y<(bim::int64)img.height(); ++y) {
         T *src = (T*) img.scanLine( sample, y );
         dest[y] = src[x];
@@ -2035,7 +2035,7 @@ bool Image::pixel_operations(F func, const A &args, const Image &mask) {
     std::vector<unsigned char> mm(w, 255);
 
     for (unsigned int sample=0; sample<bmp->i.samples; ++sample ) {
-        #pragma omp parallel for default(shared)
+        #pragma omp parallel for default(shared) BIM_OMP_SCHEDULE if (h>BIM_OMP_FOR2)
         for (bim::int64 y=0; y<(bim::int64)h; ++y ) {
             void *src = this->scanLine( sample, y );
             unsigned char *m = !mask.isEmpty() ? mask.scanLine(0, y) : &mm[0];
@@ -2169,7 +2169,7 @@ void fuse_channels ( T *dest, const Image &srci, const std::set<int> &map ) {
     bim::uint64 s = srci.width() * srci.height();
     for (std::set<int>::const_iterator i=map.begin(); i!=map.end(); ++i) {
         T *src = (T*) srci.bits(*i);
-        #pragma omp parallel for default(shared)
+        #pragma omp parallel for default(shared) BIM_OMP_SCHEDULE if (s>BIM_OMP_FOR1)
         for (bim::int64 x=0; x<(bim::int64)s; ++x)
             dest[x] = std::max( dest[x], src[x] );
     }
@@ -2333,7 +2333,7 @@ void fuse_channels_weights ( Image *img, int sample, const Image &srci, const st
   //if (weight_sum==0) weight_sum=1;
       weight_sum++;
 
-  #pragma omp parallel for default(shared)
+  #pragma omp parallel for default(shared) BIM_OMP_SCHEDULE if (srci.height()>BIM_OMP_FOR2)
   for (bim::int64 y=0; y<(bim::int64)srci.height(); ++y) {
     std::vector<T> black(srci.width(), 0);
     std::vector<double> line(srci.width());
@@ -2702,7 +2702,7 @@ void deinterlace_operation( Image *img, const Image::DeinterlaceMethod &method )
     bim::uint64 s = img->samples();
     int offset = 1;
     for (unsigned int sample=0; sample<s; ++sample ) {
-        #pragma omp parallel for default(shared)
+        #pragma omp parallel for default(shared) BIM_OMP_SCHEDULE if (h>BIM_OMP_FOR2)
         for (bim::int64 y=0; y<(bim::int64)h-2; y+=2 ) {
             T *src1 = (T*) img->scanLine( sample, y );
             T *src2 = (T*) img->scanLine( sample, y+1 );
@@ -2779,7 +2779,7 @@ Image do_convolution( const Image *in, const Eigen::Matrix<double, Eigen::Dynami
     Image out = in->deepCopy();
 
     for (unsigned int sample=0; sample<s; ++sample ) {
-    #pragma omp parallel for default(shared)
+        #pragma omp parallel for default(shared) BIM_OMP_SCHEDULE if (h>BIM_OMP_FOR2)
         for (unsigned int y=0; y<h-2; y+=2 ) {
             T *src = (T*) img->scanLine( sample, y );
 

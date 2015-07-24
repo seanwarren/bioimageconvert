@@ -41,7 +41,7 @@ void edge_filter( const Image &in, Image &out ) {
     bim::uint64 h = (bim::uint64) in.height();
 
     for (int sample=0; sample<in.samples(); sample++) {
-        #pragma omp parallel for default(shared)
+        #pragma omp parallel for default(shared) BIM_OMP_SCHEDULE if (h>BIM_OMP_FOR2)
         for (int y=1; y<h-1; ++y ) {
             T *src_m1 = (T *) in.scanLine ( sample, y-1 ); 
             T *src = (T *) in.scanLine ( sample, y ); 

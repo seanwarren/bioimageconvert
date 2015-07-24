@@ -75,7 +75,7 @@ Image fft2 (const Image &matrix_IN) {
 
         // complete the first column
         out_plane = (double*) im.bits(sample);
-        #pragma omp parallel for default(shared)
+        #pragma omp parallel for default(shared) BIM_OMP_SCHEDULE if (height>BIM_OMP_FOR2)
         for (int y=half_height; y<height; y++) {
             double *pO = out_plane + width*y;
             double *pI = out_plane + width*(height-y);
@@ -84,7 +84,7 @@ Image fft2 (const Image &matrix_IN) {
 
         // complete the rest of the columns
         out_plane = (double*) im.bits(sample);
-        #pragma omp parallel for default(shared)
+        #pragma omp parallel for default(shared) BIM_OMP_SCHEDULE if (height>BIM_OMP_FOR2)
         for (int y=half_height; y<height; y++)
         for (unsigned int x=1; x<width; x++) { // 1 because the first column is already completed
             double *pO = out_plane + width*y + x;
@@ -130,7 +130,7 @@ void do_wavelet2 (const Image &in, Image &out) {
     for (unsigned int sample=0; sample<in.samples(); sample++) {
 	    DataGrid *grid = new DataGrid2D(width,height,-1);
         //Ti *p = (Ti*) in.bits(sample);
-        #pragma omp parallel for default(shared)
+        #pragma omp parallel for default(shared) BIM_OMP_SCHEDULE if (height>BIM_OMP_FOR2)
         for (int y=0;y<height;y++) {
             Ti *p = (Ti*) in.scanLine(sample, y);
 		    for(unsigned int x=0; x<width; x++) {
@@ -144,7 +144,7 @@ void do_wavelet2 (const Image &in, Image &out) {
         unsigned int ow = std::min<unsigned int>(grid->getX(), out.width());
         unsigned int oh = std::min<unsigned int>(grid->getY(), out.height());
         //To *po = (To*) out.bits(sample);
-        #pragma omp parallel for default(shared)
+        #pragma omp parallel for default(shared) BIM_OMP_SCHEDULE if (oh>BIM_OMP_FOR2)
         for (int y=0;y<oh;y++) {
             To *po = (To*) out.scanLine(sample, y);
 		    for(unsigned int x=0; x<ow; x++) {
@@ -423,7 +423,7 @@ bool converter_3c( const Image &in, Image &out, F func ) {
     double tmin = (double) bim::lowest<T>();
     double range = (double) std::numeric_limits<T>::max() - bim::lowest<T>();
 
-    #pragma omp parallel for default(shared)
+    #pragma omp parallel for default(shared) BIM_OMP_SCHEDULE if (h>BIM_OMP_FOR2)
     for (int y=0; y<h; ++y ) {
         double d1, d2, d3;
         T *src_1 = (T *) in.scanLine ( bim::Red,   y ); 
@@ -535,7 +535,7 @@ bool converter_hounsfield(const Image &in, Image &out, const Tw &slope, const Tw
     double tmin = (double)bim::lowest<T>();
 
     for (int s = 0; s < in.samples(); ++s) {
-        #pragma omp parallel for default(shared)
+        #pragma omp parallel for default(shared) BIM_OMP_SCHEDULE if (h>BIM_OMP_FOR2)
         for (bim::int64 y = 0; y < h; ++y) {
             T *src = (T *)in.scanLine(s, y);
             T *dst = (T *)out.scanLine(s, y);
@@ -613,7 +613,7 @@ bool enhancer_hounsfield(const Image &in, const T &min_val, const T &max_val, co
     bim::uint64 h = (bim::uint64) in.height();
 
     for (int s = 0; s < in.samples(); ++s) {
-        #pragma omp parallel for default(shared)
+        #pragma omp parallel for default(shared) BIM_OMP_SCHEDULE if (h>BIM_OMP_FOR2)
         for (bim::int64 y = 0; y < h; ++y) {
             T *src = (T *)in.scanLine(s, y);
             for (unsigned int x = 0; x < w; ++x) {

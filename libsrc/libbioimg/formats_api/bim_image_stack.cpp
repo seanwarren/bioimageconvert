@@ -415,7 +415,7 @@ Image ImageStack::projectionXZAxis( unsigned int y ) const {
   Image img;
   if (img.alloc( w, h, s, d ) != 0) return img;
   
-  #pragma omp parallel for default(shared)
+  #pragma omp parallel for default(shared) BIM_OMP_SCHEDULE if (length()>BIM_OMP_FOR2)
   for (int64 z=0; z<length(); ++z) {
     for (unsigned int c=0; c<samples(); ++c) {
       unsigned char *line_in = images[z].scanLine( c, y );
@@ -437,7 +437,7 @@ Image ImageStack::projectionYZAxis( unsigned int x ) const {
   Image img;
   if (img.alloc( w, h, s, d ) != 0) return img;
 
-  #pragma omp parallel for default(shared)
+  #pragma omp parallel for default(shared) BIM_OMP_SCHEDULE if (length()>BIM_OMP_FOR2)
   for (int64 z=0; z<length(); ++z) {
       std::vector<unsigned char> row_buf( img.bytesPerLine() );
       for (unsigned int c=0; c<samples(); ++c) {
@@ -603,7 +603,7 @@ void ImageStack::resize( bim::uint w, bim::uint h, bim::uint d, Image::ResizeMet
     Image img_xz = projectionXZAxis( y );
     img_xz = img_xz.resize(w, d, method, false );
     
-    #pragma omp parallel for default(shared)
+    #pragma omp parallel for default(shared) BIM_OMP_SCHEDULE if (d>BIM_OMP_FOR2)
     for (int z=0; z<d; ++z) {
       for (unsigned int c=0; c<stack.samples(); ++c) {
         unsigned char *line_out = stack.images[z].scanLine( c, y );

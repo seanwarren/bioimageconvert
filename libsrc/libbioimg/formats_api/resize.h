@@ -602,7 +602,7 @@ static void HorizontalFilter( const Td *psrc, unsigned int w_in, unsigned int /*
   scale = (Tw)(1.0/scale);
   if (support*2+2 > filter_in.contribution.size()) filter_in.contribution.resize( (unsigned int)(support*2+2) );
   
-  #pragma omp parallel for default(shared)
+  #pragma omp parallel for default(shared) BIM_OMP_SCHEDULE if (w_to>BIM_OMP_FOR2)
   for (bim::int64 x=0; x<w_to; ++x) {
     DInterpolationFilter<Tw> filter = filter_in;
     Tw center  = (Tw)  (x+0.5)/x_factor;
@@ -667,7 +667,7 @@ static void VerticalFilter( const Td *psrc, unsigned int /*w_in*/, unsigned int 
   scale = (Tw)(1.0/scale);
   if (support*2+2 > filter_in.contribution.size()) filter_in.contribution.resize( (unsigned int)(support*2+2) );
 
-  #pragma omp parallel for default(shared)
+  #pragma omp parallel for default(shared) BIM_OMP_SCHEDULE if (h_to>BIM_OMP_FOR2)
   for (bim::int64 y=0; y<h_to; ++y) {
     DInterpolationFilter<Tw> filter = filter_in;
     Tw center  = (Tw)  (y+0.5)/y_factor;
@@ -750,7 +750,7 @@ void image_resample_NN ( T *pdest, unsigned int w_to, unsigned int h_to, unsigne
     Tw ratio_h = w_in  / (Tw) w_to;
     Tw ratio_v = h_in / (Tw) h_to;
 
-    #pragma omp parallel for default(shared)
+    #pragma omp parallel for default(shared) BIM_OMP_SCHEDULE if (h_to>BIM_OMP_FOR2)
     for (bim::int64 y=0; y<h_to; y++) {
         T *q = ((T*) pdest) + y*offset_to;
         for (unsigned int x=0; x<w_to; x++) {

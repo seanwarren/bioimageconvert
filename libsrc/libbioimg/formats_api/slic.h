@@ -205,7 +205,7 @@ void slic_segment (bim::uint32 *segmentation,
 
     // compute edge map (gradient strength)
     for (bim::int64 k=0; k<(bim::int64)numChannels; ++k) {
-        #pragma omp parallel for default(shared)
+        #pragma omp parallel for default(shared) BIM_OMP_SCHEDULE if (height>BIM_OMP_FOR2)
         for (bim::int64 y=1; y<(bim::int64)height-1; ++y) {
             for (bim::int64 x=1; x<(bim::int64)width-1; ++x) {
                 Tw a = (Tw) atimage(x-1,y,k);
@@ -218,7 +218,7 @@ void slic_segment (bim::uint32 *segmentation,
     }
 
     // initialize K-means centers
-    #pragma omp parallel for default(shared)
+    #pragma omp parallel for default(shared) BIM_OMP_SCHEDULE if (numRegionsY>BIM_OMP_FOR2)
     for (bim::int64 v = 0 ; v < (bim::int64)numRegionsY ; ++v) {
         for (bim::int64 u = 0 ; u < (bim::int64)numRegionsX ; ++u) {
             Tw minEdgeValue = std::numeric_limits<Tw>::infinity();
@@ -263,7 +263,7 @@ void slic_segment (bim::uint32 *segmentation,
         // assign pixels to centers
         for (bim::int64 y=0; y<(bim::int64)height; ++y) {
             std::vector<Tw> distances(width, 0);
-            #pragma omp parallel for default(shared)
+            #pragma omp parallel for default(shared) BIM_OMP_SCHEDULE if (width>BIM_OMP_FOR2)
             for (bim::int64 x=0; x<(bim::int64)width; ++x) {
                 bim::int64 u = (bim::int64) floor((double)x / regionSize - 0.5) ;
                 bim::int64 v = (bim::int64) floor((double)y / regionSize - 0.5) ;
@@ -313,7 +313,7 @@ void slic_segment (bim::uint32 *segmentation,
         memset(masses, 0, sizeof(bim::uint32) * width * height) ;
         memset(centers, 0, sizeof(Tw) * (2 + numChannels) * numRegions) ;
 
-        #pragma omp parallel for default(shared)
+        #pragma omp parallel for default(shared) BIM_OMP_SCHEDULE if (height>BIM_OMP_FOR2)        
         for (bim::int64 y = 0 ; y < (bim::int64)height ; ++y) {
             for (bim::int64 x = 0 ; x < (bim::int64)width ; ++x) {
                 bim::int64 pixel = x + y * width ;
@@ -327,7 +327,7 @@ void slic_segment (bim::uint32 *segmentation,
             }
         }
 
-        #pragma omp parallel for default(shared)
+        #pragma omp parallel for default(shared) BIM_OMP_SCHEDULE if (numRegions>BIM_OMP_FOR2)
         for (bim::int64 region = 0 ; region < (bim::int64)numRegions ; ++region) {
             Tw mass = bim::max<Tw>((Tw)masses[region], 1e-8f) ;
             for (bim::int64 i = (2 + numChannels) * region ;

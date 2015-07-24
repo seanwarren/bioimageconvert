@@ -208,7 +208,7 @@ void copy_channel(bim::uint64 W, bim::uint64 H, int samples, int sample, const v
     size_t inrowsz = stride == 0 ? samples*W : stride;
     size_t ourowsz = W;
 
-    #pragma omp parallel for default(shared)
+    #pragma omp parallel for default(shared) BIM_OMP_SCHEDULE if (W > BIM_OMP_FOR2 && H > BIM_OMP_FOR2)
     for (bim::int64 y = 0; y < H; ++y) {
         T *lin = raw + y*inrowsz;
         T *lou = p + y*ourowsz;
@@ -265,7 +265,7 @@ void copy_from_channel(bim::uint64 W, bim::uint64 H, int samples, int sample, co
     size_t inrowsz = W;
     size_t ourowsz = samples*W;
 
-    #pragma omp parallel for default(shared)
+    #pragma omp parallel for default(shared) BIM_OMP_SCHEDULE if (W > BIM_OMP_FOR2 && H > BIM_OMP_FOR2)
     for (bim::int64 y = 0; y < H; ++y) {
         T *lin = raw + y*inrowsz;
         T *lou = p + y*ourowsz;

@@ -329,7 +329,7 @@ void copy_channel(bim::uint64 W, bim::uint64 H, int samples, int sample, const v
     T *raw = (T *) in;
     T *p = (T *) out;
     raw += sample;
-    #pragma omp parallel for default(shared)
+    #pragma omp parallel for default(shared) BIM_OMP_SCHEDULE if (W*H>BIM_OMP_FOR1)
     for (bim::int64 x = 0; x < W*H; ++x) {
         T *pp = p + x;
         T *rr = raw + x*samples;
@@ -340,7 +340,7 @@ void copy_channel(bim::uint64 W, bim::uint64 H, int samples, int sample, const v
 template <typename T>
 void scale_channel(bim::uint64 W, bim::uint64 H, const void *in, nifti_1_header *h) {
     T *raw = (T *)in;
-    #pragma omp parallel for default(shared)
+    #pragma omp parallel for default(shared) BIM_OMP_SCHEDULE if (W*H>BIM_OMP_FOR1)
     for (bim::int64 x = 0; x < W*H; ++x) {
         raw[x] = (raw[x] * h->scl_slope) + h->scl_inter;
     } // for x

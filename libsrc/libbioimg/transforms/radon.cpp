@@ -1,11 +1,13 @@
 //---------------------------------------------------------------------------
 
-
 #include <math.h>
 #include "radon.h"
 
 #define _USE_MATH_DEFINES //to get the constant to work
 #include <cmath>
+
+#include "xtypes.h"
+
 //---------------------------------------------------------------------------
 /*
 pPtr -array of double- output column. a pre-allocated vector of the size 2*ceil(norm(size(I)-floor((size(I)-1)/2)-1))+3
@@ -51,7 +53,7 @@ void radon(double *pPtr, double *iPtr, double *thetaPtr, int M, int N,
 
         /* Remember that n and m will each change twice as fast as the */
         /* pixel pointer should change. */
-        #pragma omp parallel for default(shared)   
+        #pragma omp parallel for default(shared) BIM_OMP_SCHEDULE if (2*N>BIM_OMP_FOR2)
         for (int n = 0; n < 2*N; n++) {
             double *pixelPtr = iPtr + (n/2)*M; // points inside input array
             for (int m=0; m<2*M; m++) {

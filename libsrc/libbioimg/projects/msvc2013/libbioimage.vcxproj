@@ -335,6 +335,7 @@
     <ClCompile Include="..\..\formats\dicom\bim_dicom_format.cpp" />
     <ClCompile Include="..\..\formats\jp2\bim_jp2_color.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\..\formats\jp2\bim_jp2_format.cpp" />
     <ClCompile Include="..\..\formats\jxr\bim_jxr_format.cpp" />
@@ -401,11 +402,13 @@
     <ClInclude Include="..\..\..\pole\pole.h" />
     <ClInclude Include="..\..\formats\jp2\bim_jp2_color.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="..\..\formats\jp2\bim_jp2_format.h" />
     <ClInclude Include="..\..\formats_api\bim_image_5d.h" />
     <ClInclude Include="..\..\formats_api\bim_image_proxy.h" />
     <ClInclude Include="..\..\formats_api\bim_primitives.h" />
+    <ClInclude Include="..\..\formats_api\slic.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
