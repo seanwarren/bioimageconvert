@@ -647,13 +647,11 @@ void tiffSetWriteParameters (FormatHandle *fmtHndl) {
       if (options[i] == "lzw") fmtHndl->compression = COMPRESSION_LZW;
       if (options[i] == "packbits") fmtHndl->compression = COMPRESSION_PACKBITS;
       continue;
-    }
-
+    } else
     if (options[i] == "tiles" && options.size() - i>0) {
         par->info.tileWidth = par->info.tileHeight = options[++i].toInt(0);
         continue;
-    }
-
+    } else
     if (options[i] == "pyramid" && options.size() - i>0) {
         xstring pf = options[++i];
         if (pf == "subdirs") par->pyramid.format = PyramidInfo::pyrFmtSubDirs;

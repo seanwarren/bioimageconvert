@@ -106,9 +106,20 @@ bool ImageProxy::readTile(Image &img, bim::uint page, bim::uint64 xid, bim::uint
     if (im_tile_sz < 1 || im_tile_sz != fm->get_metadata_tag_int(bim::TILE_NUM_Y, 0))
         return false;
 
+    bool flat_structure = fm->get_metadata_tag(bim::IMAGE_RES_STRUCTURE, "") == bim::IMAGE_RES_STRUCTURE_FLAT;
+    if (flat_structure && level>0) {
+        // tiles get progressively smaller with the flat structure, adjust tile size and positions accordingly
+        im_tile_sz = bim::round<bim::uint64>((double)im_tile_sz / pow<double>(2.0, level));
+        ImageInfo info = fm->sessionGetInfo();
+        bim::uint64 w = bim::round<bim::uint64>((double)info.width / pow<double>(2.0, level));
+        bim::uint64 h = bim::round<bim::uint64>((double)info.height / pow<double>(2.0, level));
+        if (w<tile_size && h<tile_size) 
+            return fm->sessionReadLevel(img.imageBitmap(), page, level);
+    }
+
     if (tile_size == im_tile_sz)
         return fm->sessionReadTile(img.imageBitmap(), page, xid, yid, requested_level) == 0;
-    
+   
     // if file tile size is different from the requested size, compose output tile from stored tiles
     unsigned int x1 = xid * tile_size;
     unsigned int x2 = xid * tile_size + tile_size-1;
@@ -121,21 +132,24 @@ bool ImageProxy::readTile(Image &img, bim::uint page, bim::uint64 xid, bim::uint
     double yt2 = y2 / (double)im_tile_sz;
 
     int xid1 = floor(xt1);
-    int nx = bim::max<int>(floor(xt2) - xid1, 1);
+    int nx = bim::max<int>(bim::round<int>(xt2) - xid1, 1);
     int yid1 = floor(yt1);
-    int ny = bim::max<int>(floor(yt2) - yid1, 1);
+    int ny = bim::max<int>(bim::round<int>(yt2) -yid1, 1);
 
     // read all required tiles into the temp image
     Image temp;
     Image tile;
-    for (bim::int64 x=0; x<nx; ++x) {
-        for (bim::int64 y=0; y<ny; ++y) {
-            if (fm->sessionReadTile(tile.imageBitmap(), page, x + xid1, y + yid1, requested_level) != 0) break;
-            if (temp.isEmpty())
-                temp.alloc(nx * im_tile_sz, ny * im_tile_sz, tile.samples(), tile.depth(), tile.pixelType());
-            temp.setROI(x*im_tile_sz, y*im_tile_sz, tile);
-        } // y
-    } // x
+    try {
+        for (bim::int64 x = 0; x < nx; ++x) {
+            for (bim::int64 y = 0; y < ny; ++y) {
+                if (fm->sessionReadTile(tile.imageBitmap(), page, x + xid1, y + yid1, requested_level) == 0) {
+                    if (temp.isEmpty())
+                        temp.alloc(nx * im_tile_sz, ny * im_tile_sz, tile.samples(), tile.depth(), tile.pixelType());
+                    temp.setROI(x*im_tile_sz, y*im_tile_sz, tile);
+                }
+            } // y
+        } // x
+    } catch (...) {}
 
     // compute level image size
     xstring s = fm->get_metadata_tag(bim::IMAGE_RES_L_SCALES, "");

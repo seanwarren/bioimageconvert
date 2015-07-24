@@ -51,10 +51,11 @@ namespace bim {
         opj_codec_t *codec;
         opj_image_t *image;
 
+        int num_tiles_x;
+        int num_tiles_y;
+
         void open(const char *filename, bim::ImageIOModes mode);
-        
-        
-        std::vector<std::string> comments;
+        void close();
     };
 
 } // namespace bim

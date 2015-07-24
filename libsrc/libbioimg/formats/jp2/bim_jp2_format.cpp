@@ -91,13 +91,12 @@ bim::JP2Params::JP2Params() {
     stream = NULL;
     codec = NULL;
     image = NULL;
+    num_tiles_x = 0;
+    num_tiles_y = 0;
 }
 
 bim::JP2Params::~JP2Params() {
-    if (codec) opj_destroy_codec(codec);
-    if (image) opj_image_destroy(image);
-    if (stream) opj_stream_destroy(stream);
-    if (file) delete file;
+    close();
 }
 
 void bim::JP2Params::open(const char *filename, bim::ImageIOModes io_mode) {
@@ -117,6 +116,49 @@ void bim::JP2Params::open(const char *filename, bim::ImageIOModes io_mode) {
         opj_stream_set_write_function(this->stream, (opj_stream_write_fn)_WriteProc);
         opj_stream_set_skip_function(this->stream, (opj_stream_skip_fn)_SkipProc);
         opj_stream_set_seek_function(this->stream, (opj_stream_seek_fn)_SeekProc);
+
+        if (io_mode == IO_READ)
+            codec = opj_create_decompress(OPJ_CODEC_JP2);
+        else
+            codec = opj_create_compress(OPJ_CODEC_JP2);
+
+        // configure the event callbacks
+        opj_set_info_handler(codec, NULL, NULL);
+        opj_set_warning_handler(codec, NULL, NULL); //opj_set_warning_handler(codec, jp2_warning_callback, NULL);
+        opj_set_error_handler(codec, jp2_error_callback, NULL);
+
+        if (io_mode == IO_READ) {
+            // setup the decoder decoding parameters using user parameters
+            opj_dparameters_t parameters;
+            opj_set_default_decoder_parameters(&parameters);
+            if (!opj_setup_decoder(codec, &parameters)) {
+                throw "Failed to setup the decoder\n";
+            }
+
+            // read the main header of the codestream and if necessary the JP2 boxes
+            if (!opj_read_header(stream, codec, &image)) {
+                throw "Failed to read the header\n";
+            }
+        }
+    }
+}
+
+void bim::JP2Params::close() {
+    if (image) {
+        opj_image_destroy(image);
+        image = NULL;
+    }
+    if (codec) {
+        opj_destroy_codec(codec);
+        codec = NULL;
+    }
+    if (stream) {
+        opj_stream_destroy(stream);
+        stream = NULL;
+    }
+    if (file) {
+        delete file;
+        file = NULL;
     }
 }
 
@@ -166,6 +208,9 @@ void jp2SetWriteParameters(FormatHandle *fmtHndl) {
     if (fmtHndl == NULL) return;
     fmtHndl->order = 1; // use progressive encoding by default
     fmtHndl->quality = 95;
+    
+    bim::JP2Params *par = (bim::JP2Params *) fmtHndl->internalParams;
+    par->i.tileWidth = par->i.tileHeight = 0;
 
     if (!fmtHndl->options) return;
     xstring str = fmtHndl->options;
@@ -188,50 +233,37 @@ void jp2SetWriteParameters(FormatHandle *fmtHndl) {
             else
                 fmtHndl->order = 1;
             continue;
+        } else
+        if (options[i] == "tiles" && options.size() - i>0) {
+            par->i.tileWidth = par->i.tileHeight = options[++i].toInt(0);
+            continue;
         }
 
     } // while
-}
-
-static inline int int_ceildivpow2(int a, int b) {
-    return (a + (1 << b) - 1) >> b;
 }
 
 void jp2GetImageInfo(FormatHandle *fmtHndl) {
     if (fmtHndl == NULL) return;
     if (fmtHndl->internalParams == NULL) return;
     bim::JP2Params *par = (bim::JP2Params *) fmtHndl->internalParams;
-
-    if (!par->codec) {
-        opj_dparameters_t parameters;
-        opj_set_default_decoder_parameters(&parameters);
-        par->codec = opj_create_decompress(OPJ_CODEC_JP2);
-
-        opj_set_info_handler(par->codec, NULL, NULL);
-        opj_set_warning_handler(par->codec, jp2_warning_callback, NULL);
-        opj_set_error_handler(par->codec, jp2_error_callback, NULL);
-
-        // setup the decoder decoding parameters using user parameters
-        if (!opj_setup_decoder(par->codec, &parameters)) {
-            throw "Failed to setup the decoder\n";
-        }
-    }
-
-    // read the main header of the codestream and if necessary the JP2 boxes
-    if (!par->image) {
-        if (!opj_read_header(par->stream, par->codec, &par->image)) {
-            throw "Failed to read the header\n";
-        }
-    }
-
     ImageInfo *info = &par->i;
     *info = initImageInfo();
-    info->width = int_ceildivpow2(par->image->comps[0].w, par->image->comps[0].factor);
-    info->height = int_ceildivpow2(par->image->comps[0].h, par->image->comps[0].factor);
+
+    // header should be already loaded in the open
+
+    opj_codestream_info_v2_t* pCodeStreamInfo = opj_get_cstr_info(par->codec);
+    info->tileWidth = pCodeStreamInfo->tdx;
+    info->tileHeight = pCodeStreamInfo->tdy;
+    par->num_tiles_x = pCodeStreamInfo->tw;
+    par->num_tiles_y = pCodeStreamInfo->th;
+    info->number_levels = pCodeStreamInfo->m_default_tile_info.tccp_info[0].numresolutions;
+    opj_destroy_cstr_info(&pCodeStreamInfo);
+
+    info->width = par->image->comps[0].w;
+    info->height = par->image->comps[0].h;
     info->samples = par->image->numcomps;
     info->depth = par->image->comps[0].prec;
-    info->number_levels = par->image->comps[0].resno_decoded;
-
+    
     info->pixelType = FMT_UNSIGNED;
     if (par->image->comps[0].sgnd == 1)
         info->pixelType = FMT_SIGNED;
@@ -291,8 +323,8 @@ bim::uint jp2OpenImageProc(FormatHandle *fmtHndl, ImageIOModes io_mode) {
     bim::JP2Params *par = new bim::JP2Params();
     fmtHndl->internalParams = (void *)par;
 
-    par->open(fmtHndl->fileName, io_mode);
     try {
+        par->open(fmtHndl->fileName, io_mode);
         if (io_mode == IO_READ) {
             jp2GetImageInfo(fmtHndl);
         } else if (io_mode == IO_WRITE) {
@@ -334,29 +366,44 @@ ImageInfo jp2GetImageInfoProc(FormatHandle *fmtHndl, bim::uint page_num) {
 template <typename T>
 void copy_component(bim::uint64 W, bim::uint64 H, int sample, const opj_image_comp_t &in, void *out) {
     OPJ_INT32 a = (in.sgnd ? 1 << (in.prec - 1) : 0);
-    #pragma omp parallel for default(shared)
-    for (bim::int64 y = 0; y < H; ++y) {
-        T *p = ((T *)out) + y*W;
-        bim::uint64 pos = y*W;
-        for (bim::int64 x = 0; x < W; ++x) {
-            *p = (T) (in.data[pos] + a);
-            p++;
-            pos++;
-        } // for x
-    } // for y
+    if (W > 32 && H > 32) { // use parallel version
+        #pragma omp parallel for default(shared)
+        for (bim::int64 y = 0; y < H; ++y) {
+            T *p = ((T *)out) + y*W;
+            bim::uint64 pos = y*W;
+            for (bim::int64 x = 0; x < W; ++x) {
+                *p = (T)(in.data[pos] + a);
+                p++;
+                pos++;
+            } // for x
+        } // for y
+    } else {
+        for (bim::int64 y = 0; y < H; ++y) {
+            T *p = ((T *)out) + y*W;
+            bim::uint64 pos = y*W;
+            for (bim::int64 x = 0; x < W; ++x) {
+                *p = (T)(in.data[pos] + a);
+                p++;
+                pos++;
+            } // for x
+        } // for y
+    }
 }
 
 bim::uint jp2ReadImageProc(FormatHandle *fmtHndl, bim::uint page) {
     if (fmtHndl == NULL) return 1;
     fmtHndl->pageNumber = page;
     bim::JP2Params *par = (bim::JP2Params *) fmtHndl->internalParams;
-    if (!par->codec || !par->image) return 1;
 
     ImageBitmap *bmp = fmtHndl->image;
     ImageInfo *info = &par->i;
     if (allocImg(fmtHndl, info, bmp) != 0) return 1;
 
     try {
+        // openjpeg unfortunately has some problem with multiple decodings, have to reset everything from scratch
+        if (!par->image) 
+            par->open(fmtHndl->fileName, fmtHndl->io_mode);
+
         if (!opj_decode(par->codec, par->stream, par->image)) {
             throw "Failed to decode image\n";
         }
@@ -374,9 +421,117 @@ bim::uint jp2ReadImageProc(FormatHandle *fmtHndl, bim::uint page) {
                 copy_component<bim::uint32>(info->width, info->height, s, par->image->comps[s], bmp->bits[s]);
         } // for sample
 
-        opj_image_destroy(par->image);
-        par->image = NULL;
+        par->close();
     } catch (...) {
+        par->close();
+        return 1;
+    }
+    return 0;
+}
+
+bim::uint jp2ReadImageLevelProc(FormatHandle *fmtHndl, bim::uint page, bim::uint level) {
+    if (fmtHndl == NULL) return 1;
+    if (fmtHndl->internalParams == NULL) return 1;
+    bim::JP2Params *par = (bim::JP2Params *) fmtHndl->internalParams;
+    ImageInfo *info = &par->i;
+
+    try {
+        // openjpeg unfortunately has some problem with multiple decodings, have to reset everything from scratch
+        if (!par->image)
+            par->open(fmtHndl->fileName, fmtHndl->io_mode);
+
+        // read a specific resolution level
+        if (!opj_set_decoded_resolution_factor(par->codec, level)) {
+            throw "Failed to set image level\n";
+        }
+        
+        // setting resolution level does not change image size in opj_decode, a little hack to
+        // update image size based on the resolution level
+        info->width = bim::round<bim::uint64>((double)info->width / pow<double>(2.0, level));
+        info->height = bim::round<bim::uint64>((double)info->height / pow<double>(2.0, level));
+        for (int i = 0; i < info->samples; ++i) {
+            par->image->comps[i].w = info->width;
+            par->image->comps[i].h = info->height;
+        }
+        
+        if (!opj_decode(par->codec, par->stream, par->image)) {
+            throw "Failed to decode image level\n";
+        }
+
+        if (!opj_end_decompress(par->codec, par->stream)) {
+            throw "Failed to finish decompression\n";
+        }
+
+        // setting resolution level does not change image size in opj_decode 
+        //info->width = par->image->comps[0].w;
+        //info->height = par->image->comps[0].h;
+        ImageBitmap *bmp = fmtHndl->image;
+        if (allocImg(fmtHndl, info, bmp) != 0) return 1;
+
+        for (int s = 0; s < info->samples; ++s) {
+            if (info->depth == 8)
+                copy_component<bim::uint8>(info->width, info->height, s, par->image->comps[s], bmp->bits[s]);
+            else if (info->depth == 16)
+                copy_component<bim::uint16>(info->width, info->height, s, par->image->comps[s], bmp->bits[s]);
+            else if (info->depth == 32)
+                copy_component<bim::uint32>(info->width, info->height, s, par->image->comps[s], bmp->bits[s]);
+        } // for sample
+
+        par->close();
+    }
+    catch (...) {
+        par->close();
+        return 1;
+    }
+    return 0;
+}
+
+bim::uint jp2ReadImageTileProc(FormatHandle *fmtHndl, bim::uint page, bim::uint64 xid, bim::uint64 yid, bim::uint level) {
+    if (fmtHndl == NULL) return 1;
+    if (fmtHndl->internalParams == NULL) return 1;
+    bim::JP2Params *par = (bim::JP2Params *) fmtHndl->internalParams;
+    ImageInfo *info = &par->i;
+
+    if (xid>=par->num_tiles_x || yid >= par->num_tiles_y) {
+        return 1;
+    }
+
+    try {
+        // openjpeg unfortunately has some problem with multiple decodings, have to reset everything from scratch
+        if (!par->image)
+            par->open(fmtHndl->fileName, fmtHndl->io_mode);
+
+        // read a specific resolution level
+        if (!opj_set_decoded_resolution_factor(par->codec, level)) {
+            throw "Failed to set image level\n";
+        }
+            
+        OPJ_UINT32 tile_index = yid * par->num_tiles_x + xid;
+        if (!opj_get_decoded_tile(par->codec, par->stream, par->image, tile_index)) {
+            throw "Failed to decode tile\n";
+        }
+
+        if (!opj_end_decompress(par->codec, par->stream)) {
+            throw "Failed to finish decompression\n";
+        }
+
+        info->width = par->image->comps[0].w;
+        info->height = par->image->comps[0].h;
+        ImageBitmap *bmp = fmtHndl->image;
+        if (allocImg(fmtHndl, info, bmp) != 0) return 1;
+
+        for (int s = 0; s < info->samples; ++s) {
+            if (info->depth == 8)
+                copy_component<bim::uint8>(info->width, info->height, s, par->image->comps[s], bmp->bits[s]);
+            else if (info->depth == 16)
+                copy_component<bim::uint16>(info->width, info->height, s, par->image->comps[s], bmp->bits[s]);
+            else if (info->depth == 32)
+                copy_component<bim::uint32>(info->width, info->height, s, par->image->comps[s], bmp->bits[s]);
+        } // for sample
+
+        par->close();
+     } catch (...) {
+        par->close();
         return 1;
     }
     return 0;
@@ -403,6 +558,7 @@ void copy_from_component(bim::uint64 W, bim::uint64 H, int sample, const void *i
 bim::uint jp2WriteImageProc(FormatHandle *fmtHndl) {
     if (!fmtHndl) return 1;
     bim::JP2Params *par = (bim::JP2Params *) fmtHndl->internalParams;
+    int tile_size = par->i.tileWidth;
     ImageBitmap *bmp = fmtHndl->image;
     ImageInfo *info = &bmp->i;
     
@@ -413,6 +569,15 @@ bim::uint jp2WriteImageProc(FormatHandle *fmtHndl) {
         parameters.cp_disto_alloc = 1;
         parameters.tcp_numlayers = 1;
         parameters.tcp_mct = (info->samples == 3) ? 1 : 0; // decide if MCT should be used
+        
+        // set the number of resolution levels
+        int min_level_size = 50;
+        unsigned int side_sz = bim::max<unsigned int>(info->width, info->height);
+        if (tile_size > 0) {
+            side_sz = tile_size;
+            min_level_size = 4;
+        }
+        parameters.numresolution = ceil(bim::log2<double>(side_sz)) - ceil(bim::log2<double>(min_level_size)) + 1;
 
         if (fmtHndl->quality >= 100) { // lossless mode
             parameters.irreversible = 0;
@@ -422,6 +587,15 @@ bim::uint jp2WriteImageProc(FormatHandle *fmtHndl) {
             parameters.tcp_rates[0] = 100.0-fmtHndl->quality;
             //parameters.tcp_distoratio[0] = (double) fmtHndl->quality / 100.0;
             //parameters.cp_fixed_quality = OPJ_TRUE;
+        }
+
+        // select tiled writing
+        if (tile_size>0) {
+            parameters.tile_size_on = OPJ_TRUE;
+            parameters.cp_tx0 = 0;
+            parameters.cp_ty0 = 0;
+            parameters.cp_tdx = tile_size;
+            parameters.cp_tdy = tile_size;
         }
 
         // initialize image components 
@@ -467,14 +641,6 @@ bim::uint jp2WriteImageProc(FormatHandle *fmtHndl) {
                 copy_from_component<bim::uint32>(info->width, info->height, s, bmp->bits[s], image->comps[s]);
         } // for sample
 
-        
-        par->codec = opj_create_compress(OPJ_CODEC_JP2);
-
-        // configure the event callbacks
-        opj_set_info_handler(par->codec, NULL, NULL);
-        opj_set_warning_handler(par->codec, jp2_warning_callback, NULL);
-        opj_set_error_handler(par->codec, jp2_error_callback, NULL);
-
         // setup the encoder parameters using the current image and using user parameters
         opj_setup_encoder(par->codec, &parameters, image);
 
@@ -511,17 +677,52 @@ bim::uint jp2_append_metadata(FormatHandle *fmtHndl, TagMap *hash) {
     if (!fmtHndl->fileName) return 1;
     bim::JP2Params *par = (bim::JP2Params *) fmtHndl->internalParams;
 
-    for (size_t comidx = 0; comidx < par->comments.size(); ++comidx) {
+    // append image pyramid meta
+    ImageInfo *info = &par->i;
+    double scale = 1.0;
+    std::vector<double> scales;
+    for (int i = 0; i < info->number_levels; ++i) {
+        scales.push_back(scale);
+        scale /= 2.0;
+    }
+    hash->set_value(bim::IMAGE_NUM_RES_L, (int)info->number_levels);
+    hash->set_value(bim::IMAGE_RES_L_SCALES, xstring::join(scales, ","));
+    hash->set_value(bim::IMAGE_RES_STRUCTURE, bim::IMAGE_RES_STRUCTURE_FLAT);
+    
+    // Read the main header of the codestream, and if necessary the JP2 boxes
+    std::vector<xstring> comments;
+    if (par->image->cp_comment) {
+        size_t endpos = 0;
+        size_t startpos = 0;
+        const char* comment;
+        while (true) {
+            ++endpos;
+            if (par->image->cp_comment[endpos] == 0 && par->image->cp_comment[endpos + 1] != 0) {
+                // A single zero character followed by a non-zero character indicates the end
+                // of one comment. So here is a break between two concatenated comments:
+                comment = (par->image->cp_comment + startpos);
+                comments.push_back(comment);
+                startpos = endpos + 1;
+            }
+            else if (par->image->cp_comment[endpos] == 0 && par->image->cp_comment[endpos + 1] == 0 && par->image->cp_comment[endpos + 2] == 0) {
+                // Three consecutive zero characters indicate the end of the comments list.
+                // So here is the end of all string comments:
+                comment = (par->image->cp_comment + startpos);
+                comments.push_back(comment);
+                break;
+            }
+        }
+    }
+
+    for (size_t comidx = 0; comidx < comments.size(); ++comidx) {
         // NOTE: if comments contain an '=' sign, they are 'key=value' strings and
         // should be split on the '=' sign:
-        const size_t pos = par->comments[comidx].find('=');
+        const size_t pos = comments[comidx].find('=');
         if (pos != std::string::npos) {
-            std::string key = par->comments[comidx].substr(0, pos);
-            std::string value = par->comments[comidx].substr(pos + 1);
-            hash->append_tag("custom/" + key, value);
-        }
-        else {
-            hash->append_tag("custom/Comment", par->comments[comidx]);
+            std::vector<xstring> v = comments[comidx].split("=");
+            hash->append_tag("custom/" + v[0], v[1]);
+        } else {
+            hash->append_tag("custom/Comment", comments[comidx]);
         }
     }
 
@@ -586,13 +787,13 @@ FormatHeader jp2Header = {
     // read/write
     jp2ReadImageProc, //ReadImageProc 
     jp2WriteImageProc, //WriteImageProc
-    NULL, //ReadImageTileProc
+    jp2ReadImageTileProc, //ReadImageTileProc
     NULL, //WriteImageTileProc
-    NULL, //ReadImageLineProc
+    jp2ReadImageLevelProc, //ReadImageLevelProc
     NULL, //WriteImageLineProc
     NULL, //ReadImageThumbProc
     NULL, //WriteImageThumbProc
-    NULL, //dimJpegReadImagePreviewProc, //ReadImagePreviewProc
+    NULL, //, //ReadImagePreviewProc
 
     // meta data
     NULL, //ReadMetaDataProc
