@@ -27,9 +27,10 @@
 /* Written by:  Lior Shamir <shamirl [at] mail [dot] nih [dot] gov>              */
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-
 #include <cstdlib>
 #include <cmath>
+
+#include "xtypes.h"
 
 void TNx(double *x, double *out, int N, int height) {
     double *temp = new double[N*height];
@@ -43,7 +44,7 @@ void TNx(double *x, double *out, int N, int height) {
         for (int iy = 0; iy < height; iy++)
             temp[iy*N+ix] = x[iy];
     // acos
-    #pragma omp parallel for default(shared)
+    #pragma omp parallel for default(shared) BIM_OMP_SCHEDULE if (N>BIM_OMP_FOR2)
     for (int ix = 0; ix < N; ix++)
         for (int iy = 0; iy < height; iy++)
             if (fabs(temp[iy*N+ix]) > 1) temp[iy*N+ix] = 0;   /* protect from acos domain error */
@@ -89,7 +90,7 @@ void getChCoeff1D(double *f,double *out,double *Tj,int N,int width) {
 }
 
 void getChCoeff(double *Im, double *out, double *Tj,int N,int width, int height) {
-    #pragma omp parallel for default(shared)
+    #pragma omp parallel for default(shared) BIM_OMP_SCHEDULE if (height>BIM_OMP_FOR2)
     for (int iy = 0; iy < height; iy++) {
         getChCoeff1D(&(Im[iy*width]),&(out[iy*N]),Tj,N,width);
     }

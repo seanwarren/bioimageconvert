@@ -568,7 +568,7 @@ void Lut::apply_lut( const Ti *ibuf, To *obuf, const unsigned int &num_data_poin
       return;
   }
 
-  #pragma omp parallel for default(shared)
+  #pragma omp parallel for default(shared) BIM_OMP_SCHEDULE if (num_data_points>BIM_OMP_FOR1)
   for (bim::int64 i=0; i<num_data_points; ++i)
       obuf[i] = bim::trim<To, bim::Lut::StorageType>(lut[ibuf[i]]);
 }
@@ -584,7 +584,7 @@ void Lut::apply_lut_scale_from( const Ti *ibuf, To *obuf, const unsigned int &nu
   double shift = h_in.d.shift;
   double range = (double)lut.size();
 
-  #pragma omp parallel for default(shared)
+  #pragma omp parallel for default(shared) BIM_OMP_SCHEDULE if (num_data_points>BIM_OMP_FOR1)
   for (bim::int64 i=0; i<num_data_points; ++i)
     obuf[i] = bim::trim<To, bim::Lut::StorageType>(lut[ bim::trim<unsigned int, double>( ((double)ibuf[i]-shift)*scale, 0, range-1) ]);
 }
@@ -593,7 +593,7 @@ template <typename Ti, typename To>
 void Lut::apply_typecast( const Ti *ibuf, To *obuf, const unsigned int &num_data_points ) const {
   if (!ibuf || !obuf) return;
 
-  #pragma omp parallel for default(shared)
+  #pragma omp parallel for default(shared) BIM_OMP_SCHEDULE if (num_data_points>BIM_OMP_FOR1)
   for (bim::int64 i=0; i<num_data_points; ++i)
     obuf[i] = (To) ibuf[i];
 }

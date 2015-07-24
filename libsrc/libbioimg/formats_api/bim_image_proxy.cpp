@@ -139,17 +139,15 @@ bool ImageProxy::readTile(Image &img, bim::uint page, bim::uint64 xid, bim::uint
     // read all required tiles into the temp image
     Image temp;
     Image tile;
-    try {
-        for (bim::int64 x = 0; x < nx; ++x) {
-            for (bim::int64 y = 0; y < ny; ++y) {
-                if (fm->sessionReadTile(tile.imageBitmap(), page, x + xid1, y + yid1, requested_level) == 0) {
-                    if (temp.isEmpty())
-                        temp.alloc(nx * im_tile_sz, ny * im_tile_sz, tile.samples(), tile.depth(), tile.pixelType());
-                    temp.setROI(x*im_tile_sz, y*im_tile_sz, tile);
-                }
-            } // y
-        } // x
-    } catch (...) {}
+    for (bim::int64 x = 0; x < nx; ++x) {
+        for (bim::int64 y = 0; y < ny; ++y) {
+            if (fm->sessionReadTile(tile.imageBitmap(), page, x + xid1, y + yid1, requested_level) == 0) {
+                if (temp.isEmpty())
+                    temp.alloc(nx * im_tile_sz, ny * im_tile_sz, tile.samples(), tile.depth(), tile.pixelType());
+                temp.setROI(x*im_tile_sz, y*im_tile_sz, tile);
+            }
+        } // y
+    } // x
 
     // compute level image size
     xstring s = fm->get_metadata_tag(bim::IMAGE_RES_L_SCALES, "");

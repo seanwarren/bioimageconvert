@@ -104,6 +104,10 @@ const static double Pi = 3.14159265358979323846264338327950288419716939937510;
 #define BIM_ALIGN_FLOAT  BIM_ALIGN(32)
 #define BIM_ALIGN_DOUBLE BIM_ALIGN(64)
 
+#define BIM_OMP_FOR1 10000
+#define BIM_OMP_FOR2 100
+#define BIM_OMP_SCHEDULE schedule(runtime)
+
 template<typename T>
 inline bool isnan(T value) { return value != value; }
 

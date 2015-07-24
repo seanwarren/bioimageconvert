@@ -366,28 +366,16 @@ ImageInfo jp2GetImageInfoProc(FormatHandle *fmtHndl, bim::uint page_num) {
 template <typename T>
 void copy_component(bim::uint64 W, bim::uint64 H, int sample, const opj_image_comp_t &in, void *out) {
     OPJ_INT32 a = (in.sgnd ? 1 << (in.prec - 1) : 0);
-    if (W > 32 && H > 32) { // use parallel version
-        #pragma omp parallel for default(shared)
-        for (bim::int64 y = 0; y < H; ++y) {
-            T *p = ((T *)out) + y*W;
-            bim::uint64 pos = y*W;
-            for (bim::int64 x = 0; x < W; ++x) {
-                *p = (T)(in.data[pos] + a);
-                p++;
-                pos++;
-            } // for x
-        } // for y
-    } else {
-        for (bim::int64 y = 0; y < H; ++y) {
-            T *p = ((T *)out) + y*W;
-            bim::uint64 pos = y*W;
-            for (bim::int64 x = 0; x < W; ++x) {
-                *p = (T)(in.data[pos] + a);
-                p++;
-                pos++;
-            } // for x
-        } // for y
-    }
+    #pragma omp parallel for default(shared) BIM_OMP_SCHEDULE if (W > BIM_OMP_FOR2 && H > BIM_OMP_FOR2)
+    for (bim::int64 y = 0; y < (bim::int64) H; ++y) {
+        T *p = ((T *)out) + y*W;
+        bim::uint64 pos = y*W;
+        for (bim::int64 x = 0; x < (bim::int64) W; ++x) {
+            *p = (T)(in.data[pos] + a);
+            p++;
+            pos++;
+        } // for x
+    } // for y
 }
 
 bim::uint jp2ReadImageProc(FormatHandle *fmtHndl, bim::uint page) {
@@ -543,7 +531,7 @@ bim::uint jp2ReadImageTileProc(FormatHandle *fmtHndl, bim::uint page, bim::uint6
 
 template <typename T>
 void copy_from_component(bim::uint64 W, bim::uint64 H, int sample, const void *in, const opj_image_comp_t &out) {
-    #pragma omp parallel for default(shared)
+    #pragma omp parallel for default(shared) BIM_OMP_SCHEDULE if (W > BIM_OMP_FOR2 && H > BIM_OMP_FOR2)
     for (bim::int64 y = 0; y < H; ++y) {
         T *p = ((T *)in) + y*W;
         bim::uint64 pos = y*W;
@@ -575,7 +563,7 @@ bim::uint jp2WriteImageProc(FormatHandle *fmtHndl) {
         unsigned int side_sz = bim::max<unsigned int>(info->width, info->height);
         if (tile_size > 0) {
             side_sz = tile_size;
-            min_level_size = 4;
+            min_level_size = 16;
         }
         parameters.numresolution = ceil(bim::log2<double>(side_sz)) - ceil(bim::log2<double>(min_level_size)) + 1;
 

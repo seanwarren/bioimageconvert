@@ -182,7 +182,7 @@ void read_channel(bim::uint64 W, bim::uint64 H, int samples, int sample, const v
     T *raw = (T *)in;
     T *p = (T *)out;
     raw += sample;
-    #pragma omp parallel for default(shared)
+    #pragma omp parallel for default(shared) BIM_OMP_SCHEDULE if (W*H>BIM_OMP_FOR1)
     for (bim::int64 x = 0; x < W*H; ++x) {
         T *pp = p + x;
         T *rr = raw + x*samples;
@@ -291,7 +291,7 @@ void write_channel(bim::uint64 W, bim::uint64 H, int samples, int sample, const 
     T *raw = (T *)in;
     T *p = (T *)out;
     raw += sample;
-    #pragma omp parallel for default(shared)
+    #pragma omp parallel for default(shared) BIM_OMP_SCHEDULE if (W*H>BIM_OMP_FOR1)
     for (bim::int64 x = 0; x < W*H; ++x) {
         T *pp = p + x;
         T *rr = raw + x*samples;
