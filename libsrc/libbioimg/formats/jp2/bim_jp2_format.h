@@ -56,6 +56,8 @@ namespace bim {
 
         void open(const char *filename, bim::ImageIOModes mode);
         void close();
+
+        std::vector<bim::xstring> comments;
     };
 
 } // namespace bim

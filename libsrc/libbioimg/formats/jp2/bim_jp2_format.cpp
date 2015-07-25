@@ -242,6 +242,36 @@ void jp2SetWriteParameters(FormatHandle *fmtHndl) {
     } // while
 }
 
+void jp2_read_comments(FormatHandle *fmtHndl) {
+    if (fmtHndl == NULL) return;
+    bim::JP2Params *par = (bim::JP2Params *) fmtHndl->internalParams;
+
+    // Read the main header of the codestream, and if necessary the JP2 boxes
+    if (par->image && par->image->cp_comment) {
+        size_t endpos = 0;
+        size_t startpos = 0;
+        const char* comment;
+        while (true) {
+            ++endpos;
+            if (par->image->cp_comment[endpos] == 0 && par->image->cp_comment[endpos + 1] != 0) {
+                // A single zero character followed by a non-zero character indicates the end
+                // of one comment. So here is a break between two concatenated comments:
+                comment = (par->image->cp_comment + startpos);
+                par->comments.push_back(comment);
+                startpos = endpos + 1;
+            }
+            else if (par->image->cp_comment[endpos] == 0 && par->image->cp_comment[endpos + 1] == 0 && par->image->cp_comment[endpos + 2] == 0) {
+                // Three consecutive zero characters indicate the end of the comments list.
+                // So here is the end of all string comments:
+                comment = (par->image->cp_comment + startpos);
+                par->comments.push_back(comment);
+                break;
+            }
+        }
+    }
+
+}
+
 void jp2GetImageInfo(FormatHandle *fmtHndl) {
     if (fmtHndl == NULL) return;
     if (fmtHndl->internalParams == NULL) return;
@@ -307,6 +337,8 @@ void jp2GetImageInfo(FormatHandle *fmtHndl) {
     info->xRes = resX;
     info->yRes = resY;
     */
+
+    jp2_read_comments(fmtHndl);
 }
 
 void jp2CloseImageProc(FormatHandle *fmtHndl) {
@@ -676,41 +708,16 @@ bim::uint jp2_append_metadata(FormatHandle *fmtHndl, TagMap *hash) {
     hash->set_value(bim::IMAGE_NUM_RES_L, (int)info->number_levels);
     hash->set_value(bim::IMAGE_RES_L_SCALES, xstring::join(scales, ","));
     hash->set_value(bim::IMAGE_RES_STRUCTURE, bim::IMAGE_RES_STRUCTURE_FLAT);
-    
-    // Read the main header of the codestream, and if necessary the JP2 boxes
-    std::vector<xstring> comments;
-    if (par->image->cp_comment) {
-        size_t endpos = 0;
-        size_t startpos = 0;
-        const char* comment;
-        while (true) {
-            ++endpos;
-            if (par->image->cp_comment[endpos] == 0 && par->image->cp_comment[endpos + 1] != 0) {
-                // A single zero character followed by a non-zero character indicates the end
-                // of one comment. So here is a break between two concatenated comments:
-                comment = (par->image->cp_comment + startpos);
-                comments.push_back(comment);
-                startpos = endpos + 1;
-            }
-            else if (par->image->cp_comment[endpos] == 0 && par->image->cp_comment[endpos + 1] == 0 && par->image->cp_comment[endpos + 2] == 0) {
-                // Three consecutive zero characters indicate the end of the comments list.
-                // So here is the end of all string comments:
-                comment = (par->image->cp_comment + startpos);
-                comments.push_back(comment);
-                break;
-            }
-        }
-    }
 
-    for (size_t comidx = 0; comidx < comments.size(); ++comidx) {
+    for (size_t comidx = 0; comidx < par->comments.size(); ++comidx) {
         // NOTE: if comments contain an '=' sign, they are 'key=value' strings and
         // should be split on the '=' sign:
-        const size_t pos = comments[comidx].find('=');
+        const size_t pos = par->comments[comidx].find('=');
         if (pos != std::string::npos) {
-            std::vector<xstring> v = comments[comidx].split("=");
+            std::vector<xstring> v = par->comments[comidx].split("=");
             hash->append_tag("custom/" + v[0], v[1]);
         } else {
-            hash->append_tag("custom/Comment", comments[comidx]);
+            hash->append_tag("custom/Comment", par->comments[comidx]);
         }
     }
 
