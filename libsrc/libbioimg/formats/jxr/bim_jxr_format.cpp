@@ -218,7 +218,7 @@ static const char* JXR_ErrorMessage(const int error) {
     case WMP_errFail:
     case WMP_errNotInitialized:
     default:
-        return "Invalid instruction - please contact the FreeImage team";
+        return "Invalid instruction";
     }
 }
 
