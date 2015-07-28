@@ -40,9 +40,9 @@
 
 /* Usefull in particular for loadshared where the full path
  * to the lib is needed */
-#define GDCM_SOURCE_DIR "/cluster/home/fedorov/libsrc/gdcm"
-#define GDCM_EXECUTABLE_OUTPUT_PATH "/cluster/home/fedorov/libsrc/gdcmbin/bin"
-#define GDCM_LIBRARY_OUTPUT_PATH    "/cluster/home/fedorov/libsrc/gdcmbin/bin"
+#define GDCM_SOURCE_DIR "../../"
+#define GDCM_EXECUTABLE_OUTPUT_PATH "../../projects"
+#define GDCM_LIBRARY_OUTPUT_PATH    "../../projects"
 
 /* #undef GDCM_BUILD_TESTING */
 
@@ -70,7 +70,7 @@
 #define OPENJPEG_MAJOR_VERSION 1
 #endif // GDCM_USE_OPENJPEG_V2
 #else
-#define OPENJPEG_MAJOR_VERSION
+#define OPENJPEG_MAJOR_VERSION 2
 #endif //GDCM_USE_SYSTEM_OPENJPEG
 
 #ifndef OPENJPEG_MAJOR_VERSION

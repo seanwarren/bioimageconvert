@@ -40,11 +40,11 @@
 
 /* Usefull in particular for loadshared where the full path
  * to the lib is needed */
-#define GDCM_SOURCE_DIR "f:/dima/develop/c++/imgcnv/_files/gdcm/gdcm-2.4.4"
-#define GDCM_EXECUTABLE_OUTPUT_PATH "f:/dima/develop/c++/imgcnv/_files/gdcm/gdcm-2.4.4.build/bin"
-#define GDCM_LIBRARY_OUTPUT_PATH    "f:/dima/develop/c++/imgcnv/_files/gdcm/gdcm-2.4.4.build/bin"
+#define GDCM_SOURCE_DIR "../../"
+#define GDCM_EXECUTABLE_OUTPUT_PATH "../../projects"
+#define GDCM_LIBRARY_OUTPUT_PATH    "../../projects"
 
-/* #undef GDCM_BUILD_TESTING */
+/*#undef GDCM_BUILD_TESTING */
 
 /* #undef GDCM_USE_SYSTEM_ZLIB */
 /* #undef GDCM_USE_SYSTEM_UUID */
@@ -70,7 +70,7 @@
 #define OPENJPEG_MAJOR_VERSION 1
 #endif // GDCM_USE_OPENJPEG_V2
 #else
-#define OPENJPEG_MAJOR_VERSION
+#define OPENJPEG_MAJOR_VERSION 2
 #endif //GDCM_USE_SYSTEM_OPENJPEG
 
 #ifndef OPENJPEG_MAJOR_VERSION
