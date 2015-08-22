@@ -39,6 +39,8 @@ public:
     jpeg_decompress_struct *cinfo;
     my_jpeg_source_mgr *iod_src;
     my_error_mgr *jerr;
+
+    std::vector<char> buffer_icc;
 };
 
 } // namespace bim

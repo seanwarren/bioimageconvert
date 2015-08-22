@@ -54,28 +54,22 @@ std::vector<bim::DisplayColor> bim::defaultChannelColors() {
     return c;
 }
 
-MetaFormatManager::MetaFormatManager() 
-: FormatManager(){
+MetaFormatManager::MetaFormatManager() : FormatManager() {
 
-  memset( &writeTagItem, 0, sizeof(writeTagItem) );
-  writeTagItem.tagGroup  = META_GENERIC;
-  writeTagItem.tagLength = 0;
-  writeTagItem.tagType   = TAG_NOTYPE;
+    display_channel_tag_names.push_back(bim::DISPLAY_CHANNEL_RED);
+    display_channel_tag_names.push_back(bim::DISPLAY_CHANNEL_GREEN);
+    display_channel_tag_names.push_back(bim::DISPLAY_CHANNEL_BLUE);
+    display_channel_tag_names.push_back(bim::DISPLAY_CHANNEL_GRAY);
+    display_channel_tag_names.push_back(bim::DISPLAY_CHANNEL_CYAN);
+    display_channel_tag_names.push_back(bim::DISPLAY_CHANNEL_MAGENTA);
+    display_channel_tag_names.push_back(bim::DISPLAY_CHANNEL_YELLOW);
 
-  display_channel_tag_names.push_back(bim::DISPLAY_CHANNEL_RED);
-  display_channel_tag_names.push_back(bim::DISPLAY_CHANNEL_GREEN);
-  display_channel_tag_names.push_back(bim::DISPLAY_CHANNEL_BLUE);
-  display_channel_tag_names.push_back(bim::DISPLAY_CHANNEL_GRAY);
-  display_channel_tag_names.push_back(bim::DISPLAY_CHANNEL_CYAN);
-  display_channel_tag_names.push_back(bim::DISPLAY_CHANNEL_MAGENTA);
-  display_channel_tag_names.push_back(bim::DISPLAY_CHANNEL_YELLOW);
+    channel_colors_default = bim::defaultChannelColors();
 
-  channel_colors_default = bim::defaultChannelColors();
-
-  pixel_format_strings.push_back("undefined");
-  pixel_format_strings.push_back("unsigned integer");
-  pixel_format_strings.push_back("signed integer");
-  pixel_format_strings.push_back("floating point");
+    pixel_format_strings.push_back("undefined");
+    pixel_format_strings.push_back("unsigned integer");
+    pixel_format_strings.push_back("signed integer");
+    pixel_format_strings.push_back("floating point");
 }
 
 MetaFormatManager::~MetaFormatManager()
@@ -99,38 +93,18 @@ int MetaFormatManager::sessionStartRead(const bim::Filename fileName) {
   channel_names.clear();
   display_lut.clear();
   metadata.clear();
-  tagList = 0;
   info = initImageInfo();
   return FormatManager::sessionStartRead(fileName);
 }
 
 void MetaFormatManager::sessionEnd() {
   got_meta_for_session = -1;
-  tagList = 0;
   FormatManager::sessionEnd();
 }
 
 int MetaFormatManager::sessionWriteImage ( ImageBitmap *bmp, bim::uint page ) {
   if (session_active != true) return 1;
-
-  sessionHandle.metaData.count = 0;
-  sessionHandle.metaData.tags  = 0;
-
-  //meta_data_text metadata
-  if (page==0 && metadata.size()>0) {
-    writeTagItem.tagId     = METADATA_TAGS;
-    writeTagItem.tagData   = &metadata;
-    sessionHandle.metaData.count = 1;
-    sessionHandle.metaData.tags  = &writeTagItem;
-  }
-
-  if (page==0 && meta_data_text.size()>0) {
-    writeTagItem.tagId     = METADATA_OMEXML;
-    writeTagItem.tagData   = &meta_data_text;
-    sessionHandle.metaData.count = 1;
-    sessionHandle.metaData.tags  = &writeTagItem;
-  }
-
+  sessionHandle.metaData = &this->metadata;
   return FormatManager::sessionWriteImage( bmp, page );
 }
 
@@ -187,11 +161,13 @@ int MetaFormatManager::sessionReadImage ( ImageBitmap *bmp, bim::uint page ) {
 
 
 void MetaFormatManager::sessionWriteSetMetadata( const TagMap &hash ) {
-  metadata = hash;
+    metadata = hash;
+    if (session_active)
+        sessionHandle.metaData = &this->metadata;
 }
 
 void MetaFormatManager::sessionWriteSetOMEXML( const std::string &omexml ) {
-  meta_data_text = omexml;
+    metadata.set_value(bim::RAW_TAGS_OMEXML, omexml, "string,omexml");
 }
 
 void MetaFormatManager::sessionParseMetaData(bim::uint page) {
@@ -201,16 +177,10 @@ void MetaFormatManager::sessionParseMetaData(bim::uint page) {
     display_lut.clear();
     metadata.clear();
 
-    tagList = sessionReadMetaData(page, -1, -1, -1);
+    //tagList = sessionReadMetaData(page, -1, -1, -1);
     got_meta_for_session = page;
 
-    char *meta_char = sessionGetTextMetaData();
-    if (meta_char) {
-        meta_data_text = meta_char;
-        delete meta_char;
-    }
-
-    { // parsing stuff from read image
+    { // parsing stuff from red image
 
         display_lut.resize((int)bim::NumberDisplayChannels);
         for (int i = 0; i < (int)bim::NumberDisplayChannels; ++i) display_lut[i] = -1;

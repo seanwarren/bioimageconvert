@@ -55,6 +55,29 @@ public:
   void sessionWriteSetMetadata( const TagMap &hash );
   void sessionWriteSetOMEXML( const std::string &omexml );
 
+  void writeImage(BIM_STREAM_CLASS *stream, ReadProc readProc, WriteProc writeProc, FlushProc flushProc,
+      SeekProc seekProc, SizeProc sizeProc, TellProc  tellProc,
+      EofProc eofProc, CloseProc closeProc, const bim::Filename fileName,
+      ImageBitmap *bmp, const char *formatName, int quality, TagMap *meta = NULL, const char *options = NULL) {
+      return FormatManager::writeImage(stream, readProc,
+          writeProc, flushProc, seekProc,
+          sizeProc, tellProc, eofProc, closeProc,
+          fileName, bmp, formatName, quality, meta == NULL ? &this->metadata : meta, options);
+  }
+
+  void writeImage(const bim::Filename fileName, ImageBitmap *bmp, const char *formatName, int quality, TagMap *meta) {
+      writeImage(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, fileName, bmp, formatName, quality, meta);
+  }
+  void writeImage(const bim::Filename fileName, ImageBitmap *bmp, const char *formatName, int quality) {
+      writeImage(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, fileName, bmp, formatName, quality, NULL);
+  }
+  void writeImage(const bim::Filename fileName, ImageBitmap *bmp, const char *formatName, const char *options = NULL) {
+      writeImage(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, fileName, bmp, formatName, 100, NULL, options);
+  }
+  void writeImage(const bim::Filename fileName, Image &img, const char *formatName, const char *options = NULL) {
+      writeImage(fileName, img.imageBitmap(), formatName, options);
+  }
+
   // META
   double       getPixelSizeX();
   double       getPixelSizeY();
@@ -64,7 +87,6 @@ public:
 
   bool         display_lut_needs_fusion() const;
 
-  inline const std::string                 &get_text_metadata() const { return meta_data_text; }  
   inline const TagMap                      &get_metadata() const      { return metadata; }
   inline const std::vector< int >          &get_display_lut() const   { return display_lut; }
   inline const std::vector< std::string >  &get_channel_names() const { return channel_names; }
@@ -81,11 +103,11 @@ public:
 
 private:
   int           got_meta_for_session;
-  TagList  *tagList;
-  std::string   meta_data_text;
+  //TagList  *tagList;
+  //std::string   meta_data_text;
   //ImageInfo info;
+  //TagItem   writeTagItem;
 
-  TagItem   writeTagItem;
   std::vector<std::string> display_channel_tag_names;
   std::vector<bim::DisplayColor> channel_colors_default;
   std::vector<std::string> pixel_format_strings;

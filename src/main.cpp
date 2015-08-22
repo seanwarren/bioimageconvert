@@ -109,7 +109,7 @@
                 
 *******************************************************************************/
 
-#define IMGCNV_VER "2.0.3"
+#define IMGCNV_VER "2.0.7"
 
 #include <cmath>
 #include <cstdio>
@@ -605,6 +605,9 @@ void DConf::init() {
   tmp += "  compression N - where N can be: none, packbits, lzw, fax, ex: -options \"compression none\"\n";
   tmp += "  tiles N - write tiled TIFF where N defined tile size, ex: tiles -options \"512\"\n";
   tmp += "  pyramid N - writes TIFF pyramid where N is a storage type: subdirs, topdirs, ex: -options \"compression lzw tiles 512 pyramid subdirs\"\n\n";
+  tmp += "JPEG-2000 encoder options:\n";
+  tmp += "  tiles N - write tiled TIFF where N defined tile size, ex: tiles -options \"512\"\n";
+  tmp += "  quality N - specify encoding quality 0-100, where 100 is lossless, ex: -options \"quality 90\"\n";
   tmp += "JPEG-XR encoder options:\n";
   tmp += "  quality N - specify encoding quality 0-100, where 100 is lossless, ex: -options \"quality 90\"\n";
   tmp += "WebP encoder options:\n";
@@ -1283,51 +1286,50 @@ void printMetaField( const xstring &key, const xstring &val ) {
 }
 
 void printMeta( MetaFormatManager *fm ) {
-  const std::map<std::string, std::string> metadata = fm->get_metadata();
-  std::map<std::string, std::string>::const_iterator it;
+  const bim::TagMap metadata = fm->get_metadata();
+  bim::TagMap::const_iterator it;
   for(it = metadata.begin(); it != metadata.end(); ++it) {
     xstring s = (*it).first;
-    xstring v = (*it).second;
-    if (!s.startsWith("raw/"))
-       printMetaField( (*it).first, (*it).second );  
+    if (!s.startsWith(bim::RAW_TAGS_PREFIX) && (*it).second.size() < 1024)
+        printMetaField(s, (*it).second.as_string() );
   }
 }
 
 void printTag( MetaFormatManager *fm, const std::string &key ) {
-  const std::map<std::string, std::string> metadata = fm->get_metadata();
-  std::map<std::string, std::string>::const_iterator it = metadata.find(key);
-  if (it != metadata.end())
-      std::cout << (*it).second;
+    const bim::TagMap metadata = fm->get_metadata();
+    bim::TagMap::const_iterator it = metadata.find(key);
+    if (it != metadata.end())
+        std::cout << metadata.get_value((*it).first);
 }
 
-void printMetaParsed( MetaFormatManager *fm ) {
-  const std::map<std::string, std::string> metadata = fm->get_metadata();
-  std::map<std::string, std::string>::const_iterator it;
-  for(it = metadata.begin(); it != metadata.end(); ++it) {
-    xstring s = (*it).first;
-    if ( !s.startsWith("custom/") && !s.startsWith("raw/") )
-      printMetaField( (*it).first, (*it).second ); 
-  }
+void printMetaParsed(MetaFormatManager *fm) {
+    const bim::TagMap metadata = fm->get_metadata();
+    bim::TagMap::const_iterator it;
+    for (it = metadata.begin(); it != metadata.end(); ++it) {
+        xstring s = (*it).first;
+        if (!s.startsWith(bim::CUSTOM_TAGS_PREFIX) && !s.startsWith(bim::RAW_TAGS_PREFIX))
+            printMetaField((*it).first, (*it).second.as_string());
+    }
 }
 
-void printMetaCustom( MetaFormatManager *fm ) {
-  const std::map<std::string, std::string> metadata = fm->get_metadata();
-  std::map<std::string, std::string>::const_iterator it;
-  for(it = metadata.begin(); it != metadata.end(); ++it) {
-    xstring s = (*it).first;
-    if ( s.startsWith("custom/") )
-      printMetaField( (*it).first, (*it).second ); 
-  }
+void printMetaCustom(MetaFormatManager *fm) {
+    const bim::TagMap metadata = fm->get_metadata();
+    bim::TagMap::const_iterator it;
+    for (it = metadata.begin(); it != metadata.end(); ++it) {
+        xstring s = (*it).first;
+        if (s.startsWith(bim::CUSTOM_TAGS_PREFIX))
+            printMetaField((*it).first, (*it).second.as_string());
+    }
 }
 
-void printMetaRaw( MetaFormatManager *fm ) {
-  const std::map<std::string, std::string> metadata = fm->get_metadata();
-  std::map<std::string, std::string>::const_iterator it;
-  for(it = metadata.begin(); it != metadata.end(); ++it) {
-    xstring s = (*it).first;
-    if ( s.startsWith("raw/") )
-      printMetaField( (*it).first, (*it).second ); 
-  }
+void printMetaRaw(MetaFormatManager *fm) {
+    const bim::TagMap metadata = fm->get_metadata();
+    bim::TagMap::const_iterator it;
+    for (it = metadata.begin(); it != metadata.end(); ++it) {
+        xstring s = (*it).first;
+        if (s.startsWith(bim::RAW_TAGS_PREFIX))
+            printMetaField((*it).first, (*it).second.as_string() );
+    }
 }
 
 

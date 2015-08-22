@@ -612,7 +612,7 @@ void FormatManager::writeImage ( BIM_STREAM_CLASS *stream, ReadProc readProc,
                   WriteProc writeProc, FlushProc flushProc, SeekProc seekProc,
                   SizeProc sizeProc, TellProc  tellProc,  EofProc eofProc, CloseProc closeProc,
                   const bim::Filename fileName, ImageBitmap *bmp, const char *formatName, 
-                  int quality, TagList *meta, const char *options )
+                  int quality, TagMap *meta, const char *options )
 {
   int format_index, sub_index;
   FormatHeader *selectedFmt;
@@ -641,8 +641,7 @@ void FormatManager::writeImage ( BIM_STREAM_CLASS *stream, ReadProc readProc,
   fmtParams.image = bmp;
   fmtParams.quality = (unsigned char) quality;
   fmtParams.io_mode = IO_WRITE;
-  if ( meta != NULL ) 
-    fmtParams.metaData = *meta;
+  if (meta) fmtParams.metaData = meta;
 
   if (options != NULL && options[0] != 0) fmtParams.options = (char *) options;
 
@@ -657,7 +656,7 @@ void FormatManager::writeImage ( BIM_STREAM_CLASS *stream, ReadProc readProc,
 }
 
 void FormatManager::writeImage (const bim::Filename fileName, ImageBitmap *bmp, const char *formatName, 
-                                    int quality, TagList *meta )
+    int quality, TagMap *meta)
 {
   writeImage ( NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, fileName, bmp, formatName, quality, meta );
 }
@@ -1012,18 +1011,8 @@ int FormatManager::sessionGetCurrentPage ()
   return sessionCurrentPage;
 }
 
-char* FormatManager::sessionGetTextMetaData ()
-{
-  if (session_active != true) return NULL;
-  FormatHeader *selectedFmt = formatList.at( sessionFormatIndex );
-  if (selectedFmt->readMetaDataAsTextProc)
-      return selectedFmt->readMetaDataAsTextProc(&sessionHandle);
-  else
-      return NULL;
-}
-
-TagList* FormatManager::sessionReadMetaData ( bim::uint page, int group, int tag, int type)
-{
+/*
+TagList* FormatManager::sessionReadMetaData ( bim::uint page, int group, int tag, int type) {
   if (session_active != true) return NULL;
   sessionCurrentPage = page;
   FormatHeader *selectedFmt = formatList.at( sessionFormatIndex );
@@ -1031,6 +1020,7 @@ TagList* FormatManager::sessionReadMetaData ( bim::uint page, int group, int tag
       selectedFmt->readMetaDataProc ( &sessionHandle, page, group, tag, type);
   return &sessionHandle.metaData;
 }
+*/
 
 int FormatManager::sessionReadImage ( ImageBitmap *bmp, bim::uint page ) {
   if (session_active != true) return 1;

@@ -22,6 +22,10 @@
 
 #include <png.h>
 
+#include <tag_map.h>
+#include <bim_metatags.h>
+#include <bim_exiv_parse.h>
+
 using namespace bim;
 
 //----------------------------------------------------------------------------
@@ -388,6 +392,38 @@ static int read_png_image(FormatHandle *fmtHndl)
 //****************************************************************************
 // WRITE PROC
 //****************************************************************************
+
+void png_write_metadata(bim::PngParams *par, TagMap *hash) {
+    /*std::vector<png_text> m;
+    TagMap::const_iterator it = hash->begin();
+    while (it != hash->end()) {
+        xstring key = it->first;
+        xstring tt = it->second.type();
+        if (key.startsWith(bim::RAW_TAGS_PREFIX) || !tt.startsWith("string") || it->second.size()>8) continue;
+
+        png_text item;
+
+        if (key.size() > 79) key.resize(79); // png limitation
+        char *keychar = new char [ key.size() ];
+        strncpy(keychar, key.c_str(), key.size());
+        item.key = (png_charp)keychar;
+
+        xstring val = it->second.as_string();
+        char *strchar = new char[val.size()];
+        strncpy(strchar, val.c_str(), val.size());
+        item.text = (png_charp)strchar;
+
+        if (val.size() < 40)
+            item.compression = PNG_TEXT_COMPRESSION_NONE;
+        else
+            item.compression = PNG_TEXT_COMPRESSION_zTXt;
+
+        m.push_back(item);
+        ++it;
+    }
+    png_set_text( par->png_ptr, par->info_ptr, &m[0], m.size() );*/
+}
+
 template <typename T>
 void write_png_buff ( ImageBitmap *img, T *buf, int y ) {
   
@@ -477,38 +513,8 @@ static int write_png_image(FormatHandle *fmtHndl)
   //-------------------------------------------------
   // write meta text if any
   //-------------------------------------------------
-  if ( ( fmtHndl->metaData.count > 0 ) && ( fmtHndl->metaData.tags != NULL ) )
-  {
-    TagList *tagList = &fmtHndl->metaData;
-    png_textp text_ptr = new png_text[ tagList->count ];    
-    std::string str = "", keystr = ""; 
-    unsigned int i;
-
-    for (i=0; i<tagList->count; i++)
-    {
-      TagItem *tagItem = &tagList->tags[i];
-      str = "";
-      keystr = tagItem->tagId;
-
-      if ( tagItem->tagType == TAG_ASCII ) 
-        str = (char *) tagItem->tagData;
-      
-      if ( str.size() < 40 )
-        text_ptr[i].compression = PNG_TEXT_COMPRESSION_NONE;
-      else
-        text_ptr[i].compression = PNG_TEXT_COMPRESSION_zTXt;
-
-      char *keychar = new char [ keystr.size() ];
-      char *strchar = new char [ str.size() ];
-      strncpy ( keychar, keystr.c_str(), keystr.size());
-      strncpy ( strchar, str.c_str(), str.size());
-      text_ptr[i].key  = (png_charp) keychar;
-      text_ptr[i].text = (png_charp) strchar;
-    } // for i
-
-    png_set_text( par->png_ptr, par->info_ptr, text_ptr, tagList->count );
-    delete [] text_ptr;
-  } // if there are meta tags
+  if (fmtHndl->metaData)
+      png_write_metadata(par, fmtHndl->metaData);
 
   //-------------------------------------------------
   // write image
@@ -554,111 +560,6 @@ static int write_png_image(FormatHandle *fmtHndl)
   if (palette) delete palette;
   return 0;
 }
-
-//****************************************************************************
-// READ METADATA TEXT PROC
-//****************************************************************************
-
-static char *png_read_meta_as_text(FormatHandle *fmtHndl)
-{
-  if (fmtHndl == NULL) return NULL;
-  if (fmtHndl->internalParams == NULL) return NULL;
-  bim::PngParams *par = (bim::PngParams *) fmtHndl->internalParams;
-
-  char *buf = NULL;
-  std::string str = ""; 
-  
-  if (setjmp( png_jmpbuf(par->png_ptr) ))
-  {
-    png_destroy_read_struct( &par->png_ptr, &par->info_ptr, &par->end_info );
-    return NULL;
-  }
-
-  png_textp text_ptr;
-  int num_text = 0;
-  png_get_text( par->png_ptr, par->info_ptr, &text_ptr, &num_text );
-
-  while (num_text--) 
-  {
-    str += "[ Key: ";   
-    str += text_ptr->key;
-    str += " ]\n";
-    str += text_ptr->text;
-    str += "\n\n";
-    text_ptr++;
-  }
-
-  buf = new char [str.size()+1];
-  buf[str.size()] = '\0';
-  memcpy( buf, str.c_str(), str.size() );
-  
-  return buf;
-}
-
-//----------------------------------------------------------------------------
-// read meta data tag by tag
-//----------------------------------------------------------------------------
-
-static bim::uint add_one_png_tag (FormatHandle *fmtHndl, int tag, const char* str) {
-    uchar *buf = NULL;
-    uint32 buf_size = (uint32) strlen(str);
-    uint32 buf_type = TAG_ASCII;
-
-    if ( (buf_size == 0) || (str == NULL) ) return 1;
-
-    // now add tag into structure
-    TagItem item;
-
-    buf = (unsigned char *) xmalloc(fmtHndl, buf_size + 1);
-    strncpy((char *) buf, str, buf_size);
-    buf[buf_size] = '\0';
-
-    item.tagGroup  = META_PNG;
-    item.tagId     = tag;
-    item.tagType   = buf_type;
-    item.tagLength = buf_size;
-    item.tagData   = buf;
-
-    addMetaTag( &fmtHndl->metaData, item);
-    return 0;
-}
-
-static bim::uint read_png_metadata (FormatHandle *fmtHndl, int group, int tag, int type)
-{
-  if (fmtHndl == NULL) return 1;
-  if (fmtHndl->internalParams == NULL) return 1;
-  bim::PngParams *par = (bim::PngParams *) fmtHndl->internalParams;
-  
-  if ( (group != META_PNG) && (group != -1) ) return 1;
-
-  if (setjmp( png_jmpbuf(par->png_ptr) ))
-  {
-    png_destroy_read_struct( &par->png_ptr, &par->info_ptr, &par->end_info );
-    return 1;
-  }
-
-  png_textp text_ptr;
-  int num_text = 0;
-  png_get_text( par->png_ptr, par->info_ptr, &text_ptr, &num_text );
-
-  int i = 0;
-  while ( i < num_text) {
-    std::string str = "";
-    str += "[Key: ";   
-    str += text_ptr->key;
-    str += "]\n";
-    str += text_ptr->text;
-    
-    add_one_png_tag ( fmtHndl, i, str.c_str() );
-
-    ++text_ptr;
-    ++i;
-  }
-
-  tag; type;
-  return 0;
-}
-
 
 
 //****************************************************************************
@@ -767,19 +668,38 @@ ImageInfo pngGetImageInfoProc ( FormatHandle *fmtHndl, bim::uint /*page_num*/ ) 
 // METADATA
 //----------------------------------------------------------------------------
 
-bim::uint pngAddMetaDataProc (FormatHandle * /*fmtHndl*/) {
-  return 1;
+
+static void read_png_metadata(bim::PngParams *par, TagMap *hash) {
+    if (setjmp(png_jmpbuf(par->png_ptr))) {
+        png_destroy_read_struct(&par->png_ptr, &par->info_ptr, &par->end_info);
+        return;
+    }
+
+    png_textp text_ptr;
+    int num_text = 0;
+    png_get_text(par->png_ptr, par->info_ptr, &text_ptr, &num_text);
+
+    for (int i = 0; i < num_text; ++i) {
+        hash->set_value(bim::CUSTOM_TAGS_PREFIX + text_ptr->key, text_ptr->text);
+        ++text_ptr;
+    }
 }
 
+bim::uint png_append_metadata(FormatHandle *fmtHndl, TagMap *hash) {
+    if (fmtHndl == NULL) return 1;
+    if (!hash) return 1;
+    if (isCustomReading(fmtHndl)) return 1;
+    if (!fmtHndl->fileName) return 1;
+    bim::PngParams *par = (bim::PngParams *) fmtHndl->internalParams;
 
-bim::uint pngReadMetaDataProc (FormatHandle *fmtHndl, bim::uint /*page*/, int group, int tag, int type) {
-  return read_png_metadata ( fmtHndl, group, tag, type );
+    // get keyed metadata
+    read_png_metadata(par, hash);
+
+    // use EXIV2 to read metadata
+    exiv_append_metadata(fmtHndl, hash);
+
+    return 0;
 }
-
-char* pngReadMetaDataAsTextProc ( FormatHandle *fmtHndl ) {
-  return png_read_meta_as_text( fmtHndl );
-}
-
 
 //----------------------------------------------------------------------------
 // READ/WRITE
@@ -860,11 +780,11 @@ FormatHeader pngHeader = {
   NULL, //dimJpegReadImagePreviewProc, //ReadImagePreviewProc
   
   // meta data
-  pngReadMetaDataProc, //ReadMetaDataProc
-  pngAddMetaDataProc,  //AddMetaDataProc
-  pngReadMetaDataAsTextProc, //ReadMetaDataAsTextProc
+  NULL, //ReadMetaDataProc
+  NULL,  //AddMetaDataProc
+  NULL, //ReadMetaDataAsTextProc
+  png_append_metadata,
 
-  NULL,
   NULL,
   NULL,
   ""

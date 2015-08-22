@@ -49,6 +49,16 @@ namespace bim {
         PKImageEncode *pEncoder;
         int frames_written;
         
+        std::vector<char> buffer_icc;
+        std::vector<char> buffer_xmp;
+        std::vector<char> buffer_iptc;
+        std::vector<char> buffer_photoshop;
+
+        std::vector<char> buffer_exif;
+        unsigned int offset_exif;
+        std::vector<char> buffer_exifgps;
+        unsigned int offset_exifgps;
+
         void open(const char *filename, bim::ImageIOModes mode);
     };
 

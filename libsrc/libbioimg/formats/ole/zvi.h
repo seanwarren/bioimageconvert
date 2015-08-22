@@ -368,7 +368,7 @@ class PlaneStreamMap : public TagMap {
 public:
   // constructors
   explicit PlaneStreamMap(): TagMap() {}
-  PlaneStreamMap( const std::map<std::string, std::string>& _Right ): TagMap(_Right) {}
+  PlaneStreamMap(const bim::TagMap& _Right) : TagMap(_Right) {}
 
   template<class InputIterator>
   PlaneStreamMap( InputIterator _First, InputIterator _Last ): TagMap(_First, _Last) {}

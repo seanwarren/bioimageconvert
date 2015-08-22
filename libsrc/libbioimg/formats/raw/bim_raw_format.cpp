@@ -101,8 +101,23 @@ bool rawWriteImageInfo( FormatHandle *fmtHndl ) {
 // PARAMETERS, INITS
 //----------------------------------------------------------------------------
 
-int rawValidateFormatProc (BIM_MAGIC_STREAM *magic, bim::uint length, const bim::Filename fileName) {
-  return -1;
+#define BIM_FORMAT_RAW_MAGIC_SIZE 20
+
+#define BIM_RAW_FORMAT_RAW   0
+#define BIM_RAW_FORMAT_NRRD  1
+#define BIM_RAW_FORMAT_MHD   2
+
+int rawValidateFormatProc(BIM_MAGIC_STREAM *magic, bim::uint length, const bim::Filename fileName) {
+    if (length < BIM_FORMAT_RAW_MAGIC_SIZE) return -1;
+    unsigned char *mag_num = (unsigned char *)magic;
+
+    //if (memcmp(mag_num, "MMMMRawT", 8) == 0) return BIM_RAW_FORMAT_NRRD;
+    //if (memcmp(mag_num, "IIII", 4) == 0) return BIM_RAW_FORMAT_MHD;
+
+    //if (length >= 32)
+    //if (memcmp(mag_num + 25, "ARECOYK", 7) == 0) return BIM_DCRAW_FORMAT_DCRAW; //Contax
+
+    return -1;
 }
 
 FormatHandle rawAquireFormatProc( void ) {
@@ -396,22 +411,6 @@ bim::uint rawWriteImageProc ( FormatHandle *fmtHndl ) {
 // metadata
 //----------------------------------------------------------------------------
 
-bim::uint rawAddMetaDataProc(FormatHandle *fmtHndl) {
-    fmtHndl = fmtHndl;
-    return 1;
-}
-
-bim::uint rawReadMetaDataProc(FormatHandle *fmtHndl, bim::uint page, int group, int tag, int type) {
-    fmtHndl; page; group; tag; type;
-    return 1;
-}
-
-char* rawReadMetaDataAsTextProc(FormatHandle *fmtHndl) {
-    fmtHndl;
-    return NULL;
-}
-
-
 bim::uint raw_append_metadata(FormatHandle *fmtHndl, TagMap *hash) {
     if (fmtHndl == NULL) return 1;
     if (fmtHndl->internalParams == NULL) return 1;
@@ -435,7 +434,9 @@ bim::uint raw_append_metadata(FormatHandle *fmtHndl, TagMap *hash) {
 // EXPORTED
 //****************************************************************************
 
-FormatItem rawItems[1] = {
+#define BIM_RAW_NUM_FORMATS 3
+
+FormatItem rawItems[BIM_RAW_NUM_FORMATS] = {
 {
     "RAW",              // short name, no spaces
     "RAW image pixels", // Long format name
@@ -447,18 +448,42 @@ FormatItem rawItems[1] = {
     1, //canWriteMultiPage;   // 0 - NO, 1 - YES
     //TDivFormatConstrains constrains ( w, h, pages, minsampl, maxsampl, minbitsampl, maxbitsampl, noLut )
     { 0, 0, 0, 0, 0, 0, 0, 0 } 
-  }  
+  },
+  {
+      "NRRD",              // short name, no spaces
+      "NRRD", // Long format name
+      "nrrd",              // pipe "|" separated supported extension list
+      1, //canRead;      // 0 - NO, 1 - YES
+      1, //canWrite;     // 0 - NO, 1 - YES
+      1, //canReadMeta;  // 0 - NO, 1 - YES
+      0, //canWriteMeta; // 0 - NO, 1 - YES
+      1, //canWriteMultiPage;   // 0 - NO, 1 - YES
+      //TDivFormatConstrains constrains ( w, h, pages, minsampl, maxsampl, minbitsampl, maxbitsampl, noLut )
+      { 0, 0, 0, 0, 0, 0, 0, 0 }
+  },
+  {
+      "MHD",              // short name, no spaces
+      "MHD", // Long format name
+      "mhd",              // pipe "|" separated supported extension list
+      1, //canRead;      // 0 - NO, 1 - YES
+      1, //canWrite;     // 0 - NO, 1 - YES
+      1, //canReadMeta;  // 0 - NO, 1 - YES
+      0, //canWriteMeta; // 0 - NO, 1 - YES
+      1, //canWriteMultiPage;   // 0 - NO, 1 - YES
+      //TDivFormatConstrains constrains ( w, h, pages, minsampl, maxsampl, minbitsampl, maxbitsampl, noLut )
+      { 0, 0, 0, 0, 0, 0, 0, 0 }
+  }
 };
 
 FormatHeader rawHeader = {
 
   sizeof(FormatHeader),
-  "2.0.0",
-  "DIMIN RAW CODEC",
+  "3.0.0",
+  "RAW CODEC",
   "RAW CODEC",
   
-  2,                     // 0 or more, specify number of bytes needed to identify the file
-  {1, 1, rawItems},   // dimJpegSupported,
+  BIM_FORMAT_RAW_MAGIC_SIZE,                     // 0 or more, specify number of bytes needed to identify the file
+  { 1, BIM_RAW_NUM_FORMATS, rawItems },   // dimJpegSupported,
   
   rawValidateFormatProc,
   // begin
@@ -492,11 +517,11 @@ FormatHeader rawHeader = {
   NULL, //dimJpegReadImagePreviewProc, //ReadImagePreviewProc
   
   // meta data
-  rawReadMetaDataProc, //ReadMetaDataProc
-  rawAddMetaDataProc,  //AddMetaDataProc
-  rawReadMetaDataAsTextProc, //ReadMetaDataAsTextProc
+  NULL, //ReadMetaDataProc
+  NULL,  //AddMetaDataProc
+  NULL, //ReadMetaDataAsTextProc
 
-  NULL,
+  raw_append_metadata,
   NULL,
   NULL,
   ""

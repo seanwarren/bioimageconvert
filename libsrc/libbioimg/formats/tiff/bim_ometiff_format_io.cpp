@@ -48,7 +48,8 @@ void detectTiffPyramid(bim::TiffParams *tiffParams);
 int read_tiff_image_level(bim::FormatHandle *fmtHndl, bim::TiffParams *tifParams, bim::uint page, bim::uint level);
 int read_tiff_image_tile(bim::FormatHandle *fmtHndl, bim::TiffParams *tifParams, bim::uint page, bim::uint64 xid, bim::uint64 yid, bim::uint level);
 void pyramid_append_metadata(bim::FormatHandle *fmtHndl, bim::TagMap *hash);
-
+void icc_append_metadata(FormatHandle *fmtHndl, TagMap *hash);
+void icc_write_metadata(FormatHandle *fmtHndl, TagMap *hash);
 
 //----------------------------------------------------------------------------
 // OME-TIFF MISC FUNCTIONS
@@ -1005,6 +1006,12 @@ bim::uint append_metadata_omeTiff(bim::FormatHandle *fmtHndl, bim::TagMap *hash)
     parse_json_object (hash, rootNode, path);
   }
 
+  //----------------------------------------------------------------------------
+  // Reading Micro-Manager tag
+  //----------------------------------------------------------------------------
+
+  icc_append_metadata(fmtHndl, hash);
+
   return 0;
 }
 
@@ -1102,7 +1109,7 @@ std::string constructOMEXML( bim::FormatHandle *fmtHndl, bim::TagMap *hash ) {
   if (hash && hash->size() > 0) {
       str += "<StructuredAnnotations xmlns=\"http://www.openmicroscopy.org/Schemas/SA/2013-06\">";
       int i = 0;
-      std::map<std::string, std::string>::const_iterator it;
+      bim::TagMap::const_iterator it;
       for (it = hash->begin(); it != hash->end(); ++it) {
           bim::xstring key = (*it).first;
           if (key.startsWith(bim::CUSTOM_TAGS_PREFIX) && key != "custom/Image Description") {
@@ -1110,7 +1117,7 @@ std::string constructOMEXML( bim::FormatHandle *fmtHndl, bim::TagMap *hash ) {
               str += "<Value xmlns=\"\"><OriginalMetadata>";
               // dima: here we should be encoding strings into utf-8, though bioformats seems to expect latin1, skip encoding for now
               str += bim::xstring::xprintf("<Key>%s</Key>", key.right(7).c_str());
-              str += bim::xstring::xprintf("<Value>%s</Value>", (*it).second.c_str());
+              str += bim::xstring::xprintf("<Value>%s</Value>", hash->get_value(key));
               str += "</OriginalMetadata></Value></XMLAnnotation>";
               i++;
           }
@@ -1123,31 +1130,22 @@ std::string constructOMEXML( bim::FormatHandle *fmtHndl, bim::TagMap *hash ) {
 }
 
 bim::uint write_omeTiff_metadata (bim::FormatHandle *fmtHndl, bim::TiffParams *tifParams) {
-  TIFF *tif = tifParams->tiff;
-  bim::TagList *tagList = &fmtHndl->metaData;
+    TIFF *tif = tifParams->tiff;
+    bim::TagMap *hash = fmtHndl->metaData;
 
-  if (tagList->count>0 && tagList->tags)
-  for (bim::uint i=0; i<tagList->count; i++) {
-    bim::TagItem *tagItem = &tagList->tags[i];
-    
-    if (tagItem->tagGroup == bim::META_GENERIC && tagItem->tagId == bim::METADATA_TAGS ) {
-      bim::TagMap *hash = (bim::TagMap *) tagItem->tagData;
-      std::string xml = constructOMEXML( fmtHndl, hash );
-      TIFFSetField( tif, TIFFTAG_IMAGEDESCRIPTION, xml.c_str() );
-      return 0;
+    if (hash && hash->hasKey(bim::RAW_TAGS_OMEXML)) {
+        TIFFSetField(tif, TIFFTAG_IMAGEDESCRIPTION, hash->get_value_bin(bim::RAW_TAGS_OMEXML));
+    } else if (hash) {
+        std::string xml = constructOMEXML( fmtHndl, hash );
+        TIFFSetField( tif, TIFFTAG_IMAGEDESCRIPTION, xml.c_str() );
+    } else {
+        std::string xml = constructOMEXML(fmtHndl, 0);
+        TIFFSetField(tif, TIFFTAG_IMAGEDESCRIPTION, xml.c_str());
     }
 
-    if (tagItem->tagGroup == bim::META_GENERIC && tagItem->tagId == bim::METADATA_OMEXML ) {
-      std::string *xml = (std::string *) tagItem->tagData;
-      TIFFSetField( tif, TIFFTAG_IMAGEDESCRIPTION, xml->c_str() );
-      return 0;
-    }
-  }
+    icc_write_metadata(fmtHndl, hash);
 
-  std::string xml = constructOMEXML( fmtHndl, 0 );
-  TIFFSetField( tif, TIFFTAG_IMAGEDESCRIPTION, xml.c_str());
-
-  return 0;
+    return 0;
 }
 
 //****************************************************************************

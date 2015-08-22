@@ -254,6 +254,7 @@ HEADERS += $$BIM_FMTS_API/bim_buffer.h \
 SOURCES += $$BIM_FMTS/bim_format_manager.cpp \
            $$BIM_FMTS/meta_format_manager.cpp \
            $$BIM_FMTS/bim_exiv_parse.cpp \
+           $$BIM_FMTS/bim_lcms_parse.cpp \
            $$BIM_FMTS/tiff/bim_tiny_tiff.cpp \
            $$BIM_FMTS/tiff/bim_tiff_format.cpp \
            $$BIM_FMTS/tiff/bim_tiff_format_io.cpp \
@@ -473,7 +474,7 @@ ffmpeg {
 #---------------------------------------------------------------------
 
 stat_gdcm {
-  DEFINES += BIM_GDCM_FORMAT
+  DEFINES += BIM_GDCM_FORMAT OPJ_STATIC
   SOURCES += $$BIM_FMT_DICOM/bim_dicom_format.cpp
 
   win32 {

@@ -1152,76 +1152,8 @@ bim::uint  stkReadPlane(TiffParams *tiffParams, int plane, ImageBitmap *img, For
 
 
 //----------------------------------------------------------------------------
-// METADATA TEXT FUNCTIONS
+// METADATA
 //----------------------------------------------------------------------------
-
-//----------------------------------------------------------------------------
-// META DATA PROC
-//----------------------------------------------------------------------------
-
-bim::uint stkAddOneTag (FormatHandle *fmtHndl, int tag, const char* str)
-{
-  uchar *buf = NULL;
-  size_t buf_size = strlen(str);
-  bim::uint32 buf_type = TAG_ASCII;
-
-  if ( (buf_size == 0) || (str == NULL) ) return 1;
-  else
-  {
-    // now add tag into structure
-    TagItem item;
-
-    buf = (unsigned char *) xmalloc(buf_size + 1);
-    strncpy((char *) buf, str, buf_size);
-    buf[buf_size] = '\0';
-
-    item.tagGroup  = META_STK;
-    item.tagId     = tag;
-    item.tagType   = buf_type;
-    item.tagLength = (bim::uint32) buf_size;
-    item.tagData   = buf;
-
-    addMetaTag( &fmtHndl->metaData, item);
-  }
-
-  return 0;
-}
-
-
-bim::uint stkReadMetaMeta (FormatHandle *fmtHndl, int group, int tag, int type)
-{
-  if (fmtHndl == NULL) return 1;
-  if (fmtHndl->internalParams == NULL) return 1;
-  TiffParams *tiffParams = (TiffParams *) fmtHndl->internalParams;
-  StkMetaData *meta = &tiffParams->stkInfo.metaData;
-  
-  if ( (group != META_STK) && (group != -1) ) return 1;
-
-  // add tag UIC2Tag 33629, some info
-  std::string str_uic2 = "";
-  char text[1024];
-
-  for (int i=0; i<meta->N; i++) {
-    unsigned short y;
-    unsigned char m, d;
-    unsigned char h, mi, s;
-
-    JulianToYMD(meta->creationDate[i], y, m, d);
-    MiliMidnightToHMS(meta->creationTime[i], h, mi, s);
-
-    sprintf(text, "Page %.3d: %.4d-%.2d-%.2d %.2d:%.2d:%.2d\n", i, y, m, d, h, mi, s );
-    str_uic2 += text;
-  }
- 
-  if (str_uic2.size() > 0) 
-    stkAddOneTag ( fmtHndl, 33629, str_uic2.c_str() );
-
-  return 0;
-}
-
-//***********************************************************************************************
-// new metadata support
-//***********************************************************************************************
 
 std::string stk_readline( const std::string &str, int &pos ) {
   std::string line;

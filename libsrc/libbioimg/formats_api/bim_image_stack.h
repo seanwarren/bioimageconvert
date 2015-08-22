@@ -83,7 +83,7 @@ class ImageStack {
     bool positionSet( unsigned int l );
     int  positionCurrent() const { return cur_position; }
 
-    const std::map<std::string, std::string> &get_metadata() const { return metadata; }
+    const bim::TagMap &get_metadata() const { return metadata; }
     std::string get_metadata_tag( const std::string &key, const std::string &def ) const { return metadata.get_value( key, def ); }
     int         get_metadata_tag_int( const std::string &key, const int &def ) const { return metadata.get_value_int( key, def ); }
     double      get_metadata_tag_double( const std::string &key, const double &def ) const { return metadata.get_value_double( key, def ); }

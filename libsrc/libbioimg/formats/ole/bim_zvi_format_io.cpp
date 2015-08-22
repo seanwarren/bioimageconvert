@@ -246,9 +246,9 @@ bim::uint zvi_append_metadata (FormatHandle *fmtHndl, TagMap *hash ) {
   //-------------------------------------------
   // include all other tags into custom tag location
   //-------------------------------------------
-  std::map< std::string, std::string >::const_iterator it = z->meta()->begin();
+  bim::TagMap::const_iterator it = z->meta()->begin();
   while (it != z->meta()->end() ) {
-    hash->set_value( xstring(bim::CUSTOM_TAGS_PREFIX)+it->first, it->second );
+      hash->set_value(xstring(bim::CUSTOM_TAGS_PREFIX) + it->first, z->meta()->get_value(it->first));
     ++it;
   }
 

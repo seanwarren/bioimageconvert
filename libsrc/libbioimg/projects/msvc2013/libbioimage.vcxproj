@@ -332,6 +332,7 @@
     <ClCompile Include="..\..\..\nifti\niftilib\nifti1_io.c" />
     <ClCompile Include="..\..\..\nifti\znzlib\znzlib.c" />
     <ClCompile Include="..\..\..\pole\pole.cpp" />
+    <ClCompile Include="..\..\formats\bim_lcms_parse.cpp" />
     <ClCompile Include="..\..\formats\dicom\bim_dicom_format.cpp" />
     <ClCompile Include="..\..\formats\jp2\bim_jp2_color.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
