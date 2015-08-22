@@ -94,6 +94,7 @@ public:
   static xstring join(std::vector<xstring> v, const xstring &separator);
   static xstring join(std::vector<int> v,     const xstring &separator);
   static xstring join(std::vector<double> v,  const xstring &separator);
+  static xstring join(std::vector<unsigned char> v, const xstring &separator);
 
   xstring left(std::string::size_type pos) const;
   xstring left(const xstring &sub) const;

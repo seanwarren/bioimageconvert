@@ -33,13 +33,16 @@
   #pragma warning(disable:4996)
 #endif 
 
-void change_0_to_n (char *str, long size);
-
 void read_text_tag(TinyTiff::IFD *ifd, bim::uint tag, MemIOBuf *outIOBuf);
 
 using namespace bim;
 
 unsigned int tiffGetNumberOfPages( TiffParams *tiffpar );
+
+const void change_0_to_n(char *str, long size) {
+    for (long i = 0; i<size; i++)
+        if (str[i] == '\0') str[i] = '\n';
+}
 
 //----------------------------------------------------------------------------
 // PSIA MISC FUNCTIONS
@@ -421,31 +424,21 @@ void parse_metadata_fluoview (FormatHandle *fmtHndl, TagMap *hash ) {
   //----------------------------------------------------------------------------
   // Parsing some additional specific tags
   //----------------------------------------------------------------------------
-  std::map< std::string, std::string >::const_iterator it;
 
   // objective
-  it = hash->find("custom/Acquisition Parameters/Objective Lens");
-  if (it != hash->end() ) 
-    hash->append_tag( bim::OBJECTIVE_DESCRIPTION, it->second );
+  if (hash->hasKey("custom/Acquisition Parameters/Objective Lens"))
+      hash->append_tag(bim::OBJECTIVE_DESCRIPTION, hash->get_value("custom/Acquisition Parameters/Objective Lens"));
 
   // magnification
-  it = hash->find("custom/Acquisition Parameters/Magnification");
-  if (it != hash->end() ) 
-    hash->append_tag( bim::OBJECTIVE_MAGNIFICATION, it->second );
+  if (hash->hasKey("custom/Acquisition Parameters/Magnification"))
+      hash->append_tag(bim::OBJECTIVE_MAGNIFICATION, hash->get_value("custom/Acquisition Parameters/Objective Lens"));
 
 
   //---------------------------------------
   //Date=02-17-2004
   //Time=11:54:50
-  xstring line;
-
-  it = hash->find("custom/Acquisition Parameters/Date");
-  if (it != hash->end() ) line = it->second;
-  std::vector<xstring> date = line.split( "-" );
-
-  it = hash->find("custom/Acquisition Parameters/Time");
-  if (it != hash->end() ) line = it->second;
-  std::vector<xstring> time = line.split( ":" );
+  std::vector<xstring> date = hash->get_value("custom/Acquisition Parameters/Date").split("-");
+  std::vector<xstring> time = hash->get_value("custom/Acquisition Parameters/Time").split(":");
 
   if (date.size()>2 && time.size()>2) {
     xstring imaging_time;
@@ -488,7 +481,7 @@ void parse_metadata_andor (FormatHandle *fmtHndl, TagMap *hash ) {
       pp += "\n";
       ++itt;
     }
-    andor_hash["Protocol Description"] = pp;
+    andor_hash.set_value("Protocol Description", pp);
   }
 
   std::deque<std::string> RegionInfo = TagMap::iniGetBlock( tag_270, "Region Info (Fields)" );
@@ -501,7 +494,7 @@ void parse_metadata_andor (FormatHandle *fmtHndl, TagMap *hash ) {
       pp += "\n";
       ++itt;
     }
-    andor_hash["Region Info (Fields)"] = pp;
+    andor_hash.set_value("Region Info (Fields)", pp);
   }  
 
 
@@ -511,7 +504,7 @@ void parse_metadata_andor (FormatHandle *fmtHndl, TagMap *hash ) {
   //----------------------------------------------------------------------------
   // Parsing some additional specific tags
   //----------------------------------------------------------------------------
-  std::map< std::string, std::string >::const_iterator it;
+  bim::TagMap::const_iterator it;
 
 /*
   // objective
@@ -530,12 +523,10 @@ void parse_metadata_andor (FormatHandle *fmtHndl, TagMap *hash ) {
   //Time=10:10:36 AM
   xstring line;
 
-  it = andor_hash.find("Created/Date");
-  if (it != andor_hash.end() ) line = it->second;
+  line = andor_hash.get_value("Created/Date");
   std::vector<xstring> date = line.split( "/" );
 
-  it = andor_hash.find("Created/Time");
-  if (it != andor_hash.end() ) line = it->second;
+  line = andor_hash.get_value("Created/Time");
   std::vector<xstring> time_ampm = line.split( " " );
   std::vector<xstring> time = time_ampm[0].split( ":" );
   int time_add=0;
@@ -555,7 +546,7 @@ void parse_metadata_andor (FormatHandle *fmtHndl, TagMap *hash ) {
 
   //parse XYFields
   std::deque< Eigen::Vector3d > xyFields;
-  std::vector<xstring> XYFields = xstring(andor_hash["XYZScan/XYFields"]).split( "\t" );
+  std::vector<xstring> XYFields = andor_hash.get_value("XYZScan/XYFields").split("\t");
   if ( XYFields.size()>0 && XYFields[0].toInt()<XYFields.size() ) {
     for (int i=1; i<XYFields.size(); ++i) {
       std::vector<xstring> XYZ = XYFields[i].split(",");
@@ -566,7 +557,7 @@ void parse_metadata_andor (FormatHandle *fmtHndl, TagMap *hash ) {
 
   //parse MontageOffsets
   std::deque< Eigen::Vector3d > montageOffsets;
-  std::vector<xstring> MontageOffsets = xstring(andor_hash["XYZScan/MontageOffsets"]).split( "\t" );
+  std::vector<xstring> MontageOffsets = andor_hash.get_value("XYZScan/MontageOffsets").split("\t");
   if ( MontageOffsets.size()>0 && MontageOffsets[0].toInt()<MontageOffsets.size() ) {
     for (int i=1; i<MontageOffsets.size(); ++i) {
       std::vector<xstring> XYZ = MontageOffsets[i].split(",");

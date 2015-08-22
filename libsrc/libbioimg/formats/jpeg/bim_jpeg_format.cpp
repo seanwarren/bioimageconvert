@@ -187,25 +187,6 @@ ImageInfo jpegGetImageInfoProc ( FormatHandle *fmtHndl, bim::uint page_num ) {
 }
 
 //----------------------------------------------------------------------------
-// METADATA
-//----------------------------------------------------------------------------
-
-bim::uint jpegAddMetaDataProc (FormatHandle * /*fmtHndl*/) {
-  return 1;
-}
-
-
-bim::uint jpegReadMetaDataProc (FormatHandle * /*fmtHndl*/, bim::uint /*page*/, int /*group*/, int /*tag*/, int /*type*/) {
-  return 1;
-}
-
-char* jpegReadMetaDataAsTextProc ( FormatHandle *fmtHndl ) {
-  if (fmtHndl == NULL) return NULL;
-  return NULL;
-}
-
-
-//----------------------------------------------------------------------------
 // READ/WRITE
 //----------------------------------------------------------------------------
 
@@ -290,9 +271,9 @@ FormatHeader jpegHeader = {
   NULL, //jpegReadImagePreviewProc, //ReadImagePreviewProc
   
   // meta data
-  jpegReadMetaDataProc, //ReadMetaDataProc
-  jpegAddMetaDataProc,  //AddMetaDataProc
-  jpegReadMetaDataAsTextProc, //ReadMetaDataAsTextProc
+  NULL, //ReadMetaDataProc
+  NULL,  //AddMetaDataProc
+  NULL, //ReadMetaDataAsTextProc
   jpeg_append_metadata, //AppendMetaDataProc
 
   NULL,

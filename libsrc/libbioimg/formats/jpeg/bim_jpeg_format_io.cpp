@@ -1,24 +1,27 @@
 /*****************************************************************************
-  JPEG IO 
+  JPEG IO
   Copyright (c) 2004 by Dmitry V. Fedorov <www.dimin.net> <dima@dimin.net>
 
   IMPLEMENTATION
-  
+
   Programmer: Dima V. Fedorov <mailto:dima@dimin.net> <http://www.dimin.net/>
-    
+
 
   History:
-    03/29/2004 22:23 - First creation
-    08/04/2004 22:25 - Update to FMT_IFS 1.2, support for io protorypes
-    2010-06-24 15:11 - EXIF/IPTC extraction
-        
+  03/29/2004 22:23 - First creation
+  08/04/2004 22:25 - Update to FMT_IFS 1.2, support for io protorypes
+  2010-06-24 15:11 - EXIF/IPTC extraction
+
   Ver : 3
-*****************************************************************************/
+  *****************************************************************************/
 
 #include "bim_jpeg_format.h"
 
+#include <tag_map.h>
 #include <bim_metatags.h>
 #include <bim_exiv_parse.h>
+#include <bim_lcms_parse.h>
+#include <bim_format_misc.h>
 
 struct my_error_mgr : public jpeg_error_mgr {
     jmp_buf setjmp_buffer;
@@ -26,13 +29,13 @@ struct my_error_mgr : public jpeg_error_mgr {
 
 
 extern "C" {
-static void my_error_exit (j_common_ptr cinfo)
-{
-    my_error_mgr* myerr = (my_error_mgr*) cinfo->err;
-    char buffer[JMSG_LENGTH_MAX];
-    (*cinfo->err->format_message)(cinfo, buffer);
-    longjmp(myerr->setjmp_buffer, 1);
-}
+    static void my_error_exit(j_common_ptr cinfo)
+    {
+        my_error_mgr* myerr = (my_error_mgr*)cinfo->err;
+        char buffer[JMSG_LENGTH_MAX];
+        (*cinfo->err->format_message)(cinfo, buffer);
+        longjmp(myerr->setjmp_buffer, 1);
+    }
 }
 
 static const int max_buf = 4096;
@@ -52,85 +55,178 @@ public:
 
 extern "C" {
 
-static void dimjpeg_init_source(j_decompress_ptr)
-{
-}
-
-static boolean dimjpeg_fill_input_buffer(j_decompress_ptr cinfo) {
-  int num_read;
-  my_jpeg_source_mgr* src = (my_jpeg_source_mgr*)cinfo->src;
-  src->next_input_byte = src->buffer;
-  
-  //num_read = fread( src->buffer, 1, max_buf, src->stream);
-  num_read = xread( src->fmtHndl, src->buffer, 1, max_buf );
-
-  if ( num_read <= 0 ) {
-    // Insert a fake EOI marker - as per jpeglib recommendation
-    src->buffer[0] = (JOCTET) 0xFF;
-    src->buffer[1] = (JOCTET) JPEG_EOI;
-    src->bytes_in_buffer = 2;
-  } 
-  else 
-    src->bytes_in_buffer = num_read;
-
-  return (boolean)true;
-}
-
-static void dimjpeg_skip_input_data(j_decompress_ptr cinfo, long num_bytes)
-{
-  my_jpeg_source_mgr* src = (my_jpeg_source_mgr*)cinfo->src;
-
-  // `dumb' implementation from jpeglib
-
-  // Just a dumb implementation for now.  Could use fseek() except
-  // it doesn't work on pipes.  Not clear that being smart is worth
-  // any trouble anyway --- large skips are infrequent.
-  if (num_bytes > 0) 
-  {
-    while (num_bytes > (long) src->bytes_in_buffer) 
+    static void dimjpeg_init_source(j_decompress_ptr)
     {
-      num_bytes -= (long) src->bytes_in_buffer;
-      (void) dimjpeg_fill_input_buffer(cinfo);
-      // note we assume that qt_fill_input_buffer will never return false,
-      // so suspension need not be handled.
     }
-    src->next_input_byte += (size_t) num_bytes;
-    src->bytes_in_buffer -= (size_t) num_bytes;
-  }
-}
 
-static void dimjpeg_term_source(j_decompress_ptr)
-{
-}
+    static boolean dimjpeg_fill_input_buffer(j_decompress_ptr cinfo) {
+        int num_read;
+        my_jpeg_source_mgr* src = (my_jpeg_source_mgr*)cinfo->src;
+        src->next_input_byte = src->buffer;
+
+        //num_read = fread( src->buffer, 1, max_buf, src->stream);
+        num_read = xread(src->fmtHndl, src->buffer, 1, max_buf);
+
+        if (num_read <= 0) {
+            // Insert a fake EOI marker - as per jpeglib recommendation
+            src->buffer[0] = (JOCTET)0xFF;
+            src->buffer[1] = (JOCTET)JPEG_EOI;
+            src->bytes_in_buffer = 2;
+        }
+        else
+            src->bytes_in_buffer = num_read;
+
+        return (boolean)true;
+    }
+
+    static void dimjpeg_skip_input_data(j_decompress_ptr cinfo, long num_bytes)
+    {
+        my_jpeg_source_mgr* src = (my_jpeg_source_mgr*)cinfo->src;
+
+        // `dumb' implementation from jpeglib
+
+        // Just a dumb implementation for now.  Could use fseek() except
+        // it doesn't work on pipes.  Not clear that being smart is worth
+        // any trouble anyway --- large skips are infrequent.
+        if (num_bytes > 0)
+        {
+            while (num_bytes > (long)src->bytes_in_buffer)
+            {
+                num_bytes -= (long)src->bytes_in_buffer;
+                (void)dimjpeg_fill_input_buffer(cinfo);
+                // note we assume that qt_fill_input_buffer will never return false,
+                // so suspension need not be handled.
+            }
+            src->next_input_byte += (size_t)num_bytes;
+            src->bytes_in_buffer -= (size_t)num_bytes;
+        }
+    }
+
+    static void dimjpeg_term_source(j_decompress_ptr)
+    {
+    }
 
 } // extern C
 
 
 inline my_jpeg_source_mgr::my_jpeg_source_mgr(FormatHandle *new_hndl)
 {
-  jpeg_source_mgr::init_source       = dimjpeg_init_source;
-  jpeg_source_mgr::fill_input_buffer = dimjpeg_fill_input_buffer;
-  jpeg_source_mgr::skip_input_data   = dimjpeg_skip_input_data;
-  jpeg_source_mgr::resync_to_restart = jpeg_resync_to_restart;
-  jpeg_source_mgr::term_source       = dimjpeg_term_source;
-  fmtHndl = new_hndl;
-  bytes_in_buffer = 0;
-  next_input_byte = buffer;
+    jpeg_source_mgr::init_source = dimjpeg_init_source;
+    jpeg_source_mgr::fill_input_buffer = dimjpeg_fill_input_buffer;
+    jpeg_source_mgr::skip_input_data = dimjpeg_skip_input_data;
+    jpeg_source_mgr::resync_to_restart = jpeg_resync_to_restart;
+    jpeg_source_mgr::term_source = dimjpeg_term_source;
+    fmtHndl = new_hndl;
+    bytes_in_buffer = 0;
+    next_input_byte = buffer;
 }
 
 //----------------------------------------------------------------------------
 // READ PROC
 //----------------------------------------------------------------------------
 
-bool jpegGetImageInfo( FormatHandle *fmtHndl ) {
+#define ICC_MARKER  (JPEG_APP0 + 2)	// JPEG marker code for ICC
+#define ICC_OVERHEAD_LEN  14		// size of non-profile data in APP2
+#define MAX_SEQ_NO  255		        // sufficient since marker numbers are bytes
+
+static boolean marker_is_icc(jpeg_saved_marker_ptr marker) {
+    return
+        marker->marker == ICC_MARKER &&
+        marker->data_length >= ICC_OVERHEAD_LEN &&
+        /* verify the identifying string */
+        GETJOCTET(marker->data[0]) == 0x49 &&
+        GETJOCTET(marker->data[1]) == 0x43 &&
+        GETJOCTET(marker->data[2]) == 0x43 &&
+        GETJOCTET(marker->data[3]) == 0x5F &&
+        GETJOCTET(marker->data[4]) == 0x50 &&
+        GETJOCTET(marker->data[5]) == 0x52 &&
+        GETJOCTET(marker->data[6]) == 0x4F &&
+        GETJOCTET(marker->data[7]) == 0x46 &&
+        GETJOCTET(marker->data[8]) == 0x49 &&
+        GETJOCTET(marker->data[9]) == 0x4C &&
+        GETJOCTET(marker->data[10]) == 0x45 &&
+        GETJOCTET(marker->data[11]) == 0x0;
+}
+
+static bool ReadMetadata(bim::JpegParams *par) {
+    jpeg_decompress_struct *cinfo = par->cinfo;
+    jpeg_saved_marker_ptr marker;
+
+    char marker_present[MAX_SEQ_NO + 1];	  // 1 if marker found
+    unsigned int data_length[MAX_SEQ_NO + 1]; // size of profile data in marker
+    unsigned int data_offset[MAX_SEQ_NO + 1]; // offset for data in marker
+
+    // This first pass over the saved markers discovers whether there are
+    // any ICC markers and verifies the consistency of the marker numbering.
+    int num_markers = 0;
+    int seq_no;
+    for (seq_no = 1; seq_no <= MAX_SEQ_NO; seq_no++)
+        marker_present[seq_no] = 0;
+
+    for (marker = cinfo->marker_list; marker != NULL; marker = marker->next) {
+        if (marker_is_icc(marker)) {
+            if (num_markers == 0)
+                num_markers = GETJOCTET(marker->data[13]);
+            else if (num_markers != GETJOCTET(marker->data[13]))
+                return FALSE;		// inconsistent num_markers fields
+            seq_no = GETJOCTET(marker->data[12]);
+            if (seq_no <= 0 || seq_no > num_markers)
+                return FALSE;		// bogus sequence number
+            if (marker_present[seq_no])
+                return FALSE;		// duplicate sequence numbers
+            marker_present[seq_no] = 1;
+            data_length[seq_no] = marker->data_length - ICC_OVERHEAD_LEN;
+        }
+    }
+
+    if (num_markers == 0)
+        return FALSE;
+
+    // Check for missing markers, count total space needed,
+    // compute offset of each marker's part of the data.
+    unsigned int total_length = 0;
+    for (seq_no = 1; seq_no <= num_markers; seq_no++) {
+        if (marker_present[seq_no] == 0)
+            return FALSE;		// missing sequence number
+        data_offset[seq_no] = total_length;
+        total_length += data_length[seq_no];
+    }
+
+    if (total_length == 0)
+        return FALSE;		// found only empty markers?
+
+    // Allocate space for assembled data
+    par->buffer_icc.resize(total_length * sizeof(JOCTET));
+    
+    // and fill it in
+    for (marker = cinfo->marker_list; marker != NULL; marker = marker->next) {
+        if (marker_is_icc(marker)) {
+            JOCTET FAR *src_ptr;
+            JOCTET *dst_ptr;
+            unsigned int length;
+            seq_no = GETJOCTET(marker->data[12]);
+            dst_ptr = ((unsigned char*)&par->buffer_icc[0]) + data_offset[seq_no];
+            src_ptr = marker->data + ICC_OVERHEAD_LEN;
+            length = data_length[seq_no];
+            while (length--) {
+                *dst_ptr++ = *src_ptr++;
+            }
+        }
+    }
+}
+
+bool jpegGetImageInfo(FormatHandle *fmtHndl) {
     bim::JpegParams *par = (bim::JpegParams *) fmtHndl->internalParams;
 
-    par->iod_src = new my_jpeg_source_mgr( fmtHndl );
+    par->iod_src = new my_jpeg_source_mgr(fmtHndl);
     par->cinfo = new jpeg_decompress_struct;
     jpeg_create_decompress(par->cinfo);
     par->cinfo->src = par->iod_src;
     par->cinfo->err = jpeg_std_error(par->jerr);
     par->jerr->error_exit = my_error_exit;
+
+    for (int m = 0; m < 16; m++)
+        jpeg_save_markers(par->cinfo, JPEG_APP0 + m, 0xFFFF);
 
     if (!setjmp(par->jerr->setjmp_buffer)) {
         jpeg_read_header(par->cinfo, (boolean)true);
@@ -139,91 +235,89 @@ bool jpegGetImageInfo( FormatHandle *fmtHndl ) {
     // set some image parameters
     par->i.number_pages = 1;
     par->i.depth = 8;
-    par->i.width   = par->cinfo->image_width;
-    par->i.height  = par->cinfo->image_height;
+    par->i.width = par->cinfo->image_width;
+    par->i.height = par->cinfo->image_height;
     par->i.samples = par->cinfo->num_components;
+
+    ReadMetadata(par);
     return true;
 }
 
 static int read_jpeg_image(FormatHandle *fmtHndl) {
-  bim::JpegParams *par = (bim::JpegParams *) fmtHndl->internalParams;
-  JSAMPROW row_pointer[1];
-  ImageBitmap *image = fmtHndl->image;
-  jpeg_decompress_struct *cinfo = par->cinfo;
+    bim::JpegParams *par = (bim::JpegParams *) fmtHndl->internalParams;
+    JSAMPROW row_pointer[1];
+    ImageBitmap *image = fmtHndl->image;
+    jpeg_decompress_struct *cinfo = par->cinfo;
 
-  if (!setjmp(par->jerr->setjmp_buffer)) {
-    jpeg_start_decompress(cinfo);
+    if (!setjmp(par->jerr->setjmp_buffer)) {
+        jpeg_start_decompress(cinfo);
 
-    if (allocImg( image, cinfo->output_width, cinfo->output_height, cinfo->output_components, 8 ) != 0) {
-      jpeg_destroy_decompress(cinfo);      
-      return 1;
+        if (allocImg(image, cinfo->output_width, cinfo->output_height, cinfo->output_components, 8) != 0) {
+            jpeg_destroy_decompress(cinfo);
+            return 1;
+        }
+
+        if (cinfo->output_components == 1) {
+            while (cinfo->output_scanline < cinfo->output_height) {
+                xprogress(fmtHndl, cinfo->output_scanline, cinfo->output_height, "Reading JPEG");
+                if (xtestAbort(fmtHndl) == 1) break;
+
+                row_pointer[0] = ((uchar *)image->bits[0]) + (cinfo->output_width*cinfo->output_scanline);
+                (void)jpeg_read_scanlines(cinfo, row_pointer, 1);
+            }
+        }  else if (cinfo->output_components == 3) {
+            row_pointer[0] = new uchar[cinfo->output_width*cinfo->output_components];
+            while (cinfo->output_scanline < cinfo->output_height) {
+                xprogress(fmtHndl, cinfo->output_scanline, cinfo->output_height, "Reading JPEG");
+                if (xtestAbort(fmtHndl) == 1) break;
+
+                register unsigned int i;
+                (void)jpeg_read_scanlines(cinfo, row_pointer, 1);
+                uchar *row = row_pointer[0];
+                uchar* pix1 = ((uchar *)image->bits[0]) + cinfo->output_width * (cinfo->output_scanline - 1);
+                uchar* pix2 = ((uchar *)image->bits[1]) + cinfo->output_width * (cinfo->output_scanline - 1);
+                uchar* pix3 = ((uchar *)image->bits[2]) + cinfo->output_width * (cinfo->output_scanline - 1);
+
+                for (i = 0; i < cinfo->output_width; i++) {
+                    *pix1++ = *row++;
+                    *pix2++ = *row++;
+                    *pix3++ = *row++;
+                }
+
+            } // while scanlines
+            delete row_pointer[0];
+        }
+        else if (cinfo->output_components == 4) {
+
+            row_pointer[0] = new uchar[cinfo->output_width*cinfo->output_components];
+
+            while (cinfo->output_scanline < cinfo->output_height) {
+                xprogress(fmtHndl, cinfo->output_scanline, cinfo->output_height, "Reading JPEG");
+                if (xtestAbort(fmtHndl) == 1) break;
+
+                register unsigned int i;
+                (void)jpeg_read_scanlines(cinfo, row_pointer, 1);
+                uchar *row = row_pointer[0];
+                uchar* pix1 = ((uchar *)image->bits[0]) + cinfo->output_width * (cinfo->output_scanline - 1);
+                uchar* pix2 = ((uchar *)image->bits[1]) + cinfo->output_width * (cinfo->output_scanline - 1);
+                uchar* pix3 = ((uchar *)image->bits[2]) + cinfo->output_width * (cinfo->output_scanline - 1);
+                uchar* pix4 = ((uchar *)image->bits[3]) + cinfo->output_width * (cinfo->output_scanline - 1);
+
+                for (i = 0; i < cinfo->output_width; i++) {
+                    *pix1++ = *row++;
+                    *pix2++ = *row++;
+                    *pix3++ = *row++;
+                    *pix4++ = *row++;
+                }
+
+            } // while scanlines
+            delete row_pointer[0];
+        } // if 4 components
+
+        jpeg_finish_decompress(cinfo);
     }
 
-    if (cinfo->output_components == 1) {
-      while (cinfo->output_scanline < cinfo->output_height) {
-        xprogress( fmtHndl, cinfo->output_scanline, cinfo->output_height, "Reading JPEG" );
-        if ( xtestAbort( fmtHndl ) == 1) break;  
-
-        row_pointer[0] =  ((uchar *) image->bits[0]) + (cinfo->output_width*cinfo->output_scanline);
-        (void) jpeg_read_scanlines( cinfo, row_pointer, 1 );
-      }
-    } // if 1 component
-    
-
-    if ( cinfo->output_components == 3 ) {
-      row_pointer[0] = new uchar[cinfo->output_width*cinfo->output_components];
-
-      while (cinfo->output_scanline < cinfo->output_height) {
-        xprogress( fmtHndl, cinfo->output_scanline, cinfo->output_height, "Reading JPEG" );
-        if ( xtestAbort( fmtHndl ) == 1) break; 
-
-        register unsigned int i;        
-        (void) jpeg_read_scanlines( cinfo, row_pointer, 1 );
-        uchar *row = row_pointer[0];        
-        uchar* pix1 = ((uchar *) image->bits[0]) + cinfo->output_width * (cinfo->output_scanline-1);
-        uchar* pix2 = ((uchar *) image->bits[1]) + cinfo->output_width * (cinfo->output_scanline-1);
-        uchar* pix3 = ((uchar *) image->bits[2]) + cinfo->output_width * (cinfo->output_scanline-1);
-
-        for (i=0; i<cinfo->output_width; i++) {
-          *pix1++ = *row++;
-          *pix2++ = *row++;
-          *pix3++ = *row++;
-        }
-
-      } // while scanlines
-      delete row_pointer[0];
-    } // if 3 components
-
-    if ( cinfo->output_components == 4 ) {
-      row_pointer[0] = new uchar[cinfo->output_width*cinfo->output_components];
-
-      while (cinfo->output_scanline < cinfo->output_height) {
-        xprogress( fmtHndl, cinfo->output_scanline, cinfo->output_height, "Reading JPEG" );
-        if ( xtestAbort( fmtHndl ) == 1) break; 
-
-        register unsigned int i;        
-        (void) jpeg_read_scanlines( cinfo, row_pointer, 1 );
-        uchar *row = row_pointer[0];        
-        uchar* pix1 = ((uchar *) image->bits[0]) + cinfo->output_width * (cinfo->output_scanline-1);
-        uchar* pix2 = ((uchar *) image->bits[1]) + cinfo->output_width * (cinfo->output_scanline-1);
-        uchar* pix3 = ((uchar *) image->bits[2]) + cinfo->output_width * (cinfo->output_scanline-1);
-        uchar* pix4 = ((uchar *) image->bits[3]) + cinfo->output_width * (cinfo->output_scanline-1);
-
-        for (i=0; i<cinfo->output_width; i++) {
-          *pix1++ = *row++;
-          *pix2++ = *row++;
-          *pix3++ = *row++;
-          *pix4++ = *row++;
-        }
-
-      } // while scanlines
-      delete row_pointer[0];
-    } // if 4 components
-
-    jpeg_finish_decompress(cinfo);
-  }
-
-  return 0;
+    return 0;
 }
 
 
@@ -242,327 +336,388 @@ public:
 
 extern "C" {
 
-static void dimjpeg_init_destination(j_compress_ptr)
-{
-}
+    static void dimjpeg_init_destination(j_compress_ptr)
+    {
+    }
 
-static void dimjpeg_exit_on_error(j_compress_ptr cinfo, FormatHandle *fmtHndl)
-{
-  // cinfo->err->msg_code = JERR_FILE_WRITE;
-  xflush( fmtHndl );
-  (*cinfo->err->error_exit)((j_common_ptr)cinfo);
-}
+    static void dimjpeg_exit_on_error(j_compress_ptr cinfo, FormatHandle *fmtHndl)
+    {
+        // cinfo->err->msg_code = JERR_FILE_WRITE;
+        xflush(fmtHndl);
+        (*cinfo->err->error_exit)((j_common_ptr)cinfo);
+    }
 
-static boolean dimjpeg_empty_output_buffer(j_compress_ptr cinfo)
-{
-  my_jpeg_destination_mgr* dest = (my_jpeg_destination_mgr*)cinfo->dest;
-  
-  if ( xwrite( dest->fmtHndl, (char*)dest->buffer, 1, max_buf) != max_buf )
-    dimjpeg_exit_on_error(cinfo, dest->fmtHndl);
+    static boolean dimjpeg_empty_output_buffer(j_compress_ptr cinfo)
+    {
+        my_jpeg_destination_mgr* dest = (my_jpeg_destination_mgr*)cinfo->dest;
 
-  xflush( dest->fmtHndl );
-  dest->next_output_byte = dest->buffer;
-  dest->free_in_buffer = max_buf;
+        if (xwrite(dest->fmtHndl, (char*)dest->buffer, 1, max_buf) != max_buf)
+            dimjpeg_exit_on_error(cinfo, dest->fmtHndl);
 
-  return (boolean)true;
-}
+        xflush(dest->fmtHndl);
+        dest->next_output_byte = dest->buffer;
+        dest->free_in_buffer = max_buf;
 
-static void dimjpeg_term_destination(j_compress_ptr cinfo)
-{
-  my_jpeg_destination_mgr* dest = (my_jpeg_destination_mgr*)cinfo->dest;
-  unsigned int n = max_buf - dest->free_in_buffer;
-  
-  if ( xwrite( dest->fmtHndl, (char*)dest->buffer, 1, n ) != n )
-    dimjpeg_exit_on_error(cinfo, dest->fmtHndl);
+        return (boolean)true;
+    }
 
-  xflush( dest->fmtHndl );
-  dimjpeg_exit_on_error( cinfo, dest->fmtHndl );
-}
+    static void dimjpeg_term_destination(j_compress_ptr cinfo)
+    {
+        my_jpeg_destination_mgr* dest = (my_jpeg_destination_mgr*)cinfo->dest;
+        unsigned int n = max_buf - dest->free_in_buffer;
+
+        if (xwrite(dest->fmtHndl, (char*)dest->buffer, 1, n) != n)
+            dimjpeg_exit_on_error(cinfo, dest->fmtHndl);
+
+        xflush(dest->fmtHndl);
+        dimjpeg_exit_on_error(cinfo, dest->fmtHndl);
+    }
 
 } // extern C
 
 inline my_jpeg_destination_mgr::my_jpeg_destination_mgr(FormatHandle *new_hndl)
 {
-  jpeg_destination_mgr::init_destination    = dimjpeg_init_destination;
-  jpeg_destination_mgr::empty_output_buffer = dimjpeg_empty_output_buffer;
-  jpeg_destination_mgr::term_destination    = dimjpeg_term_destination;
-  fmtHndl = new_hndl;
-  next_output_byte = buffer;
-  free_in_buffer = max_buf;
+    jpeg_destination_mgr::init_destination = dimjpeg_init_destination;
+    jpeg_destination_mgr::empty_output_buffer = dimjpeg_empty_output_buffer;
+    jpeg_destination_mgr::term_destination = dimjpeg_term_destination;
+    fmtHndl = new_hndl;
+    next_output_byte = buffer;
+    free_in_buffer = max_buf;
 }
 
 //----------------------------------------------------------------------------
 // WRITE PROC
 //----------------------------------------------------------------------------
 
-static int write_jpeg_image( FormatHandle *fmtHndl )
-{
-  ImageBitmap *image = fmtHndl->image;
+#define MAX_BYTES_IN_MARKER  65533	// maximum data len of a JPEG marker
+#define MAX_DATA_BYTES_IN_MARKER  (MAX_BYTES_IN_MARKER - ICC_OVERHEAD_LEN)
 
-  struct jpeg_compress_struct cinfo;
-  JSAMPROW row_pointer[1];
-  row_pointer[0] = 0;
+static void WriteMetadata(j_compress_ptr cinfo, TagMap *hash) {
+    // write ICC profile
+    if (hash->hasKey(bim::RAW_TAGS_ICC) && hash->get_type(bim::RAW_TAGS_ICC) == bim::RAW_TYPES_ICC) {
+        unsigned int icc_data_len = hash->get_size(bim::RAW_TAGS_ICC);
+        JOCTET *icc_data_ptr = (JOCTET *)hash->get_value_bin(bim::RAW_TAGS_ICC);
 
-  struct my_jpeg_destination_mgr *iod_dest = new my_jpeg_destination_mgr( fmtHndl );
-  struct my_error_mgr jerr;
+        int cur_marker = 1;  // per spec, counting starts at 1
+        unsigned int length; // number of bytes to write in this marker
 
-  cinfo.err = jpeg_std_error(&jerr);
+        // Calculate the number of markers we'll need, rounding up of course
+        unsigned int num_markers = icc_data_len / MAX_DATA_BYTES_IN_MARKER;
 
-  jerr.error_exit = my_error_exit;
+        if (num_markers * MAX_DATA_BYTES_IN_MARKER != icc_data_len)
+            num_markers++;
 
-  if (!setjmp(jerr.setjmp_buffer)) 
-  {
-    jpeg_create_compress(&cinfo);
-    cinfo.dest = iod_dest;
+        while (icc_data_len > 0) {
+            // length of profile to put in this marker
+            length = icc_data_len;
+            if (length > MAX_DATA_BYTES_IN_MARKER)
+                length = MAX_DATA_BYTES_IN_MARKER;
+            icc_data_len -= length;
 
-    cinfo.image_width  = image->i.width;
-    cinfo.image_height = image->i.height;
+            // Write the JPEG marker header (APP2 code and marker length)
+            jpeg_write_m_header(cinfo, ICC_MARKER,
+                (unsigned int)(length + ICC_OVERHEAD_LEN));
 
+            // Write the marker identifying string "ICC_PROFILE" (null-terminated).
+            // We code it in this less-than-transparent way so that the code works
+            // even if the local character set is not ASCII.
+            jpeg_write_m_byte(cinfo, 0x49);
+            jpeg_write_m_byte(cinfo, 0x43);
+            jpeg_write_m_byte(cinfo, 0x43);
+            jpeg_write_m_byte(cinfo, 0x5F);
+            jpeg_write_m_byte(cinfo, 0x50);
+            jpeg_write_m_byte(cinfo, 0x52);
+            jpeg_write_m_byte(cinfo, 0x4F);
+            jpeg_write_m_byte(cinfo, 0x46);
+            jpeg_write_m_byte(cinfo, 0x49);
+            jpeg_write_m_byte(cinfo, 0x4C);
+            jpeg_write_m_byte(cinfo, 0x45);
+            jpeg_write_m_byte(cinfo, 0x0);
 
-    LUT* cmap=0;
-    bool gray=true;
+            // Add the sequencing info
+            jpeg_write_m_byte(cinfo, cur_marker);
+            jpeg_write_m_byte(cinfo, (int)num_markers);
 
-    if ( image->i.samples == 1 )
-    {
-      cinfo.input_components = 1;
-      cinfo.in_color_space = JCS_GRAYSCALE;
-      gray = true;
+            // Add the profile data
+            while (length--) {
+                jpeg_write_m_byte(cinfo, *icc_data_ptr);
+                icc_data_ptr++;
+            }
+            cur_marker++;
+        }
     }
-    else
+}
+
+static int write_jpeg_image(FormatHandle *fmtHndl) {
+    ImageBitmap *image = fmtHndl->image;
+    bim::JpegParams *par = (bim::JpegParams *) fmtHndl->internalParams;
+
+    struct jpeg_compress_struct cinfo;
+    JSAMPROW row_pointer[1];
+    row_pointer[0] = 0;
+
+    struct my_jpeg_destination_mgr *iod_dest = new my_jpeg_destination_mgr(fmtHndl);
+    struct my_error_mgr jerr;
+
+    cinfo.err = jpeg_std_error(&jerr);
+
+    jerr.error_exit = my_error_exit;
+
+    if (!setjmp(jerr.setjmp_buffer))
     {
-      cinfo.input_components = 3;
-      cinfo.in_color_space = JCS_RGB;
-      gray = false;
-    }
+        jpeg_create_compress(&cinfo);
+        cinfo.dest = iod_dest;
 
-    if ( image->i.depth < 8 )
-    {
-      cmap = &image->i.lut;
-      gray = true;
-      if (cmap->count > 0) gray = false;
-      cinfo.input_components = gray ? 1 : 3;
-      cinfo.in_color_space = gray ? JCS_GRAYSCALE : JCS_RGB;
-    }
-
-    jpeg_set_defaults(&cinfo);
-    int quality = fmtHndl->quality;
-    if (quality < 1) quality = 1;
-    if (quality > 100) quality = 100;    
-    jpeg_set_quality(&cinfo, quality, (boolean)true); // limit to baseline-JPEG values );
-
-    if (fmtHndl->order == 1) jpeg_simple_progression(&cinfo);
-
-    jpeg_start_compress(&cinfo, (boolean)true);
-
-    row_pointer[0] = new uchar[cinfo.image_width*cinfo.input_components];
-    int w = cinfo.image_width;
-    long lineSizeBytes = getLineSizeInBytes( image );
-
-    while (cinfo.next_scanline < cinfo.image_height) 
-    {
-      uchar *row = row_pointer[0];
-
-      /*
-      switch ( image.depth() ) 
-      {
-        case 1:
-          if (gray) 
-          {
-            uchar* data = image.scanLine(cinfo.next_scanline);
-            if ( image.bitOrder() == QImage::LittleEndian ) 
-            {
-              for (int i=0; i<w; i++) 
-              {
-                bool bit = !!(*(data + (i >> 3)) & (1 << (i & 7)));
-                row[i] = qRed(cmap[bit]);
-              }
-            } 
-            else 
-            {
-              for (int i=0; i<w; i++) 
-              {
-                bool bit = !!(*(data + (i >> 3)) & (1 << (7 -(i & 7))));
-                row[i] = qRed(cmap[bit]);
-              }
-            }
-          } 
-          else 
-          {
-            uchar* data = image.scanLine(cinfo.next_scanline);
-            if ( image.bitOrder() == QImage::LittleEndian ) 
-            {
-              for (int i=0; i<w; i++) 
-              {
-                bool bit = !!(*(data + (i >> 3)) & (1 << (i & 7)));
-                *row++ = qRed(cmap[bit]);
-                *row++ = qGreen(cmap[bit]);
-                *row++ = qBlue(cmap[bit]);
-              }
-            } 
-            else 
-            {
-              for (int i=0; i<w; i++) 
-              {
-                bool bit = !!(*(data + (i >> 3)) & (1 << (7 -(i & 7))));
-                *row++ = qRed(cmap[bit]);
-                *row++ = qGreen(cmap[bit]);
-                *row++ = qBlue(cmap[bit]);
-              }
-            }
-          }
-          
-          break;
-        */
+        cinfo.image_width = image->i.width;
+        cinfo.image_height = image->i.height;
 
 
-      //if 4 bits per sample, there should be only one sample
-      if (image->i.depth == 4)
-      {
-        if (gray)
-        {
-          uchar* pix = ((uchar *) image->bits[0]) + lineSizeBytes * cinfo.next_scanline;
-          uchar pixH, pixL;
-          for (int i=0; i<lineSizeBytes; i++) 
-          {
-            pixH = (unsigned char) ((*pix) << 4);
-            pixL = (unsigned char) ((*pix) >> 4);
-            *row++ = pixH;
-            if (i+1<w) *row++ = pixL;
-            pix++;
-          }
-        } // if one sample with 8 bits
-        else
-        {
-          uchar pixH, pixL;
-          uchar* pix = ((uchar *) image->bits[0]) + lineSizeBytes * cinfo.next_scanline;
+        LUT* cmap = 0;
+        bool gray = true;
 
-          for (int i=0; i<lineSizeBytes; i++) 
-          {
-            pixH = (unsigned char) ((*pix) << 4);
-            pixL = (unsigned char) ((*pix) >> 4);
-            *row++ = (unsigned char) xR( cmap->rgba[pixH] );
-            *row++ = (unsigned char) xG( cmap->rgba[pixH] );
-            *row++ = (unsigned char) xB( cmap->rgba[pixH] );
-            if (i+1<w) 
-            {
-              *row++ = (unsigned char) xR( cmap->rgba[pixL] );
-              *row++ = (unsigned char) xG( cmap->rgba[pixL] );
-              *row++ = (unsigned char) xB( cmap->rgba[pixL] );
-            }
-            pix++;
-          }
-        } // if paletted image
-      } // 4 bits per sample
-
-      
-      //if 8 bits per sample
-      if (image->i.depth == 8)
-      {
-        if (gray)
-        {
-          uchar* pix = ((uchar *) image->bits[0]) + lineSizeBytes * cinfo.next_scanline;
-
-          memcpy( row, pix, w );
-          row += w;
-        } // if one sample with 8 bits
-        else
-        {
-          if (image->i.samples == 1)
-          {
-            uchar* pix = ((uchar *) image->bits[0]) + lineSizeBytes * cinfo.next_scanline;
-            for (int i=0; i<w; i++) 
-            {
-              *row++ = (unsigned char) xR( cmap->rgba[*pix] );
-              *row++ = (unsigned char) xG( cmap->rgba[*pix] );
-              *row++ = (unsigned char) xB( cmap->rgba[*pix] );
-              pix++;
-            }
-          } // if paletted image
-
-          if (image->i.samples == 2)
-          {
-            uchar* pix1 = ((uchar *) image->bits[0]) + lineSizeBytes * cinfo.next_scanline;
-            uchar* pix2 = ((uchar *) image->bits[1]) + lineSizeBytes * cinfo.next_scanline;
-            for (int i=0; i<w; i++) 
-            {
-              *row++ = *pix1;
-              *row++ = *pix2;
-              *row++ = 0;
-              pix1++; pix2++;
-            }
-          } // if 2 samples
-
-          if (image->i.samples >= 3)
-          {
-            uchar* pix1 = ((uchar *) image->bits[0]) + lineSizeBytes * cinfo.next_scanline;
-            uchar* pix2 = ((uchar *) image->bits[1]) + lineSizeBytes * cinfo.next_scanline;
-            uchar* pix3 = ((uchar *) image->bits[2]) + lineSizeBytes * cinfo.next_scanline;
-            for (int i=0; i<w; i++) 
-            {
-              *row++ = *pix1;
-              *row++ = *pix2;
-              *row++ = *pix3;
-              pix1++; pix2++; pix3++;
-            }
-          } // if 3 or more samples
-        } // if not gray
-      } // 8 bits per sample
-
-
-      //if 16 bits per sample
-      if (image->i.depth == 16)
-      {
         if (image->i.samples == 1)
         {
-          uint16* pix = (uint16*) (((uchar *) image->bits[0]) + lineSizeBytes * cinfo.next_scanline);
-
-          for (int i=0; i<w; i++) 
-          {
-            *row++ = (uchar) (*pix / 256);
-            ++pix;
-          }
-        } // if paletted image
-
-        if (image->i.samples == 2)
+            cinfo.input_components = 1;
+            cinfo.in_color_space = JCS_GRAYSCALE;
+            gray = true;
+        }
+        else
         {
-          uint16* pix1 = (uint16*) (((uchar *) image->bits[0]) + lineSizeBytes * cinfo.next_scanline);
-          uint16* pix2 = (uint16*) (((uchar *) image->bits[1]) + lineSizeBytes * cinfo.next_scanline);
-          for (int i=0; i<w; i++) 
-          {
-            *row++ = (uchar) (*pix1 / 256);
-            *row++ = (uchar) (*pix2 / 256);
-            *row++ = 0;
-            ++pix1; ++pix2;
-          }
-        } // if 2 samples
+            cinfo.input_components = 3;
+            cinfo.in_color_space = JCS_RGB;
+            gray = false;
+        }
 
-        if (image->i.samples >= 3)
+        if (image->i.depth < 8)
         {
-          uint16* pix1 = (uint16*) (((uchar *) image->bits[0]) + lineSizeBytes * cinfo.next_scanline);
-          uint16* pix2 = (uint16*) (((uchar *) image->bits[1]) + lineSizeBytes * cinfo.next_scanline);
-          uint16* pix3 = (uint16*) (((uchar *) image->bits[2]) + lineSizeBytes * cinfo.next_scanline);
-          for (int i=0; i<w; i++) 
-          {
-            *row++ = (uchar) (*pix1 / 256);
-            *row++ = (uchar) (*pix2 / 256);
-            *row++ = (uchar) (*pix3 / 256);
-            ++pix1; ++pix2; ++pix3;
-          }
-        } // if 3 or more samples
+            cmap = &image->i.lut;
+            gray = true;
+            if (cmap->count > 0) gray = false;
+            cinfo.input_components = gray ? 1 : 3;
+            cinfo.in_color_space = gray ? JCS_GRAYSCALE : JCS_RGB;
+        }
 
-      } // 16 bits per sample
+        jpeg_set_defaults(&cinfo);
+        int quality = fmtHndl->quality;
+        if (quality < 1) quality = 1;
+        if (quality > 100) quality = 100;
+        jpeg_set_quality(&cinfo, quality, (boolean)true); // limit to baseline-JPEG values );
 
-      jpeg_write_scanlines(&cinfo, row_pointer, 1);
+        if (fmtHndl->order == 1) jpeg_simple_progression(&cinfo);
+
+        jpeg_start_compress(&cinfo, (boolean)true);
+
+        WriteMetadata(&cinfo, fmtHndl->metaData);
+
+        row_pointer[0] = new uchar[cinfo.image_width*cinfo.input_components];
+        int w = cinfo.image_width;
+        long lineSizeBytes = getLineSizeInBytes(image);
+
+        while (cinfo.next_scanline < cinfo.image_height)
+        {
+            uchar *row = row_pointer[0];
+
+            /*
+            switch ( image.depth() )
+            {
+            case 1:
+            if (gray)
+            {
+            uchar* data = image.scanLine(cinfo.next_scanline);
+            if ( image.bitOrder() == QImage::LittleEndian )
+            {
+            for (int i=0; i<w; i++)
+            {
+            bool bit = !!(*(data + (i >> 3)) & (1 << (i & 7)));
+            row[i] = qRed(cmap[bit]);
+            }
+            }
+            else
+            {
+            for (int i=0; i<w; i++)
+            {
+            bool bit = !!(*(data + (i >> 3)) & (1 << (7 -(i & 7))));
+            row[i] = qRed(cmap[bit]);
+            }
+            }
+            }
+            else
+            {
+            uchar* data = image.scanLine(cinfo.next_scanline);
+            if ( image.bitOrder() == QImage::LittleEndian )
+            {
+            for (int i=0; i<w; i++)
+            {
+            bool bit = !!(*(data + (i >> 3)) & (1 << (i & 7)));
+            *row++ = qRed(cmap[bit]);
+            *row++ = qGreen(cmap[bit]);
+            *row++ = qBlue(cmap[bit]);
+            }
+            }
+            else
+            {
+            for (int i=0; i<w; i++)
+            {
+            bool bit = !!(*(data + (i >> 3)) & (1 << (7 -(i & 7))));
+            *row++ = qRed(cmap[bit]);
+            *row++ = qGreen(cmap[bit]);
+            *row++ = qBlue(cmap[bit]);
+            }
+            }
+            }
+
+            break;
+            */
+
+
+            //if 4 bits per sample, there should be only one sample
+            if (image->i.depth == 4)
+            {
+                if (gray)
+                {
+                    uchar* pix = ((uchar *)image->bits[0]) + lineSizeBytes * cinfo.next_scanline;
+                    uchar pixH, pixL;
+                    for (int i = 0; i < lineSizeBytes; i++)
+                    {
+                        pixH = (unsigned char)((*pix) << 4);
+                        pixL = (unsigned char)((*pix) >> 4);
+                        *row++ = pixH;
+                        if (i + 1 < w) *row++ = pixL;
+                        pix++;
+                    }
+                } // if one sample with 8 bits
+                else
+                {
+                    uchar pixH, pixL;
+                    uchar* pix = ((uchar *)image->bits[0]) + lineSizeBytes * cinfo.next_scanline;
+
+                    for (int i = 0; i < lineSizeBytes; i++)
+                    {
+                        pixH = (unsigned char)((*pix) << 4);
+                        pixL = (unsigned char)((*pix) >> 4);
+                        *row++ = (unsigned char)xR(cmap->rgba[pixH]);
+                        *row++ = (unsigned char)xG(cmap->rgba[pixH]);
+                        *row++ = (unsigned char)xB(cmap->rgba[pixH]);
+                        if (i + 1 < w)
+                        {
+                            *row++ = (unsigned char)xR(cmap->rgba[pixL]);
+                            *row++ = (unsigned char)xG(cmap->rgba[pixL]);
+                            *row++ = (unsigned char)xB(cmap->rgba[pixL]);
+                        }
+                        pix++;
+                    }
+                } // if paletted image
+            } // 4 bits per sample
+
+
+            //if 8 bits per sample
+            if (image->i.depth == 8)
+            {
+                if (gray)
+                {
+                    uchar* pix = ((uchar *)image->bits[0]) + lineSizeBytes * cinfo.next_scanline;
+
+                    memcpy(row, pix, w);
+                    row += w;
+                } // if one sample with 8 bits
+                else
+                {
+                    if (image->i.samples == 1)
+                    {
+                        uchar* pix = ((uchar *)image->bits[0]) + lineSizeBytes * cinfo.next_scanline;
+                        for (int i = 0; i < w; i++)
+                        {
+                            *row++ = (unsigned char)xR(cmap->rgba[*pix]);
+                            *row++ = (unsigned char)xG(cmap->rgba[*pix]);
+                            *row++ = (unsigned char)xB(cmap->rgba[*pix]);
+                            pix++;
+                        }
+                    } // if paletted image
+
+                    if (image->i.samples == 2)
+                    {
+                        uchar* pix1 = ((uchar *)image->bits[0]) + lineSizeBytes * cinfo.next_scanline;
+                        uchar* pix2 = ((uchar *)image->bits[1]) + lineSizeBytes * cinfo.next_scanline;
+                        for (int i = 0; i < w; i++)
+                        {
+                            *row++ = *pix1;
+                            *row++ = *pix2;
+                            *row++ = 0;
+                            pix1++; pix2++;
+                        }
+                    } // if 2 samples
+
+                    if (image->i.samples >= 3)
+                    {
+                        uchar* pix1 = ((uchar *)image->bits[0]) + lineSizeBytes * cinfo.next_scanline;
+                        uchar* pix2 = ((uchar *)image->bits[1]) + lineSizeBytes * cinfo.next_scanline;
+                        uchar* pix3 = ((uchar *)image->bits[2]) + lineSizeBytes * cinfo.next_scanline;
+                        for (int i = 0; i < w; i++)
+                        {
+                            *row++ = *pix1;
+                            *row++ = *pix2;
+                            *row++ = *pix3;
+                            pix1++; pix2++; pix3++;
+                        }
+                    } // if 3 or more samples
+                } // if not gray
+            } // 8 bits per sample
+
+
+            //if 16 bits per sample
+            if (image->i.depth == 16)
+            {
+                if (image->i.samples == 1)
+                {
+                    uint16* pix = (uint16*)(((uchar *)image->bits[0]) + lineSizeBytes * cinfo.next_scanline);
+
+                    for (int i = 0; i < w; i++)
+                    {
+                        *row++ = (uchar)(*pix / 256);
+                        ++pix;
+                    }
+                } // if paletted image
+
+                if (image->i.samples == 2)
+                {
+                    uint16* pix1 = (uint16*)(((uchar *)image->bits[0]) + lineSizeBytes * cinfo.next_scanline);
+                    uint16* pix2 = (uint16*)(((uchar *)image->bits[1]) + lineSizeBytes * cinfo.next_scanline);
+                    for (int i = 0; i < w; i++)
+                    {
+                        *row++ = (uchar)(*pix1 / 256);
+                        *row++ = (uchar)(*pix2 / 256);
+                        *row++ = 0;
+                        ++pix1; ++pix2;
+                    }
+                } // if 2 samples
+
+                if (image->i.samples >= 3)
+                {
+                    uint16* pix1 = (uint16*)(((uchar *)image->bits[0]) + lineSizeBytes * cinfo.next_scanline);
+                    uint16* pix2 = (uint16*)(((uchar *)image->bits[1]) + lineSizeBytes * cinfo.next_scanline);
+                    uint16* pix3 = (uint16*)(((uchar *)image->bits[2]) + lineSizeBytes * cinfo.next_scanline);
+                    for (int i = 0; i < w; i++)
+                    {
+                        *row++ = (uchar)(*pix1 / 256);
+                        *row++ = (uchar)(*pix2 / 256);
+                        *row++ = (uchar)(*pix3 / 256);
+                        ++pix1; ++pix2; ++pix3;
+                    }
+                } // if 3 or more samples
+
+            } // 16 bits per sample
+
+            jpeg_write_scanlines(&cinfo, row_pointer, 1);
+        }
+
+        jpeg_finish_compress(&cinfo);
+        jpeg_destroy_compress(&cinfo);
     }
 
-    jpeg_finish_compress(&cinfo);
-    jpeg_destroy_compress(&cinfo);
-  }
+    delete iod_dest;
+    delete row_pointer[0];
 
-  delete iod_dest;
-  delete row_pointer[0];
-
-  return 0;
+    return 0;
 }
 
 
@@ -570,16 +725,24 @@ static int write_jpeg_image( FormatHandle *fmtHndl )
 // META DATA PROC
 //----------------------------------------------------------------------------
 
-bim::uint jpeg_append_metadata (FormatHandle *fmtHndl, TagMap *hash ) {
-  if (fmtHndl == NULL) return 1;
-  if (!hash) return 1;
-  if ( isCustomReading ( fmtHndl ) ) return 1;
-  if (!fmtHndl->fileName) return 1;
+bim::uint jpeg_append_metadata(FormatHandle *fmtHndl, TagMap *hash) {
+    if (fmtHndl == NULL) return 1;
+    if (!hash) return 1;
+    if (isCustomReading(fmtHndl)) return 1;
+    bim::JpegParams *par = (bim::JpegParams *) fmtHndl->internalParams;
 
-  // use EXIV2 to read metadata
-  exiv_append_metadata (fmtHndl, hash );
+    if (par->buffer_icc.size() > 0) {
+        hash->set_value(bim::RAW_TAGS_ICC, par->buffer_icc, bim::RAW_TYPES_ICC);
 
-  return 0;
+        // use LCMS2 to parse color profile
+        lcms_append_metadata(fmtHndl, hash);
+    }
+
+    // use EXIV2 to read metadata
+    if (!fmtHndl->fileName) return 1;
+    exiv_append_metadata(fmtHndl, hash);
+
+    return 0;
 }
 
 

@@ -77,55 +77,6 @@ static int read_biorad_image(FormatHandle *fmtHndl) {
   return 0;
 }
 
-
-//----------------------------------------------------------------------------
-// META DATA PROC
-//----------------------------------------------------------------------------
-
-bim::uint add_one_tag (FormatHandle *fmtHndl, int tag, const char* str) {
-  uchar *buf = NULL;
-  uint32 buf_size = strlen(str);
-  uint32 buf_type = TAG_ASCII;
-
-  if ( (buf_size == 0) || (str == NULL) ) return 1;
-  else { // now add tag into structure
-    TagItem item;
-
-    buf = (unsigned char *) xmalloc(fmtHndl, buf_size + 1);
-    strncpy((char *) buf, str, buf_size);
-    buf[buf_size] = '\0';
-
-    item.tagGroup  = META_BIORAD;
-    item.tagId     = tag;
-    item.tagType   = buf_type;
-    item.tagLength = buf_size;
-    item.tagData   = buf;
-
-    addMetaTag( &fmtHndl->metaData, item);
-  }
-
-  return 0;
-}
-
-bim::uint read_biorad_metadata (FormatHandle *fmtHndl, int group, int , int )
-{
-  if (fmtHndl == NULL) return 1;
-  if (fmtHndl->internalParams == NULL) return 1;
-  BioRadPicParams *par = (BioRadPicParams *) fmtHndl->internalParams;
-  
-  if ( (group != META_BIORAD) && (group != -1) ) return 1;
-
-  if (par->note01.size() > 0) 
-    add_one_tag ( fmtHndl, 01, par->note01.c_str() );
-  if (par->note20.size() > 0) 
-    add_one_tag ( fmtHndl, 20, par->note20.c_str() );
-  if (par->note21.size() > 0) 
-    add_one_tag ( fmtHndl, 21, par->note21.c_str() );
-
-  return 0;
-}
-
-
 //----------------------------------------------------------------------------
 // Metadata hash
 //----------------------------------------------------------------------------

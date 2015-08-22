@@ -267,6 +267,13 @@ xstring xstring::join(std::vector<double> v, const xstring &separator) {
     return xstring::join(vv, separator);
 }
 
+xstring xstring::join(std::vector<unsigned char> v, const xstring &separator) {
+    std::vector<xstring> vv(v.size());
+    for (int i = 0; i < v.size(); ++i) {
+        vv[i] = xstring::xprintf("%X", v[i]);
+    }
+    return xstring::join(vv, separator);
+}
 
 //******************************************************************************
 std::string xstring::toLowerCase() const {

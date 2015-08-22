@@ -669,10 +669,6 @@ void tiffCloseImageProc (FormatHandle *fmtHndl)
 
   TiffParams *tiffpar = (TiffParams *) fmtHndl->internalParams;
 
-  if (fmtHndl->io_mode != IO_WRITE) {
-    clearMetaTags( &fmtHndl->metaData );
-  }
-
   if ( (tiffpar != NULL) && (tiffpar->tiff != NULL) ) {
     XTIFFClose( tiffpar->tiff );
     tiffpar->tiff = NULL;
@@ -796,34 +792,12 @@ ImageInfo tiffGetImageInfoProc ( FormatHandle *fmtHndl, bim::uint page_num ) {
 // METADATA
 //----------------------------------------------------------------------------
 
-// libTIFF CANNOT ADD TAGS INTO ANY GIVEN IMAGE
-bim::uint tiffAddMetaDataProc (FormatHandle *) {
-  return 1;
-}
-
-
-bim::uint tiffReadMetaDataProc (FormatHandle *fmtHndl, bim::uint page, int group, int tag, int type) {
-  if (fmtHndl == NULL) return 1;
-  if (fmtHndl->internalParams == NULL) return 1;
-  TiffParams *tiffpar = (TiffParams *) fmtHndl->internalParams;
-  fmtHndl->pageNumber = page;
-  return read_tiff_metadata (fmtHndl, tiffpar, group, tag, type);
-}
-
-char* tiffReadMetaDataAsTextProc ( FormatHandle *fmtHndl ) {
-  if (fmtHndl == NULL) return NULL;
-  if (fmtHndl->internalParams == NULL) return NULL;
-  TiffParams *tiffpar = (TiffParams *) fmtHndl->internalParams;
-  return read_text_tiff_metadata ( fmtHndl, tiffpar );
-}
-
 bim::uint tiffAppendMetadataProc (FormatHandle *fmtHndl, TagMap *hash ) {
   if (fmtHndl == NULL) return 1;
   if (fmtHndl->internalParams == NULL) return 1;
   if (!hash) return 1;
   return tiff_append_metadata(fmtHndl, hash );
 }
-
 
 
 //----------------------------------------------------------------------------
@@ -1042,9 +1016,9 @@ FormatHeader tiffHeader = {
   NULL, //ReadImagePreviewProc
   
   // meta data
-  tiffReadMetaDataProc, //ReadMetaDataProc
-  tiffAddMetaDataProc,  //AddMetaDataProc
-  tiffReadMetaDataAsTextProc, //ReadMetaDataAsTextProc
+  NULL, //ReadMetaDataProc
+  NULL, //AddMetaDataProc
+  NULL, //ReadMetaDataAsTextProc
   tiffAppendMetadataProc, //AppendMetaDataProc
 
   NULL,

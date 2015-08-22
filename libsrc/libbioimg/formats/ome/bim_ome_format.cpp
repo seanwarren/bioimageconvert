@@ -156,9 +156,7 @@ void omeCloseImageProc (FormatHandle *fmtHndl) {
   if (fmtHndl->io_mode == IO_WRITE) {
     omeWriteImageEnd ( fmtHndl );
     omeWriteOmeEnd   ( fmtHndl );
-  } else {    
-    clearMetaTags( &fmtHndl->metaData );
-  }  
+  } 
 
   xclose ( fmtHndl );
 
@@ -217,33 +215,6 @@ ImageInfo omeGetImageInfoProc ( FormatHandle *fmtHndl, bim::uint page_num )
   return omePar->i;
   page_num;
 }
-
-//----------------------------------------------------------------------------
-// METADATA
-//----------------------------------------------------------------------------
-
-bim::uint omeReadMetaDataProc (FormatHandle *fmtHndl, bim::uint page, int group, int tag, int type)
-{
-  if (fmtHndl == NULL) return 1;
-  //return read_ome_metadata (fmtHndl, group, tag, type);
-  return 0;
-  page;
-}
-
-char* omeReadMetaDataAsTextProc ( FormatHandle *fmtHndl )
-{
-  if (fmtHndl == NULL) return NULL;
-
-  //return read_text_ome_metadata ( fmtHndl );
-  return 0;
-}
-
-bim::uint omeAddMetaDataProc (FormatHandle *fmtHndl)
-{
-  fmtHndl=fmtHndl;
-  return 1;
-}
-
 
 //----------------------------------------------------------------------------
 // READ/WRITE
@@ -329,9 +300,9 @@ FormatHeader omeHeader = {
   NULL, //dimJpegReadImagePreviewProc, //ReadImagePreviewProc
   
   // meta data
-  omeReadMetaDataProc, //ReadMetaDataProc
-  omeAddMetaDataProc,  //AddMetaDataProc
-  omeReadMetaDataAsTextProc, //ReadMetaDataAsTextProc
+  NULL, //ReadMetaDataProc
+  NULL, //AddMetaDataProc
+  NULL, //ReadMetaDataAsTextProc
 
   NULL,
   NULL,

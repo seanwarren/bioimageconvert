@@ -92,9 +92,9 @@ public:
   void writeImage ( BIM_STREAM_CLASS *stream, ReadProc readProc, WriteProc writeProc, FlushProc flushProc, 
                     SeekProc seekProc, SizeProc sizeProc, TellProc  tellProc,  
                     EofProc eofProc, CloseProc closeProc, const bim::Filename fileName, 
-                    ImageBitmap *bmp, const char *formatName, int quality, TagList *meta, const char *options = NULL );  
+                    ImageBitmap *bmp, const char *formatName, int quality, TagMap *meta=NULL, const char *options = NULL);
   void writeImage (const bim::Filename fileName, ImageBitmap *bmp, const char *formatName, 
-                   int quality, TagList *meta );
+      int quality, TagMap *meta);
   void writeImage (const bim::Filename fileName, ImageBitmap *bmp, const char *formatName, int quality);
   void writeImage (const bim::Filename fileName, ImageBitmap *bmp, const char *formatName, const char *options = NULL);
   void writeImage (const bim::Filename fileName, Image &img, const char *formatName, const char *options = NULL) {
@@ -151,8 +151,7 @@ public:
   int   sessionGetNumberOfPages ();
   ImageInfo sessionGetInfo () const { return this->info; }
   int   sessionGetCurrentPage ();
-  char* sessionGetTextMetaData  ();
-  TagList* sessionReadMetaData ( bim::uint page, int group, int tag, int type);
+  //TagList* sessionReadMetaData ( bim::uint page, int group, int tag, int type);
   int   sessionReadImage  ( ImageBitmap *bmp, bim::uint page );
   int   sessionReadImage  ( Image &img, bim::uint page ) { return sessionReadImage(img.imageBitmap(), page); }
 

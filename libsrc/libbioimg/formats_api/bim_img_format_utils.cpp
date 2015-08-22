@@ -258,8 +258,7 @@ FormatHandle bim::initFormatHandle()
   tp.quality = 0;
   tp.compression = 0;
   tp.order = 0;
-  tp.metaData.count = 0;
-  tp.metaData.tags = NULL;
+  tp.metaData = NULL;
   tp.roiX = 0;
   tp.roiY = 0;
   tp.roiW = 0;

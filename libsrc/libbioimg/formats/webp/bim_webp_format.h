@@ -26,6 +26,8 @@ extern "C" {
     bim::FormatHeader* webpGetFormatHeader(void);
 }
 
+struct WebPMux;
+
 namespace bim {
     //----------------------------------------------------------------------------
     // internal format defs
@@ -38,6 +40,15 @@ namespace bim {
 
         ImageInfo i;
         std::fstream *file;
+
+        std::vector<char> buffer_icc;
+        std::vector<char> buffer_xmp;
+        std::vector<char> buffer_iptc;
+        std::vector<char> buffer_exif;
+
+        WebPMux* mux;
+        std::vector<unsigned char> buffer_file;
+        void ensure_mux();
     };
 
 } // namespace bim

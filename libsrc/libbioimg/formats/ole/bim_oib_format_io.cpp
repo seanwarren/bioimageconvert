@@ -252,9 +252,9 @@ int oibGetImageInfo( FormatHandle *fmtHndl ) {
   TagMap oib_info_hash;
   oib_info_hash.parse_ini( oib_info );
 
-  std::string MainFileName = std::string() + "/" + oib_info_hash["OibSaveInfo/MainFileName"];
-  par->oifFolderName = oib_info_hash["OibSaveInfo/ThumbFolderName"];
-  par->oifFileName = oib_info_hash[ "OibSaveInfo/" + oib_info_hash["OibSaveInfo/MainFileName"] ];
+  std::string MainFileName = std::string() + "/" + oib_info_hash.get_value("OibSaveInfo/MainFileName");
+  par->oifFolderName = oib_info_hash.get_value("OibSaveInfo/ThumbFolderName");
+  par->oifFileName = oib_info_hash.get_value("OibSaveInfo/" + oib_info_hash.get_value("OibSaveInfo/MainFileName"));
   if (par->oifFileName.size()>4) par->oifFileName.resize( par->oifFileName.size()-4 );
   par->oib_info_hash = oib_info_hash;
 
@@ -598,12 +598,12 @@ bim::uint oib_append_metadata (FormatHandle *fmtHndl, TagMap *hash ) {
   }
 
   // include all other tags from the hash into custom tag location
-  std::map< std::string, std::string >::const_iterator it = par->oif_metadata_hash.begin();
+  bim::TagMap::const_iterator it = par->oif_metadata_hash.begin();
   while (it != par->oif_metadata_hash.end() ) {
     xstring key = it->first;
     if ( !key.startsWith("Sequential Group") && 
          !key.startsWith("ProfileSaveInfo") )
-      hash->set_value( xstring(bim::CUSTOM_TAGS_PREFIX)+it->first, it->second );
+         hash->set_value(xstring(bim::CUSTOM_TAGS_PREFIX) + key, par->oif_metadata_hash.get_value(key));
     ++it;
   }
 

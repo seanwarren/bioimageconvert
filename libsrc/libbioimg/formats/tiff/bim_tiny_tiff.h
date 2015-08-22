@@ -34,14 +34,14 @@ static const int tag_size_bytes[19] = { 1, 1, 1, 2, 4, 8, 1, 1, 2, 4, 8, 4, 8, 0
 
 // headers must be POD-types, they are loaded from disk as is!
 typedef struct {
-  uint16 magic;     // 0x4D4D constan 
+  uint16 magic;     // 0x4949 for little endian or 0x4D4D for big endian
   uint16 version;   // 0x002A version = standard TIFF
   uint32 diroffset; // offset to first directory
 } Header;
 
 // headers must be POD-types, they are loaded from disk as is!
 typedef struct {
-  uint16 magic;     // 0x4D4D constan 
+  uint16 magic;     // 0x4949 for little endian or 0x4D4D for big endian
   uint16 version;   // 0x002B version = BigTIFF
   uint16 bytesize;  // 0x0008 bytesize of offsets
   uint16 constant;  // 0x0000 constant

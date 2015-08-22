@@ -115,4 +115,53 @@ DECLARE_STR( STAGE_POSITION_TEMPLATE_Z, "stage_position/%d/z" )
 DECLARE_STR( CAMERA_SENSOR_X, "camera_sensor_x" )
 DECLARE_STR( CAMERA_SENSOR_Y, "camera_sensor_y" )
 
+// Color Profile
+DECLARE_STR( ICC_TAGS_PREFIX, "ColorProfile/" )
+DECLARE_STR( ICC_TAGS_DEFINITION, "ColorProfile/profile" )
+DECLARE_STR( ICC_TAGS_DEFINITION_EMBEDDED, "embedded_icc" )
+DECLARE_STR( ICC_TAGS_DEFINITION_SRGB, "sRGB" )
+
+DECLARE_STR( ICC_TAGS_COLORSPACE, "ColorProfile/color_space" )
+DECLARE_STR( ICC_TAGS_COLORSPACE_MULTICHANNEL, "MULTICHANNEL" )
+DECLARE_STR( ICC_TAGS_COLORSPACE_RGB,          "RGB" )
+DECLARE_STR( ICC_TAGS_COLORSPACE_XYZ,          "XYZ" )
+DECLARE_STR( ICC_TAGS_COLORSPACE_LAB,          "Lab" )
+DECLARE_STR( ICC_TAGS_COLORSPACE_LUV,          "Luv" )
+DECLARE_STR( ICC_TAGS_COLORSPACE_YCBCR,        "YCbr" )
+DECLARE_STR( ICC_TAGS_COLORSPACE_YXY,          "Yxy" )
+DECLARE_STR( ICC_TAGS_COLORSPACE_GRAY,         "GRAY" )
+DECLARE_STR( ICC_TAGS_COLORSPACE_HSV,          "HSV" )
+DECLARE_STR( ICC_TAGS_COLORSPACE_HSL,          "HLS" )
+DECLARE_STR( ICC_TAGS_COLORSPACE_CMYK,         "CMYK" )
+DECLARE_STR( ICC_TAGS_COLORSPACE_CMY,          "CMY" )
+
+DECLARE_STR( ICC_TAGS_VERSION,     "ColorProfile/version" )
+DECLARE_STR( ICC_TAGS_DESCRIPTION, "ColorProfile/description" )
+DECLARE_STR( ICC_TAGS_SIZE,        "ColorProfile/size" )
+
+// Geo
+DECLARE_STR( GEO_TAGS_PREFIX, "Geo/" )
+
+// raw tag definitions
+
+DECLARE_STR( RAW_TAGS_OMEXML,    "raw/ome_xml" )
+DECLARE_STR( RAW_TYPES_OMEXML,   "string,ome_xml" )
+
+DECLARE_STR( RAW_TAGS_GEOTIFF,   "raw/geotiff" )
+DECLARE_STR( RAW_TYPES_GEOTIFF,   "binary,geotiff" )
+
+DECLARE_STR( RAW_TAGS_ICC,       "raw/icc_profile" )
+DECLARE_STR( RAW_TYPES_ICC,      "binary,color_profile" )
+
+DECLARE_STR( RAW_TAGS_XMP,       "raw/xmp" )
+DECLARE_STR( RAW_TYPES_XMP,      "string,xmp" )
+
+DECLARE_STR( RAW_TAGS_IPTC,      "raw/iptc" )
+DECLARE_STR( RAW_TYPES_IPTC,     "binary,iptc" )
+
+DECLARE_STR( RAW_TAGS_PHOTOSHOP,  "raw/photoshop" )
+DECLARE_STR( RAW_TYPES_PHOTOSHOP, "binary,photoshop" )
+
+DECLARE_STR( RAW_TAGS_EXIF,      "raw/exif" ) // TIFF image block with EXIF and GPS IFDs
+DECLARE_STR( RAW_TYPES_EXIF,     "binary,exif" )
 

@@ -23,6 +23,7 @@
 #include <xstring.h>
 #include <tag_map.h>
 #include <bim_metatags.h>
+#include <bim_format_misc.h>
 
 #include "bim_nifti_format.h"
 
@@ -324,6 +325,7 @@ char* niftiReadMetaDataAsTextProc ( FormatHandle *fmtHndl ) {
 // READ/WRITE
 //----------------------------------------------------------------------------
 
+/*
 template <typename T>
 void copy_channel(bim::uint64 W, bim::uint64 H, int samples, int sample, const void *in, void *out) {
     T *raw = (T *) in;
@@ -336,6 +338,7 @@ void copy_channel(bim::uint64 W, bim::uint64 H, int samples, int sample, const v
         *pp = *rr;
     } // for x
 }
+*/
 
 template <typename T>
 void scale_channel(bim::uint64 W, bim::uint64 H, const void *in, nifti_1_header *h) {
@@ -374,7 +377,7 @@ bim::uint niftiReadImageProc  ( FormatHandle *fmtHndl, bim::uint page ) {
         // in multi-channel interleaved case read into appropriate channels
         for (int s = 0; s < info->samples; ++s) {
             if (bmp->i.depth == 8 && bmp->i.pixelType == FMT_UNSIGNED)
-                copy_channel<uint8>(info->width, info->height, info->samples, s, buf + offset, bmp->bits[s]);
+                copy_sample_interleaved_to_planar<uint8>(info->width, info->height, info->samples, s, buf + offset, bmp->bits[s]);
         } // for sample
     }
 
@@ -502,6 +505,8 @@ void nifti_parse_extension_dicom(TagMap *hash, nifti1_extension *ex) {
 
 }
 
+#define XYZT_TO_SPECTRAL(xyzt)        ( (xyzt) & 0xe0 )
+
 bim::uint nifti_append_metadata (FormatHandle *fmtHndl, TagMap *hash ) {
     if (fmtHndl == NULL) return 1;
     if (isCustomReading(fmtHndl)) return 1;
@@ -520,41 +525,33 @@ bim::uint nifti_append_metadata (FormatHandle *fmtHndl, TagMap *hash ) {
     hash->set_value(bim::PIXEL_RESOLUTION_Z, h->pixdim[3]);
     hash->set_value(bim::PIXEL_RESOLUTION_T, h->pixdim[4]);
 
-    if (h->xyzt_units | NIFTI_UNITS_METER) {
+    if (XYZT_TO_SPACE(h->xyzt_units) == NIFTI_UNITS_METER) {
         hash->set_value(bim::PIXEL_RESOLUTION_UNIT_X, "m");
         hash->set_value(bim::PIXEL_RESOLUTION_UNIT_Y, "m");
         hash->set_value(bim::PIXEL_RESOLUTION_UNIT_Z, "m");
-    } else if (h->xyzt_units | NIFTI_UNITS_MICRON) {
+    } else if (XYZT_TO_SPACE(h->xyzt_units) == NIFTI_UNITS_MICRON) {
         hash->set_value(bim::PIXEL_RESOLUTION_UNIT_X, "um");
         hash->set_value(bim::PIXEL_RESOLUTION_UNIT_Y, "um");
         hash->set_value(bim::PIXEL_RESOLUTION_UNIT_Z, "um");
-    } else {
+    } else if (XYZT_TO_SPACE(h->xyzt_units) == NIFTI_UNITS_MM) {
         hash->set_value(bim::PIXEL_RESOLUTION_UNIT_X, "mm");
         hash->set_value(bim::PIXEL_RESOLUTION_UNIT_Y, "mm");
         hash->set_value(bim::PIXEL_RESOLUTION_UNIT_Z, "mm");
     }
 
-    if (h->xyzt_units | NIFTI_UNITS_MSEC) {
+    if (XYZT_TO_TIME(h->xyzt_units) == NIFTI_UNITS_MSEC) {
         hash->set_value(bim::PIXEL_RESOLUTION_UNIT_T, "ms");
-    } else if (h->xyzt_units | NIFTI_UNITS_USEC) {
+    } else if (XYZT_TO_TIME(h->xyzt_units) == NIFTI_UNITS_USEC) {
         hash->set_value(bim::PIXEL_RESOLUTION_UNIT_T, "us");
-    } else {
+    } else if (XYZT_TO_TIME(h->xyzt_units) == NIFTI_UNITS_SEC) {
         hash->set_value(bim::PIXEL_RESOLUTION_UNIT_T, "s");
     }
 
-    if (h->xyzt_units | NIFTI_UNITS_MSEC) {
-        hash->set_value(bim::PIXEL_RESOLUTION_UNIT_T, "ms");
-    } else if (h->xyzt_units | NIFTI_UNITS_USEC) {
-        hash->set_value(bim::PIXEL_RESOLUTION_UNIT_T, "us");
-    } else {
-        hash->set_value(bim::PIXEL_RESOLUTION_UNIT_T, "s");
-    }
-
-    if (h->xyzt_units | NIFTI_UNITS_PPM) {
+    if (XYZT_TO_TIME(h->xyzt_units) == NIFTI_UNITS_PPM) {
         hash->set_value(bim::PIXEL_RESOLUTION_UNIT_C, "ppm");
-    } else if (h->xyzt_units | NIFTI_UNITS_RADS) {
+    } else if (XYZT_TO_TIME(h->xyzt_units) == NIFTI_UNITS_RADS) {
         hash->set_value(bim::PIXEL_RESOLUTION_UNIT_C, "rads");
-    } else {
+    } else if (XYZT_TO_TIME(h->xyzt_units) == NIFTI_UNITS_HZ) {
         hash->set_value(bim::PIXEL_RESOLUTION_UNIT_C, "hz");
     }
 

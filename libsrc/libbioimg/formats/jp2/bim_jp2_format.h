@@ -58,6 +58,7 @@ namespace bim {
         void close();
 
         std::vector<bim::xstring> comments;
+        std::vector<char> buffer_icc;
     };
 
 } // namespace bim

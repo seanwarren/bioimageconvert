@@ -25,12 +25,22 @@
 #include <tag_map.h>
 #include <bim_metatags.h>
 #include <bim_exiv_parse.h>
+#include <bim_lcms_parse.h>
+#include <bim_format_misc.h>
 
 #include "bim_jxr_format.h"
 
 #include <JXRGlue.h>
+#include <tiffio.h>
 
 using namespace bim;
+
+// following two tags are exported directly from JXR library and are only useful when writing JXR file
+#define JXR_TAGS_EXIF "raw/jxr_exif"
+#define JXR_TYPES_EXIF "binary,jxr_exif"
+
+#define JXR_TAGS_EXIFGPS "raw/jxr_exif_gps"
+#define JXR_TYPES_EXIFGPS "binary,jxr_exif_gps"
 
 //****************************************************************************
 // Misc
@@ -228,6 +238,78 @@ if (error_code < 0) { \
     throw error_code; \
 }
 
+static ERR ReadBuffer(WMPStream* stream, unsigned count, unsigned offset, std::vector<char> &buffer) {
+    buffer.resize(count);
+    if (WMP_errSuccess == stream->SetPos(stream, offset)) {
+        if (WMP_errSuccess == stream->Read(stream, &buffer[0], count)) {
+            return WMP_errSuccess;
+        }
+    }
+    return WMP_errFileIO;
+}
+
+// Most metadata is red by our patched EXIV2: XMP, Exif, Exif-GPS, IPTC
+// Here we read ICC profile since it is not red by EXIV2
+static ERR ReadMetadata(bim::JXRParams *par) {
+    ERR error_code = 0;
+    size_t currentPos = 0;
+
+    WMPStream *stream = par->pDecoder->pStream;
+    WmpDEMisc *wmiDEMisc = &par->pDecoder->WMP.wmiDEMisc;
+
+    try {
+        // save current position
+        error_code = stream->GetPos(stream, &currentPos);
+        JXR_CHECK(error_code);
+
+        // ICC profile
+        if (0 != wmiDEMisc->uColorProfileByteCount) {
+            error_code = ReadBuffer(stream, wmiDEMisc->uColorProfileByteCount, wmiDEMisc->uColorProfileOffset, par->buffer_icc);
+            JXR_CHECK(error_code);
+        }
+        
+        // XMP metadata
+        if (0 != wmiDEMisc->uXMPMetadataByteCount) {
+        error_code = ReadBuffer(stream, wmiDEMisc->uXMPMetadataByteCount, wmiDEMisc->uXMPMetadataOffset, par->buffer_xmp);
+        JXR_CHECK(error_code);
+        }
+
+        // IPTC metadata
+        if (0 != wmiDEMisc->uIPTCNAAMetadataByteCount) {
+        error_code = ReadBuffer(stream, wmiDEMisc->uIPTCNAAMetadataByteCount, wmiDEMisc->uIPTCNAAMetadataOffset, par->buffer_iptc);
+        JXR_CHECK(error_code);
+        }
+
+        // Photoshop metadata
+        if (0 != wmiDEMisc->uPhotoshopMetadataByteCount) {
+        error_code = ReadBuffer(stream, wmiDEMisc->uPhotoshopMetadataByteCount, wmiDEMisc->uPhotoshopMetadataOffset, par->buffer_photoshop);
+        JXR_CHECK(error_code);
+        }
+        
+        // Exif metadata
+        if (0 != wmiDEMisc->uEXIFMetadataByteCount) {
+            error_code = ReadBuffer(stream, wmiDEMisc->uEXIFMetadataByteCount, wmiDEMisc->uEXIFMetadataOffset, par->buffer_exif);
+            par->offset_exif = wmiDEMisc->uEXIFMetadataOffset;
+            JXR_CHECK(error_code);
+        }
+
+        // Exif-GPS metadata
+        if (0 != wmiDEMisc->uGPSInfoMetadataByteCount) {
+            error_code = ReadBuffer(stream, wmiDEMisc->uGPSInfoMetadataByteCount, wmiDEMisc->uGPSInfoMetadataOffset, par->buffer_exifgps);
+            par->offset_exifgps = wmiDEMisc->uGPSInfoMetadataOffset;
+            JXR_CHECK(error_code);
+        }
+
+        // restore initial position
+        error_code = stream->SetPos(stream, currentPos);
+        JXR_CHECK(error_code);
+    }
+    catch (...) {
+        if (currentPos) stream->SetPos(stream, currentPos);
+        return error_code;
+    }
+}
+
 void jxrGetImageInfo(FormatHandle *fmtHndl) {
     if (fmtHndl == NULL) return;
     if (fmtHndl->internalParams == NULL) return;
@@ -323,6 +405,10 @@ void jxrGetImageInfo(FormatHandle *fmtHndl) {
         info->number_dims = 3;
     else
         info->number_dims = 2;
+
+    // have to read metadata before reading image pixels and rewind the stream
+    error_code = ReadMetadata(par);
+    JXR_CHECK(error_code);
 }
 
 void jxrCloseImageProc(FormatHandle *fmtHndl) {
@@ -374,6 +460,133 @@ ImageInfo jxrGetImageInfoProc(FormatHandle *fmtHndl, bim::uint page_num) {
     fmtHndl->pageNumber = page_num;
     bim::JXRParams *par = (bim::JXRParams *) fmtHndl->internalParams;
     return par->i;
+}
+
+
+//----------------------------------------------------------------------------
+// Metadata
+//----------------------------------------------------------------------------
+
+// jxrlib exports EXIF IFD only and with offsets relative to the current file
+// typically one needs to have the full TIFF file with offsets relative to its 
+// beginning and also containing endianness info, etc...
+// here we group EXIF and EXIF-GPS IFDs into one minimal TIFF stream updating 
+// offsets to proper positions
+
+const int tiff_tag_sizes[19] = { 1, 1, 1, 2, 4, 8, 1, 1, 2, 4, 8, 4, 8, 0, 0, 0, 8, 8, 8 };
+
+#define BIM_EXIF_NUM_TAGS 2
+
+#pragma pack(push, 1)
+typedef struct {
+    bim::uint16 tag;    // tag identifying information for entry
+    bim::uint16 type;   // data type of entry (for BigTIFF 17 types are defined, 0-13, 16-18)
+    bim::uint32 count;  // count of elements for entry, in TIFF stored as uint32
+    bim::uint32 offset; // data itself (if <= 64-bits) or offset to data for entry, in TIFF stored as uint32
+} ifd_entry;
+
+typedef struct {
+    bim::uint16 magic;     // 0x4D4D constan 
+    bim::uint16 version;   // 0x002A version = standard TIFF
+    bim::uint32 diroffset; // offset to first directory
+    bim::uint16 count;     // number of directory entries, uint16 in TIFF and uint64 in BigTIFF
+    ifd_entry entries[BIM_EXIF_NUM_TAGS];
+    bim::uint32 next;  // offset to next directory or zero, uint32 in TIFF and uint64 in BigTIFF
+} tiff_buffer;
+#pragma pack(pop)
+
+const void parse_ifd_update_offsets(unsigned char *buf, unsigned int old_offset, unsigned int new_offset) {
+    bim::uint16 count = *(bim::uint16*) buf;
+    buf += sizeof(bim::uint16);
+    for (int i = 0; i < count; ++i) {
+        ifd_entry *e = (ifd_entry*)buf;
+        if (e->count * tiff_tag_sizes[e->type] > 4) {
+            // if offset is stored in the offset field, then update
+            e->offset = e->offset - old_offset + new_offset;
+        }
+        buf += sizeof(ifd_entry);
+    }
+}
+
+const void jxr_create_proper_exif(FormatHandle *fmtHndl, TagMap *hash) {    
+    bim::JXRParams *par = (bim::JXRParams *) fmtHndl->internalParams;
+    if (par->buffer_exif.size() == 0 && par->buffer_exifgps.size() == 0) return;
+       
+    unsigned int bufsz = sizeof(tiff_buffer);
+    unsigned int offset_exif_new = 0;
+    unsigned int offset_exifgps_new = 0;
+    
+    if (par->buffer_exif.size() > 0) {
+        bufsz += par->buffer_exif.size();
+        offset_exif_new = sizeof(tiff_buffer);
+        parse_ifd_update_offsets((unsigned char *) &par->buffer_exif[0], par->offset_exif, offset_exif_new);
+    }
+
+    if (par->buffer_exifgps.size() > 0) {
+        int align = (bufsz % 2) ? 1 : 0; // offset must be even, word aligned
+        offset_exifgps_new = bufsz + align;
+        bufsz += par->buffer_exifgps.size() + align;
+        parse_ifd_update_offsets((unsigned char *) &par->buffer_exifgps[0], par->offset_exifgps, offset_exifgps_new);
+    }
+
+    // create mini TIFF stream
+    tiff_buffer header;
+    header.magic = 0x4949;
+    header.version = 0x002A;
+    header.diroffset = 8;
+    header.count = BIM_EXIF_NUM_TAGS;
+    header.entries[0].tag = TIFFTAG_EXIFIFD;
+    header.entries[0].type = TIFF_LONG;
+    header.entries[0].count = 1;
+    header.entries[0].offset = offset_exif_new;
+    header.entries[1].tag = TIFFTAG_GPSIFD;
+    header.entries[1].type = TIFF_LONG;
+    header.entries[1].count = 1;
+    header.entries[1].offset = offset_exifgps_new;
+    header.next = 0;
+
+    std::vector<char> buffer(bufsz, 0);
+    memcpy(&buffer[0], &header, sizeof(header));
+    
+    if (par->buffer_exif.size() > 0)
+        memcpy(&buffer[0] + offset_exif_new, &par->buffer_exif[0], par->buffer_exif.size());
+
+    if (par->buffer_exifgps.size() > 0)
+        memcpy(&buffer[0] + offset_exifgps_new, &par->buffer_exifgps[0], par->buffer_exifgps.size());
+
+    hash->set_value(bim::RAW_TAGS_EXIF, buffer, bim::RAW_TYPES_EXIF);
+}
+
+bim::uint jxr_append_metadata(FormatHandle *fmtHndl, TagMap *hash) {
+    if (fmtHndl == NULL) return 1;
+    if (!hash) return 1;
+    if (isCustomReading(fmtHndl)) return 1;
+    bim::JXRParams *par = (bim::JXRParams *) fmtHndl->internalParams;
+
+    if (par->buffer_icc.size()>0)       
+        hash->set_value(bim::RAW_TAGS_ICC, par->buffer_icc, bim::RAW_TYPES_ICC);
+    if (par->buffer_xmp.size()>0)       
+        hash->set_value(bim::RAW_TAGS_XMP, par->buffer_xmp, bim::RAW_TYPES_XMP);
+    if (par->buffer_iptc.size()>0)      
+        hash->set_value(bim::RAW_TAGS_IPTC, par->buffer_iptc, bim::RAW_TYPES_IPTC);
+    if (par->buffer_photoshop.size()>0) 
+        hash->set_value(bim::RAW_TAGS_PHOTOSHOP, par->buffer_photoshop, bim::RAW_TYPES_PHOTOSHOP);
+    
+    jxr_create_proper_exif(fmtHndl, hash); // parse and write proper EXIF block
+
+    // these blocks contain improper offsets and probably not really suitable for writing back directly
+    /*if (par->buffer_exif.size()>0)
+        hash->set_value(JXR_TAGS_EXIF, par->buffer_exif, JXR_TYPES_EXIF);
+    if (par->buffer_exifgps.size()>0)
+        hash->set_value(JXR_TAGS_EXIFGPS, par->buffer_exifgps, JXR_TYPES_EXIFGPS);*/
+
+    // use LCMS2 to parse color profile
+    lcms_append_metadata(fmtHndl, hash);
+
+    // use EXIV2 to read metadata
+    exiv_append_metadata(fmtHndl, hash);
+
+    return 0;
 }
 
 //----------------------------------------------------------------------------
@@ -459,26 +672,6 @@ bool getOutputPixelFormat(const PKPixelFormatGUID &guid_format_in, PKPixelFormat
     return false;
 }
 
-template <typename T>
-void copy_channel(bim::uint64 W, bim::uint64 H, int samples, int sample, const void *in, void *out, int stride = 0 ) {
-    T *raw = (T *)in + sample;
-    T *p = (T *)out;
-    int step = samples;
-    size_t inrowsz = stride == 0 ? samples*W : stride;
-    size_t ourowsz = W;
-
-    #pragma omp parallel for default(shared) BIM_OMP_SCHEDULE if (W > BIM_OMP_FOR2 && H > BIM_OMP_FOR2)
-    for (bim::int64 y = 0; y < H; ++y) {
-        T *lin = raw + y*inrowsz;
-        T *lou = p + y*ourowsz;
-        for (bim::int64 x = 0; x < W; ++x) {
-            *lou = *lin;
-            lou++;
-            lin += step;
-        } // for x
-    } // for y
-}
-
 bim::uint jxrReadImageProc(FormatHandle *fmtHndl, bim::uint page) {
     if (fmtHndl == NULL) return 1;
     fmtHndl->pageNumber = page;
@@ -495,7 +688,7 @@ bim::uint jxrReadImageProc(FormatHandle *fmtHndl, bim::uint page) {
     PKFormatConverter *pConverter = NULL;
     unsigned char *pb = NULL;
     const PKRect rect = { 0, 0, info->width, info->height };
-
+   
     try {
         PKPixelFormatGUID guid_format_in;
         error_code = par->pDecoder->GetPixelFormat(par->pDecoder, &guid_format_in);
@@ -518,11 +711,11 @@ bim::uint jxrReadImageProc(FormatHandle *fmtHndl, bim::uint page) {
             JXR_CHECK(error_code);
             for (int s = 0; s < info->samples; ++s) {
                 if (info->depth == 8)
-                    copy_channel<bim::uint8>(info->width, info->height, info->samples, s, &buffer[0], bmp->bits[s]);
+                    copy_sample_interleaved_to_planar<bim::uint8>(info->width, info->height, info->samples, s, &buffer[0], bmp->bits[s]);
                 else if (info->depth == 16)
-                    copy_channel<bim::uint16>(info->width, info->height, info->samples, s, &buffer[0], bmp->bits[s]);
+                    copy_sample_interleaved_to_planar<bim::uint16>(info->width, info->height, info->samples, s, &buffer[0], bmp->bits[s]);
                 else if (info->depth == 32)
-                    copy_channel<bim::uint32>(info->width, info->height, info->samples, s, &buffer[0], bmp->bits[s]);
+                    copy_sample_interleaved_to_planar<bim::uint32>(info->width, info->height, info->samples, s, &buffer[0], bmp->bits[s]);
             } // for sample
         } else { // we need to use the conversion API for complex types
             // allocate the pixel format converter
@@ -562,11 +755,11 @@ bim::uint jxrReadImageProc(FormatHandle *fmtHndl, bim::uint page) {
 
             for (int s = 0; s < info->samples; ++s) {
                 if (info->depth == 8)
-                    copy_channel<bim::uint8>(info->width, info->height, info->samples, s, pb, bmp->bits[s], stride);
+                    copy_sample_interleaved_to_planar<bim::uint8>(info->width, info->height, info->samples, s, pb, bmp->bits[s], stride);
                 else if (info->depth == 16)
-                    copy_channel<bim::uint16>(info->width, info->height, info->samples, s, pb, bmp->bits[s], stride);
+                    copy_sample_interleaved_to_planar<bim::uint16>(info->width, info->height, info->samples, s, pb, bmp->bits[s], stride);
                 else if (info->depth == 32)
-                    copy_channel<bim::uint32>(info->width, info->height, info->samples, s, pb, bmp->bits[s], stride);
+                    copy_sample_interleaved_to_planar<bim::uint32>(info->width, info->height, info->samples, s, pb, bmp->bits[s], stride);
             } // for sample
 
             PKFreeAligned((void **)&pb);
@@ -658,10 +851,11 @@ int DPK_QPS_32f[11][6] = {
 };
 
 static void WriteTag(TagMap *hash, const std::string &key, DPKPROPVARIANT & varDst, DPKVARTYPE vt = DPKVT_EMPTY) {
+    if (!hash->hasKey(key)) return;
     varDst.vt = vt;
     switch (vt) {
     case DPKVT_LPSTR:
-        varDst.VT.pszVal = (char *) hash->get_value(key).c_str();
+        varDst.VT.pszVal = (char *) hash->get_value_bin(key);
         break;
     case DPKVT_UI2:
         varDst.VT.uiVal = hash->get_value_int(key, 0);
@@ -677,6 +871,7 @@ static void WriteTag(TagMap *hash, const std::string &key, DPKPROPVARIANT & varD
 static ERR WriteDescriptiveMetadata(PKImageEncode *pEncoder, TagMap *hash) {
     ERR error_code = 0;		// error code as returned by the interface
     DESCRIPTIVEMETADATA DescMetadata;
+    memset(&DescMetadata, 0, sizeof(DESCRIPTIVEMETADATA));
 
     // fill the DESCRIPTIVEMETADATA structure (use pointers to arrays when needed)
     WriteTag(hash, "Exif/Image/ImageDescription", DescMetadata.pvarImageDescription, DPKVT_LPSTR);
@@ -712,55 +907,43 @@ static ERR WriteMetadata(PKImageEncode *pEncoder, ImageInfo *info, TagMap *hash)
         JXR_CHECK(error_code);
 
         // write ICC profile
-        /*
-        FIICCPROFILE *iccProfile = FreeImage_GetICCProfile(dib);
-        if (iccProfile->data) {
-            error_code = pIE->SetColorContext(pIE, (U8*)iccProfile->data, iccProfile->size);
+        if (hash->hasKey(bim::RAW_TAGS_ICC) && hash->get_type(bim::RAW_TAGS_ICC) == bim::RAW_TYPES_ICC) {
+            error_code = pEncoder->SetColorContext(pEncoder, (U8*) hash->get_value_bin(bim::RAW_TAGS_ICC), hash->get_size(bim::RAW_TAGS_ICC));
             JXR_CHECK(error_code);
         }
 
         // write IPTC metadata
-        if (FreeImage_GetMetadataCount(FIMD_IPTC, dib)) {
-            // create a binary profile
-            if (write_iptc_profile(dib, &profile, &profile_size)) {
-                // write the profile
-                error_code = PKImageEncode_SetIPTCNAAMetadata_WMP(pIE, profile, profile_size);
-                JXR_CHECK(error_code);
-                // release profile
-                free(profile);
-                profile = NULL;
-            }
+        if (hash->hasKey(bim::RAW_TAGS_IPTC) && hash->get_type(bim::RAW_TAGS_IPTC) == bim::RAW_TYPES_IPTC) {
+            error_code = PKImageEncode_SetIPTCNAAMetadata_WMP(pEncoder, (U8*)hash->get_value_bin(bim::RAW_TAGS_IPTC), hash->get_size(bim::RAW_TAGS_IPTC));
+            JXR_CHECK(error_code);
         }
 
         // write XMP metadata
-        {
-            FITAG *tag_xmp = NULL;
-            if (FreeImage_GetMetadata(FIMD_XMP, dib, g_TagLib_XMPFieldName, &tag_xmp)) {
-                error_code = PKImageEncode_SetXMPMetadata_WMP(pIE, (BYTE*)FreeImage_GetTagValue(tag_xmp), FreeImage_GetTagLength(tag_xmp));
-                JXR_CHECK(error_code);
-            }
+        if (hash->hasKey(bim::RAW_TAGS_XMP) && hash->get_type(bim::RAW_TAGS_XMP) == bim::RAW_TYPES_XMP) {
+            error_code = PKImageEncode_SetXMPMetadata_WMP(pEncoder, (U8*)hash->get_value_bin(bim::RAW_TAGS_XMP), hash->get_size(bim::RAW_TAGS_XMP));
+            JXR_CHECK(error_code);
+        }
+
+        // write Photoshop metadata
+        if (hash->hasKey(bim::RAW_TAGS_PHOTOSHOP) && hash->get_type(bim::RAW_TAGS_PHOTOSHOP) == bim::RAW_TYPES_PHOTOSHOP) {
+            error_code = PKImageEncode_SetPhotoshopMetadata_WMP(pEncoder, (U8*)hash->get_value_bin(bim::RAW_TAGS_PHOTOSHOP), hash->get_size(bim::RAW_TAGS_PHOTOSHOP));
+            JXR_CHECK(error_code);
         }
 
         // write Exif metadata
-        {
-            if (tiff_get_ifd_profile(dib, FIMD_EXIF_EXIF, &profile, &profile_size)) {
-                error_code = PKImageEncode_SetEXIFMetadata_WMP(pIE, profile, profile_size);
-                JXR_CHECK(error_code);
-                // release profile
-                free(profile);
-                profile = NULL;
-            }
+        // dima: writing EXIF IFD requires proper offset of data elements, not sure how this is intended to work
+        // should offsets be relative to the beginning of the block and then are updated by the library?
+        // for now only look for a JXR version of this tag
+        /*
+        if (hash->hasKey(bim::RAW_TAGS_EXIF) && hash->get_type(bim::RAW_TAGS_EXIF) == bim::RAW_TYPES_EXIF) {
+            error_code = PKImageEncode_SetEXIFMetadata_WMP(pEncoder, (U8*)hash->get_value_bin(bim::RAW_TAGS_EXIF), hash->get_size(bim::RAW_TAGS_EXIF));
+            JXR_CHECK(error_code);
         }
 
         // write Exif GPS metadata
-        {
-            if (tiff_get_ifd_profile(dib, FIMD_EXIF_GPS, &profile, &profile_size)) {
-                error_code = PKImageEncode_SetGPSInfoMetadata_WMP(pIE, profile, profile_size);
-                JXR_CHECK(error_code);
-                // release profile
-                free(profile);
-                profile = NULL;
-            }
+        if (hash->hasKey(bim::RAW_TAGS_EXIFGPS) && hash->get_type(bim::RAW_TAGS_EXIFGPS) == bim::RAW_TYPES_EXIFGPS) {
+            error_code = PKImageEncode_SetGPSInfoMetadata_WMP(pEncoder, (U8*)hash->get_value_bin(bim::RAW_TAGS_EXIFGPS), hash->get_size(bim::RAW_TAGS_EXIFGPS));
+            JXR_CHECK(error_code);
         }
         */
 
@@ -769,26 +952,6 @@ static ERR WriteMetadata(PKImageEncode *pEncoder, ImageInfo *info, TagMap *hash)
         free(profile);
         return error_code;
     }
-}
-
-template <typename T>
-void copy_from_channel(bim::uint64 W, bim::uint64 H, int samples, int sample, const void *in, void *out) {
-    T *raw = (T *)in;
-    T *p = (T *)out + sample;
-    int step = samples;
-    size_t inrowsz = W;
-    size_t ourowsz = samples*W;
-
-    #pragma omp parallel for default(shared) BIM_OMP_SCHEDULE if (W > BIM_OMP_FOR2 && H > BIM_OMP_FOR2)
-    for (bim::int64 y = 0; y < H; ++y) {
-        T *lin = raw + y*inrowsz;
-        T *lou = p + y*ourowsz;
-        for (bim::int64 x = 0; x < W; ++x) {
-            *lou = *lin;
-            lin++;
-            lou += step;
-        } // for x
-    } // for y
 }
 
 PKPixelFormatGUID initGUIDPixelFormat(ImageInfo *info) {
@@ -976,8 +1139,8 @@ bim::uint jxrWriteImageProc(FormatHandle *fmtHndl) {
         par->pEncoder->SetSize(par->pEncoder, info->width, info->height);
         
         // write metadata
-        //error_code = WriteMetadata(par->pEncoder, info, hash);
-        //JXR_CHECK(error_code);
+        error_code = WriteMetadata(par->pEncoder, info, fmtHndl->metaData);
+        JXR_CHECK(error_code);
 
         // encode image
         int stride = getLineSizeInBytes(bmp) * info->samples;
@@ -987,11 +1150,11 @@ bim::uint jxrWriteImageProc(FormatHandle *fmtHndl) {
 
         for (int s = 0; s<info->samples; ++s) {
             if (info->depth == 8)
-                copy_from_channel<bim::uint8>(info->width, info->height, info->samples, s, bmp->bits[s], &buffer[0]);
+                copy_sample_planar_to_interleaved<bim::uint8>(info->width, info->height, info->samples, s, bmp->bits[s], &buffer[0]);
             else if (info->depth == 16)
-                copy_from_channel<bim::uint16>(info->width, info->height, info->samples, s, bmp->bits[s], &buffer[0]);
+                copy_sample_planar_to_interleaved<bim::uint16>(info->width, info->height, info->samples, s, bmp->bits[s], &buffer[0]);
             else if (info->depth == 32)
-                copy_from_channel<bim::uint32>(info->width, info->height, info->samples, s, bmp->bits[s], &buffer[0]);
+                copy_sample_planar_to_interleaved<bim::uint32>(info->width, info->height, info->samples, s, bmp->bits[s], &buffer[0]);
         } // for sample
         
         error_code = par->pEncoder->WritePixels(par->pEncoder, info->height, &buffer[0], stride);
@@ -1003,27 +1166,6 @@ bim::uint jxrWriteImageProc(FormatHandle *fmtHndl) {
         //if (par->pEncoder) par->pEncoder->Release(&par->pEncoder);
         return 1;
     }
-}
-
-//----------------------------------------------------------------------------
-// Metadata hash
-//----------------------------------------------------------------------------
-
-bim::uint jxr_append_metadata(FormatHandle *fmtHndl, TagMap *hash) {
-    if (fmtHndl == NULL) return 1;
-    if (!hash) return 1;
-    if (isCustomReading(fmtHndl)) return 1;
-    if (!fmtHndl->fileName) return 1;
-
-
-    // get metadata & ICC profile
-    //error_code = ReadMetadata(par->pDecoder, dib);
-    //JXR_CHECK(error_code);
-
-    // use EXIV2 to read metadata
-    exiv_append_metadata(fmtHndl, hash);
-
-    return 0;
 }
 
 //****************************************************************************

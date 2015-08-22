@@ -328,30 +328,6 @@ ImageInfo bioRadPicGetImageInfoProc ( FormatHandle *fmtHndl, bim::uint page_num 
 }
 
 //----------------------------------------------------------------------------
-// METADATA
-//----------------------------------------------------------------------------
-
-bim::uint bioRadPicAddMetaDataProc (FormatHandle *fmtHndl)
-{
-  fmtHndl=fmtHndl;
-  return 1;
-}
-
-
-bim::uint bioRadPicReadMetaDataProc (FormatHandle *fmtHndl, bim::uint page, int group, int tag, int type)
-{
-  if (fmtHndl == NULL) return 1;
-  page;
-  return read_biorad_metadata (fmtHndl, group, tag, type);
-}
-
-char* bioRadPicReadMetaDataAsTextProc ( FormatHandle *fmtHndl )
-{
-  return NULL;
-}
-
-
-//----------------------------------------------------------------------------
 // READ/WRITE
 //----------------------------------------------------------------------------
 
@@ -435,9 +411,9 @@ FormatHeader bioRadPicHeader = {
   NULL, //dimJpegReadImagePreviewProc, //ReadImagePreviewProc
   
   // meta data
-  bioRadPicReadMetaDataProc, //ReadMetaDataProc
-  bioRadPicAddMetaDataProc,  //AddMetaDataProc
-  bioRadPicReadMetaDataAsTextProc, //ReadMetaDataAsTextProc
+  NULL, //ReadMetaDataProc
+  NULL,  //AddMetaDataProc
+  NULL, //ReadMetaDataAsTextProc
   biorad_append_metadata, //AppendMetaDataProc
 
   NULL,

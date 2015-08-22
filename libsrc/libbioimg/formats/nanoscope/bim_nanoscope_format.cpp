@@ -271,27 +271,6 @@ ImageInfo nanoscopeGetImageInfoProc ( FormatHandle *fmtHndl, bim::uint  ) {
 }
 
 //----------------------------------------------------------------------------
-// METADATA
-//----------------------------------------------------------------------------
-
-bim::uint nanoscopeReadMetaDataProc (FormatHandle *fmtHndl, bim::uint , int group, int tag, int type) {
-  if (fmtHndl == NULL) return 1;
-  return read_nanoscope_metadata (fmtHndl, group, tag, type);
-}
-
-char* nanoscopeReadMetaDataAsTextProc ( FormatHandle *fmtHndl ) {
-  if (fmtHndl == NULL) return NULL;
-  return read_text_nanoscope_metadata ( fmtHndl );
-}
-
-bim::uint nanoscopeAddMetaDataProc (FormatHandle *) {
-  return 1;
-}
-
-
-
-
-//----------------------------------------------------------------------------
 // READ/WRITE
 //----------------------------------------------------------------------------
 
@@ -525,9 +504,9 @@ FormatHeader nanoscopeHeader = {
   NULL, //dimJpegReadImagePreviewProc, //ReadImagePreviewProc
   
   // meta data
-  nanoscopeReadMetaDataProc, //ReadMetaDataProc
-  nanoscopeAddMetaDataProc,  //AddMetaDataProc
-  nanoscopeReadMetaDataAsTextProc, //ReadMetaDataAsTextProc
+  NULL, //ReadMetaDataProc
+  NULL,  //AddMetaDataProc
+  NULL, //ReadMetaDataAsTextProc
   nanoscope_append_metadata, //AppendMetaDataProc
 
   NULL,

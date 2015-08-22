@@ -29,6 +29,7 @@ ver : 2
 #include <tag_map.h>
 #include <bim_metatags.h>
 #include <bim_exiv_parse.h>
+#include <bim_lcms_parse.h>
 
 #include "bim_jp2_format.h"
 
@@ -245,6 +246,13 @@ void jp2SetWriteParameters(FormatHandle *fmtHndl) {
 void jp2_read_comments(FormatHandle *fmtHndl) {
     if (fmtHndl == NULL) return;
     bim::JP2Params *par = (bim::JP2Params *) fmtHndl->internalParams;
+
+    // read ICC profile
+    if (par->image && par->image->icc_profile_len>0) {
+        //par->image->icc_profile_buf, par->image->icc_profile_len);
+        par->buffer_icc.resize(par->image->icc_profile_len);
+        memcpy(&par->buffer_icc[0], par->image->icc_profile_buf, par->image->icc_profile_len);
+    }
 
     // Read the main header of the codestream, and if necessary the JP2 boxes
     if (par->image && par->image->cp_comment) {
@@ -561,6 +569,16 @@ bim::uint jp2ReadImageTileProc(FormatHandle *fmtHndl, bim::uint page, bim::uint6
 // WRITE
 //----------------------------------------------------------------------------
 
+static void WriteMetadata(opj_image_t *image, TagMap *hash) {
+    if (!hash) return;
+
+    // write ICC profile
+    if (hash->hasKey(bim::RAW_TAGS_ICC) && hash->get_type(bim::RAW_TAGS_ICC) == bim::RAW_TYPES_ICC) {
+        image->icc_profile_len = hash->get_size(bim::RAW_TAGS_ICC);
+        image->icc_profile_buf = (OPJ_BYTE *) hash->get_value_bin(bim::RAW_TAGS_ICC);
+    }
+}
+
 template <typename T>
 void copy_from_component(bim::uint64 W, bim::uint64 H, int sample, const void *in, const opj_image_comp_t &out) {
     #pragma omp parallel for default(shared) BIM_OMP_SCHEDULE if (W > BIM_OMP_FOR2 && H > BIM_OMP_FOR2)
@@ -646,6 +664,8 @@ bim::uint jp2WriteImageProc(FormatHandle *fmtHndl) {
             throw "Could not create JP2 image buffer";
         }
 
+        WriteMetadata(image, fmtHndl->metaData);
+
         // set image offset and reference grid 
         image->x0 = parameters.image_offset_x0;
         image->y0 = parameters.image_offset_y0;
@@ -715,14 +735,20 @@ bim::uint jp2_append_metadata(FormatHandle *fmtHndl, TagMap *hash) {
         const size_t pos = par->comments[comidx].find('=');
         if (pos != std::string::npos) {
             std::vector<xstring> v = par->comments[comidx].split("=");
-            hash->append_tag("custom/" + v[0], v[1]);
+            hash->append_tag(bim::CUSTOM_TAGS_PREFIX + v[0], v[1]);
         } else {
-            hash->append_tag("custom/Comment", par->comments[comidx]);
+            hash->append_tag(bim::CUSTOM_TAGS_PREFIX+"Comment", par->comments[comidx]);
         }
     }
 
     // Append EXIV2 metadata
     exiv_append_metadata(fmtHndl, hash);
+
+    // append other metadata
+    if (par->buffer_icc.size() > 0) {
+        hash->set_value(bim::RAW_TAGS_ICC, par->buffer_icc, bim::RAW_TYPES_ICC);
+        lcms_append_metadata(fmtHndl, hash);
+    }
 
     return 0;
 }

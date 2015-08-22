@@ -25,6 +25,7 @@
 #include <tag_map.h>
 #include <bim_metatags.h>
 #include <bim_exiv_parse.h>
+#include <bim_lcms_parse.h>
 #include <bim_image.h>
 
 #include "xtiffio.h"
@@ -331,145 +332,8 @@ void init_image_palette( TIFF *tif, ImageInfo *info ) {
   } // if paletted
 }
 
-//****************************************************************************
-// META DATA
-//****************************************************************************
-
-bim::uint read_one_tag (FormatHandle *fmtHndl, TiffParams *tifParams, bim::uint16 tag) {
-  if (!areValidParams(fmtHndl, tifParams)) return 1;
-  TinyTiff::IFD *ifd = tifParams->ifds.getIfd(fmtHndl->pageNumber);
-  if (!ifd) return 1;
-
-  //if (fmtHndl->pageNumber >= tifParams->ifds.count()) { fmtHndl->pageNumber = 0; }
-  TIFF *tif = tifParams->tiff;
-
-  bim::uchar *buf=NULL; bim::uint16 buf_type; bim::uint64 buf_size;
-
-  if ( (tifParams->subType == tstStk) && (tag == 33629) ) {// stk 33629 got custom size 6*N
-    buf_type = TAG_LONG;
-    bim::uint64 count = ifd->tagCount(tag);
-    buf_size = ( count * 6 ) * TinyTiff::tag_size_bytes[buf_type];
-    ifd->readTagCustom(tag, buf_size, buf_type, (bim::uchar **) &buf);
-  }
-  else
-    ifd->readTag(tag, buf_size, buf_type, (bim::uchar **) &buf);
-
-
-
-  if (buf_size==0 || !buf) return 1;
-  else
-  {
-    // now add tag into structure
-    TagItem item;
-
-    item.tagGroup  = META_TIFF_TAG;
-    item.tagId     = tag;
-    item.tagType   = buf_type;
-    item.tagLength = (bim::uint32)( buf_size / TinyTiff::tag_size_bytes[buf_type]);
-    item.tagData   = buf;
-
-    addMetaTag( &fmtHndl->metaData, item);
-  }
-
-  return 0;
-}
-
-bim::uint read_tiff_metadata (FormatHandle *fmtHndl, TiffParams *tifParams, int group, int tag, int type)
-{
-  if (!areValidParams(fmtHndl, tifParams)) return 1;
-  if (group == META_BIORAD) return 1;
-  TinyTiff::IFD *ifd = tifParams->ifds.getIfd(fmtHndl->pageNumber);
-  if (!ifd) return 1;
-
-  // first read custom formatted tags
-  if (tifParams->subType == tstStk)
-    stkReadMetaMeta (fmtHndl, group, tag, type);
-
-  if (tag != -1)
-    return read_one_tag ( fmtHndl, tifParams, tag );
-
-  if ( (group == -1) || (group == META_TIFF_TAG) ) {
-    for (bim::uint64 i=0; i<ifd->size(); i++ ) {
-      TinyTiff::Entry *entry = ifd->getEntry(i);
-      if (type == -1) {
-        if (entry->tag>532 && entry->tag!=50434) 
-            read_one_tag ( fmtHndl, tifParams, entry->tag );    
-    
-        switch( entry->tag ) 
-        {
-          case 269: //DocumentName
-          case 270: //ImageDescription
-          case 271: //Make
-          case 272: //Model
-          case 285: //PageName
-          case 305: //Software
-          case 306: //DateTime
-          case 315: //Artist
-          case 316: //HostComputer
-            read_one_tag ( fmtHndl, tifParams, entry->tag );
-            break;
-        } // switch
-      } // type == -1
-      else
-      {
-        if (entry->type == type)
-          read_one_tag ( fmtHndl, tifParams, entry->tag );
-
-      } // type != -1
-
-    } // for i<ifd count
-  } // if no group
-
-  return 0;
-}
-
 //----------------------------------------------------------------------------
-// Textual METADATA
-//----------------------------------------------------------------------------
-
-void change_0_to_n (char *str, long size) {
-  for (long i=0; i<size; i++)
-    if (str[i] == '\0') str[i] = '\n'; 
-}
-
-void write_title_text(const char *text, MemIOBuf *outIOBuf)
-{
-  char title[1024];
-  sprintf(title, "\n[%s]\n\n", text);
-  MemIO_WriteProc( (thandle_t) outIOBuf, title, strlen(title)-1 );
-}
-
-void read_text_tag(TinyTiff::IFD *ifd, bim::uint tag, MemIOBuf *outIOBuf, const char *text) {
-    if (!ifd->tagPresent(tag)) return;
-
-    bim::uint64 buf_size;
-    bim::uint16 buf_type;  
-    bim::uchar *buf = NULL;
-    write_title_text(text, outIOBuf);
-    ifd->readTag (tag, buf_size, buf_type, &buf);
-    change_0_to_n ((char *) buf, (long) buf_size);
-    MemIO_WriteProc( (thandle_t) outIOBuf, buf, buf_size );
-    _TIFFfree( buf );
-}
-
-void read_text_tag(TinyTiff::IFD *ifd, bim::uint tag, MemIOBuf *outIOBuf) {
-    if (!ifd->tagPresent(tag)) return;
-    bim::uint64 buf_size;
-    bim::uint16 buf_type;  
-    bim::uchar *buf = NULL;
-  
-    ifd->readTag (tag, buf_size, buf_type, &buf);
-    change_0_to_n ((char *) buf, (long) buf_size);
-    MemIO_WriteProc( (thandle_t) outIOBuf, buf, buf_size );
-    _TIFFfree( buf );
-}
-
-char* read_text_tiff_metadata ( FormatHandle *fmtHndl, TiffParams *tifParams ) {
-    return NULL;
-}
-
-//----------------------------------------------------------------------------
-// New METADATA
+// METADATA
 //----------------------------------------------------------------------------
 
 void pyramid_append_metadata(FormatHandle *fmtHndl, TagMap *hash) {
@@ -483,6 +347,33 @@ void pyramid_append_metadata(FormatHandle *fmtHndl, TagMap *hash) {
     if (pyramid->number_levels > 1)
     for (int i = 0; i < pyramid->number_levels; ++i) {
         hash->set_value(bim::IMAGE_RES_L_SCALES, xstring::join(pyramid->scales, ","));
+    }
+}
+
+void icc_append_metadata(FormatHandle *fmtHndl, TagMap *hash) {
+    if (fmtHndl == NULL) return;
+    if (isCustomReading(fmtHndl)) return;
+    if (!hash) return;
+    TiffParams *par = (TiffParams *)fmtHndl->internalParams;
+    TIFF *tif = par->tiff;
+
+    bim::uint32 sz;
+    char* buf;
+    if (TIFFGetField(tif, TIFFTAG_ICCPROFILE, &sz, &buf)) {
+        hash->set_value(bim::RAW_TAGS_ICC, buf, sz, bim::RAW_TYPES_ICC);
+        lcms_append_metadata(fmtHndl, hash);
+    }
+}
+
+void icc_write_metadata(FormatHandle *fmtHndl, TagMap *hash) {
+    if (fmtHndl == NULL) return;
+    if (isCustomReading(fmtHndl)) return;
+    if (!hash) return;
+    TiffParams *par = (TiffParams *)fmtHndl->internalParams;
+    TIFF *tif = par->tiff;
+
+    if (hash->hasKey(bim::RAW_TAGS_ICC) && hash->get_type(bim::RAW_TAGS_ICC) == bim::RAW_TYPES_ICC) {
+        TIFFSetField(tif, TIFFTAG_ICCPROFILE, hash->get_size(bim::RAW_TAGS_ICC), hash->get_value_bin(bim::RAW_TAGS_ICC));
     }
 }
 
@@ -509,17 +400,14 @@ bim::uint append_metadata_generic_tiff (FormatHandle *fmtHndl, TagMap *hash ) {
   std::map< int, std::string >::const_iterator it = hash_tiff_tags.begin();
   while (it != hash_tiff_tags.end()) {
     xstring tag_str = ifd->readTagString(it->first);
-    if (tag_str.size()>0) hash->append_tag( xstring("custom/") + it->second, tag_str );
+    if (tag_str.size()>0) hash->append_tag(bim::CUSTOM_TAGS_PREFIX + it->second, tag_str);
     it++;
   }
 
-  // use EXIV2 to read metadata
   exiv_append_metadata (fmtHndl, hash );
-
-  // use GeoTIFF to read metadata
   geotiff_append_metadata(fmtHndl, hash);
-
   pyramid_append_metadata(fmtHndl, hash);
+  icc_append_metadata(fmtHndl, hash);
 
   return 0;
 }
@@ -616,10 +504,12 @@ bim::uint tiff_append_metadata (FormatHandle *fmtHndl, TagMap *hash ) {
 //----------------------------------------------------------------------------
 
 
-bim::uint write_tiff_metadata (FormatHandle *fmtHndl, TiffParams *tifParams)
-{
+bim::uint write_tiff_metadata (FormatHandle *fmtHndl, TiffParams *tifParams) {
   if (!areValidParams(fmtHndl, tifParams)) return 1;
-
+  
+  icc_write_metadata(fmtHndl, fmtHndl->metaData);
+  
+  /*
   bim::uint i;
   TagList *tagList = &fmtHndl->metaData;
   void  *t_list = NULL;
@@ -638,7 +528,7 @@ bim::uint write_tiff_metadata (FormatHandle *fmtHndl, TiffParams *tifParams)
       TIFFSetField( tif, tagItem->tagId, tagItem->tagLength, tagItem->tagData ); 
     }
   }
-
+  */
   return 0;
 }
 

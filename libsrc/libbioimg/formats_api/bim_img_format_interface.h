@@ -413,7 +413,7 @@ typedef struct FormatHandle {
   uint32            roiY;                // v1.1 Region Of Interest: Top Left Y (pixels), ONLY used for reading!!!
   uint32            roiW;                // v1.1 Region Of Interest: Width (pixels), ONLY used for reading!!!
   uint32            roiH;                // v1.1 Region Of Interest: Height (pixels), ONLY used for reading!!!
-  TagList           metaData;            // meta data tag list, ONLY used for writing, returned NULL while reading!!!
+  BIM_METADATA_CLASS *metaData;          // v1.7 pointer to TagMap for textual metadata, ONLY used for writing, reading is done by AppendMetaDataProc
   
   BIM_IMG_SERVICES      *imageServicesProcs; // The suite of image processing services callbacks  
   BIM_INTPARAMS_CLASS   *internalParams;     // internal plugin parameters
@@ -437,7 +437,6 @@ typedef struct FormatHandle {
   // IN/OUT
   BIM_IMAGE_CLASS       *image;              // pointer to an image structure to read/write
   BIM_OPTIONS_CLASS     *options;            // v1.6 pointer to encoding options string
-  //BIM_METADATA_CLASS    *hash;               // v1.7 pointer to TagMap for textual metadata
 
   void *param1; // reserved
   void *param2; // reserved
@@ -569,16 +568,16 @@ typedef uint (*ReadImagePreviewProc) (FormatHandle *fmtHndl, uint w, uint h);
 // any possible group = -1, any possible tag = -1
 // so to read all possible metadata pass -1 as group and tag
 // if tag or group are provided but not present in the file then return 2
-typedef uint (*ReadMetaDataProc)    ( FormatHandle *fmtHndl, uint page, int group, int tag, int type);
+//typedef uint (*ReadMetaDataProc)    ( FormatHandle *fmtHndl, uint page, int group, int tag, int type);
 
 // a simplistic approach to metadata retrieval, return null terminated string
 // with possible new line caracters OR NULL if no data could be found
-typedef char* (*ReadMetaDataAsTextProc) ( FormatHandle *fmtHndl );
+//typedef char* (*ReadMetaDataAsTextProc) ( FormatHandle *fmtHndl );
 
 // if cannot write requested meta then return value different form 0
 // this will only work on formats allowing adding meta data into the file
 // usually it should writen using WriteImageProc and meta data struct inside fmtHndl
-typedef uint (*AddMetaDataProc)     ( FormatHandle *fmtHndl);
+//typedef uint (*AddMetaDataProc)     ( FormatHandle *fmtHndl);
 
 // v1.7 New format metadata appending function, that should append fields 
 // directly into provided HashTable, this allows performing all parsing on the reader side
@@ -631,9 +630,9 @@ typedef struct FormatHeader {
   ReadImagePreviewProc    readImagePreviewProc;
   
   // meta data
-  ReadMetaDataProc        readMetaDataProc;
-  AddMetaDataProc         addMetaDataProc;
-  ReadMetaDataAsTextProc  readMetaDataAsTextProc;
+  void *readMetaDataProc;
+  void *addMetaDataProc;
+  void *readMetaDataAsTextProc;
   AppendMetaDataProc      appendMetaDataProc; // v1.7
 
   void *param1;       // reserved
