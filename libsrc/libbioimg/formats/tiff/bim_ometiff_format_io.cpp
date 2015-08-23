@@ -48,8 +48,8 @@ void detectTiffPyramid(bim::TiffParams *tiffParams);
 int read_tiff_image_level(bim::FormatHandle *fmtHndl, bim::TiffParams *tifParams, bim::uint page, bim::uint level);
 int read_tiff_image_tile(bim::FormatHandle *fmtHndl, bim::TiffParams *tifParams, bim::uint page, bim::uint64 xid, bim::uint64 yid, bim::uint level);
 void pyramid_append_metadata(bim::FormatHandle *fmtHndl, bim::TagMap *hash);
-void icc_append_metadata(FormatHandle *fmtHndl, TagMap *hash);
-void icc_write_metadata(FormatHandle *fmtHndl, TagMap *hash);
+void generic_append_metadata(FormatHandle *fmtHndl, TagMap *hash);
+void generic_write_metadata(FormatHandle *fmtHndl, TagMap *hash);
 
 //----------------------------------------------------------------------------
 // OME-TIFF MISC FUNCTIONS
@@ -1010,7 +1010,7 @@ bim::uint append_metadata_omeTiff(bim::FormatHandle *fmtHndl, bim::TagMap *hash)
   // Reading Micro-Manager tag
   //----------------------------------------------------------------------------
 
-  icc_append_metadata(fmtHndl, hash);
+  generic_append_metadata(fmtHndl, hash);
 
   return 0;
 }
@@ -1143,7 +1143,7 @@ bim::uint write_omeTiff_metadata (bim::FormatHandle *fmtHndl, bim::TiffParams *t
         TIFFSetField(tif, TIFFTAG_IMAGEDESCRIPTION, xml.c_str());
     }
 
-    icc_write_metadata(fmtHndl, hash);
+    generic_write_metadata(fmtHndl, hash);
 
     return 0;
 }

@@ -20,4 +20,17 @@ ver : 1
 // appends all tags found by EXIV2
 void exiv_append_metadata (bim::FormatHandle *fmtHndl, bim::TagMap *hash );
 
+//-----------------------------------------------------------------------------
+// Support for TIFF blocks with EXIF and GPS IFDs
+//-----------------------------------------------------------------------------
+
+typedef struct tiff TIFF;
+
+void create_tiff_exif_block(const std::vector<char> &exif, unsigned int offset_exif, 
+                            const std::vector<char> &gps, unsigned int offset_gps, 
+                            bim::TagMap *hash);
+
+void tiff_exif_to_buffer(TIFF *tif, bim::TagMap *hash);
+void buffer_to_tiff_exif(bim::TagMap *hash, TIFF *tif);
+
 #endif // BIM_EXIV_PARSE_H
