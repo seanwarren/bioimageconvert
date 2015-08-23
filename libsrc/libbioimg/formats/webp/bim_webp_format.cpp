@@ -289,9 +289,8 @@ bim::uint webp_append_metadata(FormatHandle *fmtHndl, TagMap *hash) {
     // use LCMS2 to parse color profile
     lcms_append_metadata(fmtHndl, hash);
 
-    // EXIV2 does not red WebP files yet
-    // dima: will initing EXIV2 from memory buffers 
-    //exiv_append_metadata(fmtHndl, hash);
+    // parse EXIV2 from memory buffers 
+    exiv_append_metadata(fmtHndl, hash);
 
     return 0;
 }

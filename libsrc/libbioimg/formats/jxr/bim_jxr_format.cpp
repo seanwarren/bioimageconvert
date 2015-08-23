@@ -270,20 +270,20 @@ static ERR ReadMetadata(bim::JXRParams *par) {
         
         // XMP metadata
         if (0 != wmiDEMisc->uXMPMetadataByteCount) {
-        error_code = ReadBuffer(stream, wmiDEMisc->uXMPMetadataByteCount, wmiDEMisc->uXMPMetadataOffset, par->buffer_xmp);
-        JXR_CHECK(error_code);
+            error_code = ReadBuffer(stream, wmiDEMisc->uXMPMetadataByteCount, wmiDEMisc->uXMPMetadataOffset, par->buffer_xmp);
+            JXR_CHECK(error_code);
         }
 
         // IPTC metadata
         if (0 != wmiDEMisc->uIPTCNAAMetadataByteCount) {
-        error_code = ReadBuffer(stream, wmiDEMisc->uIPTCNAAMetadataByteCount, wmiDEMisc->uIPTCNAAMetadataOffset, par->buffer_iptc);
-        JXR_CHECK(error_code);
+            error_code = ReadBuffer(stream, wmiDEMisc->uIPTCNAAMetadataByteCount, wmiDEMisc->uIPTCNAAMetadataOffset, par->buffer_iptc);
+            JXR_CHECK(error_code);
         }
 
         // Photoshop metadata
         if (0 != wmiDEMisc->uPhotoshopMetadataByteCount) {
-        error_code = ReadBuffer(stream, wmiDEMisc->uPhotoshopMetadataByteCount, wmiDEMisc->uPhotoshopMetadataOffset, par->buffer_photoshop);
-        JXR_CHECK(error_code);
+            error_code = ReadBuffer(stream, wmiDEMisc->uPhotoshopMetadataByteCount, wmiDEMisc->uPhotoshopMetadataOffset, par->buffer_photoshop);
+            JXR_CHECK(error_code);
         }
         
         // Exif metadata
@@ -473,88 +473,13 @@ ImageInfo jxrGetImageInfoProc(FormatHandle *fmtHndl, bim::uint page_num) {
 // here we group EXIF and EXIF-GPS IFDs into one minimal TIFF stream updating 
 // offsets to proper positions
 
-const int tiff_tag_sizes[19] = { 1, 1, 1, 2, 4, 8, 1, 1, 2, 4, 8, 4, 8, 0, 0, 0, 8, 8, 8 };
-
-#define BIM_EXIF_NUM_TAGS 2
-
-#pragma pack(push, 1)
-typedef struct {
-    bim::uint16 tag;    // tag identifying information for entry
-    bim::uint16 type;   // data type of entry (for BigTIFF 17 types are defined, 0-13, 16-18)
-    bim::uint32 count;  // count of elements for entry, in TIFF stored as uint32
-    bim::uint32 offset; // data itself (if <= 64-bits) or offset to data for entry, in TIFF stored as uint32
-} ifd_entry;
-
-typedef struct {
-    bim::uint16 magic;     // 0x4D4D constan 
-    bim::uint16 version;   // 0x002A version = standard TIFF
-    bim::uint32 diroffset; // offset to first directory
-    bim::uint16 count;     // number of directory entries, uint16 in TIFF and uint64 in BigTIFF
-    ifd_entry entries[BIM_EXIF_NUM_TAGS];
-    bim::uint32 next;  // offset to next directory or zero, uint32 in TIFF and uint64 in BigTIFF
-} tiff_buffer;
-#pragma pack(pop)
-
-const void parse_ifd_update_offsets(unsigned char *buf, unsigned int old_offset, unsigned int new_offset) {
-    bim::uint16 count = *(bim::uint16*) buf;
-    buf += sizeof(bim::uint16);
-    for (int i = 0; i < count; ++i) {
-        ifd_entry *e = (ifd_entry*)buf;
-        if (e->count * tiff_tag_sizes[e->type] > 4) {
-            // if offset is stored in the offset field, then update
-            e->offset = e->offset - old_offset + new_offset;
-        }
-        buf += sizeof(ifd_entry);
-    }
-}
-
 const void jxr_create_proper_exif(FormatHandle *fmtHndl, TagMap *hash) {    
     bim::JXRParams *par = (bim::JXRParams *) fmtHndl->internalParams;
     if (par->buffer_exif.size() == 0 && par->buffer_exifgps.size() == 0) return;
-       
-    unsigned int bufsz = sizeof(tiff_buffer);
-    unsigned int offset_exif_new = 0;
-    unsigned int offset_exifgps_new = 0;
-    
-    if (par->buffer_exif.size() > 0) {
-        bufsz += par->buffer_exif.size();
-        offset_exif_new = sizeof(tiff_buffer);
-        parse_ifd_update_offsets((unsigned char *) &par->buffer_exif[0], par->offset_exif, offset_exif_new);
-    }
 
-    if (par->buffer_exifgps.size() > 0) {
-        int align = (bufsz % 2) ? 1 : 0; // offset must be even, word aligned
-        offset_exifgps_new = bufsz + align;
-        bufsz += par->buffer_exifgps.size() + align;
-        parse_ifd_update_offsets((unsigned char *) &par->buffer_exifgps[0], par->offset_exifgps, offset_exifgps_new);
-    }
-
-    // create mini TIFF stream
-    tiff_buffer header;
-    header.magic = 0x4949;
-    header.version = 0x002A;
-    header.diroffset = 8;
-    header.count = BIM_EXIF_NUM_TAGS;
-    header.entries[0].tag = TIFFTAG_EXIFIFD;
-    header.entries[0].type = TIFF_LONG;
-    header.entries[0].count = 1;
-    header.entries[0].offset = offset_exif_new;
-    header.entries[1].tag = TIFFTAG_GPSIFD;
-    header.entries[1].type = TIFF_LONG;
-    header.entries[1].count = 1;
-    header.entries[1].offset = offset_exifgps_new;
-    header.next = 0;
-
-    std::vector<char> buffer(bufsz, 0);
-    memcpy(&buffer[0], &header, sizeof(header));
-    
-    if (par->buffer_exif.size() > 0)
-        memcpy(&buffer[0] + offset_exif_new, &par->buffer_exif[0], par->buffer_exif.size());
-
-    if (par->buffer_exifgps.size() > 0)
-        memcpy(&buffer[0] + offset_exifgps_new, &par->buffer_exifgps[0], par->buffer_exifgps.size());
-
-    hash->set_value(bim::RAW_TAGS_EXIF, buffer, bim::RAW_TYPES_EXIF);
+    create_tiff_exif_block(par->buffer_exif, par->offset_exif, 
+                           par->buffer_exifgps, par->offset_exifgps, 
+                           hash);
 }
 
 bim::uint jxr_append_metadata(FormatHandle *fmtHndl, TagMap *hash) {

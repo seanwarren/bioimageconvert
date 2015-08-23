@@ -350,31 +350,83 @@ void pyramid_append_metadata(FormatHandle *fmtHndl, TagMap *hash) {
     }
 }
 
-void icc_append_metadata(FormatHandle *fmtHndl, TagMap *hash) {
+void generic_append_metadata(FormatHandle *fmtHndl, TagMap *hash) {
     if (fmtHndl == NULL) return;
     if (isCustomReading(fmtHndl)) return;
     if (!hash) return;
     TiffParams *par = (TiffParams *)fmtHndl->internalParams;
     TIFF *tif = par->tiff;
 
-    bim::uint32 sz;
-    char* buf;
+    bim::uint32 sz=0;
+    char* buf=NULL;
+
+    // ICC profile
     if (TIFFGetField(tif, TIFFTAG_ICCPROFILE, &sz, &buf)) {
         hash->set_value(bim::RAW_TAGS_ICC, buf, sz, bim::RAW_TYPES_ICC);
         lcms_append_metadata(fmtHndl, hash);
     }
+
+    // IPTC: dima not reading????
+    sz = 0; buf = NULL;
+    if (TIFFGetField(tif, TIFFTAG_RICHTIFFIPTC, &sz, &buf)) {
+        hash->set_value(bim::RAW_TAGS_IPTC, buf, sz, bim::RAW_TYPES_IPTC);
+    } else if (par->ifds.tagPresentInFirstIFD(TIFFTAG_RICHTIFFIPTC)) {
+        TinyTiff::IFD *ifd = par->ifds.firstIfd();
+        if (ifd) {
+            TinyTiff::Entry *e = ifd->getTag(TIFFTAG_RICHTIFFIPTC);
+            std::vector<char> v(e->count);
+            int r = ifd->readBufNoAlloc(e->offset, e->count, TIFF_BYTE, (unsigned char *) &v[0]);
+            hash->set_value(bim::RAW_TAGS_IPTC, v, bim::RAW_TYPES_IPTC);
+        }
+    }
+
+    // XMP
+    sz = 0; buf = NULL;
+    if (TIFFGetField(tif, TIFFTAG_XMLPACKET, &sz, &buf)) {
+        hash->set_value(bim::RAW_TAGS_XMP, buf, sz, bim::RAW_TYPES_XMP);
+    }
+
+    // PHOTOSHOP
+    sz = 0; buf = NULL;
+    if (TIFFGetField(tif, TIFFTAG_PHOTOSHOP, &sz, &buf)) {
+        hash->set_value(bim::RAW_TAGS_PHOTOSHOP, buf, sz, bim::RAW_TYPES_PHOTOSHOP);
+    }
+
+    // EXIF requires constructing a tiny tiff stream with embedded EXIF and GPS IFDs
+    tiff_exif_to_buffer(tif, hash);
+
 }
 
-void icc_write_metadata(FormatHandle *fmtHndl, TagMap *hash) {
+void generic_write_metadata(FormatHandle *fmtHndl, TagMap *hash) {
     if (fmtHndl == NULL) return;
     if (isCustomReading(fmtHndl)) return;
     if (!hash) return;
     TiffParams *par = (TiffParams *)fmtHndl->internalParams;
     TIFF *tif = par->tiff;
 
+    // ICC profile
     if (hash->hasKey(bim::RAW_TAGS_ICC) && hash->get_type(bim::RAW_TAGS_ICC) == bim::RAW_TYPES_ICC) {
         TIFFSetField(tif, TIFFTAG_ICCPROFILE, hash->get_size(bim::RAW_TAGS_ICC), hash->get_value_bin(bim::RAW_TAGS_ICC));
     }
+
+    // IPTC
+    if (hash->hasKey(bim::RAW_TAGS_IPTC) && hash->get_type(bim::RAW_TAGS_IPTC) == bim::RAW_TYPES_IPTC) {
+        TIFFSetField(tif, TIFFTAG_RICHTIFFIPTC, hash->get_size(bim::RAW_TAGS_IPTC), hash->get_value_bin(bim::RAW_TAGS_IPTC));
+    }
+
+    // XMP
+    if (hash->hasKey(bim::RAW_TAGS_XMP) && hash->get_type(bim::RAW_TAGS_XMP) == bim::RAW_TYPES_XMP) {
+        TIFFSetField(tif, TIFFTAG_XMLPACKET, hash->get_size(bim::RAW_TAGS_XMP), hash->get_value_bin(bim::RAW_TAGS_XMP));
+    }
+
+    // PHOTOSHOP
+    if (hash->hasKey(bim::RAW_TAGS_PHOTOSHOP) && hash->get_type(bim::RAW_TAGS_PHOTOSHOP) == bim::RAW_TYPES_PHOTOSHOP) {
+        TIFFSetField(tif, TIFFTAG_PHOTOSHOP, hash->get_size(bim::RAW_TAGS_PHOTOSHOP), hash->get_value_bin(bim::RAW_TAGS_PHOTOSHOP));
+    }
+
+    // EXIF requires parsing a tiny tiff stream with embedded EXIF and GPS IFDs
+    tiff_exif_to_buffer(tif, hash);
+
 }
 
 bim::uint append_metadata_generic_tiff (FormatHandle *fmtHndl, TagMap *hash ) {
@@ -404,10 +456,10 @@ bim::uint append_metadata_generic_tiff (FormatHandle *fmtHndl, TagMap *hash ) {
     it++;
   }
 
-  exiv_append_metadata (fmtHndl, hash );
   geotiff_append_metadata(fmtHndl, hash);
   pyramid_append_metadata(fmtHndl, hash);
-  icc_append_metadata(fmtHndl, hash);
+  generic_append_metadata(fmtHndl, hash);
+  exiv_append_metadata(fmtHndl, hash);
 
   return 0;
 }
@@ -507,28 +559,8 @@ bim::uint tiff_append_metadata (FormatHandle *fmtHndl, TagMap *hash ) {
 bim::uint write_tiff_metadata (FormatHandle *fmtHndl, TiffParams *tifParams) {
   if (!areValidParams(fmtHndl, tifParams)) return 1;
   
-  icc_write_metadata(fmtHndl, fmtHndl->metaData);
+  generic_write_metadata(fmtHndl, fmtHndl->metaData);
   
-  /*
-  bim::uint i;
-  TagList *tagList = &fmtHndl->metaData;
-  void  *t_list = NULL;
-  bim::int16 t_list_count;
-  TIFF *tif = tifParams->tiff;
-
-  if (tagList->count == 0) return 1;
-  if (tagList->tags == NULL) return 1;
-
-  for (i=0; i<tagList->count; i++) {
-    TagItem *tagItem = &tagList->tags[i];
-    if (tagItem->tagGroup == META_TIFF_TAG) {
-      t_list = tagItem->tagData;
-      t_list_count = tagItem->tagLength;
-
-      TIFFSetField( tif, tagItem->tagId, tagItem->tagLength, tagItem->tagData ); 
-    }
-  }
-  */
   return 0;
 }
 
