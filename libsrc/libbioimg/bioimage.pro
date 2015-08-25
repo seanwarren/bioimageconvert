@@ -654,7 +654,7 @@ stat_libtiff {
              $$BIM_LIB_TIF/tif_strip.c $$BIM_LIB_TIF/tif_swab.c \
              $$BIM_LIB_TIF/tif_thunder.c $$BIM_LIB_TIF/tif_tile.c \
              $$BIM_LIB_TIF/tif_version.c $$BIM_LIB_TIF/tif_warning.c \
-             $$BIM_LIB_TIF/tif_write.c $$BIM_LIB_TIF/tif_zip.c
+             $$BIM_LIB_TIF/tif_write.c $$BIM_LIB_TIF/tif_zip.c $$BIM_LIB_TIF/tif_lzma.c
 
   unix:SOURCES  += $$BIM_LIB_TIF/tif_unix.c
   win32:SOURCES += $$BIM_LIB_TIF/tif_win32.c

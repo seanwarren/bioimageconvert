@@ -122,8 +122,7 @@ void jpegSetWriteParameters  (FormatHandle *fmtHndl) {
       i++;
       fmtHndl->quality = options[i].toInt( 100 );
       continue;
-    } else
-    if ( options[i]=="progressive" && options.size()-i>0 ) {
+    } else if ( options[i]=="progressive" && options.size()-i>0 ) {
       i++;    
       if (options[i]=="no") fmtHndl->order = 0;
       else

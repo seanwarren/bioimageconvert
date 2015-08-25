@@ -366,16 +366,20 @@ void generic_append_metadata(FormatHandle *fmtHndl, TagMap *hash) {
         lcms_append_metadata(fmtHndl, hash);
     }
 
-    // IPTC: dima not reading????
+    // IPTC: libtiff does not seem to be reading????
     sz = 0; buf = NULL;
     if (TIFFGetField(tif, TIFFTAG_RICHTIFFIPTC, &sz, &buf)) {
-        hash->set_value(bim::RAW_TAGS_IPTC, buf, sz, bim::RAW_TYPES_IPTC);
+        if (TIFFIsByteSwapped(tif) != 0)
+            TIFFSwabArrayOfLong((bim::uint32 *)buf, (unsigned long)sz);
+        hash->set_value(bim::RAW_TAGS_IPTC, buf, sz*4, bim::RAW_TYPES_IPTC);
     } else if (par->ifds.tagPresentInFirstIFD(TIFFTAG_RICHTIFFIPTC)) {
         TinyTiff::IFD *ifd = par->ifds.firstIfd();
         if (ifd) {
             TinyTiff::Entry *e = ifd->getTag(TIFFTAG_RICHTIFFIPTC);
             std::vector<char> v(e->count);
             int r = ifd->readBufNoAlloc(e->offset, e->count, TIFF_BYTE, (unsigned char *) &v[0]);
+            if (TIFFIsByteSwapped(tif) != 0)
+                TIFFSwabArrayOfLong((bim::uint32 *)&v[0], (unsigned long)v.size()/4);
             hash->set_value(bim::RAW_TAGS_IPTC, v, bim::RAW_TYPES_IPTC);
         }
     }
@@ -1088,66 +1092,38 @@ int write_tiff_image(FormatHandle *fmtHndl, TiffParams *par, ImageBitmap *img = 
   //------------------------------------------------------------------------------  
 
   compression = fmtHndl->compression;
-  if (compression == 0) compression = COMPRESSION_NONE; 
+  if (compression == 0) compression = COMPRESSION_NONE;
 
-  switch(bitspersample) {
-  case 1  :
-    if (compression != COMPRESSION_CCITTFAX4) compression = COMPRESSION_NONE;
-    break;
-
-  case 8  :
-  case 16 :
-  case 32 :
-  case 64 :
-    if ( (compression != COMPRESSION_LZW) && (compression != COMPRESSION_PACKBITS) )
-      compression = COMPRESSION_NONE;  
-    break;
-  
-  default :
-    compression = COMPRESSION_NONE;
-    break;
+  if (compression == COMPRESSION_CCITTFAX4 && bitspersample != 1) {
+      compression = COMPRESSION_NONE;
+  } if (compression == COMPRESSION_JPEG && (bitspersample != 8 && bitspersample != 16)) {
+      compression = COMPRESSION_NONE;
   }
-
   TIFFSetField(out, TIFFTAG_COMPRESSION, compression);
 
-  unsigned long strip_size = bim::max<unsigned long>( TIFFDefaultStripSize(out,-1), 1 );
-  switch ( compression ) {
-    case COMPRESSION_JPEG:
-    {
-      //TIFFSetField( out, TIFFTAG_ROWSPERSTRIP, strip_size+(16-(strip_size % 16)) );
-      break;
-    }
-
-    case COMPRESSION_ADOBE_DEFLATE:
-    {
+  // set compression parameters
+  bim::uint32 strip_size = bim::max<bim::uint32>(TIFFDefaultStripSize(out, -1), 1);
+  if (compression == COMPRESSION_JPEG) {
+      // rowsperstrip must be multiple of 8 for JPEG
+      TIFFSetField(out, TIFFTAG_ROWSPERSTRIP, strip_size + (8 - (strip_size % 8)));
+      TIFFSetField(out, TIFFTAG_JPEGQUALITY, fmtHndl->quality);
+  } else if (compression == COMPRESSION_ADOBE_DEFLATE) {
       //TIFFSetField( out, TIFFTAG_ROWSPERSTRIP, height );
-      if ( (photometric == PHOTOMETRIC_RGB) ||
-           ((photometric == PHOTOMETRIC_MINISBLACK) && (bitspersample >= 8)) )
-        TIFFSetField( out, TIFFTAG_PREDICTOR, 2 );
-      TIFFSetField( out, TIFFTAG_ZIPQUALITY, 9 );
-      break;
-    }
-
-    case COMPRESSION_CCITTFAX4:
-    {
-      //TIFFSetField( out, TIFFTAG_ROWSPERSTRIP, height );
-      break;
-    }
-
-    case COMPRESSION_LZW:
-    {
-      //TIFFSetField( out, TIFFTAG_ROWSPERSTRIP, strip_size );
-      if (planarConfig == PLANARCONFIG_SEPARATE)
-         TIFFSetField( out, TIFFTAG_PREDICTOR, PREDICTOR_NONE );
+      if (planarConfig == PLANARCONFIG_SEPARATE || samplesperpixel == 1)
+          TIFFSetField(out, TIFFTAG_PREDICTOR, PREDICTOR_NONE);
       else
-         TIFFSetField( out, TIFFTAG_PREDICTOR, PREDICTOR_HORIZONTAL );
-      break;
-    }
-    default:
-    {
+          TIFFSetField(out, TIFFTAG_PREDICTOR, PREDICTOR_HORIZONTAL);
+      TIFFSetField(out, TIFFTAG_ZIPQUALITY, 9);
+  } else if (compression == COMPRESSION_CCITTFAX4) {
+      //TIFFSetField( out, TIFFTAG_ROWSPERSTRIP, height );
+  } else if (compression == COMPRESSION_LZW) {
       //TIFFSetField( out, TIFFTAG_ROWSPERSTRIP, strip_size );
-      break;
-    }
+      if (planarConfig == PLANARCONFIG_SEPARATE || samplesperpixel == 1)
+          TIFFSetField(out, TIFFTAG_PREDICTOR, PREDICTOR_NONE);
+      else
+          TIFFSetField(out, TIFFTAG_PREDICTOR, PREDICTOR_HORIZONTAL);
+  } else {
+      //TIFFSetField( out, TIFFTAG_ROWSPERSTRIP, strip_size );
   }
 
   //------------------------------------------------------------------------------  
@@ -1199,6 +1175,7 @@ int write_tiff_image(FormatHandle *fmtHndl, TiffParams *par, ImageBitmap *img = 
   // writing meta data
   //------------------------------------------------------------------------------
   if (!subscale) {
+      //
       write_tiff_metadata(fmtHndl, par);
   }
 

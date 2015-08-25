@@ -640,19 +640,25 @@ void tiffSetWriteParameters (FormatHandle *fmtHndl) {
   while (i<(int)options.size()-1) {
     ++i;
 
-    if ( options[i]=="compression" && options.size()-i>0 ) {
+    if (options[i] == "quality" && options.size() - i>0) {
+        i++;
+        fmtHndl->quality = options[i].toInt(90);
+        continue;
+    } else if ( options[i]=="compression" && options.size()-i>0 ) {
       ++i;
-      if (options[i] == "none") fmtHndl->compression = COMPRESSION_NONE;
-      if (options[i] == "fax") fmtHndl->compression = COMPRESSION_CCITTFAX4;
-      if (options[i] == "lzw") fmtHndl->compression = COMPRESSION_LZW;
+      if (options[i] == "none")     fmtHndl->compression = COMPRESSION_NONE;
+      if (options[i] == "fax")      fmtHndl->compression = COMPRESSION_CCITTFAX4;
+      if (options[i] == "lzw")      fmtHndl->compression = COMPRESSION_LZW;
       if (options[i] == "packbits") fmtHndl->compression = COMPRESSION_PACKBITS;
+      if (options[i] == "zip")      fmtHndl->compression = COMPRESSION_ADOBE_DEFLATE;
+      if (options[i] == "jpeg")     fmtHndl->compression = COMPRESSION_JPEG;
+      if (options[i] == "lzma")     fmtHndl->compression = COMPRESSION_LZMA;
+      //if (options[i] == "jxr")      fmtHndl->compression = COMPRESSION_JXR; // JPEG-XR
       continue;
-    } else
-    if (options[i] == "tiles" && options.size() - i>0) {
+    } else if (options[i] == "tiles" && options.size() - i>0) {
         par->info.tileWidth = par->info.tileHeight = options[++i].toInt(0);
         continue;
-    } else
-    if (options[i] == "pyramid" && options.size() - i>0) {
+    } else if (options[i] == "pyramid" && options.size() - i>0) {
         xstring pf = options[++i];
         if (pf == "subdirs") par->pyramid.format = PyramidInfo::pyrFmtSubDirs;
         if (pf == "topdirs") par->pyramid.format = PyramidInfo::pyrFmtTopDirs;
