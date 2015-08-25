@@ -59,5 +59,8 @@
     <Library Include="..\libs\vc2013_x64\avcodec-56.lib">
       <Filter>lib_win64</Filter>
     </Library>
+    <Library Include="..\libs\vc2013_x64\liblzma.lib">
+      <Filter>lib_win64</Filter>
+    </Library>
   </ItemGroup>
 </Project>
