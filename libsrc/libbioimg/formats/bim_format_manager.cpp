@@ -60,7 +60,7 @@ FormatManager::FormatManager() {
   max_magic_size = 0;
   magic_number = NULL;
   sessionHandle = initFormatHandle();
-  sessionFormatIndex = 0;
+  sessionFormatIndex = -1;
   sessionSubIndex = 0;
   
   // add static formats, jpeg first updated: dima 07/21/2005 17:11
@@ -950,10 +950,8 @@ int FormatManager::sessionStartWrite ( BIM_STREAM_CLASS *stream,
   return res;
 }
 
-void FormatManager::sessionEnd()
-{
-  if ( (sessionFormatIndex>0) && (sessionFormatIndex<(int)formatList.size()) )
-  {
+void FormatManager::sessionEnd() {
+  if ( (sessionFormatIndex>=0) && (sessionFormatIndex<(int)formatList.size()) ) {
     FormatHeader *selectedFmt = formatList.at( sessionFormatIndex );
     selectedFmt->closeImageProc    ( &sessionHandle );
     selectedFmt->releaseFormatProc ( &sessionHandle );

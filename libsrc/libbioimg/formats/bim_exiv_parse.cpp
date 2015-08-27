@@ -173,6 +173,7 @@ void exiv_append_metadata(FormatHandle *fmtHndl, TagMap *hash) {
         exif2hash(image->exifData(), hash);
         iptc2hash(image->iptcData(), hash);
         xmp2hash(image->xmpData(), hash);
+        image.release();
     }
 
     // fill in date time from exif

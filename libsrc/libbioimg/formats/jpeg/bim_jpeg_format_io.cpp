@@ -739,7 +739,6 @@ bim::uint jpeg_append_metadata(FormatHandle *fmtHndl, TagMap *hash) {
     }
 
     // use EXIV2 to read metadata
-    if (!fmtHndl->fileName) return 1;
     exiv_append_metadata(fmtHndl, hash);
 
     return 0;
