@@ -157,7 +157,10 @@ bim::uint jpegOpenImageProc  (FormatHandle *fmtHndl, ImageIOModes io_mode) {
           return 1; 
       };
 
-      if ( !jpegGetImageInfo( fmtHndl ) ) { jpegCloseImageProc (fmtHndl); return 1; };
+      if ( !jpegGetImageInfo( fmtHndl ) ) { 
+          jpegCloseImageProc (fmtHndl); 
+          return 1; 
+      };
   }
 
   if (io_mode == IO_WRITE) {
