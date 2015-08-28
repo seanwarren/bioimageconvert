@@ -23,6 +23,25 @@
 #include <bim_lcms_parse.h>
 #include <bim_format_misc.h>
 
+static const int max_buf = 4096;
+
+#define EXIF_MARKER		(JPEG_APP0+1)	// EXIF marker / Adobe XMP marker
+#define ICC_MARKER		(JPEG_APP0+2)	// ICC profile marker
+#define IPTC_MARKER		(JPEG_APP0+13)	// IPTC marker / BIM marker 
+
+#define ICC_HEADER_SIZE 14				// size of non-profile data in APP2
+#define MAX_BYTES_IN_MARKER 65533L		// maximum data length of a JPEG marker
+#define MAX_DATA_BYTES_IN_MARKER 65519L	// maximum data length of a JPEG APP2 marker
+
+#define MAX_JFXX_THUMB_SIZE (MAX_BYTES_IN_MARKER - 5 - 1)
+
+#define JFXX_TYPE_JPEG 	0x10	// JFIF extension marker: JPEG-compressed thumbnail image
+#define JFXX_TYPE_8bit 	0x11	// JFIF extension marker: palette thumbnail image
+#define JFXX_TYPE_24bit	0x13	// JFIF extension marker: RGB thumbnail image
+
+#define ICC_OVERHEAD_LEN  14		// size of non-profile data in APP2
+#define MAX_SEQ_NO  255		        // sufficient since marker numbers are bytes
+
 struct my_error_mgr : public jpeg_error_mgr {
     jmp_buf setjmp_buffer;
 };
@@ -37,8 +56,6 @@ extern "C" {
         longjmp(myerr->setjmp_buffer, 1);
     }
 }
-
-static const int max_buf = 4096;
 
 //****************************************************************************
 // READ STUFF
@@ -125,30 +142,15 @@ inline my_jpeg_source_mgr::my_jpeg_source_mgr(FormatHandle *new_hndl)
 // READ PROC
 //----------------------------------------------------------------------------
 
-#define ICC_MARKER  (JPEG_APP0 + 2)	// JPEG marker code for ICC
-#define ICC_OVERHEAD_LEN  14		// size of non-profile data in APP2
-#define MAX_SEQ_NO  255		        // sufficient since marker numbers are bytes
+const unsigned char icc_signature[12] = { 0x49, 0x43, 0x43, 0x5F, 0x50, 0x52, 0x4F, 0x46, 0x49, 0x4C, 0x45, 0x00 };
 
-static boolean marker_is_icc(jpeg_saved_marker_ptr marker) {
-    return
-        marker->marker == ICC_MARKER &&
-        marker->data_length >= ICC_OVERHEAD_LEN &&
-        /* verify the identifying string */
-        GETJOCTET(marker->data[0]) == 0x49 &&
-        GETJOCTET(marker->data[1]) == 0x43 &&
-        GETJOCTET(marker->data[2]) == 0x43 &&
-        GETJOCTET(marker->data[3]) == 0x5F &&
-        GETJOCTET(marker->data[4]) == 0x50 &&
-        GETJOCTET(marker->data[5]) == 0x52 &&
-        GETJOCTET(marker->data[6]) == 0x4F &&
-        GETJOCTET(marker->data[7]) == 0x46 &&
-        GETJOCTET(marker->data[8]) == 0x49 &&
-        GETJOCTET(marker->data[9]) == 0x4C &&
-        GETJOCTET(marker->data[10]) == 0x45 &&
-        GETJOCTET(marker->data[11]) == 0x0;
+static inline boolean marker_is_icc(jpeg_saved_marker_ptr marker) {
+    return marker->marker == ICC_MARKER &&
+           marker->data_length >= ICC_HEADER_SIZE &&
+           (memcmp(icc_signature, marker->data, sizeof(icc_signature)) == 0);
 }
 
-static bool ReadMetadata(bim::JpegParams *par) {
+static bool jpeg_read_icc(bim::JpegParams *par) {
     jpeg_decompress_struct *cinfo = par->cinfo;
     jpeg_saved_marker_ptr marker;
 
@@ -201,18 +203,93 @@ static bool ReadMetadata(bim::JpegParams *par) {
     // and fill it in
     for (marker = cinfo->marker_list; marker != NULL; marker = marker->next) {
         if (marker_is_icc(marker)) {
-            JOCTET FAR *src_ptr;
-            JOCTET *dst_ptr;
-            unsigned int length;
             seq_no = GETJOCTET(marker->data[12]);
-            dst_ptr = ((unsigned char*)&par->buffer_icc[0]) + data_offset[seq_no];
-            src_ptr = marker->data + ICC_OVERHEAD_LEN;
-            length = data_length[seq_no];
-            while (length--) {
-                *dst_ptr++ = *src_ptr++;
-            }
+            JOCTET *dst_ptr = ((unsigned char*)&par->buffer_icc[0]) + data_offset[seq_no];
+            JOCTET FAR *src_ptr = marker->data + ICC_OVERHEAD_LEN;
+            memcpy(dst_ptr, src_ptr, data_length[seq_no]);
         }
     }
+}
+
+const unsigned char exif_signature[6] = { 0x45, 0x78, 0x69, 0x66, 0x00, 0x00 };
+
+static void jpeg_read_exif(bim::JpegParams *par, const unsigned char *buffer, unsigned int size) {
+    if (size <= sizeof(exif_signature)) return;
+    if (memcmp(exif_signature, buffer, sizeof(exif_signature)) != 0) return;
+
+    par->buffer_exif.resize(size - sizeof(exif_signature));
+    memcpy(&par->buffer_exif[0], buffer + sizeof(exif_signature), size - sizeof(exif_signature));
+}
+
+const char *adobecm_signature = "Adobe_CM";
+const char *adobe2_signature = "Adobe_Photoshop2.5";
+const char *adobe3_signature = "Photoshop 3.0\x0"; // 14
+const char *iptc_signature = "8BIM\x04\x04\x0\x0\x0\x0"; // 10
+const unsigned char iptc_magic[2] = { 0x1C, 0x01 };
+
+static void jpeg_read_iptc(bim::JpegParams *par, const unsigned char *buffer, unsigned int size) {
+    if (size < 8) return;
+    if (memcmp(buffer, adobecm_signature, strlen(adobecm_signature)) == 0) return;
+    //if (memcmp(buffer, adobe2_signature, strlen(adobe2_signature)) != 0) return;
+    //if (memcmp(buffer, adobe3_signature, strlen(adobe3_signature)) != 0) return;
+
+    size_t offset = 0;
+    bool found = false;
+    while (offset < size - 1) {
+        if (memcmp(buffer + offset, iptc_magic, sizeof(iptc_magic)) == 0) {
+            found = true;
+            break;
+        }
+        offset++;
+    }
+    if (!found) return;
+
+    par->buffer_iptc.resize(size - offset);
+    memcpy(&par->buffer_iptc[0], buffer + offset, size - offset);
+}
+
+const char *xmp_signature = "http://ns.adobe.com/xap/1.0/";
+
+static void jpeg_read_xmp(bim::JpegParams *par, const unsigned char *buffer, unsigned int size) {
+    const size_t xmp_signature_size = strlen(xmp_signature) + 1;
+    if (size <= xmp_signature_size) return;
+    if (memcmp(xmp_signature, buffer, xmp_signature_size-1) != 0) return;
+
+    par->buffer_xmp.resize(size - xmp_signature_size);
+    memcpy(&par->buffer_xmp[0], buffer + xmp_signature_size, size - xmp_signature_size);
+}
+
+static void jpeg_read_comment(bim::JpegParams *par, const unsigned char *buffer, unsigned int size) {
+    std::string c;
+    c.resize(size+1, 0);
+    memcpy(&c[0], buffer, size);
+    par->comments.push_back(c);
+}
+
+static void ReadMetadata(bim::JpegParams *par) {
+    jpeg_read_icc(par);
+
+    jpeg_decompress_struct *cinfo = par->cinfo;
+    jpeg_saved_marker_ptr marker;
+    for (marker = cinfo->marker_list; marker != NULL; marker = marker->next) {
+        if (marker->marker == JPEG_APP0) {
+            if (memcmp(marker->data, "JFIF", 5) == 0) {
+                // JFIF is handled by libjpeg already, handle JFXX
+            } else if (memcmp(marker->data, "JFXX", 5) == 0) {
+                //if (cinfo->saw_JFIF_marker && cinfo->JFIF_minor_version >= 2)
+                //    jpeg_read_jfxx(par, marker->data, marker->data_length);
+            }
+        } else if (marker->marker == JPEG_COM) {
+            jpeg_read_comment(par, marker->data, marker->data_length);
+        } else if (marker->marker == EXIF_MARKER) {
+            jpeg_read_exif(par, marker->data, marker->data_length);
+            jpeg_read_xmp(par, marker->data, marker->data_length);
+        } else if (marker->marker == IPTC_MARKER) {
+            // IPTC/NAA or Adobe Photoshop profile
+            jpeg_read_iptc(par, marker->data, marker->data_length);
+        }
+    }
+
 }
 
 bool jpegGetImageInfo(FormatHandle *fmtHndl) {
@@ -320,6 +397,40 @@ static int read_jpeg_image(FormatHandle *fmtHndl) {
     return 0;
 }
 
+//----------------------------------------------------------------------------
+// METADATA
+//----------------------------------------------------------------------------
+
+bim::uint jpeg_append_metadata(FormatHandle *fmtHndl, TagMap *hash) {
+    if (fmtHndl == NULL) return 1;
+    if (!hash) return 1;
+    if (isCustomReading(fmtHndl)) return 1;
+    bim::JpegParams *par = (bim::JpegParams *) fmtHndl->internalParams;
+
+    if (par->buffer_icc.size() > 0) {
+        hash->set_value(bim::RAW_TAGS_ICC, par->buffer_icc, bim::RAW_TYPES_ICC);
+        lcms_append_metadata(fmtHndl, hash);
+    }
+
+    // comments
+    for (int i = 0; i<par->comments.size(); ++i) {
+        hash->set_value(bim::CUSTOM_TAGS_PREFIX + xstring::xprintf("comment_%.3d", i), par->comments[i]);
+    }
+
+    if (par->buffer_exif.size()>0)
+        hash->set_value(bim::RAW_TAGS_EXIF, par->buffer_exif, bim::RAW_TYPES_EXIF);
+    if (par->buffer_xmp.size()>0)
+        hash->set_value(bim::RAW_TAGS_XMP, par->buffer_xmp, bim::RAW_TYPES_XMP);
+    if (par->buffer_iptc.size()>0)
+        hash->set_value(bim::RAW_TAGS_IPTC, par->buffer_iptc, bim::RAW_TYPES_IPTC);
+    //if (par->buffer_photoshop.size()>0)
+    //    hash->set_value(bim::RAW_TAGS_PHOTOSHOP, par->buffer_photoshop, bim::RAW_TYPES_PHOTOSHOP);
+
+    // use EXIV2 to read metadata
+    exiv_append_metadata(fmtHndl, hash);
+
+    return 0;
+}
 
 //****************************************************************************
 // WRITE STUFF
@@ -389,10 +500,9 @@ inline my_jpeg_destination_mgr::my_jpeg_destination_mgr(FormatHandle *new_hndl)
 // WRITE PROC
 //----------------------------------------------------------------------------
 
-#define MAX_BYTES_IN_MARKER  65533	// maximum data len of a JPEG marker
 #define MAX_DATA_BYTES_IN_MARKER  (MAX_BYTES_IN_MARKER - ICC_OVERHEAD_LEN)
 
-static void WriteMetadata(j_compress_ptr cinfo, TagMap *hash) {
+static void jpeg_write_icc(j_compress_ptr cinfo, TagMap *hash) {
     // write ICC profile
     if (hash->hasKey(bim::RAW_TAGS_ICC) && hash->get_type(bim::RAW_TAGS_ICC) == bim::RAW_TYPES_ICC) {
         unsigned int icc_data_len = hash->get_size(bim::RAW_TAGS_ICC);
@@ -446,6 +556,11 @@ static void WriteMetadata(j_compress_ptr cinfo, TagMap *hash) {
             cur_marker++;
         }
     }
+}
+
+static void WriteMetadata(j_compress_ptr cinfo, TagMap *hash) {
+    jpeg_write_icc(cinfo, hash);
+
 }
 
 static int write_jpeg_image(FormatHandle *fmtHndl) {
@@ -716,30 +831,6 @@ static int write_jpeg_image(FormatHandle *fmtHndl) {
 
     delete iod_dest;
     delete row_pointer[0];
-
-    return 0;
-}
-
-
-//----------------------------------------------------------------------------
-// META DATA PROC
-//----------------------------------------------------------------------------
-
-bim::uint jpeg_append_metadata(FormatHandle *fmtHndl, TagMap *hash) {
-    if (fmtHndl == NULL) return 1;
-    if (!hash) return 1;
-    if (isCustomReading(fmtHndl)) return 1;
-    bim::JpegParams *par = (bim::JpegParams *) fmtHndl->internalParams;
-
-    if (par->buffer_icc.size() > 0) {
-        hash->set_value(bim::RAW_TAGS_ICC, par->buffer_icc, bim::RAW_TYPES_ICC);
-
-        // use LCMS2 to parse color profile
-        lcms_append_metadata(fmtHndl, hash);
-    }
-
-    // use EXIV2 to read metadata
-    exiv_append_metadata(fmtHndl, hash);
 
     return 0;
 }
