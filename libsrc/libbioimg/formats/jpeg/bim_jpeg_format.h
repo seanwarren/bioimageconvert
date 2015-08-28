@@ -41,6 +41,10 @@ public:
     my_error_mgr *jerr;
 
     std::vector<char> buffer_icc;
+    std::vector<char> buffer_exif;
+    std::vector<char> buffer_iptc;
+    std::vector<char> buffer_xmp;
+    std::vector<std::string> comments;
 };
 
 } // namespace bim
