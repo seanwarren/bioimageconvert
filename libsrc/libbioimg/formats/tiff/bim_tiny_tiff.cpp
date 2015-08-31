@@ -17,7 +17,89 @@
 
 #include "bim_tiny_tiff.h"
 
+#include <xtypes.h>
+
 using namespace TinyTiff;
+
+
+//-------------------------------------------------------------------------------------
+// TIFF in-memory reading
+//-------------------------------------------------------------------------------------
+
+tsize_t MemoryStream::read(tdata_t buffer, tsize_t _size) {
+    _size = bim::min<tsize_t>(_size, this->sz - this->pos);
+    if (_size > 0) {
+        memcpy(buffer, this->data + this->pos, _size);
+        this->pos += _size;
+    }
+    return _size;
+}
+
+tsize_t MemoryStream::write(tdata_t buffer, tsize_t _size) {
+    _size = bim::min<tsize_t>(_size, this->sz - this->pos);
+    if (_size > 0) {
+        memcpy(this->data + this->pos, buffer, _size);
+        this->pos += _size;
+    }
+    return _size;
+}
+
+toff_t MemoryStream::seek(toff_t pos, int whence) {
+    unsigned int offset = pos;
+    if (whence == SEEK_CUR)
+        offset = this->pos + pos;
+    else if (whence == SEEK_END)
+        offset = this->sz - pos;
+    this->pos = bim::trim<toff_t>(offset, 0, this->sz - 1);
+    return this->pos;
+}
+
+toff_t MemoryStream::size() {
+    return this->sz;
+}
+
+// libtiff io functions
+
+tsize_t TinyTiff::mem_read(thandle_t st, tdata_t buffer, tsize_t size) {
+    MemoryStream *s = (MemoryStream *) st;
+    if (!s) return 0;
+    return s->read(buffer, size);
+};
+
+tsize_t TinyTiff::mem_write(thandle_t st, tdata_t buffer, tsize_t size) {
+    MemoryStream *s = (MemoryStream *)st;
+    if (!s) return 0;
+    return s->write(buffer, size);
+};
+
+int TinyTiff::mem_close(thandle_t) {
+    return 0;
+};
+
+toff_t TinyTiff::mem_seek(thandle_t st, toff_t pos, int whence) {
+    MemoryStream *s = (MemoryStream *)st;
+    if (!s) return 0;
+    return s->seek(pos, whence);
+};
+
+toff_t TinyTiff::mem_size(thandle_t st) {
+    MemoryStream *s = (MemoryStream *)st;
+    if (!s) return 0;
+    return s->size();
+};
+
+int TinyTiff::mem_map(thandle_t, tdata_t*, toff_t*) {
+    return 0;
+};
+
+void TinyTiff::mem_unmap(thandle_t, tdata_t, toff_t) {
+    return;
+};
+
+
+//-------------------------------------------------------------------------------------
+// misc
+//-------------------------------------------------------------------------------------
 
 inline void swabData(int type, uint64 size, void* data, bool needswab) {
     if (!needswab) return;
@@ -46,8 +128,8 @@ void Entry::read(TIFF *tif, bool needswab) {
     unsigned char buffer[20]; // Tiff entry is 12 bytes, BigTiff entry is 20 bytes
     unsigned int size = (tif->tif_flags & TIFF_BIGTIFF) ? 20 : 12;
     init();
-
-    if (tif->tif_readproc((thandle_t) tif->tif_fd, buffer, size) < size) return;
+    thandle_t h = tif->tif_fd != 0 ? (thandle_t)tif->tif_fd : (thandle_t)tif->tif_clientdata;
+    if (tif->tif_readproc(h, buffer, size) < size) return;
 
     if (needswab) {
         if (tif->tif_flags & TIFF_BIGTIFF) {
@@ -84,16 +166,17 @@ void Entry::read(TIFF *tif, bool needswab) {
 
 void IFD::read(toff_t offset) {
     init();
-    tif->tif_seekproc((thandle_t) tif->tif_fd, offset, SEEK_SET);
+    thandle_t h = tif->tif_fd != 0 ? (thandle_t)tif->tif_fd : (thandle_t)tif->tif_clientdata;
+    tif->tif_seekproc(h, offset, SEEK_SET);
 
     // read count of tags in the IFD
     if (tif->tif_flags & TIFF_BIGTIFF) {
-        if (tif->tif_readproc((thandle_t) tif->tif_fd, &count, 8) < 8) return;
+        if (tif->tif_readproc(h, &count, 8) < 8) return;
         if (needswab) 
             TIFFSwabLong8(&count);
     } else {
         uint16 countsm;
-        if (tif->tif_readproc((thandle_t) tif->tif_fd, &countsm, 2) < 2) return;
+        if (tif->tif_readproc(h, &countsm, 2) < 2) return;
         if (needswab)
             TIFFSwabShort(&countsm);
         count = countsm;
@@ -110,11 +193,11 @@ void IFD::read(toff_t offset) {
 
     // read offset to the next IFD
     if (tif->tif_flags & TIFF_BIGTIFF) {
-        if (tif->tif_readproc((thandle_t) tif->tif_fd, &next, 8) < 8) return;
+        if (tif->tif_readproc(h, &next, 8) < 8) return;
         if (needswab) { TIFFSwabLong8(&next); }
     } else {
         uint32 nextsm;
-        if (tif->tif_readproc((thandle_t) tif->tif_fd, &nextsm, 4) < 4) return;
+        if (tif->tif_readproc(h, &nextsm, 4) < 4) return;
         if (needswab) { TIFFSwabLong(&nextsm); }
         next = nextsm;
     }
@@ -135,8 +218,9 @@ Entry* IFD::getTag(uint16 tag) {
 
 int IFD::readBufNoAlloc (toff_t offset, uint64 size, uint16 type, uint8 *buf) {
   if (!buf) return 1;
-  tif->tif_seekproc((thandle_t) tif->tif_fd, offset, SEEK_SET);
-  if (tif->tif_readproc((thandle_t) tif->tif_fd, buf, size) < (tmsize_t) size) return 1;
+  thandle_t h = tif->tif_fd != 0 ? (thandle_t)tif->tif_fd : (thandle_t)tif->tif_clientdata;
+  tif->tif_seekproc(h, offset, SEEK_SET);
+  if (tif->tif_readproc(h, buf, size) < (tmsize_t)size) return 1;
   swabData(type, size, buf, needswab);
   return 0;
 }
@@ -177,23 +261,6 @@ void IFD::readTagCustom (uint16 tag, uint64 size, uint16 type, uint8 **buf) {
     this->readBuf ( entry->offset, size, type, buf);
 }
 
-std::string IFD::readTagString (uint16 tag) {
-    std::string s;
-    if (!this->tagPresent(tag )) return s;
-
-    uint8 *buf = NULL;
-    uint64 size;
-    uint16 type;
-    this->readTag (tag, size, type, &buf);
-    while (size > 0 && buf[size] == 0) {
-        --size;
-    }
-    s.resize( size );
-    memcpy( &s[0], buf, size );
-    _TIFFfree(buf);
-    return s;
-}
-
 void IFD::readTag (uint16 tag, std::vector<uint8> *v) {
     if (!this->tagPresent(tag )) return;
     uint8 *buf = NULL; uint64 size; uint16 type;
@@ -203,6 +270,35 @@ void IFD::readTag (uint16 tag, std::vector<uint8> *v) {
     _TIFFfree(buf);
 }
 
+std::string IFD::readTagString(uint16 tag) {
+    std::string s;
+    if (!this->tagPresent(tag)) return s;
+
+    std::vector<uint8> buf;
+    this->readTag(tag, &buf);
+    uint64 size = buf.size();
+    while (size > 0 && buf[size] == 0)
+        --size;
+    s.resize(size);
+    memcpy(&s[0], &buf[0], size);
+    return s;
+}
+
+int IFD::readTagInt(uint16 tag) {
+    if (!this->tagPresent(tag)) return 0;
+    std::vector<uint8> buf;
+    this->readTag(tag, &buf);
+    
+    uint64 size = buf.size();
+    Entry *tt = this->getTag(tag);
+    
+    if (tt->type == TIFF_SHORT && size >= 2)
+        return *(short*)&buf[0];
+    else if (tt->type == TIFF_LONG && size >= 4)
+        return *(long*)&buf[0];
+
+    return 0;
+}
 
 //-------------------------------------------------------------------------------------
 // IFDs
@@ -211,12 +307,13 @@ void IFD::readTag (uint16 tag, std::vector<uint8> *v) {
 void Tiff::read(TIFF *tif) {
     this->tif = tif;
     init();
-    tif->tif_seekproc((thandle_t) tif->tif_fd, 0, SEEK_SET);
+    thandle_t h = tif->tif_fd != 0 ? (thandle_t) tif->tif_fd : (thandle_t)tif->tif_clientdata;
+    tif->tif_seekproc(h, 0, SEEK_SET);
     
     uint64 ifd_offset=8;
     if (tif->tif_flags & TIFF_BIGTIFF) {
         HeaderBig hdr;
-        if (tif->tif_readproc((thandle_t) tif->tif_fd, &hdr, sizeof(hdr) ) < (int) sizeof(hdr)) return;  
+        if (tif->tif_readproc(h, &hdr, sizeof(hdr)) < (int) sizeof(hdr)) return;
         hdr.magic == TIFF_BIGENDIAN ? needswab = static_cast<bool>(!bigendian) : needswab = static_cast<bool>(bigendian);
         if (needswab) {
             TIFFSwabShort(&hdr.version);
@@ -226,7 +323,7 @@ void Tiff::read(TIFF *tif) {
         ifd_offset = hdr.diroffset;
     } else {
         Header hdr;
-        if (tif->tif_readproc((thandle_t) tif->tif_fd, &hdr, sizeof(hdr) ) < (int) sizeof(hdr)) return;  
+        if (tif->tif_readproc(h, &hdr, sizeof(hdr)) < (int) sizeof(hdr)) return;
         hdr.magic == TIFF_BIGENDIAN ? needswab = static_cast<bool>(!bigendian) : needswab = static_cast<bool>(bigendian);
         if (needswab) {
             TIFFSwabShort(&hdr.version);

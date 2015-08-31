@@ -17,6 +17,9 @@
 
 #include "bim_jpeg_format.h"
 
+#include <bim_img_format_interface.h>
+#include <bim_img_format_utils.h>
+
 #include <tag_map.h>
 #include <bim_metatags.h>
 #include <bim_exiv_parse.h>
@@ -217,46 +220,43 @@ static void jpeg_read_exif(bim::JpegParams *par, const unsigned char *buffer, un
     if (size <= sizeof(exif_signature)) return;
     if (memcmp(exif_signature, buffer, sizeof(exif_signature)) != 0) return;
 
-    par->buffer_exif.resize(size - sizeof(exif_signature));
-    memcpy(&par->buffer_exif[0], buffer + sizeof(exif_signature), size - sizeof(exif_signature));
+    unsigned int offset = par->buffer_exif.size();
+    par->buffer_exif.resize(offset + size - sizeof(exif_signature));
+    memcpy(&par->buffer_exif[offset], buffer + sizeof(exif_signature), size - sizeof(exif_signature));
 }
 
-const char *adobecm_signature = "Adobe_CM";
-const char *adobe2_signature = "Adobe_Photoshop2.5";
-const char *adobe3_signature = "Photoshop 3.0\x0"; // 14
-const char *iptc_signature = "8BIM\x04\x04\x0\x0\x0\x0"; // 10
+// "Adobe_CM";
+const unsigned char adobecm_signature[8] = { 0x41, 0x64, 0x6f, 0x62, 0x65, 0x5f, 0x43, 0x4d };
+// "Adobe_Photoshop2.5"
+const unsigned char adobe2_signature[18] = { 0x41, 0x64, 0x6f, 0x62, 0x65, 0x5f, 0x50, 0x68, 0x6f, 0x74, 0x6f, 0x73, 0x68, 0x6f, 0x70, 0x32, 0x2e, 0x35 };
+// "Photoshop 3.0\x0"
+const unsigned char adobe3_signature[14] = { 0x50, 0x68, 0x6f, 0x74, 0x6f, 0x73, 0x68, 0x6f, 0x70, 0x20, 0x33, 0x2e, 0x30, 0x0 };
+// "8BIM\x04\x04\x0\x0\x0\x0"
+const unsigned char iptc_signature[10] = { 0x38, 0x42, 0x49, 0x4d, 0x04, 0x04, 0x0, 0x0, 0x0, 0x0 };
 const unsigned char iptc_magic[2] = { 0x1C, 0x01 };
 
 static void jpeg_read_iptc(bim::JpegParams *par, const unsigned char *buffer, unsigned int size) {
-    if (size < 8) return;
-    if (memcmp(buffer, adobecm_signature, strlen(adobecm_signature)) == 0) return;
-    //if (memcmp(buffer, adobe2_signature, strlen(adobe2_signature)) != 0) return;
-    //if (memcmp(buffer, adobe3_signature, strlen(adobe3_signature)) != 0) return;
+    const size_t signature_size = sizeof(adobe3_signature)+sizeof(iptc_signature)+2;
+    if (size <= signature_size) return;
+    if ((memcmp(buffer, adobe3_signature, sizeof(adobe3_signature)) != 0) ||
+        (memcmp(buffer + sizeof(adobe3_signature), iptc_signature, sizeof(iptc_signature)) != 0)) return;
 
-    size_t offset = 0;
-    bool found = false;
-    while (offset < size - 1) {
-        if (memcmp(buffer + offset, iptc_magic, sizeof(iptc_magic)) == 0) {
-            found = true;
-            break;
-        }
-        offset++;
-    }
-    if (!found) return;
-
-    par->buffer_iptc.resize(size - offset);
-    memcpy(&par->buffer_iptc[0], buffer + offset, size - offset);
+    size_t offset = par->buffer_iptc.size();
+    par->buffer_iptc.resize(offset + size - signature_size);
+    memcpy(&par->buffer_iptc[offset], buffer + signature_size, size - signature_size);
 }
 
-const char *xmp_signature = "http://ns.adobe.com/xap/1.0/";
+//"http://ns.adobe.com/xap/1.0/"
+const unsigned char xmp_signature[29] = { 0x68, 0x74, 0x74, 0x70, 0x3a, 0x2f, 0x2f, 0x6e, 0x73, 0x2e, 0x61, 0x64, 0x6f, 0x62, 0x65, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x78, 0x61, 0x70, 0x2f, 0x31, 0x2e, 0x30, 0x2f, 0x0 };
 
 static void jpeg_read_xmp(bim::JpegParams *par, const unsigned char *buffer, unsigned int size) {
-    const size_t xmp_signature_size = strlen(xmp_signature) + 1;
+    const size_t xmp_signature_size = sizeof(xmp_signature);
     if (size <= xmp_signature_size) return;
-    if (memcmp(xmp_signature, buffer, xmp_signature_size-1) != 0) return;
+    if (memcmp(buffer, xmp_signature, xmp_signature_size-1) != 0) return;
 
-    par->buffer_xmp.resize(size - xmp_signature_size);
-    memcpy(&par->buffer_xmp[0], buffer + xmp_signature_size, size - xmp_signature_size);
+    unsigned int offset = par->buffer_xmp.size();
+    par->buffer_xmp.resize(offset + size - xmp_signature_size);
+    memcpy(&par->buffer_xmp[offset], buffer + xmp_signature_size, size - xmp_signature_size);
 }
 
 static void jpeg_read_comment(bim::JpegParams *par, const unsigned char *buffer, unsigned int size) {
@@ -315,6 +315,13 @@ bool jpegGetImageInfo(FormatHandle *fmtHndl) {
     par->i.width = par->cinfo->image_width;
     par->i.height = par->cinfo->image_height;
     par->i.samples = par->cinfo->num_components;
+    par->i.imageMode = IM_MULTI;
+    if (par->i.samples == 1)
+        par->i.imageMode = IM_GRAYSCALE;
+    else if (par->i.samples == 3)
+        par->i.imageMode = IM_RGB;
+    else if (par->i.samples == 4)
+        par->i.imageMode = IM_RGBA;
 
     ReadMetadata(par);
     return true;
@@ -329,7 +336,7 @@ static int read_jpeg_image(FormatHandle *fmtHndl) {
     if (!setjmp(par->jerr->setjmp_buffer)) {
         jpeg_start_decompress(cinfo);
 
-        if (allocImg(image, cinfo->output_width, cinfo->output_height, cinfo->output_components, 8) != 0) {
+        if (allocImg(fmtHndl, &par->i, image) != 0) {
             jpeg_destroy_decompress(cinfo);
             return 1;
         }
@@ -500,67 +507,86 @@ inline my_jpeg_destination_mgr::my_jpeg_destination_mgr(FormatHandle *new_hndl)
 // WRITE PROC
 //----------------------------------------------------------------------------
 
-#define MAX_DATA_BYTES_IN_MARKER  (MAX_BYTES_IN_MARKER - ICC_OVERHEAD_LEN)
+static void jpeg_write_marker_buffer(j_compress_ptr cinfo, const unsigned char *data, unsigned int length,
+    int marker_id, const unsigned char *signature, int signature_size) {
+
+    std::vector<unsigned char> buffer(MAX_BYTES_IN_MARKER);
+    memcpy(&buffer[0], signature, signature_size);
+
+    // now write marker blocks limited by the MAX_BYTES_IN_MARKER
+    int max_payload_size = MAX_BYTES_IN_MARKER - signature_size;
+    for (unsigned int i = 0; i < length; i += max_payload_size) {
+        unsigned int len = bim::min<unsigned int>(length - i, max_payload_size);
+        memcpy(&buffer[0] + signature_size, data + i, len);
+        jpeg_write_marker(cinfo, marker_id, &buffer[0], len);
+    }
+}
 
 static void jpeg_write_icc(j_compress_ptr cinfo, TagMap *hash) {
-    // write ICC profile
-    if (hash->hasKey(bim::RAW_TAGS_ICC) && hash->get_type(bim::RAW_TAGS_ICC) == bim::RAW_TYPES_ICC) {
-        unsigned int icc_data_len = hash->get_size(bim::RAW_TAGS_ICC);
-        JOCTET *icc_data_ptr = (JOCTET *)hash->get_value_bin(bim::RAW_TAGS_ICC);
+    if (!hash->hasKey(bim::RAW_TAGS_ICC) || hash->get_type(bim::RAW_TAGS_ICC) != bim::RAW_TYPES_ICC) return;
+    unsigned int length = hash->get_size(bim::RAW_TAGS_ICC);
+    unsigned char *data = (unsigned char *)hash->get_value_bin(bim::RAW_TAGS_ICC);
 
-        int cur_marker = 1;  // per spec, counting starts at 1
-        unsigned int length; // number of bytes to write in this marker
+    int header_size = sizeof(icc_signature)+2;
+    int max_payload_size = MAX_BYTES_IN_MARKER - header_size;
+    std::vector<unsigned char> buffer(MAX_BYTES_IN_MARKER);
+    memcpy(&buffer[0], icc_signature, sizeof(icc_signature));
+    buffer[12] = 0; // sequence number will be written for each block
+    buffer[13] = (unsigned char)(length / max_payload_size + 1); // number of markers
 
-        // Calculate the number of markers we'll need, rounding up of course
-        unsigned int num_markers = icc_data_len / MAX_DATA_BYTES_IN_MARKER;
-
-        if (num_markers * MAX_DATA_BYTES_IN_MARKER != icc_data_len)
-            num_markers++;
-
-        while (icc_data_len > 0) {
-            // length of profile to put in this marker
-            length = icc_data_len;
-            if (length > MAX_DATA_BYTES_IN_MARKER)
-                length = MAX_DATA_BYTES_IN_MARKER;
-            icc_data_len -= length;
-
-            // Write the JPEG marker header (APP2 code and marker length)
-            jpeg_write_m_header(cinfo, ICC_MARKER,
-                (unsigned int)(length + ICC_OVERHEAD_LEN));
-
-            // Write the marker identifying string "ICC_PROFILE" (null-terminated).
-            // We code it in this less-than-transparent way so that the code works
-            // even if the local character set is not ASCII.
-            jpeg_write_m_byte(cinfo, 0x49);
-            jpeg_write_m_byte(cinfo, 0x43);
-            jpeg_write_m_byte(cinfo, 0x43);
-            jpeg_write_m_byte(cinfo, 0x5F);
-            jpeg_write_m_byte(cinfo, 0x50);
-            jpeg_write_m_byte(cinfo, 0x52);
-            jpeg_write_m_byte(cinfo, 0x4F);
-            jpeg_write_m_byte(cinfo, 0x46);
-            jpeg_write_m_byte(cinfo, 0x49);
-            jpeg_write_m_byte(cinfo, 0x4C);
-            jpeg_write_m_byte(cinfo, 0x45);
-            jpeg_write_m_byte(cinfo, 0x0);
-
-            // Add the sequencing info
-            jpeg_write_m_byte(cinfo, cur_marker);
-            jpeg_write_m_byte(cinfo, (int)num_markers);
-
-            // Add the profile data
-            while (length--) {
-                jpeg_write_m_byte(cinfo, *icc_data_ptr);
-                icc_data_ptr++;
-            }
-            cur_marker++;
-        }
+    for (unsigned int i = 0; i < length; i += max_payload_size) {
+        unsigned int len = bim::min<unsigned int>(length - i, max_payload_size);
+        buffer[12] = (unsigned char)((i / max_payload_size) + 1); // sequence number
+        memcpy(&buffer[0] + header_size, data + i, len);
+        jpeg_write_marker(cinfo, ICC_MARKER, &buffer[0], len + header_size);
     }
+}
+
+static void jpeg_write_iptc(j_compress_ptr cinfo, TagMap *hash) {
+    if (!hash->hasKey(bim::RAW_TAGS_IPTC) || hash->get_type(bim::RAW_TAGS_IPTC) != bim::RAW_TYPES_IPTC) return;
+    bim::int32 length = hash->get_size(bim::RAW_TAGS_IPTC);
+    unsigned char *data = (unsigned char *)hash->get_value_bin(bim::RAW_TAGS_IPTC);
+
+    int header_size = sizeof(adobe3_signature)+sizeof(iptc_signature)+2;
+    int max_payload_size = MAX_BYTES_IN_MARKER - header_size - 1;
+    std::vector<unsigned char> buffer(MAX_BYTES_IN_MARKER);
+    memcpy(&buffer[0], adobe3_signature, sizeof(adobe3_signature));
+    memcpy(&buffer[14], iptc_signature, sizeof(iptc_signature));
+
+    for (unsigned int i = 0; i < length; i += max_payload_size) {
+        bim::int16 len = bim::min<bim::int32>(length - i, max_payload_size);
+        unsigned roundup = len & 0x01;	// needed for Photoshop
+        buffer[24] = (unsigned char)(len >> 8); // segment size
+        buffer[25] = (unsigned char)(len & 0xFF); // segment size
+        memcpy(&buffer[0] + header_size, data + i, len);
+        if (roundup)
+            buffer[header_size + len] = 0; // needed for Photoshop
+        jpeg_write_marker(cinfo, IPTC_MARKER, &buffer[0], len + header_size + roundup);
+    }
+}
+
+static void jpeg_write_xmp(j_compress_ptr cinfo, TagMap *hash) {
+    if (!hash->hasKey(bim::RAW_TAGS_XMP) || hash->get_type(bim::RAW_TAGS_XMP) != bim::RAW_TYPES_XMP) return;
+    unsigned int length = hash->get_size(bim::RAW_TAGS_XMP);
+    unsigned char *data = (unsigned char *)hash->get_value_bin(bim::RAW_TAGS_XMP);
+
+    jpeg_write_marker_buffer(cinfo, data, length, EXIF_MARKER, 
+        (const unsigned char *) xmp_signature, sizeof(xmp_signature));
+}
+
+static void jpeg_write_exif(j_compress_ptr cinfo, TagMap *hash) {
+    if (!hash->hasKey(bim::RAW_TAGS_EXIF) || hash->get_type(bim::RAW_TAGS_EXIF) != bim::RAW_TYPES_EXIF) return;
+    unsigned int length = hash->get_size(bim::RAW_TAGS_EXIF);
+    unsigned char *data = (unsigned char *)hash->get_value_bin(bim::RAW_TAGS_EXIF);
+
+    jpeg_write_marker_buffer(cinfo, data, length, EXIF_MARKER, exif_signature, sizeof(exif_signature));
 }
 
 static void WriteMetadata(j_compress_ptr cinfo, TagMap *hash) {
     jpeg_write_icc(cinfo, hash);
-
+    jpeg_write_exif(cinfo, hash);
+    jpeg_write_iptc(cinfo, hash);
+    jpeg_write_xmp(cinfo, hash);
 }
 
 static int write_jpeg_image(FormatHandle *fmtHndl) {

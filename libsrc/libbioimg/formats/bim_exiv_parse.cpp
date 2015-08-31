@@ -18,11 +18,16 @@
 #include <xstring.h>
 #include <tag_map.h>
 #include <bim_metatags.h>
+#include <tiff/bim_tiny_tiff.h>
 
 #include "bim_exiv_parse.h"
 
 #include <tiffio.h>
 #include <tiffiop.h>
+#include <tiffio.hxx>
+
+#include <streambuf>
+#include <istream>
 
 using namespace bim;
 
@@ -289,8 +294,9 @@ void create_tiff_exif_block(const std::vector<char> &exif, unsigned int offset_e
 template <typename Count, class Entry, typename next>
 void sub_ifd_to_buffer(toff_t offset, TIFF *tif, std::vector<char> &buffer) {
     Count count = 0; 
-    tif->tif_seekproc((thandle_t)tif->tif_fd, offset, SEEK_SET);
-    if (tif->tif_readproc((thandle_t)tif->tif_fd, &count, sizeof(Count)) < sizeof(Count)) return;
+    thandle_t h = tif->tif_fd != 0 ? (thandle_t)tif->tif_fd : (thandle_t)tif->tif_clientdata;
+    tif->tif_seekproc(h, offset, SEEK_SET);
+    if (tif->tif_readproc(h, &count, sizeof(Count)) < sizeof(Count)) return;
     if (tif->tif_flags & TIFF_SWAB) {
         if (tif->tif_flags & TIFF_BIGTIFF)
             TIFFSwabLong8((bim::uint64*)&count);
@@ -304,7 +310,7 @@ void sub_ifd_to_buffer(toff_t offset, TIFF *tif, std::vector<char> &buffer) {
 
     std::vector<Entry> entries(count);
     std::vector<tiff_ifd_entry> oentries(count);
-    if (tif->tif_readproc((thandle_t)tif->tif_fd, &entries[0], sizeof(Entry)*count) < sizeof(Entry)*count) return;
+    if (tif->tif_readproc(h, &entries[0], sizeof(Entry)*count) < sizeof(Entry)*count) return;
     for (int i = 0; i < count; ++i) {
         Entry *e = &entries[i];
         tiff_ifd_entry *o = &oentries[i];
@@ -347,10 +353,49 @@ void sub_ifd_to_buffer(toff_t offset, TIFF *tif, std::vector<char> &buffer) {
     memcpy(&buffer[0] + pos, &out_next, sizeof(bim::uint32));
     pos += sizeof(bim::uint32);
 
-    tif->tif_seekproc((thandle_t)tif->tif_fd, payload_begin, SEEK_SET);
-    if (tif->tif_readproc((thandle_t)tif->tif_fd, &buffer[0] + pos, payload_size) < payload_size) {
+    tif->tif_seekproc(h, payload_begin, SEEK_SET);
+    if (tif->tif_readproc(h, &buffer[0] + pos, payload_size) < payload_size) {
         buffer.resize(0);
     }
+}
+
+void extract_exif_gps_blocks(bim::TagMap *hash, std::vector<char> &exif, std::vector<char> &gps) {
+    if (!hash->hasKey(bim::RAW_TAGS_EXIF) || hash->get_type(bim::RAW_TAGS_EXIF) != bim::RAW_TYPES_EXIF) return;
+
+    // regular tiff parsing requires several tags in the first directory, use header option and find exif offsets
+    // EXIF tiff may contain very few tags in the main IFD
+    TinyTiff::MemoryStream stream((char*)hash->get_value_bin(bim::RAW_TAGS_EXIF), hash->get_size(bim::RAW_TAGS_EXIF));
+    TIFF* tif = TIFFClientOpen("MemoryTIFF", "rh", (thandle_t)&stream,
+        TinyTiff::mem_read, TinyTiff::mem_write, TinyTiff::mem_seek,
+        TinyTiff::mem_close, TinyTiff::mem_size, TinyTiff::mem_map, TinyTiff::mem_unmap);
+    if (!tif) return;
+
+    TinyTiff::Tiff ttif(tif);
+    TinyTiff::IFD *ifd = ttif.firstIfd();
+
+    // parse and extract blocks
+    toff_t offset_exif = 0;
+    toff_t offset_gps = 0;
+
+    //if (TIFFGetField(tif, TIFFTAG_EXIFIFD, &offset_exif)) {
+    if (ifd->tagPresent(TIFFTAG_EXIFIFD)) {
+        offset_exif = ifd->readTagInt(TIFFTAG_EXIFIFD);
+        if ((tif->tif_flags & TIFF_BIGTIFF))
+            sub_ifd_to_buffer<bim::uint64, bigtiff_ifd_entry, bim::uint64>(offset_exif, tif, exif);
+        else
+            sub_ifd_to_buffer<bim::uint16, tiff_ifd_entry, bim::uint32>(offset_exif, tif, exif);
+    }
+
+    //if (TIFFGetField(tif, TIFFTAG_GPSIFD, &offset_gps)) {
+    if (ifd->tagPresent(TIFFTAG_GPSIFD)) {
+        offset_gps = ifd->readTagInt(TIFFTAG_GPSIFD);
+        if ((tif->tif_flags & TIFF_BIGTIFF))
+            sub_ifd_to_buffer<bim::uint64, bigtiff_ifd_entry, bim::uint64>(offset_gps, tif, gps);
+        else
+            sub_ifd_to_buffer<bim::uint16, tiff_ifd_entry, bim::uint32>(offset_gps, tif, gps);
+    }
+
+    TIFFClose(tif);
 }
 
 void tiff_exif_to_buffer(TIFF *tif, bim::TagMap *hash) {
