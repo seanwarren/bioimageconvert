@@ -32,6 +32,45 @@ static int bigendian = (*(char *)&one == 0);
 // tiff type sizes in bytes 
 static const int tag_size_bytes[19] = { 1, 1, 1, 2, 4, 8, 1, 1, 2, 4, 8, 4, 8, 0, 0, 0, 8, 8, 8 }; 
 
+//-------------------------------------------------------------------------------------
+// TIFF in-memory reading
+//-------------------------------------------------------------------------------------
+
+/*
+Usage:
+
+TinyTiff::MemoryStream stream(buffer, buffer_size);
+TIFF* tif = TIFFClientOpen("MemoryTIFF", "rh", (thandle_t)&stream,
+    TinyTiff::mem_read, TinyTiff::mem_write, TinyTiff::mem_seek, 
+    TinyTiff::mem_close, TinyTiff::mem_size, TinyTiff::mem_map, TinyTiff::mem_unmap);
+*/
+
+class MemoryStream {
+public:
+    MemoryStream(char *_data, unsigned int _size) : data(_data), sz(_size) { pos = 0; }
+
+    tsize_t read(tdata_t buffer, tsize_t size);
+    tsize_t write(tdata_t buffer, tsize_t size);
+    toff_t  seek(toff_t pos, int whence);
+    toff_t  size();
+public:
+    char *data;
+    unsigned int sz;
+    unsigned int pos;
+};
+
+tsize_t mem_read (thandle_t st, tdata_t buffer, tsize_t size);
+tsize_t mem_write(thandle_t st, tdata_t buffer, tsize_t size);
+int     mem_close(thandle_t);
+toff_t  mem_seek (thandle_t st, toff_t pos, int whence);
+toff_t  mem_size (thandle_t st);
+int     mem_map  (thandle_t, tdata_t*, toff_t*);
+void    mem_unmap(thandle_t, tdata_t, toff_t);
+
+//-------------------------------------------------------------------------------------
+// TIFF headers
+//-------------------------------------------------------------------------------------
+
 // headers must be POD-types, they are loaded from disk as is!
 typedef struct {
   uint16 magic;     // 0x4949 for little endian or 0x4D4D for big endian
@@ -48,6 +87,9 @@ typedef struct {
   uint64 diroffset; // offset to first directory
 } HeaderBig;
 
+//-------------------------------------------------------------------------------------
+// TinyTIFF API
+//-------------------------------------------------------------------------------------
 
 // unified entry for Tiff and BigTiff, reads both and creates BigTIFF entry in memory
 class Entry {
@@ -89,8 +131,10 @@ public:
     void readBuf (toff_t offset, uint64 size, uint16 type, uint8 **buf);
     int  readBufNoAlloc (toff_t offset, uint64 size, uint16 type, uint8 *buf);
     
-    std::string readTagString (uint16 tag);
     void readTag (uint16 tag, std::vector<uint8> *buf);
+    std::string readTagString(uint16 tag);
+    int         readTagInt(uint16 tag);
+
     void readTag (uint16 tag, uint64 &size, uint16 &type, uint8 **buf);
     // this function reads tif tag using provided size and type instead of IFD values
     void readTagCustom (uint16 tag, uint64 size, uint16 type, uint8 **buf);
@@ -109,6 +153,9 @@ private:
 // unified IFDs for Tiff and BigTiff, reads both and creates BigTIFF IFD in memory
 class Tiff {
 public:
+    Tiff() { this->tif = 0; }
+    Tiff(TIFF *tif) { this->read(tif); }
+
     void   init() { ifds.clear(); needswab=false; }
     void   read(TIFF *tif);
 

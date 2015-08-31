@@ -856,21 +856,23 @@ static ERR WriteMetadata(PKImageEncode *pEncoder, ImageInfo *info, TagMap *hash)
         }
 
         // write Exif metadata
-        // dima: writing EXIF IFD requires proper offset of data elements, not sure how this is intended to work
-        // should offsets be relative to the beginning of the block and then are updated by the library?
-        // for now only look for a JXR version of this tag
-        /*
+        // libjxr expects IFDs with offsets relative to its own start, i.e. 0 of the memory buffer
+        // extract blocks and update offsets to 0s
         if (hash->hasKey(bim::RAW_TAGS_EXIF) && hash->get_type(bim::RAW_TAGS_EXIF) == bim::RAW_TYPES_EXIF) {
-            error_code = PKImageEncode_SetEXIFMetadata_WMP(pEncoder, (U8*)hash->get_value_bin(bim::RAW_TAGS_EXIF), hash->get_size(bim::RAW_TAGS_EXIF));
-            JXR_CHECK(error_code);
-        }
+            std::vector<char> exif; 
+            std::vector<char> gps;
+            extract_exif_gps_blocks(hash, exif, gps );
 
-        // write Exif GPS metadata
-        if (hash->hasKey(bim::RAW_TAGS_EXIFGPS) && hash->get_type(bim::RAW_TAGS_EXIFGPS) == bim::RAW_TYPES_EXIFGPS) {
-            error_code = PKImageEncode_SetGPSInfoMetadata_WMP(pEncoder, (U8*)hash->get_value_bin(bim::RAW_TAGS_EXIFGPS), hash->get_size(bim::RAW_TAGS_EXIFGPS));
-            JXR_CHECK(error_code);
+            if (exif.size()>0) {
+                error_code = PKImageEncode_SetEXIFMetadata_WMP(pEncoder, (U8*)&exif[0], exif.size());
+                JXR_CHECK(error_code);
+            }
+
+            if (gps.size() > 0) {
+                error_code = PKImageEncode_SetGPSInfoMetadata_WMP(pEncoder, (U8*)&gps[0], gps.size());
+                JXR_CHECK(error_code);
+            }
         }
-        */
 
         return WMP_errSuccess;
     } catch (...) {

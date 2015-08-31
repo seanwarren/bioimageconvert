@@ -24,11 +24,13 @@ void exiv_append_metadata (bim::FormatHandle *fmtHndl, bim::TagMap *hash );
 // Support for TIFF blocks with EXIF and GPS IFDs
 //-----------------------------------------------------------------------------
 
-typedef struct tiff TIFF;
-
 void create_tiff_exif_block(const std::vector<char> &exif, unsigned int offset_exif, 
                             const std::vector<char> &gps, unsigned int offset_gps, 
                             bim::TagMap *hash);
+
+void extract_exif_gps_blocks(bim::TagMap *hash, std::vector<char> &exif, std::vector<char> &gps );
+
+typedef struct tiff TIFF;
 
 void tiff_exif_to_buffer(TIFF *tif, bim::TagMap *hash);
 void buffer_to_tiff_exif(bim::TagMap *hash, TIFF *tif);

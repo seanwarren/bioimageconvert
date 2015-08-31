@@ -415,7 +415,7 @@ void generic_write_metadata(FormatHandle *fmtHndl, TagMap *hash) {
 
     // IPTC
     if (hash->hasKey(bim::RAW_TAGS_IPTC) && hash->get_type(bim::RAW_TAGS_IPTC) == bim::RAW_TYPES_IPTC) {
-        TIFFSetField(tif, TIFFTAG_RICHTIFFIPTC, hash->get_size(bim::RAW_TAGS_IPTC), hash->get_value_bin(bim::RAW_TAGS_IPTC));
+        //TIFFSetField(tif, TIFFTAG_RICHTIFFIPTC, hash->get_size(bim::RAW_TAGS_IPTC), hash->get_value_bin(bim::RAW_TAGS_IPTC));
     }
 
     // XMP
