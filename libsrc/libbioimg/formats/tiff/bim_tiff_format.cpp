@@ -23,6 +23,7 @@
 #include <xstring.h>
 #include <tag_map.h>
 #include <bim_metatags.h>
+#include <bim_exiv_parse.h>
 
 using namespace bim;
 
@@ -668,23 +669,25 @@ void tiffSetWriteParameters (FormatHandle *fmtHndl) {
   } // while
 }
 
-void tiffCloseImageProc (FormatHandle *fmtHndl)
-{
+void tiffCloseImageProc (FormatHandle *fmtHndl) {
   if (fmtHndl == NULL) return;
   if (fmtHndl->internalParams == NULL) return;
+  TiffParams *par = (TiffParams *) fmtHndl->internalParams;
 
-  TiffParams *tiffpar = (TiffParams *) fmtHndl->internalParams;
-
-  if ( (tiffpar != NULL) && (tiffpar->tiff != NULL) ) {
-    XTIFFClose( tiffpar->tiff );
-    tiffpar->tiff = NULL;
+  if ( (par != NULL) && (par->tiff != NULL) ) {
+    XTIFFClose( par->tiff );
+    par->tiff = NULL;
   }
 
   // close stream handle
   if ( fmtHndl->stream && !isCustomReading(fmtHndl) ) xclose( fmtHndl );
 
+  if (fmtHndl->io_mode == IO_WRITE && fmtHndl->metaData) {
+      exiv_write_metadata(fmtHndl->metaData, fmtHndl);
+  }
+
   if (fmtHndl->internalParams != NULL) {
-    delete tiffpar;
+    delete par;
     fmtHndl->internalParams = NULL;
   }
 }

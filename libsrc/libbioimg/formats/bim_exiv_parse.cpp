@@ -192,6 +192,35 @@ void exiv_append_metadata(FormatHandle *fmtHndl, TagMap *hash) {
 
 }
 
+void exiv_write_metadata(TagMap *hash, FormatHandle *fmtHndl) {
+    if (fmtHndl == NULL) return;
+    if (isCustomReading(fmtHndl)) return;
+    if (!hash) return;
+    if (!fmtHndl->fileName) return;
+
+    if (!hash->hasKey(bim::RAW_TAGS_EXIF) || hash->get_type(bim::RAW_TAGS_EXIF) != bim::RAW_TYPES_EXIF) return;
+    // write Exif metadata
+    try {
+        Exiv2::ExifData exifData;
+        Exiv2::ExifParser::decode(exifData,
+            (const Exiv2::byte *) hash->get_value_bin(bim::RAW_TAGS_EXIF),
+            hash->get_size(bim::RAW_TAGS_EXIF));
+            
+        #ifdef BIM_WIN
+        bim::xstring fn(fmtHndl->fileName);
+        Exiv2::Image::AutoPtr image = Exiv2::ImageFactory::open(fn.toUTF16());
+        #else
+        Exiv2::Image::AutoPtr image = Exiv2::ImageFactory::open(fmtHndl->fileName);
+        #endif
+        if (image.get() == 0) return;
+
+        image->setExifData(exifData);
+        image->writeMetadata();
+    } catch (...) {
+        //pass
+    }
+}
+
 //-----------------------------------------------------------------------------
 // Support for TIFF blocks with EXIF and GPS IFDs
 //-----------------------------------------------------------------------------
@@ -418,6 +447,42 @@ void tiff_exif_to_buffer(TIFF *tif, bim::TagMap *hash) {
     create_tiff_exif_block(exif, 0, gps, 0, hash);
 }
 
+void copy_custom_directory(TIFF *memtif, toff_t mem_offset, TIFF *tif, bim::uint64 &dir_offset, bool needswab) {
+    std::vector<bim::uint8> buf;
+    TinyTiff::IFD subifd(memtif, mem_offset, needswab);
+
+    // EXIF IFD
+    if (TIFFCreateEXIFDirectory(tif) != 0) return;
+
+    //const TIFFFieldArray *exif_fields = _TIFFGetExifFields();
+    //_TIFFMergeFields(tif, exif_fields->fields, exif_fields->count);
+
+    for (int t = 0; t < subifd.size(); ++t) {
+        //if (TIFFSetField(tif, EXIFTAG_EXPOSURETIME, .25) == 0) return;
+        //if (TIFFSetField(tif, EXIFTAG_FNUMBER, 11.) == 0) return;
+        TinyTiff::Entry *tag = subifd.getEntry(t);
+        subifd.readTag(tag->tag, &buf);
+        try {
+            if (tag->type == TIFF_ASCII) {
+                TIFFSetField(tif, tag->tag, &buf[0]);
+            }
+            else if (tag->type == TIFF_UNDEFINED) {
+                //TIFFSetField(tif, tag->tag, tag->count, &buf[0]);
+            }
+            else {
+                TIFFSetField(tif, tag->tag, tag->count, &buf[0]);
+            }
+        } catch (...) {
+            //pass
+        }
+    }
+
+    if (TIFFWriteCustomDirectory(tif, &dir_offset) == 0) return;
+
+    // update IFD0
+    if (TIFFSetDirectory(tif, 0) == 0) return;
+}
+
 void buffer_to_tiff_exif(bim::TagMap *hash, TIFF *tif) {
     if (!hash->hasKey(bim::RAW_TAGS_EXIF) || hash->get_type(bim::RAW_TAGS_EXIF) != bim::RAW_TYPES_EXIF) return;
 
@@ -454,49 +519,26 @@ void buffer_to_tiff_exif(bim::TagMap *hash, TIFF *tif) {
         if (TIFFSetField(tif, TIFFTAG_GPSIFD, gps_dir_offset) == 0) return;
     }
 
-    // write out IFD0 before we switch to EXIF IFD, so SetDirectory  after WriteCustomDir will work
+    // unfortunately libtiff does not support namespaces for EXIF-GPS tags
+    // nor it does support a custom tag writing by providing all relevant info
+    // not not requiring a lookup in the taff tag fileds directory
+    // currently we'll use EXIV2 to write EXIF tags and simplify it job
+    // by writing stub SubIFD tags
+    
+/*
     if (TIFFCheckpointDirectory(tif) == 0) return;
     if (TIFFSetDirectory(tif, 0) == 0) return;
 
-    // per ifd ops
+    // copy EXIF SubIFD
+    copy_custom_directory(memtif, mem_offset_exif, tif, exif_dir_offset, ttif.needSwab());
+    if (exif_dir_offset>0)
+        if (TIFFSetField(tif, TIFFTAG_EXIFIFD, exif_dir_offset) == 0) return;
 
-
-    std::vector<bim::uint8> buf;
-    TinyTiff::IFD subifd(memtif, mem_offset_exif, ttif.needSwab());
-
-    // EXIF IFD
-    if (TIFFCreateEXIFDirectory(tif) != 0) return;
-
-    for (int t = 0; t < subifd.size(); ++t) {
-        //if (TIFFSetField(tif, EXIFTAG_EXPOSURETIME, .25) == 0) return;
-        //if (TIFFSetField(tif, EXIFTAG_FNUMBER, 11.) == 0) return;
-        TinyTiff::Entry *tag = subifd.getEntry(t);
-        subifd.readTag(tag->tag, &buf);
-        try {
-            //TIFFSetField(tif, tag->tag, tag->count, &buf[0]);
-            //TinyTiff::TIFFSetFieldCustom(tif, tag->tag, tag->type, tag->count, buf);
-        } catch (...) {
-            //pass
-        }
-    }
-
-    if (TIFFWriteCustomDirectory(tif, &exif_dir_offset) == 0) return;
-
-    // update IFD0
-    if (TIFFSetDirectory(tif, 0) == 0) return;
-
-
-
-
-
-    if (TIFFSetField(tif, TIFFTAG_EXIFIFD, exif_dir_offset) == 0) return;
-
-    // write IFD0 (second preliminary version) and create an empty IFD1.
-    // Checkpoint causes IFD to be written at beg. of file.
-    // otherwise it would be written at end of file (after the pixels).
-    //assert(TIFFCheckpointDirectory(tif) != 0);
-    //assert(TIFFWriteDirectory(tif) != 0);
-
+    // copy EXIF-GPS SubIFD
+    copy_custom_directory(memtif, mem_offset_gps, tif, gps_dir_offset, ttif.needSwab());
+    if (gps_dir_offset>0)
+        if (TIFFSetField(tif, TIFFTAG_GPSIFD, gps_dir_offset) == 0) return;
+*/
 
     TIFFClose(memtif);
 }
