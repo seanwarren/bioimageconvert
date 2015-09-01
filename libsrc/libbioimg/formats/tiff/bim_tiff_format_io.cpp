@@ -399,6 +399,12 @@ void generic_append_metadata(FormatHandle *fmtHndl, TagMap *hash) {
     // EXIF requires constructing a tiny tiff stream with embedded EXIF and GPS IFDs
     tiff_exif_to_buffer(tif, hash);
 
+    // GEOTIFF
+    if (isGeoTiff(tif)) {
+        std::vector<char> buffer;
+        BufferFromGTIF(tif, buffer);
+        hash->set_value(bim::RAW_TAGS_GEOTIFF, buffer, bim::RAW_TYPES_GEOTIFF);
+    }
 }
 
 void generic_write_metadata(FormatHandle *fmtHndl, TagMap *hash) {
@@ -431,6 +437,11 @@ void generic_write_metadata(FormatHandle *fmtHndl, TagMap *hash) {
     // EXIF requires parsing a tiny tiff stream with embedded EXIF and GPS IFDs
     if (hash->hasKey(bim::RAW_TAGS_EXIF) && hash->get_type(bim::RAW_TAGS_EXIF) == bim::RAW_TYPES_EXIF) {
         buffer_to_tiff_exif(hash, tif);
+    }
+
+    // GEOTIFF
+    if (hash->hasKey(bim::RAW_TAGS_GEOTIFF) && hash->get_type(bim::RAW_TAGS_GEOTIFF) == bim::RAW_TYPES_GEOTIFF) {
+        GTIFFromBuffer(hash->get_value_vec(bim::RAW_TAGS_GEOTIFF), tif);
     }
 }
 

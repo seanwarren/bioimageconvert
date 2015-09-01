@@ -11,6 +11,12 @@
   ver : 1
 *****************************************************************************/
 
+#include <sstream>
+
+#include <tiffio.h>
+#include <tiffiop.h>
+#include <tiffio.hxx>
+
 #include <geotiff.h> // public interface
 #include <geo_tiffp.h> // external TIFF interface
 #include <geo_keyp.h> // private interface
@@ -22,7 +28,7 @@
 
 #include <xstring.h>
 #include <tag_map.h>
-
+#include <tiff/bim_tiny_tiff.h>
 
 //----------------------------------------------------------------------------
 // formatting metadata - rewrite of geotiff functions
@@ -338,6 +344,8 @@ void geotiff_append_metadata (FormatHandle *fmtHndl, TagMap *hash ) {
           !par->ifds.tagPresentInFirstIFD(TIFFTAG_GEOASCIIPARAMS)) return;
   }
 
+  //hash->set_value(bim::RAW_TAGS_GEOTIFF, buf, sz, bim::RAW_TYPES_GEOTIFF);
+
   // use GeoTIFF to read metadata
   try {
       TIFF *tif = par->tiff;
@@ -404,3 +412,91 @@ void geotiff_append_metadata (FormatHandle *fmtHndl, TagMap *hash ) {
   }
 }
 
+//----------------------------------------------------------------------------
+// GeoTIFF buffer support
+//----------------------------------------------------------------------------
+
+bool isGeoTiff(TIFF *tif) {
+    double *d_list = NULL;
+    bim::int16   d_list_count;
+
+    if (!TIFFGetField(tif, GTIFF_TIEPOINTS, &d_list_count, &d_list) &&
+        !TIFFGetField(tif, GTIFF_PIXELSCALE, &d_list_count, &d_list) &&
+        !TIFFGetField(tif, GTIFF_TRANSMATRIX, &d_list_count, &d_list))
+        return false;
+    else
+        return true;
+}
+
+static void CopyGeoTIFF(TIFF *in, TIFF *out) {
+    double *d_list = NULL;
+    bim::int16   d_list_count;
+
+    // read definition from source file
+    GTIF *gtif = gtif = GTIFNew(in);
+    if (!gtif) return;
+
+    // TAG 33922
+    if (TIFFGetField(in, GTIFF_TIEPOINTS, &d_list_count, &d_list))
+        TIFFSetField(out, GTIFF_TIEPOINTS, d_list_count, d_list);
+
+    // TAG 33550
+    if (TIFFGetField(in, GTIFF_PIXELSCALE, &d_list_count, &d_list))
+        TIFFSetField(out, GTIFF_PIXELSCALE, d_list_count, d_list);
+
+    // 34264
+    if (TIFFGetField(in, GTIFF_TRANSMATRIX, &d_list_count, &d_list))
+        TIFFSetField(out, GTIFF_TRANSMATRIX, d_list_count, d_list);
+
+    // Here we violate the GTIF abstraction to retarget on another file.
+    //   We should just have a function for copying tags from one GTIF object
+    //   to another
+    gtif->gt_tif = out;
+    gtif->gt_flags |= FLAG_FILE_MODIFIED;
+
+    // Install keys and tags
+    GTIFWriteKeys(gtif);
+    GTIFFree(gtif);
+    return;
+};
+
+int GTIFFromBuffer(const std::vector<char> &buffer, TIFF *out) {
+    TinyTiff::MemoryStream stream((char*)&buffer[0], buffer.size());
+    TIFF* in = XTIFFClientOpen("MemoryTIFF", "r", (thandle_t)&stream,
+        TinyTiff::mem_read, TinyTiff::mem_write, TinyTiff::mem_seek,
+        TinyTiff::mem_close, TinyTiff::mem_size, TinyTiff::mem_map, TinyTiff::mem_unmap);
+    if (!in) return -1;
+    CopyGeoTIFF(in, out);
+    XTIFFClose(in);
+    return 0;
+}
+
+int BufferFromGTIF(TIFF *in, std::vector<char> &buffer ) {
+    if (!in || !isGeoTiff(in)) return -1;
+    std::stringstream stream;
+    TIFF* out = TIFFStreamOpen("MemTIFF", (std::ostream *) &stream);
+    if (!out) return -1;
+
+    // Write some minimal set of image parameters.                    
+    TIFFSetField(out, TIFFTAG_IMAGEWIDTH, 1);
+    TIFFSetField(out, TIFFTAG_IMAGELENGTH, 1);
+    TIFFSetField(out, TIFFTAG_BITSPERSAMPLE, 8);
+    TIFFSetField(out, TIFFTAG_SAMPLESPERPIXEL, 1);
+    TIFFSetField(out, TIFFTAG_ROWSPERSTRIP, 1);
+    TIFFSetField(out, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG);
+    TIFFSetField(out, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK);
+
+    // Copy GEO params
+    CopyGeoTIFF(in, out);
+
+    // Finish tiff buffer        
+    unsigned char tiny_image = 0;
+    TIFFWriteEncodedStrip(out, 0, (char *)&tiny_image, 1);
+    TIFFWriteCheck(out, TIFFIsTiled(out), "MemBufFromGTIF");
+    TIFFWriteDirectory(out);
+    XTIFFClose(out);
+
+    // copy data into output buffer
+    buffer.assign(std::istreambuf_iterator<char>(stream), std::istreambuf_iterator<char>());
+    return 0;
+}
