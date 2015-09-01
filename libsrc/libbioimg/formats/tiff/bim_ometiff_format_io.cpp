@@ -1308,6 +1308,7 @@ int omeTiffWritePlane(bim::FormatHandle *fmtHndl, bim::TiffParams *par, bim::Ima
       // writing meta data
       //------------------------------------------------------------------------------
       if (fmtHndl->pageNumber == 0 && sample == 0 && !subscale) {
+          generic_write_metadata(fmtHndl, fmtHndl->metaData);
           write_omeTiff_metadata(fmtHndl, par);
       }
 
