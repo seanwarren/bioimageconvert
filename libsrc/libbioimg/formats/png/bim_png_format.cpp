@@ -25,6 +25,7 @@
 #include <tag_map.h>
 #include <bim_metatags.h>
 #include <bim_exiv_parse.h>
+#include <bim_lcms_parse.h>
 
 using namespace bim;
 
@@ -246,6 +247,53 @@ bool pngGetImageInfo( FormatHandle *fmtHndl )
   return true;
 }
 
+
+//----------------------------------------------------------------------------
+// METADATA
+//----------------------------------------------------------------------------
+
+
+static void read_png_metadata(bim::PngParams *par, TagMap *hash) {
+    if (setjmp(png_jmpbuf(par->png_ptr))) {
+        png_destroy_read_struct(&par->png_ptr, &par->info_ptr, &par->end_info);
+        return;
+    }
+
+    // comments
+    png_textp text_ptr;
+    int num_text = 0;
+    png_get_text(par->png_ptr, par->info_ptr, &text_ptr, &num_text);
+    for (int i = 0; i < num_text; ++i) {
+        hash->set_value(bim::CUSTOM_TAGS_PREFIX + text_ptr->key, text_ptr->text);
+        ++text_ptr;
+    }
+
+    // ICC profile
+    png_charp name;
+    int compression_type;
+    png_bytep profile;
+    png_uint_32 proflen;
+    if (png_get_iCCP(par->png_ptr, par->info_ptr, &name, &compression_type, &profile, &proflen) & PNG_INFO_iCCP) {
+        hash->set_value(bim::RAW_TAGS_ICC, (const char *) profile, proflen, bim::RAW_TYPES_ICC);
+    }
+}
+
+bim::uint png_append_metadata(FormatHandle *fmtHndl, TagMap *hash) {
+    if (fmtHndl == NULL) return 1;
+    if (!hash) return 1;
+    if (isCustomReading(fmtHndl)) return 1;
+    if (!fmtHndl->fileName) return 1;
+    bim::PngParams *par = (bim::PngParams *) fmtHndl->internalParams;
+
+    // get keyed metadata
+    read_png_metadata(par, hash);
+
+    lcms_append_metadata(fmtHndl, hash);
+    exiv_append_metadata(fmtHndl, hash);
+
+    return 0;
+}
+
 //****************************************************************************
 // READ PROC
 //****************************************************************************
@@ -394,6 +442,16 @@ static int read_png_image(FormatHandle *fmtHndl)
 //****************************************************************************
 
 void png_write_metadata(bim::PngParams *par, TagMap *hash) {
+
+    // ICC profile
+    if (hash->hasKey(bim::RAW_TAGS_ICC) && hash->get_type(bim::RAW_TAGS_ICC) == bim::RAW_TYPES_ICC) {
+        png_charp name = "ICC Profile";
+        int compression_type = 0;
+        png_bytep profile = (unsigned char *)hash->get_value_bin(bim::RAW_TAGS_ICC);
+        png_uint_32 proflen = hash->get_size(bim::RAW_TAGS_ICC);
+        png_set_iCCP(par->png_ptr, par->info_ptr, name, compression_type, profile, proflen);
+    }
+
     /*std::vector<png_text> m;
     TagMap::const_iterator it = hash->begin();
     while (it != hash->end()) {
@@ -479,7 +537,8 @@ static int write_png_image(FormatHandle *fmtHndl)
     png_destroy_read_struct( &par->png_ptr, &par->info_ptr, &par->end_info );
     return 1;
   }
-  
+  png_set_benign_errors(par->png_ptr, true); // disable breaking on iCCP warnings
+
   int color_type = PNG_COLOR_TYPE_GRAY;;
   if ( info->samples == 1 ) color_type = PNG_COLOR_TYPE_GRAY;
   //if ( info->samples == 2 ) color_type = PNG_COLOR_TYPE_GRAY_ALPHA;
@@ -664,42 +723,6 @@ ImageInfo pngGetImageInfoProc ( FormatHandle *fmtHndl, bim::uint /*page_num*/ ) 
   return par->i;
 }
 
-//----------------------------------------------------------------------------
-// METADATA
-//----------------------------------------------------------------------------
-
-
-static void read_png_metadata(bim::PngParams *par, TagMap *hash) {
-    if (setjmp(png_jmpbuf(par->png_ptr))) {
-        png_destroy_read_struct(&par->png_ptr, &par->info_ptr, &par->end_info);
-        return;
-    }
-
-    png_textp text_ptr;
-    int num_text = 0;
-    png_get_text(par->png_ptr, par->info_ptr, &text_ptr, &num_text);
-
-    for (int i = 0; i < num_text; ++i) {
-        hash->set_value(bim::CUSTOM_TAGS_PREFIX + text_ptr->key, text_ptr->text);
-        ++text_ptr;
-    }
-}
-
-bim::uint png_append_metadata(FormatHandle *fmtHndl, TagMap *hash) {
-    if (fmtHndl == NULL) return 1;
-    if (!hash) return 1;
-    if (isCustomReading(fmtHndl)) return 1;
-    if (!fmtHndl->fileName) return 1;
-    bim::PngParams *par = (bim::PngParams *) fmtHndl->internalParams;
-
-    // get keyed metadata
-    read_png_metadata(par, hash);
-
-    // use EXIV2 to read metadata
-    exiv_append_metadata(fmtHndl, hash);
-
-    return 0;
-}
 
 //----------------------------------------------------------------------------
 // READ/WRITE

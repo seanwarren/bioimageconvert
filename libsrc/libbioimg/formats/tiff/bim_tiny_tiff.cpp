@@ -96,6 +96,15 @@ void TinyTiff::mem_unmap(thandle_t, tdata_t, toff_t) {
     return;
 };
 
+//-------------------------------------------------------------------------------------
+// libtiff extensions
+//-------------------------------------------------------------------------------------
+
+int TIFFSetFieldCustom(TIFF* tif, uint32 tag, uint32 type, uint32 count, const std::vector<bim::uint8> &value) {
+    TIFFDirectory* td = &tif->tif_dir;
+    TIFFTagValue *tv;
+    int tv_size, iCustom;
+}
 
 //-------------------------------------------------------------------------------------
 // misc

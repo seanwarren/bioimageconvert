@@ -415,7 +415,7 @@ void generic_write_metadata(FormatHandle *fmtHndl, TagMap *hash) {
 
     // IPTC
     if (hash->hasKey(bim::RAW_TAGS_IPTC) && hash->get_type(bim::RAW_TAGS_IPTC) == bim::RAW_TYPES_IPTC) {
-        //TIFFSetField(tif, TIFFTAG_RICHTIFFIPTC, hash->get_size(bim::RAW_TAGS_IPTC), hash->get_value_bin(bim::RAW_TAGS_IPTC));
+        TIFFSetField(tif, TIFFTAG_RICHTIFFIPTC, hash->get_size(bim::RAW_TAGS_IPTC)/4, hash->get_value_bin(bim::RAW_TAGS_IPTC));
     }
 
     // XMP
@@ -429,8 +429,9 @@ void generic_write_metadata(FormatHandle *fmtHndl, TagMap *hash) {
     }
 
     // EXIF requires parsing a tiny tiff stream with embedded EXIF and GPS IFDs
-    tiff_exif_to_buffer(tif, hash);
-
+    if (hash->hasKey(bim::RAW_TAGS_EXIF) && hash->get_type(bim::RAW_TAGS_EXIF) == bim::RAW_TYPES_EXIF) {
+        buffer_to_tiff_exif(hash, tif);
+    }
 }
 
 bim::uint append_metadata_generic_tiff (FormatHandle *fmtHndl, TagMap *hash ) {
@@ -1174,8 +1175,7 @@ int write_tiff_image(FormatHandle *fmtHndl, TiffParams *par, ImageBitmap *img = 
   //------------------------------------------------------------------------------
   // writing meta data
   //------------------------------------------------------------------------------
-  if (!subscale) {
-      //
+  if (fmtHndl->pageNumber == 0 && !subscale) {
       write_tiff_metadata(fmtHndl, par);
   }
 

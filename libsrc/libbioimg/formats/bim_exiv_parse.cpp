@@ -374,12 +374,9 @@ void extract_exif_gps_blocks(bim::TagMap *hash, std::vector<char> &exif, std::ve
     TinyTiff::IFD *ifd = ttif.firstIfd();
 
     // parse and extract blocks
-    toff_t offset_exif = 0;
-    toff_t offset_gps = 0;
-
     //if (TIFFGetField(tif, TIFFTAG_EXIFIFD, &offset_exif)) {
     if (ifd->tagPresent(TIFFTAG_EXIFIFD)) {
-        offset_exif = ifd->readTagInt(TIFFTAG_EXIFIFD);
+        toff_t offset_exif = ifd->readTagInt(TIFFTAG_EXIFIFD);
         if ((tif->tif_flags & TIFF_BIGTIFF))
             sub_ifd_to_buffer<bim::uint64, bigtiff_ifd_entry, bim::uint64>(offset_exif, tif, exif);
         else
@@ -388,7 +385,7 @@ void extract_exif_gps_blocks(bim::TagMap *hash, std::vector<char> &exif, std::ve
 
     //if (TIFFGetField(tif, TIFFTAG_GPSIFD, &offset_gps)) {
     if (ifd->tagPresent(TIFFTAG_GPSIFD)) {
-        offset_gps = ifd->readTagInt(TIFFTAG_GPSIFD);
+        toff_t offset_gps = ifd->readTagInt(TIFFTAG_GPSIFD);
         if ((tif->tif_flags & TIFF_BIGTIFF))
             sub_ifd_to_buffer<bim::uint64, bigtiff_ifd_entry, bim::uint64>(offset_gps, tif, gps);
         else
@@ -400,10 +397,7 @@ void extract_exif_gps_blocks(bim::TagMap *hash, std::vector<char> &exif, std::ve
 
 void tiff_exif_to_buffer(TIFF *tif, bim::TagMap *hash) {
     std::vector<char> exif;
-    std::vector<char> gps;
     toff_t offset_exif = 0;
-    toff_t offset_gps = 0;
-
     if (TIFFGetField(tif, TIFFTAG_EXIFIFD, &offset_exif)) {
         if ((tif->tif_flags & TIFF_BIGTIFF))
             sub_ifd_to_buffer<bim::uint64, bigtiff_ifd_entry, bim::uint64>(offset_exif, tif, exif);
@@ -411,6 +405,8 @@ void tiff_exif_to_buffer(TIFF *tif, bim::TagMap *hash) {
             sub_ifd_to_buffer<bim::uint16, tiff_ifd_entry, bim::uint32>(offset_exif, tif, exif);
     }
 
+    std::vector<char> gps;
+    toff_t offset_gps = 0;
     if (TIFFGetField(tif, TIFFTAG_GPSIFD, &offset_gps)) {
         if ((tif->tif_flags & TIFF_BIGTIFF))
             sub_ifd_to_buffer<bim::uint64, bigtiff_ifd_entry, bim::uint64>(offset_gps, tif, gps);
@@ -423,5 +419,84 @@ void tiff_exif_to_buffer(TIFF *tif, bim::TagMap *hash) {
 }
 
 void buffer_to_tiff_exif(bim::TagMap *hash, TIFF *tif) {
+    if (!hash->hasKey(bim::RAW_TAGS_EXIF) || hash->get_type(bim::RAW_TAGS_EXIF) != bim::RAW_TYPES_EXIF) return;
 
+    // regular tiff parsing requires several tags in the first directory, use header option and find exif offsets
+    // EXIF tiff may contain very few tags in the main IFD
+    TinyTiff::MemoryStream stream((char*)hash->get_value_bin(bim::RAW_TAGS_EXIF), hash->get_size(bim::RAW_TAGS_EXIF));
+    TIFF* memtif = TIFFClientOpen("MemoryTIFF", "rh", (thandle_t)&stream,
+        TinyTiff::mem_read, TinyTiff::mem_write, TinyTiff::mem_seek,
+        TinyTiff::mem_close, TinyTiff::mem_size, TinyTiff::mem_map, TinyTiff::mem_unmap);
+    if (!memtif) return;
+
+    TinyTiff::Tiff ttif(memtif);
+    TinyTiff::IFD *ifd = ttif.firstIfd();
+
+    toff_t mem_offset_exif = 0;
+    if (ifd->tagPresent(TIFFTAG_EXIFIFD)) {
+        mem_offset_exif = ifd->readTagInt(TIFFTAG_EXIFIFD);
+    }
+
+    toff_t mem_offset_gps = 0;
+    if (ifd->tagPresent(TIFFTAG_GPSIFD)) {
+        mem_offset_gps = ifd->readTagInt(TIFFTAG_GPSIFD);
+    }
+
+    // initiate tag copy
+    bim::uint64 exif_dir_offset = 0;
+    bim::uint64 gps_dir_offset = 0;
+
+    // set EXIFIFD to temporary value so directory will be full size when we checkpoint it
+    if (mem_offset_exif > 0) {
+        if (TIFFSetField(tif, TIFFTAG_EXIFIFD, exif_dir_offset) == 0) return;
+    }
+    if (mem_offset_gps > 0) {
+        if (TIFFSetField(tif, TIFFTAG_GPSIFD, gps_dir_offset) == 0) return;
+    }
+
+    // write out IFD0 before we switch to EXIF IFD, so SetDirectory  after WriteCustomDir will work
+    if (TIFFCheckpointDirectory(tif) == 0) return;
+    if (TIFFSetDirectory(tif, 0) == 0) return;
+
+    // per ifd ops
+
+
+    std::vector<bim::uint8> buf;
+    TinyTiff::IFD subifd(memtif, mem_offset_exif, ttif.needSwab());
+
+    // EXIF IFD
+    if (TIFFCreateEXIFDirectory(tif) != 0) return;
+
+    for (int t = 0; t < subifd.size(); ++t) {
+        //if (TIFFSetField(tif, EXIFTAG_EXPOSURETIME, .25) == 0) return;
+        //if (TIFFSetField(tif, EXIFTAG_FNUMBER, 11.) == 0) return;
+        TinyTiff::Entry *tag = subifd.getEntry(t);
+        subifd.readTag(tag->tag, &buf);
+        try {
+            //TIFFSetField(tif, tag->tag, tag->count, &buf[0]);
+            //TinyTiff::TIFFSetFieldCustom(tif, tag->tag, tag->type, tag->count, buf);
+        } catch (...) {
+            //pass
+        }
+    }
+
+    if (TIFFWriteCustomDirectory(tif, &exif_dir_offset) == 0) return;
+
+    // update IFD0
+    if (TIFFSetDirectory(tif, 0) == 0) return;
+
+
+
+
+
+    if (TIFFSetField(tif, TIFFTAG_EXIFIFD, exif_dir_offset) == 0) return;
+
+    // write IFD0 (second preliminary version) and create an empty IFD1.
+    // Checkpoint causes IFD to be written at beg. of file.
+    // otherwise it would be written at end of file (after the pixels).
+    //assert(TIFFCheckpointDirectory(tif) != 0);
+    //assert(TIFFWriteDirectory(tif) != 0);
+
+
+    TIFFClose(memtif);
 }
