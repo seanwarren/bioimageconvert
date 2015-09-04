@@ -125,7 +125,8 @@ Image Image::deepCopy(bool nohist) const {
   if (bmp==NULL) return Image();
   Image img( this->width(), this->height(), this->depth(), this->samples(), this->pixelType() );
   img.bmp->i = this->bmp->i;
-  if (img.metadata.size()>0) img.metadata = this->metadata;
+  if (img.metadata.size()>0) 
+      img.metadata = this->metadata;
   //if (nohist == false && img.histo && img.histo->isValid()) *this->histo = *img.histo;
 
   bim::uint64 sample, chan_size = img.bytesPerChan();
@@ -1034,6 +1035,18 @@ void Image::extractChannel( int c ) {
   remapChannels( map );
 }
 
+Image operation_remap(Image &img, const bim::xstring &arguments, const xoperations &operations, ImageHistogram *hist, XConf *c) {
+    std::vector<int> out_channels = arguments.splitInt(",");
+    for (unsigned int i = 0; i<out_channels.size(); ++i)
+        out_channels[i] = out_channels[i] - 1;
+
+    if (out_channels.size() > 0) {
+        img.remapChannels(out_channels); // remap channels is an optimization and may leave channels pointing to the same memory address
+        hist->clear(); // dima: should properly modify instead of clearing
+        return img.deepCopy();
+    }
+    return img;
+}
 
 //------------------------------------------------------------------------------------
 // resize
@@ -2972,9 +2985,11 @@ std::map<std::string, ImageModifierProc> Image::create_modifiers() {
     ops["-brightnesscontrast"] = operation_brightnesscontrast;
     ops["-depth"] = operation_depth;
     ops["-norm"] = operation_norm;
+    ops["-remap"] = operation_remap;
     ops["-fusegrey"] = operation_fusegrey;
     ops["-fusergb"] = operation_fusergb;
     ops["-fusemeta"] = operation_fusemeta;
+    ops["-display"] = operation_fusemeta;
     ops["-fuse"] = operation_fuse;
     ops["-fuse6"] = operation_fuse6;
     ops["-deinterlace"] = operation_deinterlace;

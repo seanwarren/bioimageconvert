@@ -54,6 +54,8 @@ CONFIG += stat_jxrlib
 CONFIG += stat_libwebp
 CONFIG += stat_lcms2
 
+CONFIG += dyn_lzma
+
 CONFIG(debug, debug|release) {
    message(Building in DEBUG mode!)
    DEFINES += _DEBUG _DEBUG_
@@ -243,6 +245,22 @@ stat_libjpeg_turbo {
   }
 
 } # JPEG-TURBO
+
+#---------------------------------------------------------------------
+# LZMA
+#---------------------------------------------------------------------
+
+dyn_lzma {
+
+  win32 {
+    LIBS += $$BIM_LIBS_PLTFM/liblzma.lib
+  } else:macx {
+    #LIBS += $$BIM_LIBS_PLTFM/liblzma.a
+  } else {
+    LIBS += -llzma
+  }
+
+} # LZMA
 
 #---------------------------------------------------------------------
 # ffmpeg

@@ -109,7 +109,7 @@
                 
 *******************************************************************************/
 
-#define IMGCNV_VER "2.0.7"
+#define IMGCNV_VER "2.0.8"
 
 #include <cmath>
 #include <cstdio>
@@ -602,11 +602,12 @@ void DConf::init() {
   tmp += "  progressive no - disables progressive JPEG encoding\n";  
   tmp += "  progressive yes - enables progressive JPEG encoding (default)\n\n";    
   tmp += "TIFF encoder options:\n";
-  tmp += "  compression N - where N can be: none, packbits, lzw, fax, ex: -options \"compression none\"\n";
+  tmp += "  compression N - where N can be: none, packbits, lzw, fax, jpeg, zip, lzma, jxr. ex: -options \"compression lzw\"\n";
+  tmp += "  quality N - specify encoding quality 0-100, where 100 is best, ex: -options \"quality 90\"\n";
   tmp += "  tiles N - write tiled TIFF where N defined tile size, ex: tiles -options \"512\"\n";
   tmp += "  pyramid N - writes TIFF pyramid where N is a storage type: subdirs, topdirs, ex: -options \"compression lzw tiles 512 pyramid subdirs\"\n\n";
   tmp += "JPEG-2000 encoder options:\n";
-  tmp += "  tiles N - write tiled TIFF where N defined tile size, ex: tiles -options \"512\"\n";
+  tmp += "  tiles N - write tiled TIFF where N defined tile size, ex: tiles -options \"2048\"\n";
   tmp += "  quality N - specify encoding quality 0-100, where 100 is lossless, ex: -options \"quality 90\"\n";
   tmp += "JPEG-XR encoder options:\n";
   tmp += "  quality N - specify encoding quality 0-100, where 100 is lossless, ex: -options \"quality 90\"\n";
@@ -1400,6 +1401,7 @@ int mosaicTiles(DConf *c) {
     }
 
     Image tile(c->i_names[0]);
+    if (tile.isEmpty()) return IMGCNV_ERROR_READING_FILE;
     Image img(num_x*tile_size, num_y*tile_size, tile.depth(), tile.samples(), tile.pixelType());
     img.fill(0);
 
@@ -1419,7 +1421,8 @@ int mosaicTiles(DConf *c) {
     } // i
 
     c->print("Writing output image", 2);
-    img.toFile(c->o_name, c->o_fmt, c->options);
+    if (!img.toFile(c->o_name, c->o_fmt, c->options))
+        return IMGCNV_ERROR_WRITING_FILE;
 
     return IMGCNV_ERROR_NONE;
 }
@@ -1431,6 +1434,7 @@ int mosaicTiles(DConf *c) {
 
 int extractHistogram(DConf *c) {
     Image img(c->i_names[0], 0);
+    if (img.isEmpty()) return IMGCNV_ERROR_READING_FILE;
     img.process(c->getOperations(), 0, c);
     ImageHistogram hist(img);
 
@@ -1452,6 +1456,7 @@ inline void write_string(std::ostream *s, const std::string &str) {
 
 int countPixels(DConf *c) {
     Image img(c->i_names[0], 0);
+    if (img.isEmpty()) return IMGCNV_ERROR_READING_FILE;
     std::vector<uint64> counts = img.pixel_counter( c->threshold );
     uint64 sz = img.width()*img.height();
 
@@ -1479,6 +1484,7 @@ int resize_3d(DConf *c) {
     xoperations after = ops.right("-resize3d");
 
     ImageStack stack(c->i_names, c->c, &before);
+    if (stack.isEmpty()) return IMGCNV_ERROR_READING_FILE;
     stack.ensureTypedDepth();
     stack.resize( c->w, c->h, c->z, c->resize_method, c->resize_preserve_aspect_ratio );  
     stack.process(after, 0, c);
@@ -1497,6 +1503,7 @@ int rearrangeDimensions(DConf *c) {
     xoperations after = ops.right("-rearrange3d");
 
     ImageStack stack(c->i_names, c->c, &before);
+    if (stack.isEmpty()) return IMGCNV_ERROR_READING_FILE;
     stack.ensureTypedDepth();
     stack.process(after, 0, c);
     if (!stack.rearrange3DToFile( c->rearrange3d, c->o_name, c->o_fmt, c->options )) {
@@ -1520,6 +1527,7 @@ int texture_atlas(DConf *c) {
     xstring arguments = ops.arguments("-texturegrid");
 
     ImageStack stack(c->i_names, c->c, &before);
+    if (stack.isEmpty()) return IMGCNV_ERROR_READING_FILE;
     stack.ensureTypedDepth();
     Image atlas = stack.textureAtlas(arguments);
     atlas.process(after, 0, c);
@@ -1576,6 +1584,7 @@ bool is_overlapping_previous( const Image &img, DConf *c ) {
   return overlapping;
 }
 
+/*
 void init_fusion_from_meta( const Image &img, DConf *c ) {
     std::vector<bim::DisplayColor> channel_colors_default = bim::defaultChannelColors();
     bim::TagMap m = img.get_metadata();
@@ -1591,7 +1600,7 @@ void init_fusion_from_meta( const Image &img, DConf *c ) {
             c->out_weighted_fuse_channels.push_back(channel_colors_default[i]);
         }
     }
-}
+}*/
 
 bool read_session_pixels(MetaFormatManager *fm, Image *img, unsigned int plane, DConf *c) {
     ImageInfo info = fm->sessionGetInfo();
@@ -1884,10 +1893,11 @@ int main( int argc, char** argv ) {
 
     // ------------------------------------------------------------------
     // metadata
-    if (page==0) {
-      fm.sessionParseMetaData(0);
-      img.set_metadata(fm.get_metadata());
+    if (page == 0) {
+        fm.sessionParseMetaData(0);
     }
+    img.set_metadata(fm.get_metadata());
+
     // ------------------------------------------------------------------
 
     // update image's geometry
@@ -2009,35 +2019,6 @@ int main( int argc, char** argv ) {
 
 
     // ------------------------------------    
-    // remap according to the preferred mapping, this will generate 3 channel output
-    // run this at the very end, it's fast but channels can point to the same place
-    if (!conf.project) {
-      if ( conf.display ) {
-        conf.print( "Getting parsing session metadata", 2 );
-        fm.sessionParseMetaData(0);
-        conf.print( "About to run display", 2 );
-        // performance optimization, when no fusion is necessary simply run channel mapping
-        if (!fm.display_lut_needs_fusion())
-          img.remapChannels( fm.get_display_lut() );
-        else {
-          //std::vector< int > lut = fm.get_display_lut();
-          //img = img.fuse( lut[bim::Red], lut[bim::Green], lut[bim::Blue], lut[bim::Yellow], lut[bim::Magenta], lut[bim::Cyan], lut[bim::Gray] );
-          init_fusion_from_meta( img, &conf );
-          img = img.fuseToRGB( conf.out_weighted_fuse_channels, conf.fuse_method, &hist );
-        }
-        hist.clear();
-      } else
-      if ( conf.remap_channels ) {
-        conf.print( "About to run remapChannels", 2 );
-        img.remapChannels( conf.out_channels );
-        hist.clear();
-      }
-    } // if not projecting
-
-    // prepare metadada for writing
-
-
-
     // write into a file
     conf.print( "About to write", 2 );
     if (!conf.project && ofname.size()>0) {
@@ -2059,7 +2040,7 @@ int main( int argc, char** argv ) {
     } // if not projecting
 
     // if the image was remapped then kill the data repos, it'll have to be reinited
-    if (!conf.project && (conf.display || conf.remap_channels) ) {
+    if (!conf.project) {
       conf.print( "About to clear image", 2 );
       img.clear();
     }
@@ -2069,15 +2050,6 @@ int main( int argc, char** argv ) {
 
   // if we were projecting an image then create correct mapping here and save
   if (conf.project) {
-
-    if ( conf.display ) {
-      fm.sessionParseMetaData(0);
-      img_projected.remapChannels( fm.get_display_lut() );
-    } else
-      // run this at the very end, it's fast but channels can point to the same place
-      if ( conf.remap_channels ) 
-        img_projected.remapChannels( conf.out_channels );
-
     fm.writeImage ( (const bim::Filename)conf.o_name.c_str(), img_projected, conf.o_fmt.c_str(), conf.options.c_str() );
     hist.clear();
   } // if storing projected file

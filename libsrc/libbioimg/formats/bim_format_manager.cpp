@@ -956,6 +956,7 @@ void FormatManager::sessionEnd() {
     selectedFmt->closeImageProc    ( &sessionHandle );
     selectedFmt->releaseFormatProc ( &sessionHandle );
   }
+  sessionFormatIndex = -1;
   session_active = false;
   sessionCurrentPage = 0;
 }
