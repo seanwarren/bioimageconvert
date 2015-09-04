@@ -115,7 +115,7 @@ int MetaFormatManager::sessionReadImage ( ImageBitmap *bmp, bim::uint page ) {
 
   channel_names.clear();
   display_lut.clear();
-  metadata.clear();
+  //metadata.clear();
 
   display_lut.resize((int) bim::NumberDisplayChannels);
   for (int i=0; i<(int) bim::NumberDisplayChannels; ++i) display_lut[i] = -1;

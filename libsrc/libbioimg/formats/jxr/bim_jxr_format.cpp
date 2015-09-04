@@ -819,9 +819,8 @@ static ERR WriteDescriptiveMetadata(PKImageEncode *pEncoder, TagMap *hash) {
 }
 
 static ERR WriteMetadata(PKImageEncode *pEncoder, ImageInfo *info, TagMap *hash) {
+    if (!hash) return;
     ERR error_code = 0;
-    char *profile = NULL;
-    unsigned profile_size = 0;
 
     if (info->resUnits == RES_IN)
         pEncoder->SetResolution(pEncoder, info->xRes, info->yRes);
@@ -876,7 +875,6 @@ static ERR WriteMetadata(PKImageEncode *pEncoder, ImageInfo *info, TagMap *hash)
 
         return WMP_errSuccess;
     } catch (...) {
-        free(profile);
         return error_code;
     }
 }
