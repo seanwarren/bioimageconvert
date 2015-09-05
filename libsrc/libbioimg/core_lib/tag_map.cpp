@@ -146,6 +146,7 @@ void Variant::set(const TagContainer &value, const TagType &type) {
 }
 
 void Variant::set(const char *value, unsigned int size, const TagType &type) {
+    if (!value || size < 1) return;
     this->v.resize(size);
     this->t = type;
     memcpy(&this->v[0], value, size);

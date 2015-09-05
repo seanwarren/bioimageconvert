@@ -167,7 +167,7 @@ void MetaFormatManager::sessionWriteSetMetadata( const TagMap &hash ) {
 }
 
 void MetaFormatManager::sessionWriteSetOMEXML( const std::string &omexml ) {
-    metadata.set_value(bim::RAW_TAGS_OMEXML, omexml, "string,omexml");
+    metadata.set_value(bim::RAW_TAGS_OMEXML, omexml, bim::RAW_TYPES_OMEXML);
 }
 
 void MetaFormatManager::sessionParseMetaData(bim::uint page) {

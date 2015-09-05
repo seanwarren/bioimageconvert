@@ -343,8 +343,7 @@ static int write_raw_image(FormatHandle *fmtHndl) {
 
           if (xwrite(fmtHndl, buf, 1, plane_size) != plane_size) return 1;
       }
-  }
-  else {
+  } else {
       bim::uint64 buffer_sz = plane_size * img->i.samples;
       std::vector<unsigned char> buffer(buffer_sz);
       unsigned char *buf = (unsigned char *)&buffer[0];
@@ -436,8 +435,8 @@ bim::uint raw_append_metadata(FormatHandle *fmtHndl, TagMap *hash) {
 
 #define BIM_RAW_NUM_FORMATS 3
 
-FormatItem rawItems[BIM_RAW_NUM_FORMATS] = {
-{
+FormatItem rawItems[BIM_RAW_NUM_FORMATS] = { 
+  {
     "RAW",              // short name, no spaces
     "RAW image pixels", // Long format name
     "raw",              // pipe "|" separated supported extension list
@@ -448,8 +447,7 @@ FormatItem rawItems[BIM_RAW_NUM_FORMATS] = {
     1, //canWriteMultiPage;   // 0 - NO, 1 - YES
     //TDivFormatConstrains constrains ( w, h, pages, minsampl, maxsampl, minbitsampl, maxbitsampl, noLut )
     { 0, 0, 0, 0, 0, 0, 0, 0 } 
-  },
-  {
+  }, {
       "NRRD",              // short name, no spaces
       "NRRD", // Long format name
       "nrrd",              // pipe "|" separated supported extension list
@@ -460,8 +458,7 @@ FormatItem rawItems[BIM_RAW_NUM_FORMATS] = {
       1, //canWriteMultiPage;   // 0 - NO, 1 - YES
       //TDivFormatConstrains constrains ( w, h, pages, minsampl, maxsampl, minbitsampl, maxbitsampl, noLut )
       { 0, 0, 0, 0, 0, 0, 0, 0 }
-  },
-  {
+  }, {
       "MHD",              // short name, no spaces
       "MHD", // Long format name
       "mhd",              // pipe "|" separated supported extension list
@@ -504,7 +501,6 @@ FormatHeader rawHeader = {
   rawGetNumPagesProc, //GetNumPagesProc
   rawGetImageInfoProc, //GetImageInfoProc
 
-
   // read/write
   rawReadImageProc, //ReadImageProc 
   rawWriteImageProc, //WriteImageProc
@@ -518,7 +514,7 @@ FormatHeader rawHeader = {
   
   // meta data
   NULL, //ReadMetaDataProc
-  NULL,  //AddMetaDataProc
+  NULL, //AddMetaDataProc
   NULL, //ReadMetaDataAsTextProc
 
   raw_append_metadata,
@@ -530,8 +526,7 @@ FormatHeader rawHeader = {
 
 extern "C" {
 
-FormatHeader* rawGetFormatHeader(void)
-{
+FormatHeader* rawGetFormatHeader(void) {
   return &rawHeader;
 }
 

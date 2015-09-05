@@ -239,11 +239,11 @@ if (error_code < 0) { \
 }
 
 static ERR ReadBuffer(WMPStream* stream, unsigned count, unsigned offset, std::vector<char> &buffer) {
-    buffer.resize(count);
     if (WMP_errSuccess == stream->SetPos(stream, offset)) {
-        if (WMP_errSuccess == stream->Read(stream, &buffer[0], count)) {
+        buffer.resize(count);
+        if (WMP_errSuccess == stream->Read(stream, &buffer[0], count))
             return WMP_errSuccess;
-        }
+        buffer.clear();
     }
     return WMP_errFileIO;
 }
@@ -269,32 +269,32 @@ static ERR ReadMetadata(bim::JXRParams *par) {
         }
         
         // XMP metadata
-        if (0 != wmiDEMisc->uXMPMetadataByteCount) {
+        if (wmiDEMisc->uXMPMetadataOffset>0 && wmiDEMisc->uXMPMetadataByteCount>0) {
             error_code = ReadBuffer(stream, wmiDEMisc->uXMPMetadataByteCount, wmiDEMisc->uXMPMetadataOffset, par->buffer_xmp);
             JXR_CHECK(error_code);
         }
 
         // IPTC metadata
-        if (0 != wmiDEMisc->uIPTCNAAMetadataByteCount) {
+        if (wmiDEMisc->uIPTCNAAMetadataOffset>0 && wmiDEMisc->uIPTCNAAMetadataByteCount>0) {
             error_code = ReadBuffer(stream, wmiDEMisc->uIPTCNAAMetadataByteCount, wmiDEMisc->uIPTCNAAMetadataOffset, par->buffer_iptc);
             JXR_CHECK(error_code);
         }
 
         // Photoshop metadata
-        if (0 != wmiDEMisc->uPhotoshopMetadataByteCount) {
+        if (wmiDEMisc->uPhotoshopMetadataOffset>0 && wmiDEMisc->uPhotoshopMetadataByteCount>0) {
             error_code = ReadBuffer(stream, wmiDEMisc->uPhotoshopMetadataByteCount, wmiDEMisc->uPhotoshopMetadataOffset, par->buffer_photoshop);
             JXR_CHECK(error_code);
         }
         
         // Exif metadata
-        if (0 != wmiDEMisc->uEXIFMetadataByteCount) {
+        if (wmiDEMisc->uEXIFMetadataOffset>0 && wmiDEMisc->uEXIFMetadataByteCount>0) {
             error_code = ReadBuffer(stream, wmiDEMisc->uEXIFMetadataByteCount, wmiDEMisc->uEXIFMetadataOffset, par->buffer_exif);
             par->offset_exif = wmiDEMisc->uEXIFMetadataOffset;
             JXR_CHECK(error_code);
         }
 
         // Exif-GPS metadata
-        if (0 != wmiDEMisc->uGPSInfoMetadataByteCount) {
+        if (wmiDEMisc->uGPSInfoMetadataOffset>0 && wmiDEMisc->uGPSInfoMetadataByteCount>0) {
             error_code = ReadBuffer(stream, wmiDEMisc->uGPSInfoMetadataByteCount, wmiDEMisc->uGPSInfoMetadataOffset, par->buffer_exifgps);
             par->offset_exifgps = wmiDEMisc->uGPSInfoMetadataOffset;
             JXR_CHECK(error_code);
@@ -819,7 +819,7 @@ static ERR WriteDescriptiveMetadata(PKImageEncode *pEncoder, TagMap *hash) {
 }
 
 static ERR WriteMetadata(PKImageEncode *pEncoder, ImageInfo *info, TagMap *hash) {
-    if (!hash) return;
+    if (!hash) return 0;
     ERR error_code = 0;
 
     if (info->resUnits == RES_IN)
