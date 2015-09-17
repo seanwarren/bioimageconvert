@@ -265,8 +265,7 @@ void tiffReadResolution( TIFF *tif, bim::uint &units, double &xRes, double &yRes
 
 }
 
-bim::uint getTiffMode( TIFF *tif)
-{
+bim::uint getTiffMode( TIFF *tif) {
   if (tif == NULL) return IM_GRAYSCALE;
 
   bim::uint16 photometric = PHOTOMETRIC_MINISWHITE;
@@ -275,6 +274,10 @@ bim::uint getTiffMode( TIFF *tif)
   TIFFGetField(tif, TIFFTAG_SAMPLESPERPIXEL, &samplesperpixel);
 
   if (photometric == PHOTOMETRIC_RGB && samplesperpixel==3) return IM_RGB;
+  if (photometric == PHOTOMETRIC_CIELAB) return IM_LAB;
+  if (photometric == PHOTOMETRIC_ICCLAB) return IM_LAB;
+  if (photometric == PHOTOMETRIC_ITULAB) return IM_LAB;
+  if (photometric == PHOTOMETRIC_YCBCR) return IM_RGB; // return IM_YCbCr; // we convert in the driver
   //if (photometric == PHOTOMETRIC_RGB && samplesperpixel==4) return IM_RGBA;
   if (photometric == PHOTOMETRIC_PALETTE) return IM_INDEXED;
   if (samplesperpixel > 1) return IM_MULTI;
@@ -441,77 +444,6 @@ void getCurrentPageInfo(TiffParams *tiffParams) {
   TIFF *tif = tiffParams->tiff;
   ImageInfo *info = &tiffParams->info;
   if (!tif) return;
-
-  /*
-  bim::uint32 height = 0; 
-  bim::uint32 width = 0; 
-  bim::uint16 bitspersample = 1;
-  bim::uint16 samplesperpixel = 1;
-  bim::uint16 sampleformat = 1;
-  bim::uint16 photometric = PHOTOMETRIC_MINISWHITE;
-  bim::uint16 compression = COMPRESSION_NONE;
-  bim::uint16 planarconfig;
-
-  TIFFGetField(tif, TIFFTAG_IMAGEWIDTH, &width);
-  TIFFGetField(tif, TIFFTAG_IMAGELENGTH, &height);
-  TIFFGetField(tif, TIFFTAG_SAMPLESPERPIXEL, &samplesperpixel);
-  TIFFGetField(tif, TIFFTAG_BITSPERSAMPLE, &bitspersample);
-  TIFFGetField(tif, TIFFTAG_SAMPLEFORMAT, &sampleformat);
-
-  TIFFGetField(tif, TIFFTAG_PHOTOMETRIC, &photometric);
-  TIFFGetField(tif, TIFFTAG_COMPRESSION, &compression);
-  TIFFGetField(tif, TIFFTAG_PLANARCONFIG, &planarconfig);
-
-  if (photometric==PHOTOMETRIC_YCBCR && planarconfig==PLANARCONFIG_CONTIG && 
-      compression==COMPRESSION_JPEG) {
-    TIFFSetField(tif, TIFFTAG_JPEGCOLORMODE, JPEGCOLORMODE_RGB);
-    bitspersample = 8;
-    samplesperpixel = 3;
-  }
-
-  if (photometric==PHOTOMETRIC_LOGLUV && planarconfig==PLANARCONFIG_CONTIG && 
-      (compression==COMPRESSION_SGILOG ||compression==COMPRESSION_SGILOG24 )) {
-    TIFFSetField(tif, TIFFTAG_SGILOGDATAFMT, SGILOGDATAFMT_8BIT);
-    bitspersample = 8;
-    samplesperpixel = 3;
-  }
-
-  if (photometric==PHOTOMETRIC_LOGL && compression==COMPRESSION_SGILOG) {
-    TIFFSetField(tif, TIFFTAG_SGILOGDATAFMT, SGILOGDATAFMT_8BIT);
-    bitspersample = 8;
-  }
-
-  info->width = width;
-  info->height = height;
-
-  info->samples = samplesperpixel;
-  info->depth = bitspersample;
-  info->pixelType = FMT_UNSIGNED;
-
-  if (sampleformat == SAMPLEFORMAT_INT)
-    info->pixelType = FMT_SIGNED;
-  else
-  if (sampleformat == SAMPLEFORMAT_IEEEFP)
-    info->pixelType = FMT_FLOAT;
-
-
-  if( !TIFFIsTiled(tif) ) {
-    info->tileWidth = 0;
-    info->tileHeight = 0; 
-  } else {
-    bim::uint32 columns, rows;
-    TIFFGetField(tif, TIFFTAG_TILEWIDTH,  &columns);
-    TIFFGetField(tif, TIFFTAG_TILELENGTH, &rows);
-    info->tileWidth = columns;
-    info->tileHeight = rows; 
-  }
-    
-  info->transparentIndex = 0;
-  info->transparencyMatting = 0;
-
-  info->imageMode = getTiffMode( tif );
-  tiffReadResolution( tif, info->resUnits, info->xRes, info->yRes);
-  */
 
   if (tiffParams->subType!=tstFluoview && tiffParams->subType!=tstPsia && tiffParams->subType!=tstAndor)
     init_image_palette( tif, info );
@@ -683,7 +615,7 @@ void tiffCloseImageProc (FormatHandle *fmtHndl) {
   if ( fmtHndl->stream && !isCustomReading(fmtHndl) ) xclose( fmtHndl );
 
   if (fmtHndl->io_mode == IO_WRITE && fmtHndl->metaData) {
-      exiv_write_metadata(fmtHndl->metaData, fmtHndl);
+      //exiv_write_metadata(fmtHndl->metaData, fmtHndl);
   }
 
   if (fmtHndl->internalParams != NULL) {

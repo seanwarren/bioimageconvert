@@ -119,19 +119,6 @@ int getSampleHistogram(ImageBitmap *img, long *hist, int sample);
 
 std::string getImageInfoText( ImageInfo *info );
 
-//------------------------------------------------------------------------------------------------
-// metadata
-//------------------------------------------------------------------------------------------------
-
-void clearMetaTag(TagItem *tagItem);
-void clearMetaTags(TagList *tagList);
-//bool isTagPresent(TagList *tagList, int tag);
-bool isTagPresent(TagList *tagList, int group, int tag);
-//int tagPos(TagList *tagList, int tag);
-int tagPos(TagList *tagList, int group, int tag);
-
-int addMetaTag(TagList *tagList, TagItem item);
-
 } // namespace bim
 
 #endif //BIM_IMG_FMT_UTL_H

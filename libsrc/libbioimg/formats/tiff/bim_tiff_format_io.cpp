@@ -435,8 +435,11 @@ void generic_write_metadata(FormatHandle *fmtHndl, TagMap *hash) {
     }
 
     // EXIF requires parsing a tiny tiff stream with embedded EXIF and GPS IFDs
+    // dima: so far libtiff can't write exif and gps ifds, we need to use some true internals
+    // should we write bigtiff ifds for exif and gps into bigtiff?
+    // maybe we should simply consider them as binary data
     if (hash->hasKey(bim::RAW_TAGS_EXIF) && hash->get_type(bim::RAW_TAGS_EXIF) == bim::RAW_TYPES_EXIF) {
-        buffer_to_tiff_exif(hash, tif);
+        //buffer_to_tiff_exif(hash, tif);
     }
 
     // GEOTIFF
@@ -1037,9 +1040,13 @@ int write_tiff_image(FormatHandle *fmtHndl, TiffParams *par, ImageBitmap *img = 
   bim::uint16 compression;
   bim::uint16 planarConfig;
 
-  if (img->i.imageMode == IM_RGB)   photometric = PHOTOMETRIC_RGB;
   if (img->i.imageMode == IM_MULTI) photometric = PHOTOMETRIC_RGB;
   if (samplesperpixel >= 2)         photometric = PHOTOMETRIC_RGB;
+
+  if (img->i.imageMode == IM_RGB)   photometric = PHOTOMETRIC_RGB;
+  else if (img->i.imageMode == IM_LAB)   photometric = PHOTOMETRIC_ICCLAB;
+
+
   if ( (img->i.imageMode == IM_INDEXED) && (img->i.lut.count > 0) && (samplesperpixel==1) && (bitspersample<=8) )
     photometric = PHOTOMETRIC_PALETTE;
 
