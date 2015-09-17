@@ -24,12 +24,15 @@
 #include <xstring.h>
 #include <bim_metatags.h>
 
+#include <lcms2.h>
 #include <fftw3.h>
 #include "../transforms/FuzzyCalc.h"
 #include "../transforms/chebyshev.h"
 #include "../transforms/wavelet/Symlet5.h"
 #include "../transforms/wavelet/DataGrid2D.h"
 #include "../transforms/radon.h"
+
+#include "bim_icc_profiles.h" // rather large static definition of default icc profiles
 
 using namespace bim;
 
@@ -776,6 +779,373 @@ Image operation_hounsfield(Image &img, const bim::xstring &arguments, const xope
     }
     return img.enhance_hounsfield(depth, pf, wnd_center, wnd_width);
     //img = img.multi_hounsfield();
+};
+
+//-----------------------------------------------------------------------------------
+// ICC profiles
+//-----------------------------------------------------------------------------------
+
+const inline int color_space_sig2int(cmsColorSpaceSignature sig) {
+    if (sig == cmsSigXYZData) return PT_XYZ;
+    else if (sig == cmsSigLabData) return PT_Lab;
+    else if (sig == cmsSigLuvData) return PT_YUV;
+    else if (sig == cmsSigYCbCrData) return PT_YCbCr;
+    else if (sig == cmsSigRgbData) return PT_RGB;
+    else if (sig == cmsSigGrayData) return PT_GRAY;
+    else if (sig == cmsSigHsvData) return PT_HSV;
+    else if (sig == cmsSigHlsData) return PT_HLS;
+    else if (sig == cmsSigCmykData) return PT_CMYK;
+    else if (sig == cmsSigCmyData) return PT_CMY;
+    return PT_ANY;
+}
+
+const inline int color_space_min_channels(int lcmsPixelType) {
+    if (lcmsPixelType == PT_XYZ) return 3;
+    else if (lcmsPixelType == PT_Lab) return 3;
+    else if (lcmsPixelType == PT_YUV) return 3;
+    else if (lcmsPixelType == PT_YCbCr) return 3;
+    else if (lcmsPixelType == PT_RGB) return 3;
+    else if (lcmsPixelType == PT_GRAY) return 1;
+    else if (lcmsPixelType == PT_HSV) return 3;
+    else if (lcmsPixelType == PT_HLS) return 3;
+    else if (lcmsPixelType == PT_CMYK) return 4;
+    else if (lcmsPixelType == PT_CMY) return 3;
+    return 0;
+}
+
+// 0 bits means using image original bit depth
+const inline int color_space_preferred_bits(int lcmsPixelType) {
+    if (lcmsPixelType == PT_XYZ) return 32;
+    else if (lcmsPixelType == PT_Lab) return 32;
+    else if (lcmsPixelType == PT_YUV) return 0;
+    else if (lcmsPixelType == PT_YCbCr) return 0;
+    else if (lcmsPixelType == PT_RGB) return 0;
+    else if (lcmsPixelType == PT_GRAY) return 0;
+    else if (lcmsPixelType == PT_HSV) return 0;
+    else if (lcmsPixelType == PT_HLS) return 0;
+    else if (lcmsPixelType == PT_CMYK) return 0;
+    else if (lcmsPixelType == PT_CMY) return 0;
+    return 0;
+}
+
+// 0 bits means using image original pixelType
+const inline bim::DataFormat color_space_preferred_pixel_type(int lcmsPixelType) {
+    if (lcmsPixelType == PT_XYZ) return FMT_FLOAT;
+    else if (lcmsPixelType == PT_Lab) return FMT_FLOAT;
+    else if (lcmsPixelType == PT_YUV) return FMT_UNDEFINED;
+    else if (lcmsPixelType == PT_YCbCr) return FMT_UNDEFINED;
+    else if (lcmsPixelType == PT_RGB) return FMT_UNDEFINED;
+    else if (lcmsPixelType == PT_GRAY) return FMT_UNDEFINED;
+    else if (lcmsPixelType == PT_HSV) return FMT_UNDEFINED;
+    else if (lcmsPixelType == PT_HLS) return FMT_UNDEFINED;
+    else if (lcmsPixelType == PT_CMYK) return FMT_UNDEFINED;
+    else if (lcmsPixelType == PT_CMY) return FMT_UNDEFINED;
+    return FMT_UNDEFINED;
+}
+
+const inline ImageModes color_space_to_ImageMode(int lcmsPixelType) {
+    if (lcmsPixelType == PT_XYZ) return bim::IM_XYZ;
+    else if (lcmsPixelType == PT_Lab) return bim::IM_LAB;
+    else if (lcmsPixelType == PT_YUV) return bim::IM_YUV;
+    else if (lcmsPixelType == PT_YCbCr) return bim::IM_YCbCr;
+    else if (lcmsPixelType == PT_RGB) return bim::IM_RGB;
+    else if (lcmsPixelType == PT_GRAY) return bim::IM_GRAYSCALE;
+    else if (lcmsPixelType == PT_HSV) return bim::IM_HSV;
+    else if (lcmsPixelType == PT_HLS) return bim::IM_HSL;
+    else if (lcmsPixelType == PT_CMYK) return bim::IM_CMYK;
+    else if (lcmsPixelType == PT_CMY) return bim::IM_CMY;
+    return bim::IM_UNKNOWN;
+}
+
+template <typename Ti, typename To>
+const void convert_3to3(const Image &in, Image &out, cmsHTRANSFORM &hTransform) {
+    bim::uint64 w = (bim::uint64) in.width();
+    bim::uint64 h = (bim::uint64) in.height();
+
+    #pragma omp parallel for default(shared) BIM_OMP_SCHEDULE if (h>BIM_OMP_FOR2)
+    for (bim::int64 y = 0; y < h; ++y) {
+        Ti * BIM_RESTRICT src0 = (Ti *)in.scanLine(0, y);
+        Ti * BIM_RESTRICT src1 = (Ti *)in.scanLine(1, y);
+        Ti * BIM_RESTRICT src2 = (Ti *)in.scanLine(2, y);
+        To * BIM_RESTRICT dst0 = (To *)out.scanLine(0, y);
+        To * BIM_RESTRICT dst1 = (To *)out.scanLine(1, y);
+        To * BIM_RESTRICT dst2 = (To *)out.scanLine(2, y);
+        Ti i[3];
+        To o[3];
+        for (unsigned int x = 0; x < w; ++x) {
+            i[0] = src0[x];
+            i[1] = src1[x];
+            i[2] = src2[x];
+            cmsDoTransform(hTransform, i, o, 1);
+            dst0[x] = o[0];
+            dst1[x] = o[1];
+            dst2[x] = o[2];
+        }
+    }
+}
+
+template <typename Ti, typename To>
+const void convert_3to4(const Image &in, Image &out, cmsHTRANSFORM &hTransform) {
+    bim::uint64 w = (bim::uint64) in.width();
+    bim::uint64 h = (bim::uint64) in.height();
+
+    #pragma omp parallel for default(shared) BIM_OMP_SCHEDULE if (h>BIM_OMP_FOR2)
+    for (bim::int64 y = 0; y < h; ++y) {
+        Ti * BIM_RESTRICT src0 = (Ti *)in.scanLine(0, y);
+        Ti * BIM_RESTRICT src1 = (Ti *)in.scanLine(1, y);
+        Ti * BIM_RESTRICT src2 = (Ti *)in.scanLine(2, y);
+        To * BIM_RESTRICT dst0 = (To *)out.scanLine(0, y);
+        To * BIM_RESTRICT dst1 = (To *)out.scanLine(1, y);
+        To * BIM_RESTRICT dst2 = (To *)out.scanLine(2, y);
+        To * BIM_RESTRICT dst3 = (To *)out.scanLine(3, y);
+        Ti i[3];
+        To o[4];
+        for (unsigned int x = 0; x < w; ++x) {
+            i[0] = src0[x];
+            i[1] = src1[x];
+            i[2] = src2[x];
+            cmsDoTransform(hTransform, i, o, 1);
+            dst0[x] = o[0];
+            dst1[x] = o[1];
+            dst2[x] = o[2];
+            dst3[x] = o[3];
+        }
+    }
+}
+
+template <typename Ti, typename To>
+const void convert_4to3(const Image &in, Image &out, cmsHTRANSFORM &hTransform) {
+    bim::uint64 w = (bim::uint64) in.width();
+    bim::uint64 h = (bim::uint64) in.height();
+
+    #pragma omp parallel for default(shared) BIM_OMP_SCHEDULE if (h>BIM_OMP_FOR2)
+    for (bim::int64 y = 0; y < h; ++y) {
+        Ti * BIM_RESTRICT src0 = (Ti *)in.scanLine(0, y);
+        Ti * BIM_RESTRICT src1 = (Ti *)in.scanLine(1, y);
+        Ti * BIM_RESTRICT src2 = (Ti *)in.scanLine(2, y);
+        Ti * BIM_RESTRICT src3 = (Ti *)in.scanLine(3, y);
+        To * BIM_RESTRICT dst0 = (To *)out.scanLine(0, y);
+        To * BIM_RESTRICT dst1 = (To *)out.scanLine(1, y);
+        To * BIM_RESTRICT dst2 = (To *)out.scanLine(2, y);
+        Ti i[4];
+        To o[3];
+        for (unsigned int x = 0; x < w; ++x) {
+            i[0] = src0[x];
+            i[1] = src1[x];
+            i[2] = src2[x];
+            i[3] = src3[x];
+            cmsDoTransform(hTransform, i, o, 1);
+            dst0[x] = o[0];
+            dst1[x] = o[1];
+            dst2[x] = o[2];
+        }
+    }
+}
+
+template <typename Ti, typename To>
+const void convert_3to1(const Image &in, Image &out, cmsHTRANSFORM &hTransform) {
+    bim::uint64 w = (bim::uint64) in.width();
+    bim::uint64 h = (bim::uint64) in.height();
+
+    #pragma omp parallel for default(shared) BIM_OMP_SCHEDULE if (h>BIM_OMP_FOR2)
+    for (bim::int64 y = 0; y < h; ++y) {
+        Ti * BIM_RESTRICT src0 = (Ti *)in.scanLine(0, y);
+        Ti * BIM_RESTRICT src1 = (Ti *)in.scanLine(1, y);
+        Ti * BIM_RESTRICT src2 = (Ti *)in.scanLine(2, y);
+        To * BIM_RESTRICT dst0 = (To *)out.scanLine(0, y);
+        Ti i[3];
+        To o[1];
+        for (unsigned int x = 0; x < w; ++x) {
+            i[0] = src0[x];
+            i[1] = src1[x];
+            i[2] = src2[x];
+            cmsDoTransform(hTransform, i, o, 1);
+            dst0[x] = o[0];
+        }
+    }
+}
+
+template <typename Ti, typename To>
+const void copy_sample(const Image &in, Image &out, int isample, int osample) {
+    bim::uint64 w = (bim::uint64) in.width();
+    bim::uint64 h = (bim::uint64) in.height();
+
+    #pragma omp parallel for default(shared) BIM_OMP_SCHEDULE if (h>BIM_OMP_FOR2)
+    for (bim::int64 y = 0; y < h; ++y) {
+        Ti * BIM_RESTRICT src = (Ti *)in.scanLine(isample, y);
+        To * BIM_RESTRICT dst = (To *)out.scanLine(osample, y);
+        for (unsigned int x = 0; x < w; ++x) {
+            dst[x] = src[x];
+        }
+    }
+}
+
+Image Image::transform_icc(const std::vector<char> &profile) {
+    if (!metadata.hasKey(bim::RAW_TAGS_ICC) || metadata.get_type(bim::RAW_TAGS_ICC) != bim::RAW_TYPES_ICC) return *this;
+
+    // set proper color definitions and bit depths
+    cmsHPROFILE iProfile = cmsOpenProfileFromMem(metadata.get_value_bin(bim::RAW_TAGS_ICC), metadata.get_size(bim::RAW_TAGS_ICC));
+    cmsHPROFILE oProfile = cmsOpenProfileFromMem(&profile[0], profile.size());
+    int iColorSpace  = color_space_sig2int(cmsGetColorSpace(iProfile));
+    int oColorSpace  = color_space_sig2int(cmsGetColorSpace(oProfile));
+
+    int iChannels = color_space_min_channels(iColorSpace);
+    int iBits = this->depth();
+    int oChannels = color_space_min_channels(oColorSpace);
+    int oChannelsImg = bim::max<int>(oChannels, this->channels());
+    int oBits = bim::max<int>(color_space_preferred_bits(oColorSpace), this->depth());
+    int oPixelType = bim::max<int>(color_space_preferred_pixel_type(oColorSpace), this->pixelType());
+
+    if (color_space_min_channels(iColorSpace) > this->channels() ||
+        color_space_preferred_bits(iColorSpace) > this->depth() ||
+        color_space_preferred_pixel_type(iColorSpace) > this->pixelType() || oChannels == 0)
+    {
+        cmsCloseProfile(iProfile);
+        cmsCloseProfile(oProfile);
+        return Image();
+    }
+
+    cmsUInt32Number iFormat = (COLORSPACE_SH(iColorSpace) | CHANNELS_SH(this->channels()) | BYTES_SH(this->depth() / 8) | FLOAT_SH(this->pixelType() == FMT_FLOAT));
+    cmsUInt32Number oFormat = (COLORSPACE_SH(oColorSpace) | CHANNELS_SH(oChannels) | BYTES_SH(oBits / 8) | FLOAT_SH(oPixelType == FMT_FLOAT));
+
+    cmsHTRANSFORM hTransform = cmsCreateTransform(iProfile, iFormat, oProfile, oFormat, INTENT_PERCEPTUAL, 0);
+    cmsCloseProfile(iProfile);
+    cmsCloseProfile(oProfile);
+
+    Image out(this->width(), this->height(), oBits, oChannelsImg, (bim::DataFormat) oPixelType);
+
+    if (iChannels == 3 && oChannels == 3) {
+        // pixel format is not important, only proper buffer sizes
+        if (iBits == 8 && oBits == 8) convert_3to3<bim::uint8, bim::uint8>(*this, out, hTransform);
+        else if (iBits == 8 && oBits == 32) convert_3to3<bim::uint8, bim::uint32>(*this, out, hTransform);
+        else if (iBits == 8 && oBits == 64) convert_3to3<bim::uint8, bim::uint64>(*this, out, hTransform);
+        else if (iBits == 16 && oBits == 32) convert_3to3<bim::uint16, bim::uint32>(*this, out, hTransform);
+        else if (iBits == 16 && oBits == 64) convert_3to3<bim::uint16, bim::uint64>(*this, out, hTransform);
+        else if (iBits == 32 && oBits == 8) convert_3to3<bim::uint32, bim::uint8>(*this, out, hTransform);
+        else if (iBits == 64 && oBits == 8) convert_3to3<bim::uint64, bim::uint8>(*this, out, hTransform);
+        else if (iBits == 32 && oBits == 16) convert_3to3<bim::uint32, bim::uint16>(*this, out, hTransform);
+        else if (iBits == 64 && oBits == 16) convert_3to3<bim::uint64, bim::uint16>(*this, out, hTransform);
+        else if (iBits == 16 && oBits == 16) convert_3to3<bim::uint16, bim::uint16>(*this, out, hTransform);
+        else if (iBits == 32 && oBits == 32) convert_3to3<bim::uint32, bim::uint32>(*this, out, hTransform);
+        else if (iBits == 64 && oBits == 64) convert_3to3<bim::uint64, bim::uint64>(*this, out, hTransform);
+    } else if (iChannels == 3 && oChannels == 1) {
+        // conversions to gray
+        if (iBits == 8 && oBits == 8) convert_3to1<bim::uint8, bim::uint8>(*this, out, hTransform);
+        else if (iBits == 16 && oBits == 16) convert_3to1<bim::uint16, bim::uint16>(*this, out, hTransform);
+        else if (iBits == 32 && oBits == 32) convert_3to1<bim::uint32, bim::uint32>(*this, out, hTransform);
+        else if (iBits == 64 && oBits == 64) convert_3to1<bim::uint64, bim::uint64>(*this, out, hTransform);
+    } else if (iChannels == 3 && oChannels == 4) {
+        // conversions to CMYK
+        if (iBits == 8 && oBits == 8) convert_3to4<bim::uint8, bim::uint8>(*this, out, hTransform);
+        else if (iBits == 16 && oBits == 16) convert_3to4<bim::uint16, bim::uint16>(*this, out, hTransform);
+        else if (iBits == 32 && oBits == 32) convert_3to4<bim::uint32, bim::uint32>(*this, out, hTransform);
+        else if (iBits == 64 && oBits == 64) convert_3to4<bim::uint64, bim::uint64>(*this, out, hTransform);
+    } else if (iChannels == 4 && oChannels == 3) {
+        // conversions from CMYK
+        if (iBits == 8 && oBits == 8) convert_4to3<bim::uint8, bim::uint8>(*this, out, hTransform);
+        else if (iBits == 16 && oBits == 16) convert_4to3<bim::uint16, bim::uint16>(*this, out, hTransform);
+        else if (iBits == 32 && oBits == 32) convert_4to3<bim::uint32, bim::uint32>(*this, out, hTransform);
+        else if (iBits == 64 && oBits == 64) convert_4to3<bim::uint64, bim::uint64>(*this, out, hTransform);
+    }
+    cmsDeleteTransform(hTransform);
+
+    // copy the rest of channels as they are, respecting the chnage in pixel format
+    if (iChannels < this->channels()) {
+        int cc = oChannels;
+        for (int c = iChannels; c < this->channels(); ++c) {
+            if (iBits == 8 && oBits == 8) copy_sample<bim::uint8, bim::uint8>(*this, out, c, cc);
+            else if (iBits == 16 && oBits == 16) copy_sample<bim::uint16, bim::uint16>(*this, out, c, cc);
+            else if (iBits == 32 && oBits == 32) copy_sample<bim::uint32, bim::uint32>(*this, out, c, cc);
+            else if (iBits == 64 && oBits == 64) copy_sample<bim::uint64, bim::uint64>(*this, out, c, cc);
+            ++cc;
+        }
+    }
+    
+    // set new profile
+    out.bmp->i.imageMode = color_space_to_ImageMode(oColorSpace);
+    out.metadata.set_value(bim::RAW_TAGS_ICC, profile, bim::RAW_TYPES_ICC);
+    return out;
+}
+
+
+const void icc_load_profile(const std::string &filename, std::vector<char> &buffer) {
+    if (filename.size() < 1) return;
+    std::ifstream in(filename, std::ios::in | std::ios::binary);
+    if (!in.is_open()) return;
+    in.seekg(0, std::ios::end);
+    size_t sz = in.tellg();
+    in.seekg(0, std::ios::beg);
+    buffer.resize(sz);
+    in.read(&buffer[0], sz);
+}
+
+void Image::icc_load(const std::string &filename) {
+    if (filename.size() < 1) return;
+    std::vector<char> buf;
+    icc_load_profile(filename, buf);
+    metadata.set_value(bim::RAW_TAGS_ICC, buf, bim::RAW_TYPES_ICC);
+}
+
+void Image::icc_save(const std::string &filename) const {
+    if (filename.size() > 0 && metadata.hasKey(bim::RAW_TAGS_ICC) && metadata.get_type(bim::RAW_TAGS_ICC) == bim::RAW_TYPES_ICC) {
+        std::ofstream out(filename, std::ios::out | std::ios::binary);
+        if (!out.is_open()) return;
+        out.write(metadata.get_value_bin(bim::RAW_TAGS_ICC), metadata.get_size(bim::RAW_TAGS_ICC));
+        out.close();
+    }
+}
+
+Image Image::transform_icc(const std::string &filename) {
+    std::vector<char> buf;
+    icc_load_profile(filename, buf);
+    return this->transform_icc(buf);
+}
+
+Image Image::transform_icc(TransformColorProfile profile) {
+    cmsHPROFILE p_profile;
+
+    if (profile == Image::tcpSRGB) {
+        p_profile = cmsCreate_sRGBProfile();
+    } else if (profile == Image::tcpLAB) {
+        p_profile = cmsCreateLab4Profile(NULL);
+    } else if (profile == Image::tcpXYZ) {
+        p_profile = cmsCreateXYZProfile();
+    } else if (profile == Image::tcpCMYK) {
+        p_profile = cmsOpenProfileFromMem(icc_profile_CMYK, sizeof(icc_profile_CMYK));
+    }
+
+    cmsUInt32Number BytesNeeded;
+    cmsBool r = cmsSaveProfileToMem(p_profile, NULL, &BytesNeeded);
+    std::vector<char> buf(BytesNeeded);
+    r = cmsSaveProfileToMem(p_profile, &buf[0], &BytesNeeded);
+    cmsCloseProfile(p_profile);
+
+    return this->transform_icc(buf);
+}
+
+Image operation_icc_load(Image &img, const bim::xstring &arguments, const xoperations &operations, ImageHistogram *hist, XConf *c) {
+    img.icc_load(arguments);
+    return img;
+};
+
+
+Image operation_icc_save(Image &img, const bim::xstring &arguments, const xoperations &operations, ImageHistogram *hist, XConf *c) {
+    img.icc_save(arguments);
+    return img;
+};
+
+Image operation_transform_icc_file(Image &img, const bim::xstring &arguments, const xoperations &operations, ImageHistogram *hist, XConf *c) {
+    return img.transform_icc(arguments);
+};
+
+Image operation_transform_icc_name(Image &img, const bim::xstring &arguments, const xoperations &operations, ImageHistogram *hist, XConf *c) {
+    Image::TransformColorProfile profile;
+    if (arguments.toLowerCase() == "srgb") profile = Image::tcpSRGB;
+    else if (arguments.toLowerCase() == "lab") profile = Image::tcpLAB;
+    else if (arguments.toLowerCase() == "xyz") profile = Image::tcpXYZ;
+    else if (arguments.toLowerCase() == "cmyk") profile = Image::tcpCMYK;
+    //else if (arguments.toLowerCase() == "srgb") profile = Image::tcpSRGB;
+    return img.transform_icc(profile);
 };
 
 #endif //BIM_USE_TRANSFORMS

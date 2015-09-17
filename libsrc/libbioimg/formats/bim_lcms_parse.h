@@ -19,4 +19,6 @@ ver : 1
 
 void lcms_append_metadata (bim::FormatHandle *fmtHndl, bim::TagMap *hash );
 
+bim::ImageModes lcms_image_mode(const std::string &s);
+
 #endif // BIM_LCMS_PARSE_H

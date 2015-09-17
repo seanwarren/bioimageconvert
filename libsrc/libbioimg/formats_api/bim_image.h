@@ -229,6 +229,7 @@ class Image {
     inline uint64     samples()   const { return bmp==NULL ? 0 : bmp->i.samples; }
     inline uint64     channels()  const { return samples(); }
     inline DataFormat pixelType() const { return bmp==NULL ? FMT_UNSIGNED : bmp->i.pixelType; }
+    inline ImageModes imageMode() const { return bmp == NULL ? IM_UNKNOWN : (ImageModes)bmp->i.imageMode; }
     inline uint64     numT()      const { return bmp==NULL ? 0 : bmp->i.number_t; }
     inline uint64     numZ()      const { return bmp==NULL ? 0 : bmp->i.number_z; }
 
@@ -466,6 +467,21 @@ class Image {
       tmcRGB2WndChrmColor=3, 
     };
     Image transform_color( TransformColorMethod type ) const;
+
+    
+    enum TransformColorProfile {
+        tcpSRGB = 0,
+        tcpLAB  = 1, //CIE Lab
+        tcpXYZ  = 2, //CIE XYZ
+        tcpCMYK = 3, // 
+    };
+
+    void  icc_load(const std::string &filename);
+    void  icc_save(const std::string &filename) const;
+    Image transform_icc(const std::string &filename); // load profile from file
+    Image transform_icc(TransformColorProfile profile); // use named profile
+    Image transform_icc(const std::vector<char> &profile); // profile buffer
+
 
     enum TransformMethod { 
         tmNone         = 0, 

@@ -95,20 +95,26 @@ typedef enum {
 // modes are declared similarry to Adobe Photoshop, but there are differences
 typedef enum {
   IM_BITMAP    = 0,  // 1-bit
-  IM_GRAYSCALE = 1,  // 8-bit
+  IM_GRAYSCALE = 1,  //
   IM_INDEXED   = 2,  // 8-bit
-  IM_RGB       = 3,  // 24-bit
-  IM_BGR       = 4,  // 24-bit
-  IM_HSL       = 5,  // 24-bit
-  IM_HSV       = 6,  // 24-bit
-  IM_RGBA      = 7,  // 32-bit
-  IM_ABGR      = 8,  // 32-bit
-  IM_CMYK      = 9,  // 32-bit
+  IM_RGB       = 3,  //
+  //IM_BGR       = 4,  // removed inverted channel organizations, individual drives will provide channels always in RGB sequence
+  IM_HSL       = 5,  // 
+  IM_HSV       = 6,  // 
+  IM_RGBA      = 7,  // 
+  //IM_ABGR      = 8,  // removed inverted channel organizations, individual drives will provide channels always in RGBA sequence
+  IM_CMYK      = 9,  // 
+  // 10
+  // 11
   IM_MULTI     = 12, // undefined - image with many separate grayscale channels
   IM_RGBE      = 13, // Radiance RGBE format definign floating RGB by division with the Exponent
   IM_YUV       = 14, // YUV444 chromaticity
   IM_XYZ       = 15, // CIEXYZ
   IM_LAB       = 16, // CIELab
+  IM_CMY       = 17, // CMY
+  IM_LUV       = 18, // LUV
+  IM_YCbCr     = 19, // YCbCr
+  IM_UNKNOWN   = 999 // 
 } ImageModes;
 
 typedef enum {
@@ -259,38 +265,6 @@ typedef struct ImageBitmap {
   void *bits[BIM_MAX_CHANNELS];  // pointer to RAW data by samples i.e. plane by plane, now restricted to 512 planes
 } ImageBitmap;
 
-
-//------------------------------------------------------------------------------
-//  META DATA
-//------------------------------------------------------------------------------
-typedef enum {
-  META_TIFF_TAG = 0,  // any tiff tag
-  META_EXIF     = 1,  // whole EXIF buffer
-  META_IPTC     = 2,  // whole IPTC buffer
-  META_GEO_TIFF = 3,  // whole GeoTiff buffer
-  META_BIORAD   = 4,  // any of BioRad PIC tag
-  META_STK      = 5,  // text formated STK tags
-  META_PNG      = 6,  // any of PNG text notes
-  META_GENERIC  = 7   // OME tags: metadata hash or the whole OME XML
-} MetaGroups;
-
-typedef struct TagItem {
-  uint32  tagGroup;  // group to which tag's ID pertense, e.g. TIFF, EXIF, BioPIC... value of (BIM_MetaGroups)
-  uint32  tagId;     // tag ID: e.g. TIFF tag number
-  uint32  tagType;   // type: format in which data is stored inside data buffer: value of DataType
-  uint32  tagLength; // how many records of type is stored in data buffer
-  void   *tagData;
-} TagItem;
-
-typedef struct TagList {
-  uint32    count;
-  TagItem  *tags;
-} TagList;
-
-typedef enum {
-  METADATA_TAGS    = 0,  // points to TagMap
-  METADATA_OMEXML  = 1   // points to the whole XML as a std::string
-} GENERIC_MetaTags;
 
 //******************************************************************************
 // interface wide data type macros, define them using data types you desire

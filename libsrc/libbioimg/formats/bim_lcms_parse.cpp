@@ -61,27 +61,33 @@ void lcms_append_metadata(FormatHandle *fmtHndl, TagMap *hash) {
                 else if (sig == cmsSigCmykData) cs = bim::ICC_TAGS_COLORSPACE_CMYK;
                 else if (sig == cmsSigCmyData) cs = bim::ICC_TAGS_COLORSPACE_CMY;
                 hash->set_value(bim::ICC_TAGS_COLORSPACE, cs);
+                if (cs != bim::ICC_TAGS_COLORSPACE_MULTICHANNEL)
+                    hash->set_value(bim::IMAGE_MODE, cs);
 
-                hash->set_value(bim::ICC_TAGS_SIZE, hash->get_size(bim::RAW_TAGS_ICC), "number");
+                hash->set_value(bim::ICC_TAGS_SIZE, hash->get_size(bim::RAW_TAGS_ICC));
 
                 cmsCloseProfile(ph);
             }
-
-            // create sRGB profile buffer
-            /*
-            cmsHPROFILE p_srgb = cmsCreate_sRGBProfile();
-            cmsUInt32Number BytesNeeded;
-            cmsBool r = cmsSaveProfileToMem(p_srgb, NULL, &BytesNeeded);
-            std::vector<char> buf(BytesNeeded);
-            r = cmsSaveProfileToMem(p_srgb, &buf[0], &BytesNeeded);
-            cmsCloseProfile(p_srgb);
-            */
         }
     }
     catch (...) {
         return;
     }
 
+}
+
+bim::ImageModes lcms_image_mode(const std::string &s) {
+    if (s == bim::ICC_TAGS_COLORSPACE_XYZ) return bim::IM_XYZ;
+    else if (s == bim::ICC_TAGS_COLORSPACE_LAB) return bim::IM_LAB;
+    else if (s == bim::ICC_TAGS_COLORSPACE_LUV) return bim::IM_LUV;
+    else if (s == bim::ICC_TAGS_COLORSPACE_YCBCR) return bim::IM_YCbCr;
+    else if (s == bim::ICC_TAGS_COLORSPACE_RGB) return bim::IM_RGB;
+    else if (s == bim::ICC_TAGS_COLORSPACE_GRAY) return bim::IM_GRAYSCALE;
+    else if (s == bim::ICC_TAGS_COLORSPACE_HSV) return bim::IM_HSV;
+    else if (s == bim::ICC_TAGS_COLORSPACE_HSL) return bim::IM_HSL;
+    else if (s == bim::ICC_TAGS_COLORSPACE_CMYK) return bim::IM_CMYK;
+    else if (s == bim::ICC_TAGS_COLORSPACE_CMY) return bim::IM_CMY;
+    return bim::IM_MULTI;
 }
 
 

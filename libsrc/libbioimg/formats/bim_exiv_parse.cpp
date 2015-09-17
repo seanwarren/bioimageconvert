@@ -213,7 +213,7 @@ void exiv_write_metadata(TagMap *hash, FormatHandle *fmtHndl) {
         Exiv2::Image::AutoPtr image = Exiv2::ImageFactory::open(fmtHndl->fileName);
         #endif
         if (image.get() == 0) return;
-
+        image->readMetadata();
         image->setExifData(exifData);
         image->writeMetadata();
     } catch (...) {

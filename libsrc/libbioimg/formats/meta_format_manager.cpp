@@ -36,6 +36,7 @@
 #include <xtypes.h>
 #include <xstring.h>
 #include <bim_metatags.h>
+#include <bim_lcms_parse.h>
 
 #include "meta_format_manager.h"
 
@@ -70,6 +71,28 @@ MetaFormatManager::MetaFormatManager() : FormatManager() {
     pixel_format_strings.push_back("unsigned integer");
     pixel_format_strings.push_back("signed integer");
     pixel_format_strings.push_back("floating point");
+    pixel_format_strings.push_back("complex");
+
+    image_mode_strings.push_back("monochrome");
+    image_mode_strings.push_back("grayscale");
+    image_mode_strings.push_back("indexed");
+    image_mode_strings.push_back("RGB");
+    image_mode_strings.push_back("");
+    image_mode_strings.push_back("HSL");
+    image_mode_strings.push_back("HSV");
+    image_mode_strings.push_back("RGBA");
+    image_mode_strings.push_back("");
+    image_mode_strings.push_back("CMYK");
+    image_mode_strings.push_back("");
+    image_mode_strings.push_back("");
+    image_mode_strings.push_back("MULTICHANNEL");
+    image_mode_strings.push_back("RGBE");
+    image_mode_strings.push_back("YUV");
+    image_mode_strings.push_back("XYZ");
+    image_mode_strings.push_back("LAB");
+    image_mode_strings.push_back("CMY");
+    image_mode_strings.push_back("LUV");
+    image_mode_strings.push_back("YCbCr");
 }
 
 MetaFormatManager::~MetaFormatManager()
@@ -270,6 +293,11 @@ void MetaFormatManager::sessionParseMetaData(bim::uint page) {
     appendMetadata(bim::PIXEL_DEPTH, (int)info.depth);
     appendMetadata(bim::PIXEL_FORMAT, pixel_format_strings[info.pixelType]);
     appendMetadata(bim::RAW_ENDIAN, (bim::bigendian) ? "big" : "little");
+    // overwrite imageMode from metadata colorspace
+    bim::ImageModes mode = lcms_image_mode(metadata.get_value(bim::ICC_TAGS_COLORSPACE));
+    if (mode != bim::IM_MULTI) 
+        info.imageMode = mode;
+    appendMetadata(bim::IMAGE_MODE, image_mode_strings[info.imageMode]);
 
     appendMetadata(bim::IMAGE_NUM_RES_L, (int)info.number_levels);
     if (info.tileWidth > 0 && info.tileHeight > 0) {

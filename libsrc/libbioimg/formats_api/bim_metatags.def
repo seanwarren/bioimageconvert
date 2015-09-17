@@ -36,6 +36,7 @@ DECLARE_STR( IMAGE_RES_STRUCTURE_FLAT, "flat" ) // structure where tiles get pro
 // image pixels - describes pixel parameters
 DECLARE_STR( PIXEL_DEPTH, "image_pixel_depth" ) // bit depth of one pixel in a channel
 DECLARE_STR( PIXEL_FORMAT, "image_pixel_format" ) // unsigned, signed, float
+DECLARE_STR( IMAGE_MODE, "image_mode" ) // RGB, YUV, LAB...
 
 DECLARE_STR( RAW_ENDIAN, "raw_endian" ) // little, big
 DECLARE_STR( IMAGE_DIMENSIONS, "image_dimensions" ) // XYCZT, XYZ, XYC, ...

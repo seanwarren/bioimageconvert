@@ -87,6 +87,7 @@ public:
 
   bool         display_lut_needs_fusion() const;
 
+  inline const TagMap                      *meta() const              { return &metadata; }
   inline const TagMap                      &get_metadata() const      { return metadata; }
   inline const std::vector< int >          &get_display_lut() const   { return display_lut; }
   inline const std::vector< std::string >  &get_channel_names() const { return channel_names; }
@@ -111,6 +112,7 @@ private:
   std::vector<std::string> display_channel_tag_names;
   std::vector<bim::DisplayColor> channel_colors_default;
   std::vector<std::string> pixel_format_strings;
+  std::vector<std::string> image_mode_strings;
 
   // key-value pairs for metadata
   TagMap metadata;

@@ -65,6 +65,13 @@
 
 using namespace bim;
 
+#ifdef BIM_USE_TRANSFORMS
+Image operation_icc_load(Image &img, const bim::xstring &arguments, const xoperations &operations, ImageHistogram *hist, XConf *c);
+Image operation_icc_save(Image &img, const bim::xstring &arguments, const xoperations &operations, ImageHistogram *hist, XConf *c);
+Image operation_transform_icc_file(Image &img, const bim::xstring &arguments, const xoperations &operations, ImageHistogram *hist, XConf *c);
+Image operation_transform_icc_name(Image &img, const bim::xstring &arguments, const xoperations &operations, ImageHistogram *hist, XConf *c);
+#endif //BIM_USE_TRANSFORMS
+
 //------------------------------------------------------------------------------------
 // Image defs
 //------------------------------------------------------------------------------------
@@ -3007,6 +3014,10 @@ std::map<std::string, ImageModifierProc> Image::create_modifiers() {
     ops["-transform"] = operation_transform;
     ops["-hounsfield"] = operation_hounsfield;
     ops["-enhancemeta"] = operation_enhancemeta;
+    ops["-icc-load"] = operation_icc_load;
+    ops["-icc-save"] = operation_icc_save;
+    ops["-icc-transform-name"] = operation_transform_icc_name;
+    ops["-icc-transform-file"] = operation_transform_icc_file;
     #endif
 
     #ifdef BIM_USE_FILTERS
