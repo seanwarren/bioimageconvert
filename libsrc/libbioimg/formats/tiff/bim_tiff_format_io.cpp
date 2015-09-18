@@ -76,7 +76,7 @@ template< typename T >
 void invert_buffer(void *buf, const bim::uint64 &size) {
     T maxval = std::numeric_limits<T>::max();
     T *p = (T *) buf;  
-    #pragma omp parallel for default(shared)
+    #pragma omp parallel for default(shared) BIM_OMP_SCHEDULE if (size>BIM_OMP_FOR1)
     for (bim::int64 i=0; i<size; i++)
         p[i] = maxval - p[i];
 }
@@ -165,7 +165,6 @@ void invertImg(ImageBitmap *img) {
 
 template< typename T >
 void image_ycbcr_to_rgb(ImageBitmap *img, TiffParams *pars) {
-
     #define uint32 bim::uint32
     TIFFYCbCrToRGB* ycbcr = (TIFFYCbCrToRGB*) _TIFFmalloc(
 		    TIFFroundup_32(sizeof (TIFFYCbCrToRGB), sizeof (long))  
@@ -181,10 +180,10 @@ void image_ycbcr_to_rgb(ImageBitmap *img, TiffParams *pars) {
 	TIFFGetFieldDefaulted(pars->tiff, TIFFTAG_YCBCRCOEFFICIENTS, &luma);
 	TIFFGetFieldDefaulted(pars->tiff, TIFFTAG_REFERENCEBLACKWHITE, &refBlackWhite);
 	if (TIFFYCbCrToRGBInit(ycbcr, luma, refBlackWhite) >= 0) {
-        T *rp = (T *) img->bits[0];
-        T *gp = (T *) img->bits[1];  
-        T *bp = (T *) img->bits[2];  
-        #pragma omp parallel for default(shared)
+        T * BIM_RESTRICT rp = (T *)img->bits[0];
+        T * BIM_RESTRICT gp = (T *)img->bits[1];
+        T * BIM_RESTRICT bp = (T *)img->bits[2];
+        #pragma omp parallel for default(shared) BIM_OMP_SCHEDULE if (size>BIM_OMP_FOR1)
         for (bim::int64 i=0; i<size; i++) {
             bim::uint32 r, g, b;
             bim::uint32 Y = rp[i];
@@ -243,10 +242,10 @@ void image_cielab_to_rgb(ImageBitmap *img, TiffParams *pars) {
     refWhite[0] = whitePoint[0] / whitePoint[1] * refWhite[1];
     refWhite[2] = (1.0F - whitePoint[0] - whitePoint[1]) / whitePoint[1] * refWhite[1];
 	if (TIFFCIELabToRGBInit(cielab, &display_sRGB, refWhite) >= 0) {
-        T *rp = (T *) img->bits[0];
-        T *gp = (T *) img->bits[1];  
-        T *bp = (T *) img->bits[2];  
-        #pragma omp parallel for default(shared)
+        T * BIM_RESTRICT rp = (T *)img->bits[0];
+        T * BIM_RESTRICT gp = (T *)img->bits[1];
+        T * BIM_RESTRICT bp = (T *)img->bits[2];
+        #pragma omp parallel for default(shared) BIM_OMP_SCHEDULE if (size>BIM_OMP_FOR1)
         for (bim::int64 i=0; i<size; i++) {
             bim::uint32 r, g, b;
             float X, Y, Z;
@@ -708,7 +707,7 @@ int read_tiled_tiff(TIFF *tif, ImageBitmap *img, FormatHandle *fmtHndl) {
 
                 for (bim::uint sample = 0; sample < img->i.samples; sample++) {
                     // now put tile into the image 
-                    #pragma omp parallel for default(shared) 
+                    #pragma omp parallel for default(shared) BIM_OMP_SCHEDULE if (tile_height>BIM_OMP_FOR2)
                     for (bim::int64 yi = 0; yi < tile_height; yi++) {
                         bim::uchar *p = (bim::uchar *) img->bits[sample] + (lineSize * (y + yi));
                         write_line_segment(p + (x*bpp), buf + (yi*columns*img->i.samples*bpp), img, sample, tile_width);
@@ -914,10 +913,10 @@ int write_tiled_tiff(TIFF *tif, ImageBitmap *img, FormatHandle *fmtHndl) {
             // we need to copy only the usable portion
             if ((planarConfig == PLANARCONFIG_SEPARATE) || (img->i.samples == 1)) { // if planar
                 for (bim::uint sample = 0; sample < img->i.samples; ++sample) {
-                    #pragma omp parallel for default(shared) 
+                    #pragma omp parallel for default(shared) BIM_OMP_SCHEDULE if (tile_height>BIM_OMP_FOR2)
                     for (bim::int64 i = 0; i < tile_height; ++i) {
-                        bim::uint8 *to = buf + i*bpp*columns; // buf + sample*bpp + i*bpp*columns;
-                        bim::uint8 *from = ((bim::uint8 *)img->bits[sample]) + (y+i)*bpp*width + x*bpp;
+                        bim::uint8 * BIM_RESTRICT to = buf + i*bpp*columns; // buf + sample*bpp + i*bpp*columns;
+                        bim::uint8 * BIM_RESTRICT from = ((bim::uint8 *)img->bits[sample]) + (y + i)*bpp*width + x*bpp;
                         memcpy(to, from, tile_width*bpp);
                     }
                     if (TIFFWriteTile(tif, buf, x, y, 0, sample) < 0) break;
@@ -925,10 +924,10 @@ int write_tiled_tiff(TIFF *tif, ImageBitmap *img, FormatHandle *fmtHndl) {
             }  else { // if image contains interleaved samples: RGBRGBRGB...
                 int step = bpp * img->i.samples;
                 for (bim::uint sample = 0; sample < img->i.samples; ++sample) {
-                    #pragma omp parallel for default(shared) 
+                    #pragma omp parallel for default(shared) BIM_OMP_SCHEDULE if (tile_height>BIM_OMP_FOR2)
                     for (bim::int64 i = 0; i < tile_height; ++i) {
-                        bim::uint8 *to = buf + sample*bpp + i*step*columns;
-                        bim::uint8 *from = ((bim::uint8 *)img->bits[sample]) + (y+i)*bpp*width + x*bpp;
+                        bim::uint8 * BIM_RESTRICT to = buf + sample*bpp + i*step*columns;
+                        bim::uint8 * BIM_RESTRICT from = ((bim::uint8 *)img->bits[sample]) + (y + i)*bpp*width + x*bpp;
                         for (bim::int64 x = 0; x < tile_width; ++x) {
                             memcpy(to, from, bpp);
                             from += bpp;
@@ -1352,10 +1351,10 @@ int read_tiff_image_tile(FormatHandle *fmtHndl, TiffParams *tifParams, bim::uint
     if ((planarConfig == PLANARCONFIG_SEPARATE) || (img->i.samples == 1)) { // if planar
         for (bim::uint sample = 0; sample < img->i.samples; sample++) {
             if (TIFFReadTile(tif, buf, x, y, 0, sample) < 0) break;
-            #pragma omp parallel for default(shared) 
+            #pragma omp parallel for default(shared)  BIM_OMP_SCHEDULE if (tile_height>BIM_OMP_FOR2)
             for (bim::int64 y = 0; y < tile_height; ++y) {
-                bim::uint8 *from = buf + y*bpp*columns;
-                bim::uint8 *to = ((bim::uint8 *)img->bits[sample]) + y*bpp*tile_width;
+                bim::uint8 * BIM_RESTRICT from = buf + y*bpp*columns;
+                bim::uint8 * BIM_RESTRICT to = ((bim::uint8 *)img->bits[sample]) + y*bpp*tile_width;
                 memcpy(to, from, bpp*tile_width);
             }
         }  // for sample
@@ -1363,10 +1362,10 @@ int read_tiff_image_tile(FormatHandle *fmtHndl, TiffParams *tifParams, bim::uint
         if (TIFFReadTile(tif, buf, x, y, 0, 0) > 0) {
             int step = bpp * img->i.samples;
             for (bim::uint sample = 0; sample < img->i.samples; sample++) {
-                #pragma omp parallel for default(shared) 
+                #pragma omp parallel for default(shared)  BIM_OMP_SCHEDULE if (tile_height>BIM_OMP_FOR2)
                 for (bim::int64 y = 0; y < tile_height; ++y) {
-                    bim::uint8 *from = buf + sample*bpp + y*step*columns;
-                    bim::uint8 *to = ((bim::uint8 *)img->bits[sample]) + y*bpp*tile_width;
+                    bim::uint8 * BIM_RESTRICT from = buf + sample*bpp + y*step*columns;
+                    bim::uint8 * BIM_RESTRICT to = ((bim::uint8 *)img->bits[sample]) + y*bpp*tile_width;
                     for (bim::int64 x = 0; x < tile_width; ++x) {
                         memcpy(to, from, bpp);
                         to += bpp;
