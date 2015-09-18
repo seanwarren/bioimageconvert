@@ -465,6 +465,7 @@ class Image {
       tmcRGB2HSV=1, 
       tmcHSV2RGB=2, 
       tmcRGB2WndChrmColor=3, 
+      tmcWndChrmColor2RGB = 4, // impossible
     };
     Image transform_color( TransformColorMethod type ) const;
 
