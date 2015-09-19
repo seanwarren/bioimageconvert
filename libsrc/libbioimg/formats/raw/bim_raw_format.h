@@ -37,6 +37,7 @@ public:
     bool interleaved;
 
     std::vector<double> res;
+    std::vector<xstring> units;
     xstring datafile;
     void *datastream = 0;
     TagMap header;

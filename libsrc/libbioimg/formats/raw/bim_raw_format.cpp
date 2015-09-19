@@ -214,7 +214,7 @@ bool nrrdGetImageInfo(FormatHandle *fmtHndl) {
 
     // find data offset
     par->header_offset = 0;
-    for (int i = 0; i < 4096-4; ++i) {
+    for (int i = 0; i < 4096 - 4; ++i) {
         if (memcmp(&buf[i], "\n\n", 2) == 0) {
             par->header_offset = i + 2;
             break;
@@ -230,16 +230,28 @@ bool nrrdGetImageInfo(FormatHandle *fmtHndl) {
     for (int i = 0; i < lines.size(); ++i) {
         if (lines[i].size()>0 && lines[i][0] == '#') continue;
         std::vector<xstring> v = lines[i].split(":");
-        if (v.size()>1)
-            par->header.append_tag(v[0].strip(" "), v[1].strip(" ").lstrip("=") );
+        if (v.size() > 1)
+            par->header.append_tag(v[0].strip(" "), v[1].strip(" ").lstrip("="));
     }
 
     std::vector<int> dims = par->header.get_value("sizes").splitInt(" ");
     if (dims.size() < 2) return false;
-    info->width = dims[0];
-    info->height = dims[1];
-    if (dims.size() > 2) info->number_z = dims[2]; else info->number_z = 1;
-    if (dims.size() > 3) info->number_t = dims[3]; else info->number_t = 1;
+
+    // dima: this is a pure hack, there's no true mechanism to identify channels
+    if (dims[0] < 10 && dims.size() > 2) {
+        par->interleaved = true;
+        info->samples = dims[0];
+        info->width = dims[1];
+        info->height = dims[2];
+        if (dims.size() > 3) info->number_z = dims[3]; else info->number_z = 1;
+        if (dims.size() > 4) info->number_t = dims[4]; else info->number_t = 1;
+    } else {
+        info->samples = 1;
+        info->width = dims[0];
+        info->height = dims[1];
+        if (dims.size() > 2) info->number_z = dims[2]; else info->number_z = 1;
+        if (dims.size() > 3) info->number_t = dims[3]; else info->number_t = 1;
+    }
     info->number_pages = info->number_z * info->number_t;
     
     nrrd2PixelFormat(par->header.get_value("type"), info);
@@ -249,8 +261,8 @@ bool nrrdGetImageInfo(FormatHandle *fmtHndl) {
     par->res = par->header.get_value("spacings").splitDouble(" ");
     par->res.resize(5, 0);
 
-    info->samples = 1;
-    //info->samples = par->header.get_value_int("ElementNumberOfChannels", 1);
+    par->units = par->header.get_value("space units").split(" ");
+
     //par->header_offset = par->header.get_value_int("HeaderSize", 0);
 
     //par->header.get_value("encoding") == "raw"
@@ -679,10 +691,10 @@ bim::uint raw_append_metadata(FormatHandle *fmtHndl, TagMap *hash) {
     hash->set_value(bim::PIXEL_RESOLUTION_Z, par->res[2]);
     hash->set_value(bim::PIXEL_RESOLUTION_T, par->res[3]);
 
-    hash->set_value(bim::PIXEL_RESOLUTION_UNIT_X, bim::PIXEL_RESOLUTION_UNIT_MICRONS);
-    hash->set_value(bim::PIXEL_RESOLUTION_UNIT_Y, bim::PIXEL_RESOLUTION_UNIT_MICRONS);
-    hash->set_value(bim::PIXEL_RESOLUTION_UNIT_Z, bim::PIXEL_RESOLUTION_UNIT_MICRONS);
-    hash->set_value(bim::PIXEL_RESOLUTION_UNIT_T, bim::PIXEL_RESOLUTION_UNIT_SECONDS);
+    if (par->units.size()>0) hash->set_value(bim::PIXEL_RESOLUTION_UNIT_X, par->units[0]);
+    if (par->units.size()>1) hash->set_value(bim::PIXEL_RESOLUTION_UNIT_Y, par->units[1]);
+    if (par->units.size()>2) hash->set_value(bim::PIXEL_RESOLUTION_UNIT_Z, par->units[2]);
+    if (par->units.size()>3) hash->set_value(bim::PIXEL_RESOLUTION_UNIT_T, par->units[3]);
 
     //-------------------------------------------
     // channel names
@@ -779,11 +791,15 @@ const int nrrdWriteImageHeader(FormatHandle *fmtHndl) {
 
     bim::xstring header = "NRRD0004\n";
     int nd = 2;
+    if (info->samples > 1) ++nd;
     if (info->number_z > 1) ++nd;
     if (info->number_t > 1) ++nd;
     //info->samples
     header += xstring::xprintf("dimension: %d\n", nd);
-    header += xstring::xprintf("sizes: %d %d %d %d\n", info->width, info->height, info->number_z, info->number_t);
+    if (info->samples>1)
+        header += xstring::xprintf("sizes: %d %d %d %d %d\n", info->samples, info->width, info->height, info->number_z, info->number_t);
+    else
+        header += xstring::xprintf("sizes: %d %d %d %d\n", info->width, info->height, info->number_z, info->number_t);
     header += "type: " + nrrdPixelFormat(info) + "\n";
     if (bim::bigendian) header += "endian: big\n";
     header += "encoding: raw\n";
