@@ -196,7 +196,7 @@ protected:
   void setMaxMagicSize();
   bool loadMagic( const bim::Filename fileName );
   bool loadMagic( BIM_STREAM_CLASS *stream, SeekProc seekProc, ReadProc readProc );
-  int  getNeededFormatByMagic(const bim::Filename fileName);
+  void getNeededFormatByMagic(const bim::Filename fileName, int &format_index, int &sub_index);
   void getNeededFormatByName    (const char *formatName, int &format_index, int &sub_index);
   void getNeededFormatByFileExt (const bim::Filename fileName, int &format_index, int &sub_index);
   

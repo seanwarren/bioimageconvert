@@ -35,6 +35,12 @@ public:
     unsigned int header_offset;
     bool big_endian;
     bool interleaved;
+
+    std::vector<double> res;
+    xstring datafile;
+    void *datastream = 0;
+    TagMap header;
+    std::vector<char> uncompressed;
 };
 
 } // namespace bim
