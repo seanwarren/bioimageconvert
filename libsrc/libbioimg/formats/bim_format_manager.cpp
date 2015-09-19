@@ -161,11 +161,17 @@ bool FormatManager::loadMagic( BIM_STREAM_CLASS *stream, SeekProc seekProc, Read
   return true;
 }
 
-int FormatManager::getNeededFormatByMagic(const bim::Filename fileName) {
-  for (unsigned int i=0; i<formatList.size(); i++)
-      if (formatList.at(i)->validateFormatProc(magic_number, max_magic_size, fileName) != -1)
-          return i;
-  return -1;
+void FormatManager::getNeededFormatByMagic(const bim::Filename fileName, int &format_index, int &sub_index) {
+    format_index = -1;
+    sub_index = -1;
+    for (unsigned int i = 0; i < formatList.size(); i++) {
+        int s = formatList.at(i)->validateFormatProc(magic_number, max_magic_size, fileName);
+        if (s > -1) {
+            format_index = i;
+            sub_index = s;
+            break;
+        }
+    }
 }
 
 #ifdef WIN32
@@ -540,7 +546,7 @@ void FormatManager::loadImage ( BIM_STREAM_CLASS *stream,
                   TellProc  tellProc,  EofProc eofProc, CloseProc closeProc,   
                   const bim::Filename fileName, ImageBitmap *bmp, int page  )
 {
-  int format_index;
+  int format_index, format_sub;
   FormatHeader *selectedFmt;
   
   if ( ( stream != NULL ) && (seekProc != NULL) && (readProc != NULL) ) { 
@@ -549,13 +555,15 @@ void FormatManager::loadImage ( BIM_STREAM_CLASS *stream,
     if (!loadMagic(fileName)) return;
   }
   
-  format_index = getNeededFormatByMagic(fileName);
+  getNeededFormatByMagic(fileName, format_index, format_sub);
   if (format_index == -1) return;
   selectedFmt = formatList.at( format_index );
 
   FormatHandle fmtParams = selectedFmt->aquireFormatProc();
 
-  if ( selectedFmt->validateFormatProc(magic_number, max_magic_size, fileName) == -1 ) return;
+  format_sub = selectedFmt->validateFormatProc(magic_number, max_magic_size, fileName);
+  if (format_sub == -1) return;
+  sessionHandle.subFormat = format_sub; // initial guess
 
   fmtParams.showProgressProc = progress_proc;
   fmtParams.showErrorProc    = error_proc;
@@ -846,7 +854,7 @@ int FormatManager::sessionStartRead ( BIM_STREAM_CLASS *stream, ReadProc readPro
     else {
       if (!loadMagic(fileName)) return 1;
     }
-    sessionFormatIndex = getNeededFormatByMagic(fileName);
+    getNeededFormatByMagic(fileName, sessionFormatIndex, sessionSubIndex);
   } else {
     // force specific format
     getNeededFormatByName(formatName, sessionFormatIndex, sessionSubIndex);  
@@ -856,6 +864,7 @@ int FormatManager::sessionStartRead ( BIM_STREAM_CLASS *stream, ReadProc readPro
   FormatHeader *selectedFmt = formatList.at( sessionFormatIndex );
 
   sessionHandle = selectedFmt->aquireFormatProc();
+  sessionHandle.subFormat = sessionSubIndex; // initial guess
 
   //if ( selectedFmt->validateFormatProc(magic_number, max_magic_size)==-1 ) return 1;
   
