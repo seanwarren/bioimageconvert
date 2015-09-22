@@ -86,6 +86,9 @@ namespace bim {
     public:
         typedef std::map<std::string, TagValue >::const_iterator const_iterator;
         typedef std::map<std::string, TagValue >::iterator iterator;
+        typedef std::map<std::string, TagValue >::const_reverse_iterator const_reverse_iterator;
+        typedef std::map<std::string, TagValue >::reverse_iterator reverse_iterator;
+
     public:
         // constructors
         explicit TagMap() : std::map<std::string, TagValue>() {}

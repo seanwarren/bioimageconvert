@@ -3004,9 +3004,15 @@ Image operation_meta_keep(Image &img, const bim::xstring &arguments, const xoper
 
     // remove all tags except given
     bim::TagMap *meta = (bim::TagMap *) img.meta();
-    for (bim::TagMap::iterator it = meta->begin(); it != meta->end(); ++it) {
-        if (!keys.hasKey((*it).first))
-            meta->erase(it);
+    bim::TagMap::iterator it = meta->begin();
+    while (it != meta->end()) {
+        if (!keys.hasKey((*it).first)) {
+            bim::TagMap::iterator delit = it;
+            ++it;
+            meta->erase(delit);
+        } else {
+            ++it;
+        }
     }
     return img;
 };
