@@ -2985,6 +2985,32 @@ Image operation_hounsfield(Image &img, const bim::xstring &arguments, const xope
 Image operation_superpixels(Image &img, const bim::xstring &arguments, const xoperations &operations, ImageHistogram *hist, XConf *c);
 #endif
 
+Image operation_meta_remove(Image &img, const bim::xstring &arguments, const xoperations &operations, ImageHistogram *hist, XConf *c) {
+    std::vector<xstring> tags = arguments.split(",");
+    bim::TagMap *meta = (bim::TagMap *) img.meta();
+    for (int i = 0; i < tags.size(); ++i) {
+        meta->delete_tag(tags[i]);
+    }
+    return img;
+};
+
+Image operation_meta_keep(Image &img, const bim::xstring &arguments, const xoperations &operations, ImageHistogram *hist, XConf *c) {
+    std::vector<xstring> tags = arguments.split(",");
+    // rapid lookup for tag names
+    bim::TagMap keys;
+    for (int i = 0; i < tags.size(); ++i) {
+        keys.append_tag(tags[i], "");
+    }
+
+    // remove all tags except given
+    bim::TagMap *meta = (bim::TagMap *) img.meta();
+    for (bim::TagMap::iterator it = meta->begin(); it != meta->end(); ++it) {
+        if (!keys.hasKey((*it).first))
+            meta->erase(it);
+    }
+    return img;
+};
+
 std::map<std::string, ImageModifierProc> Image::create_modifiers() {
     std::map<std::string, ImageModifierProc> ops;
     ops["-stretch"] = operation_stretch;
@@ -3026,6 +3052,10 @@ std::map<std::string, ImageModifierProc> Image::create_modifiers() {
     #endif
     ops["-superpixels"] = operation_superpixels;
     #endif
+
+    // metadata
+    ops["-meta-keep"] = operation_meta_keep;
+    ops["-meta-remove"] = operation_meta_remove;
 
     return ops;
 }
