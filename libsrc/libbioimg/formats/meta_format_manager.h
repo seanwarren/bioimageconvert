@@ -65,17 +65,17 @@ public:
           fileName, bmp, formatName, quality, meta == NULL ? &this->metadata : meta, options);
   }
 
-  void writeImage(const bim::Filename fileName, ImageBitmap *bmp, const char *formatName, int quality, TagMap *meta) {
+  void writeImage(const bim::Filename fileName, ImageBitmap *bmp, const char *formatName, int quality, TagMap *meta=NULL) {
       writeImage(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, fileName, bmp, formatName, quality, meta);
   }
-  void writeImage(const bim::Filename fileName, ImageBitmap *bmp, const char *formatName, int quality) {
+  /*void writeImage(const bim::Filename fileName, ImageBitmap *bmp, const char *formatName, int quality) {
       writeImage(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, fileName, bmp, formatName, quality, NULL);
+  }*/
+  void writeImage(const bim::Filename fileName, ImageBitmap *bmp, const char *formatName, const char *options = NULL, TagMap *meta=NULL) {
+      writeImage(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, fileName, bmp, formatName, 100, meta, options);
   }
-  void writeImage(const bim::Filename fileName, ImageBitmap *bmp, const char *formatName, const char *options = NULL) {
-      writeImage(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, fileName, bmp, formatName, 100, NULL, options);
-  }
-  void writeImage(const bim::Filename fileName, Image &img, const char *formatName, const char *options = NULL) {
-      writeImage(fileName, img.imageBitmap(), formatName, options);
+  void writeImage(const bim::Filename fileName, Image &img, const char *formatName, const char *options = NULL, TagMap *meta = NULL) {
+      writeImage(fileName, img.imageBitmap(), formatName, options, meta);
   }
 
   // META
