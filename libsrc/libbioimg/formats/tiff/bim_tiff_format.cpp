@@ -295,8 +295,9 @@ void detectTiffPyramid(TiffParams *tiffParams) {
     pyramid->init();
     bim::uint32 sub_file_type = 10000;
     bim::uint64 current_dir = TIFFCurrentDirectory(tif);
-    bim::uint32 width = 0, w = 0;
+    bim::uint32 width = 0, height=0, w = 0, h=0;
     TIFFGetField(tif, TIFFTAG_IMAGEWIDTH, &width);
+    TIFFGetField(tif, TIFFTAG_IMAGELENGTH, &height);
 
     //----------------------------------------------------------------
     // Adobe Photoshop SubIFD pyramidal version
@@ -313,8 +314,10 @@ void detectTiffPyramid(TiffParams *tiffParams) {
         int i = 0;
         bim::uint64 subdiroffset = subIFDs[i];
         while (TIFFSetSubDirectory(tif, subdiroffset) > 0) {
+            
             if (TIFFGetField(tif, TIFFTAG_SUBFILETYPE, &sub_file_type) != 1) break;
             if (sub_file_type != FILETYPE_REDUCEDIMAGE) break;
+
             if (TIFFGetField(tif, TIFFTAG_IMAGEWIDTH, &w) == 0) break;
             double scale = (double)w / (double)width;
             pyramid->addLevel(scale, subdiroffset);
@@ -335,17 +338,32 @@ void detectTiffPyramid(TiffParams *tiffParams) {
     // ImageMagick multi-page pyramidal version
     // the first directory is not guaranteed to have subfile type
     //----------------------------------------------------------------
+    double prev_sz[2] = { width, height };
     if (pyramid->number_levels < 2) {
         TIFFSetDirectory(tif, current_dir);
         if (tif->tif_nextdiroff > 0) {
             bim::uint64 subdiroffset = tif->tif_nextdiroff;
             while (TIFFSetSubDirectory(tif, subdiroffset) > 0) {
-                if (TIFFGetField(tif, TIFFTAG_SUBFILETYPE, &sub_file_type) != 1) break;
-                if (sub_file_type != FILETYPE_REDUCEDIMAGE) break;
-                if (TIFFGetField(tif, TIFFTAG_IMAGEWIDTH, &w) == 0) break;
-                double scale = (double)w / (double)width;
-                pyramid->addLevel(scale, subdiroffset);
-                subdiroffset = tif->tif_nextdiroff;
+                if (TIFFGetField(tif, TIFFTAG_SUBFILETYPE, &sub_file_type) == 1) {
+                    // in case of properly stored file with sub-file-type
+                    if (sub_file_type != FILETYPE_REDUCEDIMAGE) break;
+                    if (TIFFGetField(tif, TIFFTAG_IMAGEWIDTH, &w) == 0) break;
+                    double scale = (double)w / (double)width;
+                    pyramid->addLevel(scale, subdiroffset);
+                    subdiroffset = tif->tif_nextdiroff;
+                } else {
+                    // in case of an image stored without sub-file-type image size should be exactly half of previous page
+                    // to qualify for a resolution level
+                    prev_sz[0] /= 2.0;
+                    prev_sz[1] /= 2.0;
+                    if (TIFFGetField(tif, TIFFTAG_IMAGEWIDTH, &w) == 0) break;
+                    if (TIFFGetField(tif, TIFFTAG_IMAGELENGTH, &h) == 0) break;
+                    // a bit of wiggle room for sizes
+                    if (prev_sz[0] - w > 2.0 || prev_sz[1] - h > 2.0) break;
+                    double scale = (double)w / (double)width;
+                    pyramid->addLevel(scale, subdiroffset);
+                    subdiroffset = tif->tif_nextdiroff;
+                }
             }
         }
         if (pyramid->number_levels > 1) {
