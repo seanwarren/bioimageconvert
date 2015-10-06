@@ -53,6 +53,7 @@ public:
     bool read(Image &img, bim::uint page);
     bool readLevel(Image &img, bim::uint page, bim::uint level);
     bool readTile(Image &img, bim::uint page, bim::uint64 xid, bim::uint64 yid, bim::uint level, bim::uint tile_size);
+    bool readRegion(Image &img, bim::uint page, bim::uint64 x1, bim::uint64 y1, bim::uint64 x2, bim::uint64 y2, bim::uint level);
 
 public:
     int getImageLevel(bim::uint level);

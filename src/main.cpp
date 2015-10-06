@@ -109,7 +109,7 @@
                 
 *******************************************************************************/
 
-#define IMGCNV_VER "2.0.8"
+#define IMGCNV_VER "2.0.9"
 
 #include <cmath>
 #include <cstdio>
@@ -256,6 +256,10 @@ public:
   int tile_size;
   int tile_xid;
   int tile_yid;
+  int tile_x1;
+  int tile_y1;
+  int tile_x2;
+  int tile_y2;
 
   bool mosaic;
   int mosaic_num_x;
@@ -310,7 +314,10 @@ void DConf::init() {
   appendArgumentDefinition( "-meta-parsed", 0, "print image's parsed meta-data, excluding custom fields" );
   appendArgumentDefinition( "-meta-custom", 0, "print image's custom meta-data fields" );
   appendArgumentDefinition( "-meta-raw",    0, "print image's raw meta-data in one huge pile" );
-  appendArgumentDefinition( "-meta-tag",    1, "prints contents of a requested tag, ex: -tag pixel_resolution" );
+  appendArgumentDefinition( "-meta-tag",    1, "prints contents of a requested tag, ex: -meta-tag pixel_resolution" );
+  appendArgumentDefinition("-meta-keep",   1, "removes all except provided comma separated tags, ex: -meta-keep pixel_resolution,raw/icc_profile");
+  appendArgumentDefinition("-meta-remove", 1, "removes provided comma separated tags, ex: -meta-remove pixel_resolution,raw/icc_profile");
+
   appendArgumentDefinition( "-rawmeta",     0, "print image's raw meta-data in one huge pile" );
   appendArgumentDefinition( "-info",        0, "print image info" );
   appendArgumentDefinition( "-supported",   0, "prints yes/no if the file can be decoded" );
@@ -333,6 +340,11 @@ void DConf::init() {
 
   appendArgumentDefinition( "-mirror",     0, "mirror the image horizontally" );
   appendArgumentDefinition( "-flip",       0, "flip the image vertically" );
+
+  appendArgumentDefinition("-icc-load",    1, "Load ICC profile from a file");
+  appendArgumentDefinition("-icc-save",    1, "Save ICC profile into a file if present");
+  appendArgumentDefinition("-icc-transform-file", 1, "Transform image to ICC profile loaded from a file");
+  appendArgumentDefinition("-icc-transform-name", 1, "Transform image to ICC profile given by a name: srgb|lab|xyz|cmyk");
 
   xstring tmp = "tile the image and store tiles in the output directory, ex: -tile 256\n";
   tmp += "  argument defines the size of the tiles in pixels\n";
@@ -460,6 +472,12 @@ void DConf::init() {
   tmp += "  if more than one region of interest is desired, specify separated by ';', ex: -roi 10,10,100,100;20,20,120,120\n";
   tmp += "  in case of multiple regions, specify a template for output file creation with following variables, ex: -template {output_filename}_{x1}.{y1}.{x2}.{y2}.tif";
   appendArgumentDefinition( "-roi", 1, tmp );
+
+  tmp = "region of interest, should be followed by: x1,y1,x2,y2 that defines ROI rectangle, ex: -tile-roi 10,10,100,100\n";
+  tmp += "the difference from -roi is in how the image is loaded, in this case if operating on a tiled image\n";
+  tmp += "only the required sub-region will be loaded, similar to tile interface but with arbitrary position\n";
+  tmp += "this means that all enhancements will be local to the ROI and glogal histogram will be needed";
+  appendArgumentDefinition("-tile-roi", 1, tmp);
 
   tmp = "Define a template for file names, ex: -template {output_filename}_{n}.tif\n";
   tmp += "  templates specify variables inside {} blocks, available variables vary for different processing";
@@ -638,6 +656,10 @@ void DConf::init() {
   tile_size = 0;
   tile_xid = -1;
   tile_yid = -1;
+  tile_x1 = -1;
+  tile_y1 = -1;
+  tile_x2 = -1;
+  tile_y2 = -1;
 
   mosaic = false;
   mosaic_num_x = 0;
@@ -893,6 +915,16 @@ void DConf::processArguments() {
           tile_xid  = t[1];
           tile_yid  = t[2];
           res_level = t[3];
+      }
+  }
+
+  if (keyExists("-tile-roi")) {
+      std::vector<int> t = splitValueInt("-tile-roi");
+      if (t.size() > 3) {
+          tile_x1 = t[0];
+          tile_y1 = t[1];
+          tile_x2 = t[2];
+          tile_y2 = t[3];
       }
   }
 
@@ -1584,32 +1616,17 @@ bool is_overlapping_previous( const Image &img, DConf *c ) {
   return overlapping;
 }
 
-/*
-void init_fusion_from_meta( const Image &img, DConf *c ) {
-    std::vector<bim::DisplayColor> channel_colors_default = bim::defaultChannelColors();
-    bim::TagMap m = img.get_metadata();
-    c->out_weighted_fuse_channels.clear();
-    for (bim::uint i=0; i<img.samples(); ++i) {
-        xstring key = xstring::xprintf(bim::CHANNEL_COLOR_TEMPLATE.c_str(), i);
-        if (m.hasKey(key)) {
-            xstring t = m.get_value(key, "");
-            std::vector<int> cmp = t.splitInt(",");
-            cmp.resize(3, 0);
-            c->out_weighted_fuse_channels.push_back(bim::DisplayColor(cmp[0], cmp[1], cmp[2]));
-        } else if (i<channel_colors_default.size()) {
-            c->out_weighted_fuse_channels.push_back(channel_colors_default[i]);
-        }
-    }
-}*/
-
 bool read_session_pixels(MetaFormatManager *fm, Image *img, unsigned int plane, DConf *c) {
     ImageInfo info = fm->sessionGetInfo();
-    if (c->tile_size == 0 && c->res_level>0 && info.number_levels>1) { // read image level
+    if (c->tile_size == 0 && c->res_level>0 && info.number_levels>c->res_level) {  // read image level
         ImageProxy ip(fm);
         return ip.readLevel(*img, plane, c->res_level);
-    } else if (c->tile_size > 0 && c->tile_xid >= 0 && info.number_levels>1 && info.tileWidth>0) { // read image tile
+    } else if (info.number_levels > c->res_level && info.tileWidth > 0 && c->tile_size > 0 && c->tile_xid >= 0) { // read image tile
         ImageProxy ip(fm);
         return ip.readTile(*img, plane, c->tile_xid, c->tile_yid, c->res_level, c->tile_size);
+    } else if (info.number_levels > c->res_level && info.tileWidth > 0 && c->tile_x1 >= 0 && c->tile_y1 >= 0 && c->tile_x2 >= 0 && c->tile_y2 >= 0) { // read image tile
+        ImageProxy ip(fm);
+        return ip.readRegion(*img, plane, c->tile_x1, c->tile_y1, c->tile_x2, c->tile_y2, c->res_level);
     } else { // read image normally
         return fm->sessionReadImage(img->imageBitmap(), plane) == 0;
     }
@@ -1915,7 +1932,6 @@ int main( int argc, char** argv ) {
 
     // print out meta-data
     if (conf.print_meta && (page == 0) ) {
-      //fm.sessionParseMetaData(0);
       if (conf.print_meta_parsed)
         printMetaParsed( &fm );
       else
@@ -2023,11 +2039,10 @@ int main( int argc, char** argv ) {
     conf.print( "About to write", 2 );
     if (!conf.project && ofname.size()>0) {
 
-      if ( conf.omexml.size()>0 ) 
-        ofm.sessionWriteSetOMEXML( conf.omexml ); 
-      else
       if ( img.get_metadata().size()>0 ) 
-        ofm.sessionWriteSetMetadata( img.get_metadata() );
+          ofm.sessionWriteSetMetadata( img.get_metadata() );
+      if (conf.omexml.size()>0)
+          ofm.sessionWriteSetOMEXML(conf.omexml);
 
       if (conf.multipage == true) {
          if (ofm.sessionWriteImage( img.imageBitmap(), page )>0) break;
@@ -2035,7 +2050,7 @@ int main( int argc, char** argv ) {
         if (num_pages > 1)
           ofname.insertAfterLast( ".", xstring::xprintf("_%.6d", real_frame+1) );
 
-        fm.writeImage ((const bim::Filename)ofname.c_str(), img.imageBitmap(), conf.o_fmt.c_str(), conf.options.c_str() );
+        fm.writeImage((const bim::Filename)ofname.c_str(), img.imageBitmap(), conf.o_fmt.c_str(), conf.options.c_str(), (TagMap *)img.meta());
       } // if not multipage
     } // if not projecting
 
