@@ -359,7 +359,7 @@ void detectTiffPyramid(TiffParams *tiffParams) {
                     if (TIFFGetField(tif, TIFFTAG_IMAGEWIDTH, &w) == 0) break;
                     if (TIFFGetField(tif, TIFFTAG_IMAGELENGTH, &h) == 0) break;
                     // a bit of wiggle room for sizes
-                    if (prev_sz[0] - w > 2.0 || prev_sz[1] - h > 2.0) break;
+                    if (fabs(prev_sz[0] - w) > 2.0 || fabs(prev_sz[1] - h) > 2.0) break;
                     double scale = (double)w / (double)width;
                     pyramid->addLevel(scale, subdiroffset);
                     subdiroffset = tif->tif_nextdiroff;
