@@ -20,6 +20,7 @@
 #include <algorithm>
 #include <limits>
 #include <cstring>
+#include <iostream>
 
 #include <xstring.h>
 #include <bim_metatags.h>

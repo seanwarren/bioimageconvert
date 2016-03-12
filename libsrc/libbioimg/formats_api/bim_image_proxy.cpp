@@ -119,10 +119,10 @@ bool ImageProxy::readRegion(Image &img, bim::uint page, bim::uint64 x1, bim::uin
     bool flat_structure = fm->get_metadata_tag(bim::IMAGE_RES_STRUCTURE, "") == bim::IMAGE_RES_STRUCTURE_FLAT;
     if (flat_structure && level>0) {
         // tiles get progressively smaller with the flat structure, adjust tile size and positions accordingly
-        im_tile_sz = bim::round<bim::uint64>((double)im_tile_sz / pow<double>(2.0, level));
+        im_tile_sz = bim::round<bim::uint64>((double)im_tile_sz / pow(2.0, level));
         ImageInfo info = fm->sessionGetInfo();
-        bim::uint64 w = bim::round<bim::uint64>((double)info.width / pow<double>(2.0, level));
-        bim::uint64 h = bim::round<bim::uint64>((double)info.height / pow<double>(2.0, level));
+        bim::uint64 w = bim::round<bim::uint64>((double)info.width / pow(2.0, level));
+        bim::uint64 h = bim::round<bim::uint64>((double)info.height / pow(2.0, level));
         if (w<tile_size_x && h<tile_size_y)
             return fm->sessionReadLevel(img.imageBitmap(), page, level);
     }
