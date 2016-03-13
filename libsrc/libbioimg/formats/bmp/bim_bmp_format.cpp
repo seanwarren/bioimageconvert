@@ -721,9 +721,9 @@ FormatHeader bmpHeader = {
   NULL, //dimJpegReadImagePreviewProc, //ReadImagePreviewProc
   
   // meta data
-  bmpReadMetaDataProc, //ReadMetaDataProc
-  bmpAddMetaDataProc,  //AddMetaDataProc
-  bmpReadMetaDataAsTextProc, //ReadMetaDataAsTextProc
+  NULL, //ReadMetaDataProc
+  NULL,  //AddMetaDataProc
+  NULL, //ReadMetaDataAsTextProc
 
   NULL,
   NULL,

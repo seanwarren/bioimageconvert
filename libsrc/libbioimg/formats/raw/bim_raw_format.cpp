@@ -105,7 +105,7 @@ const void mhd2PixelFormat(const std::string &pf, ImageInfo *info) {
     }
 }
 
-xstring replaceFileName(xstring &path, xstring &filename) {
+xstring replaceFileName(const xstring &path, const xstring &filename) {
 #ifdef BIM_WIN
     xstring div = "\\";
 #else

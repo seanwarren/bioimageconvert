@@ -245,9 +245,9 @@ FormatHeader bimOibHeader = {
   NULL, //dimJpegReadImagePreviewProc, //ReadImagePreviewProc
   
   // meta data
-  oleReadMetaDataProc, //ReadMetaDataProc
-  oleAddMetaDataProc,  //AddMetaDataProc
-  oleReadMetaDataAsTextProc, //ReadMetaDataAsTextProc
+  NULL, //ReadMetaDataProc
+  NULL,  //AddMetaDataProc
+  NULL, //ReadMetaDataAsTextProc
   oleAppendMetadata, //AppendMetaDataProc
 
   NULL,

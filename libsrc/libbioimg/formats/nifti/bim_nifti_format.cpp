@@ -650,9 +650,9 @@ FormatHeader niftiHeader = {
     NULL, //dimJpegReadImagePreviewProc, //ReadImagePreviewProc
 
     // meta data
-    niftiReadMetaDataProc, //ReadMetaDataProc
-    niftiAddMetaDataProc,  //AddMetaDataProc
-    niftiReadMetaDataAsTextProc, //ReadMetaDataAsTextProc
+    NULL, //ReadMetaDataProc
+    NULL,  //AddMetaDataProc
+    NULL, //ReadMetaDataAsTextProc
     nifti_append_metadata, //AppendMetaDataProc
 
     NULL,

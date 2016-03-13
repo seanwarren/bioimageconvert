@@ -475,8 +475,8 @@ bim::uint jp2ReadImageLevelProc(FormatHandle *fmtHndl, bim::uint page, bim::uint
         
         // setting resolution level does not change image size in opj_decode, a little hack to
         // update image size based on the resolution level
-        info->width = bim::round<bim::uint64>((double)info->width / pow<double>(2.0, level));
-        info->height = bim::round<bim::uint64>((double)info->height / pow<double>(2.0, level));
+        info->width = bim::round<bim::uint64>((double)info->width / pow(2.0, level));
+        info->height = bim::round<bim::uint64>((double)info->height / pow(2.0, level));
         for (int i = 0; i < info->samples; ++i) {
             par->image->comps[i].w = info->width;
             par->image->comps[i].h = info->height;
