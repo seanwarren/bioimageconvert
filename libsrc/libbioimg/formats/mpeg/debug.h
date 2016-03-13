@@ -50,7 +50,7 @@ SOFTWARE.
 
 #if defined(HAVE_GCC_43)
 #if defined(__USE_MISC)
-#undef __USE_MISC
+//#undef __USE_MISC
 #endif
 #endif
 #include <cstdlib>
