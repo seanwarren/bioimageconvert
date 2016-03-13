@@ -947,9 +947,9 @@ FormatHeader ffMpegHeader = {
   NULL, //dimJpegReadImagePreviewProc, //ReadImagePreviewProc
 
   // meta data
-  ffMpegReadMetaDataProc, //ReadMetaDataProc
-  ffMpegAddMetaDataProc,  //AddMetaDataProc
-  ffMpegReadMetaDataAsTextProc, //ReadMetaDataAsTextProc
+  NULL, //ReadMetaDataProc
+  NULL,  //AddMetaDataProc
+  NULL, //ReadMetaDataAsTextProc
   ffmpeg_append_metadata, //AppendMetaDataProc
 
   NULL,

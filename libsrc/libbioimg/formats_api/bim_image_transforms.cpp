@@ -21,6 +21,7 @@
 #include <limits>
 #include <cstring>
 #include <iostream>
+#include <fstream>
 
 #include <xstring.h>
 #include <bim_metatags.h>
@@ -1071,7 +1072,7 @@ Image Image::transform_icc(const std::vector<char> &profile) {
 
 const void icc_load_profile(const std::string &filename, std::vector<char> &buffer) {
     if (filename.size() < 1) return;
-    std::ifstream in(filename, std::ios::in | std::ios::binary);
+    std::ifstream in(filename.c_str(), std::ifstream::in | std::ifstream::binary);
     if (!in.is_open()) return;
     in.seekg(0, std::ios::end);
     size_t sz = in.tellg();
@@ -1089,7 +1090,7 @@ void Image::icc_load(const std::string &filename) {
 
 void Image::icc_save(const std::string &filename) const {
     if (filename.size() > 0 && metadata.hasKey(bim::RAW_TAGS_ICC) && metadata.get_type(bim::RAW_TAGS_ICC) == bim::RAW_TYPES_ICC) {
-        std::ofstream out(filename, std::ios::out | std::ios::binary);
+        std::ofstream out(filename.c_str(), std::ios::out | std::ios::binary);
         if (!out.is_open()) return;
         out.write(metadata.get_value_bin(bim::RAW_TAGS_ICC), metadata.get_size(bim::RAW_TAGS_ICC));
         out.close();

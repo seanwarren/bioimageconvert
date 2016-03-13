@@ -1117,7 +1117,7 @@ std::string constructOMEXML( bim::FormatHandle *fmtHndl, bim::TagMap *hash ) {
               str += "<Value xmlns=\"\"><OriginalMetadata>";
               // dima: here we should be encoding strings into utf-8, though bioformats seems to expect latin1, skip encoding for now
               str += bim::xstring::xprintf("<Key>%s</Key>", key.right(7).c_str());
-              str += bim::xstring::xprintf("<Value>%s</Value>", hash->get_value(key));
+              str += bim::xstring::xprintf("<Value>%s</Value>", hash->get_value(key).c_str());
               str += "</OriginalMetadata></Value></XMLAnnotation>";
               i++;
           }

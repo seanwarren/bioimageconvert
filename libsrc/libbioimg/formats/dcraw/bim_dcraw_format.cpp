@@ -498,9 +498,9 @@ FormatHeader dcrawHeader = {
   NULL, //dimJpegReadImagePreviewProc, //ReadImagePreviewProc
   
   // meta data
-  dcrawReadMetaDataProc, //ReadMetaDataProc
-  dcrawAddMetaDataProc,  //AddMetaDataProc
-  dcrawReadMetaDataAsTextProc, //ReadMetaDataAsTextProc
+  NULL, //ReadMetaDataProc
+  NULL,  //AddMetaDataProc
+  NULL, //ReadMetaDataAsTextProc
   dcraw_append_metadata, //AppendMetaDataProc
 
   NULL,

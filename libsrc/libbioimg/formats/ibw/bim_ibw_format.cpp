@@ -377,9 +377,9 @@ FormatHeader ibwHeader = {
   NULL, //dimJpegReadImagePreviewProc, //ReadImagePreviewProc
   
   // meta data
-  ibwReadMetaDataProc, //ReadMetaDataProc
-  ibwAddMetaDataProc,  //AddMetaDataProc
-  ibwReadMetaDataAsTextProc, //ReadMetaDataAsTextProc
+  NULL, //ReadMetaDataProc
+  NULL,  //AddMetaDataProc
+  NULL, //ReadMetaDataAsTextProc
   ibw_append_metadata, //AppendMetaDataProc
 
   NULL,
