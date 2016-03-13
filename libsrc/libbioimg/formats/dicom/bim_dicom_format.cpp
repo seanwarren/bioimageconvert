@@ -644,9 +644,9 @@ FormatHeader dicomHeader = {
   NULL, //dimJpegReadImagePreviewProc, //ReadImagePreviewProc
   
   // meta data
-  dicomReadMetaDataProc, //ReadMetaDataProc
-  dicomAddMetaDataProc,  //AddMetaDataProc
-  dicomReadMetaDataAsTextProc, //ReadMetaDataAsTextProc
+  NULL, //ReadMetaDataProc
+  NULL,  //AddMetaDataProc
+  NULL, //ReadMetaDataAsTextProc
   dicom_append_metadata, //AppendMetaDataProc
 
   NULL,
