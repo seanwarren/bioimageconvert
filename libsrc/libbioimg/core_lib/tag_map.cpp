@@ -218,6 +218,11 @@ void TagMap::append_tag(const std::string &key, const std::vector<char> &value, 
     this->insert(make_pair(key, Variant(value, type)));
 }
 
+void TagMap::append_tag(const std::string &key, const char *value, const TagType &type) {
+    xstring s = value;
+    this->insert(make_pair(key, Variant(s, type)));
+}
+
 void TagMap::append_tag(const std::string &key, const std::string &value, const TagType &type) {
     this->insert(make_pair(key, Variant(value, type)));
 }
@@ -255,6 +260,11 @@ void TagMap::set_value(const std::string &key, const std::vector<char> &value, c
 
 void TagMap::set_value(const std::string &key, const char *value, unsigned int size, const TagType &type) {
     (*this)[key] = Variant(value, size, type);
+}
+
+void TagMap::set_value(const std::string &key, const char *value, const TagType &type) {
+    xstring s = value;
+    (*this)[key] = Variant(s, type);
 }
 
 void TagMap::set_value(const std::string &key, const std::string &value, const TagType &type) {
