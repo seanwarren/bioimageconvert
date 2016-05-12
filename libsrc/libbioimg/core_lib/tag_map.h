@@ -132,6 +132,7 @@ namespace bim {
         void set_value(const std::string &key, const Variant &value);
         void set_value(const std::string &key, const std::vector<char> &value, const TagType &type = "binary");
         void set_value(const std::string &key, const char *value, unsigned int size, const TagType &type = "binary");
+        void set_value(const std::string &key, const char *value, const TagType &type = "string");
         void set_value(const std::string &key, const std::string &value, const TagType &type = "string");
         void set_value(const std::string &key, const int &value, const TagType &type = "int");
         void set_value(const std::string &key, const unsigned int &value, const TagType &type = "unsigned");
@@ -143,6 +144,7 @@ namespace bim {
         void append_tag(const std::string &key, const Variant &value);
         void append_tag(const std::string &key, const std::vector<char> &value, const TagType &type = "binary");
         void append_tag(const std::string &key, const char *value, unsigned int size, const TagType &type = "binary");
+        void append_tag(const std::string &key, const char *value, const TagType &type = "string");
         void append_tag(const std::string &key, const std::string &value, const TagType &type = "string");
         void append_tag(const std::string &key, const int &value, const TagType &type = "int");
         void append_tag(const std::string &key, const unsigned int &value, const TagType &type = "unsigned");
