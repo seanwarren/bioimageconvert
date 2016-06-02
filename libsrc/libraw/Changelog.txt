@@ -1,3 +1,217 @@
+2016-04-21  Alex Tutubalin <lexa@lexa.ru>
+
+ 0.18-201604 intermediate
+ 
+ * zlib library is optional
+   Use -DUSE_ZLIB to compile with zlib (to provide deflate DNG support)
+ * libjpeg version: jpeg_mem_src() is mandatory, so use libjpeg-turbo
+   or libjpeg 8+
+ * Fixes in vng_intepolate to make modern compilers happy
+ * More metadata:
+    - per channel DNG black/whitelevel
+    - DNG analog balance
+    - makernotes metadata reordered to vendor specific data fields
+ * C-API: void libraw_set_user_mul(libraw_data_t *lr,int index, float val);
+ * support for BW Jpeg previews
+ * 8-bit DNG support via DNG SDK
+ * better intepolation of low-sensitivity pixels on Sigma Quattro files
+ * Camera support:
+    BlackMagic Micro Cinema Camera, URSA Mini
+    Canon 80D, 1300D, 1DX MkII
+    Fujifilm X-Pro2 (uncompressed RAW only), X70, X-E2S
+    HTC One A9 and M9
+    Leica M (Typ 262) and X-U (Typ 113)
+    Nikon D5
+    Olympus Pen F, SH-3
+    Panasonic DMC-GX80/85, DMC-TZ80/81/85/ZS60, DMC-TZ100/101/ZS100
+    PhaseOne IQ150, IQ180 IR, IQ3 (all models)
+    Samsung Galaxy S7 (SM-G935F)
+    Sony ILCA-68, ILCE-6300, RX1R II, RX10 III
+    YUNEEC CGO4
+   
+2015-11-24  Alex Tutubalin <lexa@lexa.ru>
+ * Camera stored white balance coefficients are extracted into:
+   int imgdata.color.WBCoeffs[256][4] - array indexed by EXIF lightsource type
+    for example, WBCoeffs[21][..] contains coefficients for D65 lightsource
+   float imgdata.color.WBCT_Coeffs[64][5] contains white balance data specified
+   for given color temperature: WBCT_Coeffs[i][0] contains temperature value,
+   and [1]..[4] are WB coefficients.
+
+ * LibRaw can be built with Adobe DNG SDK support (you'll need to compile
+   this SDK yourself for your system).
+   To compile/build with DNG SDK specify USE_DNGSDK in compiler flags (you may also need to adjust include  path and linker settings).
+   On Runtime:
+     - create dng_host (or derived class) entity in your program;
+     - pass it to LibRaw:set_dng_host(dng_host *) call to enable DNG SDK use on runtime
+     - adjust imgdata.params.use_dngsdk parameter with one of this values
+       (ORed bitwise):
+       LIBRAW_DNG_NONE - do not use DNG SDK for DNG processing
+       LIBRAW_DNG_FLOAT - process floating point DNGs via Adobe DNG SDK
+       LIBRAW_DNG_LINEAR - process 'linear DNG' (i.e. demosaiced)
+       LIBRAW_DNG_DEFLATE - process DNGs compressed with deflate (gzip)
+       LIBRAW_DNG_XTRANS - process Fuji X-Trans DNGs (6x6 CFA)
+       LIBRAW_DNG_OTHER - process other files (so usual 2x2 bayer)
+     Default value for this field:
+       LIBRAW_DNG_DEFAULT=LIBRAW_DNG_FLOAT|LIBRAW_DNG_LINEAR|LIBRAW_DNG_DEFLATE
+     You also may use this macro to pass all supported DNGs to Adobe SDK:
+       LIBRAW_DNG_ALL = LIBRAW_DNG_FLOAT|LIBRAW_DNG_LINEAR|LIBRAW_DNG_XTRANS|LIBRAW_DNG_OTHER
+ * New API calls
+    unsigned LibRaw::capabilities and C-API libraw_capabilities()
+    allows developers to determine LibRaw compile flags at runtime.
+    Returns ORed bit fields:
+    LIBRAW_CAPS_RAWSPEED - LibRaw was compiled with RawSpeed Support
+    LIBRAW_CAPS_DNGSDK - LibRaw was compiled with Adobe DNG SDK
+    LIBRAW_CAPS_DEMOSAICSGPL2, LIBRAW_CAPS_DEMOSAICSGPL3 - LibRaw was compiled with demosaic packs (GPL2/GPL3)
+ * floating point support:
+   - new data fields:
+     imgdata.rawdata.float_image - bayer float data
+     imgdata.rawdata.float3_image - 3-component float data
+     imgdata.rawdata.float4_image - 4-component float data
+     imgdata.color.fmaximum - float data maximum (calculated from real data, rounded to 1.0 if below 1.0)
+  - new raw processing flag 
+     LIBRAW_PROCESSING_CONVERTFLOAT_TO_INT - converts float data to 16-bit integer immediately after decoding with default parameters
+  - new API Calls:
+    int LibRaw::is_floating_point() returns non-zero if RAW file contains floating point data
+    int LibRaw::have_fpdata() returns non-zero if rawdata.float*_image is not null (so FP data has unpacked but not converted to integrer, see below).
+    LibRaw::convertFloatToInt(float dmin=4096.f, float dmax=32767.f, float dtarget = 16383.f) converts float/float3/float4_image to raw_image/color3/color4_image with or withou scaling:
+    - if both real data maximum and metadata maximum are within range ( >= dmin && <=dmax), float data are just converted to int
+    - if data is out of range noted above, values are scaled so real data maximum becomes dtarget
+    - if data was rescaled (normalized), scale multiplier is stored in imgdata.color.fnorm
+
+ * new data field imgdata.color.dng_color.forwardmatrix, the name speaks for itself
+ * Fix for DualISO Canon DNG files
+ * Fix for Nikon P7000/7100 Firmware 1.2
+ * Fix for Nikon 1 Series 12-bit uncompressed format
+ * Fix for Sony A7 Series uncompressed format (incorrect BitsPerSample in metadata)
+ * params.sony_arw2_options and params.x3f_flags are merged into one
+   bitfiled params.raw_processing_options
+ * enums LibRaw_sonyarw2_options and LibRaw_dp2q_options are merged into one
+   LibRaw_processing_options
+ * default value for params.raw_processing_options is 
+     LIBRAW_PROCESSING_DP2Q_INTERPOLATERG| LIBRAW_PROCESSING_DP2Q_INTERPOLATERG
+ * new processing option LIBRAW_PROCESSING_PENTAXK32_ALLFRAMES
+   turns on 4 frame merge for Pentax K3-II 4-shot images
+ * dcraw_emu: new -R <num> switch allows to set params.raw_processing_options
+ * dcraw 9.26 completely imported, support for BlackMagic URSA '3:1 compressed' files
+ * Camera support:
+   BlackMagic URSA
+   Canon G5 X, G9 X, EOS M10
+   DXO One
+   Leica S (Typ 007), SL (Typ 601)
+   Olympus E-M10 Mark II
+   Richoh GR II
+   Sony A7S II
+
+2015-08-15  Alex Tutubalin <lexa@lexa.ru>
+
+ * LibRaw 0.17 
+
+ * Fixed dcraw.c ljpeg_start possibly buffer overrun
+
+ * fixed several bugs detected by using American Fuzzy Lop
+
+ * C-API extension to support 3DLut Creator
+
+ * More metadata parsing/extraction:
+    - XMP packet extracted (if exists)
+    - DNG Color information parsed
+    - GPS data (partially) parsed
+    - EXIF/Makernotes parsed for used optics (for both RAW files and DNG converted by Adobe convertor).
+
+ * Exif/Makernotes parser callback (called for each processed tag)
+
+ * Sony ARW2.3 decoder:
+   - params.sony_arw2_hack removed, decoded data are always in 0...17k range (note the difference with dcraw!)
+   - Additional processing options for Sony lossy compression techincal analysis.
+
+ * Dcraw 9.26 imported (but some changes not approved because Libraw do it better) with some exceptions:
+    - no Pentax K3-II frame selection code 
+    - no built-in JPEG decompressor
+
+ * Many improvements in data decoding/processing:
+    - Correct decoding of black level values from metadata for many formats, LibRaw do not rely on hardcoded black levels.
+
+ * 224 camera models added to supported camera list.
+   Some of them are new (released since LibRaw 0.16 come out), some was supported before, but missed from the list.
+   Added cameras are:
+
+  Alcatel 5035D
+  BlackMagic Pocket Cinema Camera, Production Camera 4k
+  Canon PowerShot A550, A3300 IS, G1 X Mark II, G7 X, SD950, SX60 HS, EOS 7D Mark II, EOS 20Da, EOS 60Da, EOS 1200D, EOS-1D C, 5DS, 5DS R, 750D, 760D, M2, M3, G3 X
+  Casio EX-FC300S, EX-FC400S, EX-Z1080, EX-ZR700, EX-ZR710, EX-ZR750, EX-ZR800, EX-ZR850, EX-ZR1000, EX-ZR1100, ZR1200, ZR1300, EX-ZR1500, EX-100, EX-10
+  Digital Bolex D16,D16M
+  DJI 4384x3288,
+  Epson R-D1s, R-D1x
+  FujiFilm E505,S1,S205EXR,HS10,HS11,HS22EXR,HS33EXR,HS35EXR,F505EXR,F605EXR,F775EXR,F900EXR,X100T,X30,X-T1,X-T1 Graphite Silver, XQ2, X-A2, X-T10
+  Hasselblad H5D-60, H5D-50,H5D-50c,H5D-40,H4D-60,H4D-50,H4D-40,H4D-31,H3DII-22,H3DII-31,H3DII-39,H3DII-50,H3D-22,H3D-31,H3D-39,H2D-22,H2D-39,CF-22,CF-31,CF-39,Stellar II,HV
+  HTC UltraPixel
+  Imacon Ixpress 96, 96C, 384, 384C (single shot only),132C,  528C (single shot only)
+  ISG 2020x1520
+  Ikonoskop A-Cam dII Panchromatic, A-Cam dII
+  Kinefinity KineMINI, KineRAW Mini, KineRAW S35
+  Kodak DCS460D, S-1
+  Leaf Credo 50
+  Lenovo a820
+  Leica Digital-Modul-R, D-Lux (Typ 109), M (Typ 240), Monochrom (Typ 240), M-E, M-P, R8, S, T (Typ 701), X (Typ 113), X2, X-E (Typ 102), V-Lux (Typ 114), Monochrom (Typ 246), Q
+  Matrix 4608x3288
+  Nikon D4s, D600, D610, D750, D800, D800E, D810, D3300, D5500, Df, 1 J4, 1 S2, 1 V3, Coolpix P340, Coolscan NEF, D7200, 1 J5,D810A
+  Nokia 1200x1600
+  Olympus E-450, E-600, E-PL6, E-PL7, E-M1, E-M10, E-M5 Mark II, SP565UZ, STYLUS1s, SH-2, TG-4, AIR-A01
+  Panasonic DMC-CM1, DMC-FZ7, DMC-FZ70, DMC-FZ1000, DMC-GF7, DMC-GH4, AG-GH4, DMC-GM1s, DMC-GM5, DMC-LX100, DMC-TZ60/61/SZ40, DMC-TZ70, FZ300/330, GX8
+  Pentax GR, K110D, K-01,  K-S1, Q, QS-1, 645Z, K-S2, K3 II
+  PhaseOne IQ250, IQ260, IQ260 Achromatic, IQ280, Achromatic+, P 20+, P 21, P 25+, P 30+, P 40+
+  Ricoh GXR MOUNT A12, GXR MOUNT A16 24-85mm F3.5-5.5, GXR, S10 24-72mm F2.5-4.4 VC, GXR, GR A12 50mm F2.5 MACRO, GXR, GR LENS A12 28mm F2.5, GXR, GXR P10
+  Samsung GX-1L, NX1, NX5, NX1000, NX1100, NX30, NX300, NX300M, NX3000, NX mini, Galaxy S3, Galaxy Nexus, NX500
+  Sigma dp1 Quattro, dp2 Quattro, dp3 Quattro, dp0 Quattro
+  Sinar eMotion 22, eMotion 54, eSpirit 65, eMotion 75, eVolution 75, Sinarback 54
+  Sony A7 II, A7S, ILCA-77M2 (A77-II), ILCE-3000, ILCE-5000, ILCE-5100, ILCE-6000, ILCE-QX1, DSC-RX100III, DSLR-A560, NEX-VG20, NEX-VG30, NEX-VG900, IMX135-mipi 13mp, IMX135-QCOM, IMX072-mipi, RX100-IV, A7R-II, RX10-II
+
+ * Fujifilm F700/S20Pro second frame support
+
+
+2014-02-01  Alex Tutubalin <lexa@lexa.ru>
+   * Updated Oly E-M10 & Panasonic TZ60/61 color data
+   * Updated foveon SD9-14 white level
+   * Support for 1x1 BlackLevelRepeatDim
+   
+2014-01-31  Alex Tutubalin <lexa@lexa.ru>
+   * imported dcraw 1.461: fixed error in BlackLevelDim handling
+   * Accurate work with pattern black-level (cblack[6+])
+   * Support for Olympus E-M10 and Fujifilm X-T1
+   * Adjusted possbile maximum value for Sigma SD9 small raws
+   
+2014-01-27 Alex Tutubalin <lexa@lexa.ru>
+   * dcraw 1.460:  Nikon D3300, Panasonic DMC-TZ61, Sony  ILCE-5000
+2014-01-25 Alex Tutubalin <lexa@lexa.ru>
+   * PhaseOne IQ250 support (both compressed and uncompressed)
+2014-01-21 Alex Tutubalin <lexa@lexa.ru>
+   * imgdata.params.sony_arw2_hack removed.
+     It always on for ARW2-files.
+   * New imgdata.params.sony_arw2_options processing flags
+     Values:
+       LIBRAW_SONYARW2_NONE - normal processing
+       LIBRAW_SONYARW2_BASEONLY - BASE pixels outputeed, delta pixels set to 0
+       LIBRAW_SONYARW2_DELTAONLY - Delta pixels written to raw data, base pixels zeroed
+       LIBRAW_SONYARW2_DELTAZEROBASE - Only deltas written without base offset
+
+2014-01-20 Alex Tutubalin <lexa@lexa.ru>
+  * Imported dcraw 9.20:
+    - Support for DNG BlackLevelRepeatDim tags
+    - imgdata.color.cblack[] holds variable BlackLevel for DNG files (up to ~4k values)
+    - imgdata.params.use_camera_matrix is now ON by default. Set it to 3 if you want
+      to force use of DNG embedded matrix.
+    - Tone curve for Canon RMF format supported
+    - Color data for Canon C500
+  * Additional camera support:
+     Alcatel 5035D
+     DJI 4384x3288
+     Fujifilm F900EXR 
+     Kodak 12MP
+     Matrix 4608x3288
+     Nokia 1200x1600
+     Olympus E-PL6
+     Panasonic DMC-FZ7
+
 2014-01-17 Alex Tutubalin <lexa@lexa.ru>
   * Camera support:
      Added: Fujifilm XE2, XQ1
