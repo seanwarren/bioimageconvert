@@ -84,7 +84,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>..;..\..\libjpeg;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..;..\..\libjpeg;..\..\lcms2\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>-Zm200 -MP %(AdditionalOptions)</AdditionalOptions>
       <AssemblerListingLocation>debug\</AssemblerListingLocation>
       <BufferSecurityCheck>false</BufferSecurityCheck>
@@ -94,7 +94,7 @@
       <PreprocessSuppressLineNumbers>false</PreprocessSuppressLineNumbers>
       <ObjectFileName>debug\</ObjectFileName>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>_WINDOWS;UNICODE;WIN32;QT_LARGEFILE_SUPPORT;LIBRAW_BUILDLIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_WINDOWS;UNICODE;WIN32;QT_LARGEFILE_SUPPORT;LIBRAW_BUILDLIB;USE_LCMS2;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ProgramDataBaseFileName>.\</ProgramDataBaseFileName>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
@@ -119,12 +119,12 @@
       <WarningLevel>0</WarningLevel>
     </Midl>
     <ResourceCompile>
-      <PreprocessorDefinitions>_WINDOWS;UNICODE;WIN32;QT_LARGEFILE_SUPPORT;LIBRAW_BUILDLIB;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_WINDOWS;UNICODE;WIN32;QT_LARGEFILE_SUPPORT;LIBRAW_BUILDLIB;USE_LCMS2;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>..;..\..\libjpeg;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..;..\..\libjpeg;..\..\lcms2\include;..\..\zlib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>-Zm200 -MP %(AdditionalOptions)</AdditionalOptions>
       <AssemblerListingLocation>debug\</AssemblerListingLocation>
       <BufferSecurityCheck>false</BufferSecurityCheck>
@@ -134,7 +134,7 @@
       <PreprocessSuppressLineNumbers>false</PreprocessSuppressLineNumbers>
       <ObjectFileName>debug\</ObjectFileName>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>_WINDOWS;UNICODE;WIN32;QT_LARGEFILE_SUPPORT;LIBRAW_BUILDLIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_WINDOWS;UNICODE;WIN32;QT_LARGEFILE_SUPPORT;LIBRAW_BUILDLIB;USE_LCMS2;USE_ZLIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ProgramDataBaseFileName>.\</ProgramDataBaseFileName>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
@@ -159,7 +159,7 @@
       <WarningLevel>0</WarningLevel>
     </Midl>
     <ResourceCompile>
-      <PreprocessorDefinitions>_WINDOWS;UNICODE;WIN32;QT_LARGEFILE_SUPPORT;LIBRAW_BUILDLIB;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_WINDOWS;UNICODE;WIN32;QT_LARGEFILE_SUPPORT;LIBRAW_BUILDLIB;USE_LCMS2;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
     <Lib>
       <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
@@ -167,7 +167,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>..;..\..\libjpeg;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..;..\..\libjpeg;..\..\lcms2\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>-Zm200 -MP %(AdditionalOptions)</AdditionalOptions>
       <AssemblerListingLocation>.\$(Platform)\$(Configuration)/</AssemblerListingLocation>
       <BufferSecurityCheck>false</BufferSecurityCheck>
@@ -178,7 +178,7 @@
       <PreprocessSuppressLineNumbers>false</PreprocessSuppressLineNumbers>
       <ObjectFileName>.\$(Platform)\$(Configuration)/</ObjectFileName>
       <Optimization>Full</Optimization>
-      <PreprocessorDefinitions>QT_NO_DEBUG;NDEBUG;_WINDOWS;UNICODE;WIN32;QT_LARGEFILE_SUPPORT;LIBRAW_BUILDLIB;LIBRAW_NODLL;USE_JPEG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>QT_NO_DEBUG;NDEBUG;_WINDOWS;UNICODE;WIN32;QT_LARGEFILE_SUPPORT;LIBRAW_BUILDLIB;LIBRAW_NODLL;USE_JPEG;USE_LCMS2;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ProgramDataBaseFileName>.\$(Platform)\$(Configuration)/</ProgramDataBaseFileName>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <RuntimeTypeInfo>
@@ -210,12 +210,12 @@
       <WarningLevel>0</WarningLevel>
     </Midl>
     <ResourceCompile>
-      <PreprocessorDefinitions>QT_NO_DEBUG;NDEBUG;_WINDOWS;UNICODE;WIN32;QT_LARGEFILE_SUPPORT;LIBRAW_BUILDLIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>QT_NO_DEBUG;NDEBUG;_WINDOWS;UNICODE;WIN32;QT_LARGEFILE_SUPPORT;LIBRAW_BUILDLIB;USE_LCMS2;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>..;..\..\libjpeg;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..;..\..\libjpeg;..\..\lcms2\include;..\..\zlib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>-Zm200 -MP %(AdditionalOptions)</AdditionalOptions>
       <AssemblerListingLocation>.\$(Platform)\$(Configuration)/</AssemblerListingLocation>
       <BufferSecurityCheck>true</BufferSecurityCheck>
@@ -226,7 +226,7 @@
       <PreprocessSuppressLineNumbers>false</PreprocessSuppressLineNumbers>
       <ObjectFileName>.\$(Platform)\$(Configuration)/</ObjectFileName>
       <Optimization>Full</Optimization>
-      <PreprocessorDefinitions>QT_NO_DEBUG;NDEBUG;_WINDOWS;UNICODE;WIN32;QT_LARGEFILE_SUPPORT;LIBRAW_BUILDLIB;LIBRAW_NODLL;USE_JPEG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>QT_NO_DEBUG;NDEBUG;_WINDOWS;UNICODE;WIN32;QT_LARGEFILE_SUPPORT;LIBRAW_BUILDLIB;LIBRAW_NODLL;USE_JPEG;USE_LCMS2;USE_ZLIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ProgramDataBaseFileName>.\$(Platform)\$(Configuration)/</ProgramDataBaseFileName>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <RuntimeTypeInfo>
@@ -258,7 +258,7 @@
       <WarningLevel>0</WarningLevel>
     </Midl>
     <ResourceCompile>
-      <PreprocessorDefinitions>QT_NO_DEBUG;NDEBUG;_WINDOWS;UNICODE;WIN32;QT_LARGEFILE_SUPPORT;LIBRAW_BUILDLIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>QT_NO_DEBUG;NDEBUG;_WINDOWS;UNICODE;WIN32;QT_LARGEFILE_SUPPORT;LIBRAW_BUILDLIB;USE_LCMS2;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
     <ProjectReference>
       <LinkLibraryDependencies>false</LinkLibraryDependencies>

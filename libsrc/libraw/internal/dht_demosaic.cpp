@@ -257,7 +257,7 @@ void DHT::hide_hots() {
 				float avg = 0;
 				for (int k = -2; k < 3; k += 2)
 					for (int m = -2; m < 3; m += 2)
-						if (m == 0 && m == 0)
+						if (m == 0 && k == 0)
 							continue;
 						else
 							avg += nraw[nr_offset(y + k, x + m)][kc];
@@ -347,7 +347,7 @@ void DHT::hide_hots() {
 void DHT::restore_hots() {
 	int iwidth = libraw.imgdata.sizes.iwidth;
 #if defined(LIBRAW_USE_OPENMP)
-#if defined(WIN32) || defined(__MACOSX__) || defined(__APPLE__)
+#ifdef WIN32
 #pragma omp parallel for firstprivate(iwidth)
 #else
 #pragma omp parallel for schedule(guided) firstprivate(iwidth) collapse(2)
@@ -668,7 +668,7 @@ void DHT::illustrate_dline(int i) {
 		int y = i + nr_topmargin;
 		nraw[nr_offset(y, x)][0] = nraw[nr_offset(y, x)][1] = nraw[nr_offset(y, x)][2] = 0.5;
 		int l = ndir[nr_offset(y, x)] & 8;
-		l >>= 3;
+		// l >>= 3; // WTF?
 		l = 1;
 		if (ndir[nr_offset(y, x)] & HOT)
 			nraw[nr_offset(y, x)][0] = l * channel_maximum[0] / 4 + channel_maximum[0] / 4;
@@ -834,7 +834,7 @@ void DHT::make_rb() {
 void DHT::copy_to_image() {
 	int iwidth = libraw.imgdata.sizes.iwidth;
 #if defined(LIBRAW_USE_OPENMP)
-#if defined(WIN32) || defined(__MACOSX__) || defined(__APPLE__)
+#ifdef WIN32
 #pragma omp parallel for
 #else
 #pragma omp parallel for schedule(guided) collapse(2)

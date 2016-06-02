@@ -156,6 +156,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gdcmopenjpeg", "..\libsrc\g
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "socketxx", "..\libsrc\gdcm\projects\msvc2013\socketxx.vcxproj", "{A9F793B5-0180-40C1-8EC2-09F98202AAC6}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "FITS", "FITS", "{4A7B9AC4-2001-4497-BBBD-57DDC544E8AF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32

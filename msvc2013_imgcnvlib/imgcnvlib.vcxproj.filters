@@ -11,12 +11,6 @@
     <Filter Include="lib_win64">
       <UniqueIdentifier>{8c409835-067d-483f-9424-5f66b0cd34ad}</UniqueIdentifier>
     </Filter>
-    <Filter Include="gdcm_win64">
-      <UniqueIdentifier>{9d543cf6-0e5f-47ad-8992-f28a9fe29466}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="gdcm_win64_debug">
-      <UniqueIdentifier>{7c6a9bb2-722f-4afc-aff2-674e77ecce1e}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="imgcnvlib.rc">
@@ -65,89 +59,8 @@
     <Library Include="..\libs\vc2013_x64\avcodec-56.lib">
       <Filter>lib_win64</Filter>
     </Library>
-    <Library Include="..\libs\vc2013_x64\gdcm\gdcmcharls.lib">
-      <Filter>gdcm_win64</Filter>
-    </Library>
-    <Library Include="..\libs\vc2013_x64\gdcm\gdcmCommon.lib">
-      <Filter>gdcm_win64</Filter>
-    </Library>
-    <Library Include="..\libs\vc2013_x64\gdcm\gdcmDICT.lib">
-      <Filter>gdcm_win64</Filter>
-    </Library>
-    <Library Include="..\libs\vc2013_x64\gdcm\gdcmDSED.lib">
-      <Filter>gdcm_win64</Filter>
-    </Library>
-    <Library Include="..\libs\vc2013_x64\gdcm\gdcmexpat.lib">
-      <Filter>gdcm_win64</Filter>
-    </Library>
-    <Library Include="..\libs\vc2013_x64\gdcm\gdcmgetopt.lib">
-      <Filter>gdcm_win64</Filter>
-    </Library>
-    <Library Include="..\libs\vc2013_x64\gdcm\gdcmIOD.lib">
-      <Filter>gdcm_win64</Filter>
-    </Library>
-    <Library Include="..\libs\vc2013_x64\gdcm\gdcmjpeg8.lib">
-      <Filter>gdcm_win64</Filter>
-    </Library>
-    <Library Include="..\libs\vc2013_x64\gdcm\gdcmjpeg12.lib">
-      <Filter>gdcm_win64</Filter>
-    </Library>
-    <Library Include="..\libs\vc2013_x64\gdcm\gdcmjpeg16.lib">
-      <Filter>gdcm_win64</Filter>
-    </Library>
-    <Library Include="..\libs\vc2013_x64\gdcm\gdcmMEXD.lib">
-      <Filter>gdcm_win64</Filter>
-    </Library>
-    <Library Include="..\libs\vc2013_x64\gdcm\gdcmMSFF.lib">
-      <Filter>gdcm_win64</Filter>
-    </Library>
-    <Library Include="..\libs\vc2013_x64\gdcm\gdcmopenjpeg.lib">
-      <Filter>gdcm_win64</Filter>
-    </Library>
-    <Library Include="..\libs\vc2013_x64\gdcm\gdcmzlib.lib">
-      <Filter>gdcm_win64</Filter>
-    </Library>
-    <Library Include="..\libs\vc2013_x64\gdcm_debug\gdcmcharls.lib">
-      <Filter>gdcm_win64_debug</Filter>
-    </Library>
-    <Library Include="..\libs\vc2013_x64\gdcm_debug\gdcmCommon.lib">
-      <Filter>gdcm_win64_debug</Filter>
-    </Library>
-    <Library Include="..\libs\vc2013_x64\gdcm_debug\gdcmDICT.lib">
-      <Filter>gdcm_win64_debug</Filter>
-    </Library>
-    <Library Include="..\libs\vc2013_x64\gdcm_debug\gdcmDSED.lib">
-      <Filter>gdcm_win64_debug</Filter>
-    </Library>
-    <Library Include="..\libs\vc2013_x64\gdcm_debug\gdcmexpat.lib">
-      <Filter>gdcm_win64_debug</Filter>
-    </Library>
-    <Library Include="..\libs\vc2013_x64\gdcm_debug\gdcmgetopt.lib">
-      <Filter>gdcm_win64_debug</Filter>
-    </Library>
-    <Library Include="..\libs\vc2013_x64\gdcm_debug\gdcmIOD.lib">
-      <Filter>gdcm_win64_debug</Filter>
-    </Library>
-    <Library Include="..\libs\vc2013_x64\gdcm_debug\gdcmjpeg8.lib">
-      <Filter>gdcm_win64_debug</Filter>
-    </Library>
-    <Library Include="..\libs\vc2013_x64\gdcm_debug\gdcmjpeg12.lib">
-      <Filter>gdcm_win64_debug</Filter>
-    </Library>
-    <Library Include="..\libs\vc2013_x64\gdcm_debug\gdcmjpeg16.lib">
-      <Filter>gdcm_win64_debug</Filter>
-    </Library>
-    <Library Include="..\libs\vc2013_x64\gdcm_debug\gdcmMEXD.lib">
-      <Filter>gdcm_win64_debug</Filter>
-    </Library>
-    <Library Include="..\libs\vc2013_x64\gdcm_debug\gdcmMSFF.lib">
-      <Filter>gdcm_win64_debug</Filter>
-    </Library>
-    <Library Include="..\libs\vc2013_x64\gdcm_debug\gdcmopenjpeg.lib">
-      <Filter>gdcm_win64_debug</Filter>
-    </Library>
-    <Library Include="..\libs\vc2013_x64\gdcm_debug\gdcmzlib.lib">
-      <Filter>gdcm_win64_debug</Filter>
+    <Library Include="..\libs\vc2013_x64\liblzma.lib">
+      <Filter>lib_win64</Filter>
     </Library>
   </ItemGroup>
 </Project>
