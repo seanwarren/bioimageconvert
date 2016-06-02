@@ -203,6 +203,29 @@ INCLUDEPATH += $$DN_FMTS_API
 INCLUDEPATH += $$DN_FMTS
 INCLUDEPATH += $$DN_CORE
 
+#unix:LIBS += -lbz2
+#unix:LIBS += -ldl
+##SUBDIRS = $$DN_LIB_BIO/bioimage.pro
+
+#macx {
+#  LIBS += $$BIM_LIBS_PLTFM/libfftw3.a
+#  LIBS += -lz
+#} else:unix {
+#  LIBS += -lfftw3
+#}
+
+PRE_TARGETDEPS = $$DN_LIB_BIO/.generated/libbioimage.a
+LIBS += $$DN_LIB_BIO/.generated/libbioimage.a
+
+BimLib.target = $$DN_LIB_BIO/.generated/libbioimage.a
+#BimLib.commands = cd $$DN_LIB_BIO && qmake bioimage.pro && make
+BimLib.depends = $$DN_LIB_BIO/Makefile
+QMAKE_EXTRA_TARGETS += BimLib
+
+#---------------------------------------------------------------------
+# required libs
+#---------------------------------------------------------------------
+
 unix:LIBS += -lbz2
 unix:LIBS += -ldl
 #SUBDIRS = $$DN_LIB_BIO/bioimage.pro
@@ -213,15 +236,6 @@ macx {
 } else:unix {
   LIBS += -lfftw3
 }
-
-PRE_TARGETDEPS = $$DN_LIB_BIO/.generated/libbioimage.a
-LIBS += $$DN_LIB_BIO/.generated/libbioimage.a
-
-BimLib.target = $$DN_LIB_BIO/.generated/libbioimage.a
-#BimLib.commands = cd $$DN_LIB_BIO && qmake bioimage.pro && make
-BimLib.depends = $$DN_LIB_BIO/Makefile
-QMAKE_EXTRA_TARGETS += BimLib
-
 
 #---------------------------------------------------------------------
 # eigen
@@ -389,6 +403,8 @@ stat_jxrlib {
 stat_libwebp {
   unix {
     LIBS += $$BIM_LIBS_PLTFM/libwebp.a
+    LIBS += $$BIM_LIBS_PLTFM/libwebpmux.a
+    LIBS += $$BIM_LIBS_PLTFM/libwebpdemux.a
   }
 }
 
@@ -401,4 +417,5 @@ stat_lcms2 {
     LIBS += $$BIM_LIBS_PLTFM/liblcms2.a
   }
 }
+
 

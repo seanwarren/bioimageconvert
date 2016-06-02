@@ -19,6 +19,7 @@ LIBS=libs/linux
 PKG_CONFIG_PATH=$LIBVPX:$LIBX264:$LIBX265/build/linux
 QMAKEOPTS=
 VERSION=2.0.0
+SUB_MAKE := $(filter-out full,$(MAKE))
 
 all : imgcnv
 
@@ -81,9 +82,11 @@ full:
 	(cd $(LIBWEBP); chmod -f u+x config.guess)
 	(cd $(LIBWEBP); chmod -f u+x config.sub)
 	(cd $(LIBWEBP); chmod -f u+x config.status)
-	(cd $(LIBWEBP); ./configure --with-pic )
+	(cd $(LIBWEBP); ./configure --with-pic --enable-libwebpmux --enable-libwebpdemux --enable-libwebpdecoder)
 	(cd $(LIBWEBP); $(MAKE))
 	(cp $(LIBWEBP)/src/.libs/libwebp.a $(LIBS)/)
+	(cp $(LIBWEBP)/src/mux/.libs/libwebpmux.a $(LIBS)/)
+	(cp $(LIBWEBP)/src/demux/.libs/libwebpdemux.a $(LIBS)/)
 
 	@echo
 	@echo
@@ -102,7 +105,7 @@ full:
 	(cd $(LCMS2); ./configure --with-pic )
 	(cd $(LCMS2); $(MAKE))
 	(cp $(LCMS2)/src/.libs/liblcms2.a $(LIBS)/)
-	
+
 	@echo
 	@echo
 	@echo "Building openjpeg 2.1.0 in $(LIBOPENJPEG)"

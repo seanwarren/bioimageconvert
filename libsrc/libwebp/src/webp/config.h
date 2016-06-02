@@ -5,7 +5,7 @@
 /* #undef AC_APPLE_UNIVERSAL_BUILD */
 
 /* Set to 1 if __builtin_bswap16 is available */
-/* #undef HAVE_BUILTIN_BSWAP16 */
+#define HAVE_BUILTIN_BSWAP16 1
 
 /* Set to 1 if __builtin_bswap32 is available */
 #define HAVE_BUILTIN_BSWAP32 1
@@ -32,7 +32,7 @@
 /* #undef HAVE_OPENGL_GLUT_H */
 
 /* Have PTHREAD_PRIO_INHERIT. */
-/* #undef HAVE_PTHREAD_PRIO_INHERIT */
+#define HAVE_PTHREAD_PRIO_INHERIT 1
 
 /* Define to 1 if you have the <shlwapi.h> header file. */
 /* #undef HAVE_SHLWAPI_H */
@@ -115,16 +115,16 @@
 /* #undef WEBP_HAVE_GL */
 
 /* Set to 1 if JPEG library is installed */
-#undef WEBP_HAVE_JPEG
+#define WEBP_HAVE_JPEG 1
 
 /* Set to 1 if PNG library is installed */
-#undef WEBP_HAVE_PNG
+#define WEBP_HAVE_PNG 1
 
 /* Set to 1 if SSE2 is supported */
 #define WEBP_HAVE_SSE2 1
 
 /* Set to 1 if TIFF library is installed */
-#undef WEBP_HAVE_TIFF
+#define WEBP_HAVE_TIFF 1
 
 /* Undefine this to disable thread support. */
 #define WEBP_USE_THREAD 1
