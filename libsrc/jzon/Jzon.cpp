@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2013 Johannes Häggqvist
+Copyright (c) 2015 Johannes Häggqvist
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -19,419 +19,424 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
+#ifdef JZON_DLL
+#	if defined _WIN32 || defined __CYGWIN__
+#		define JZON_API __declspec(dllexport)
+#		define JZON_STL_EXTERN
+#	endif
+#endif
+
 #include "Jzon.h"
 
 #include <sstream>
 #include <fstream>
 #include <stack>
 #include <algorithm>
+#include <cassert>
 
 namespace Jzon
 {
-	class FormatInterpreter
+	namespace
 	{
-	public:
-		FormatInterpreter()
+		inline bool isWhitespace(char c)
 		{
-			SetFormat(NoFormat);
-		}
-		FormatInterpreter(const Format &format)
-		{
-			SetFormat(format);
+			return (c == '\n' || c == ' ' || c == '\t' || c == '\r' || c == '\f');
 		}
 
-		void SetFormat(const Format &format)
+		const char charsUnescaped[] = { '\\'  , '/'  , '\"'  , '\n' , '\t' , '\b' , '\f' , '\r' };
+		const char *charsEscaped[]  = { "\\\\", "\\/", "\\\"", "\\n", "\\t", "\\b", "\\f", "\\r" };
+		const unsigned int numEscapeChars = 8;
+		const char nullUnescaped = '\0';
+		const char *nullEscaped  = "\0\0";
+		const char *getEscaped(const char c)
 		{
-			this->format = format;
-			indentationChar = (format.useTabs ? '\t' : ' ');
-			spacing = (format.spacing ? " " : "");
-			newline = (format.newline ? "\n" : spacing);
-		}
-
-		std::string GetIndentation(unsigned int level) const
-		{
-			if (!format.newline)
+			for (unsigned int i = 0; i < numEscapeChars; ++i)
 			{
-				return "";
+				const char &ue = charsUnescaped[i];
+
+				if (c == ue)
+				{
+					return charsEscaped[i];
+				}
+			}
+			return nullEscaped;
+		}
+		char getUnescaped(const char c1, const char c2)
+		{
+			for (unsigned int i = 0; i < numEscapeChars; ++i)
+			{
+				const char *e = charsEscaped[i];
+
+				if (c1 == e[0] && c2 == e[1])
+				{
+					return charsUnescaped[i];
+				}
+			}
+			return nullUnescaped;
+		}
+	}
+
+	Node::Node() : data(NULL)
+	{
+	}
+	Node::Node(Type type) : data(NULL)
+	{
+		if (type != T_INVALID)
+		{
+			data = new Data(type);
+		}
+	}
+	Node::Node(const Node &other) : data(other.data)
+	{
+		if (data != NULL)
+		{
+			data->addRef();
+		}
+	}
+	Node::Node(Type type, const std::string &value) : data(new Data(T_NULL)) { set(type, value); }
+	Node::Node(const std::string &value) : data(new Data(T_STRING)) { set(value); }
+	Node::Node(const char *value) : data(new Data(T_STRING)) { set(value); }
+	Node::Node(int value) : data(new Data(T_NUMBER)) { set(value); }
+	Node::Node(unsigned int value) : data(new Data(T_NUMBER)) { set(value); }
+	Node::Node(long long value) : data(new Data(T_NUMBER)) { set(value); }
+	Node::Node(unsigned long long value) : data(new Data(T_NUMBER)) { set(value); }
+	Node::Node(float value) : data(new Data(T_NUMBER)) { set(value); }
+	Node::Node(double value) : data(new Data(T_NUMBER)) { set(value); }
+	Node::Node(bool value) : data(new Data(T_BOOL)) { set(value); }
+	Node::~Node()
+	{
+		if (data != NULL && data->release())
+		{
+			delete data;
+			data = NULL;
+		}
+	}
+
+	void Node::detach()
+	{
+		if (data != NULL && data->refCount > 1)
+		{
+			Data *newData = new Data(*data);
+			if (data->release())
+			{
+				delete data;
+			}
+			data = newData;
+		}
+	}
+
+	std::string Node::toString(const std::string &def) const
+	{
+		if (isValue())
+		{
+			if (isNull())
+			{
+				return std::string("null");
 			}
 			else
 			{
-				return std::string(format.indentSize * level, indentationChar);
+				return data->valueStr;
 			}
 		}
-
-		inline const std::string &GetNewline() const
+		else
 		{
-			return newline;
-		}
-		inline const std::string &GetSpacing() const
-		{
-			return spacing;
-		}
-
-	private:
-		Format format;
-		char indentationChar;
-		std::string newline;
-		std::string spacing;
-	};
-
-	inline bool IsWhitespace(char c)
-	{
-		return (c == '\n' || c == ' ' || c == '\t' || c == '\r' || c == '\f');
-	}
-	inline bool IsNumber(char c)
-	{
-		return ((c >= '0' && c <= '9') || c == '.' || c == '-');
-	}
-
-	Node::Node()
-	{
-	}
-	Node::~Node()
-	{
-	}
-
-	Object &Node::AsObject()
-	{
-		if (IsObject())
-			return static_cast<Object&>(*this);
-		else
-			throw TypeException();
-	}
-	const Object &Node::AsObject() const
-	{
-		if (IsObject())
-			return static_cast<const Object&>(*this);
-		else
-			throw TypeException();
-	}
-	Array &Node::AsArray()
-	{
-		if (IsArray())
-			return static_cast<Array&>(*this);
-		else
-			throw TypeException();
-	}
-	const Array &Node::AsArray() const
-	{
-		if (IsArray())
-			return static_cast<const Array&>(*this);
-		else
-			throw TypeException();
-	}
-	Value &Node::AsValue()
-	{
-		if (IsValue())
-			return static_cast<Value&>(*this);
-		else
-			throw TypeException();
-	}
-	const Value &Node::AsValue() const
-	{
-		if (IsValue())
-			return static_cast<const Value&>(*this);
-		else
-			throw TypeException();
-	}
-
-	Node::Type Node::DetermineType(const std::string &json)
-	{
-		std::string::const_iterator jsonIt = json.begin();
-
-		while (jsonIt != json.end() && IsWhitespace(*jsonIt))
-			++jsonIt;
-
-		if (jsonIt == json.end())
-			return T_VALUE;
-
-		switch (*jsonIt)
-		{
-		case '{' : return T_OBJECT;
-		case '[' : return T_ARRAY;
-		default  : return T_VALUE;
+			return def;
 		}
 	}
-
-
-	Value::Value() : Node()
-	{
-		SetNull();
+#define GET_NUMBER(T) \
+	if (isNumber())\
+	{\
+		std::stringstream sstr(data->valueStr);\
+		T val;\
+		sstr >> val;\
+		return val;\
+	}\
+	else\
+	{\
+		return def;\
 	}
-	Value::Value(const Value &rhs) : Node()
+	int Node::toInt(int def) const { GET_NUMBER(int) }
+	float Node::toFloat(float def) const { GET_NUMBER(float) }
+	double Node::toDouble(double def) const { GET_NUMBER(double) }
+#undef GET_NUMBER
+	bool Node::toBool(bool def) const
 	{
-		Set(rhs);
-	}
-	Value::Value(const Node &rhs) : Node()
-	{
-		const Value &value = rhs.AsValue();
-		Set(value);
-	}
-	Value::Value(ValueType type, const std::string &value)
-	{
-		Set(type, value);
-	}
-	Value::Value(const std::string &value)
-	{
-		Set(value);
-	}
-	Value::Value(const char *value)
-	{
-		Set(value);
-	}
-	Value::Value(const int value)
-	{
-		Set(value);
-	}
-	Value::Value(const float value)
-	{
-		Set(value);
-	}
-	Value::Value(const double value)
-	{
-		Set(value);
-	}
-	Value::Value(const bool value)
-	{
-		Set(value);
-	}
-	Value::~Value()
-	{
-	}
-
-	Node::Type Value::GetType() const
-	{
-		return T_VALUE;
-	}
-	Value::ValueType Value::GetValueType() const
-	{
-		return type;
-	}
-
-	std::string Value::ToString() const
-	{
-		if (IsNull())
+		if (isBool())
 		{
-			return "null";
+			return (data->valueStr == "true");
 		}
 		else
 		{
-			return valueStr;
-		}
-	}
-	int Value::ToInt() const
-	{
-		if (IsNumber())
-		{
-			std::stringstream sstr(valueStr);
-			int val;
-			sstr >> val;
-			return val;
-		}
-		else
-		{
-			return 0;
-		}
-	}
-	float Value::ToFloat() const
-	{
-		if (IsNumber())
-		{
-			std::stringstream sstr(valueStr);
-			float val;
-			sstr >> val;
-			return val;
-		}
-		else
-		{
-			return 0.f;
-		}
-	}
-	double Value::ToDouble() const
-	{
-		if (IsNumber())
-		{
-			std::stringstream sstr(valueStr);
-			double val;
-			sstr >> val;
-			return val;
-		}
-		else
-		{
-			return 0.0;
-		}
-	}
-	bool Value::ToBool() const
-	{
-		if (IsBool())
-		{
-			return (valueStr == "true");
-		}
-		else
-		{
-			return false;
+			return def;
 		}
 	}
 
-	void Value::SetNull()
+	void Node::setNull()
 	{
-		valueStr = "";
-		type     = VT_NULL;
-	}
-	void Value::Set(const Value &value)
-	{
-		if (this != &value)
+		if (isValue())
 		{
-			valueStr = value.valueStr;
-			type     = value.type;
+			detach();
+			data->type = T_NULL;
+			data->valueStr.clear();
 		}
 	}
-	void Value::Set(ValueType type, const std::string &value)
+	void Node::set(Type type, const std::string &value)
 	{
-		valueStr   = value;
-		this->type = type;
+		if (isValue() && (type == T_NULL || type == T_STRING || type == T_NUMBER || type == T_BOOL))
+		{
+			detach();
+			data->type = type;
+			if (type == T_STRING)
+			{
+				data->valueStr = unescapeString(value);
+			}
+			else
+			{
+				data->valueStr = value;
+			}
+		}
 	}
-	void Value::Set(const std::string &value)
+	void Node::set(const std::string &value)
 	{
-		valueStr = UnescapeString(value);
-		type     = VT_STRING;
+		if (isValue())
+		{
+			detach();
+			data->type = T_STRING;
+			data->valueStr = unescapeString(value);
+		}
 	}
-	void Value::Set(const char *value)
+	void Node::set(const char *value)
 	{
-		valueStr = UnescapeString(std::string(value));
-		type     = VT_STRING;
+		if (isValue())
+		{
+			detach();
+			data->type = T_STRING;
+			data->valueStr = unescapeString(std::string(value));
+		}
 	}
-	void Value::Set(const int value)
-	{
-		std::stringstream sstr;
-		sstr << value;
-		valueStr = sstr.str();
-		type     = VT_NUMBER;
+#define SET_NUMBER \
+	if (isValue())\
+	{\
+		detach();\
+		data->type = T_NUMBER;\
+		std::stringstream sstr;\
+		sstr << value;\
+		data->valueStr = sstr.str();\
 	}
-	void Value::Set(const float value)
+	void Node::set(int value) { SET_NUMBER }
+	void Node::set(unsigned int value) { SET_NUMBER }
+	void Node::set(long long value) { SET_NUMBER }
+	void Node::set(unsigned long long value) { SET_NUMBER }
+	void Node::set(float value) { SET_NUMBER }
+	void Node::set(double value) { SET_NUMBER }
+#undef SET_NUMBER
+	void Node::set(bool value)
 	{
-		std::stringstream sstr;
-		sstr << value;
-		valueStr = sstr.str();
-		type     = VT_NUMBER;
-	}
-	void Value::Set(const double value)
-	{
-		std::stringstream sstr;
-		sstr << value;
-		valueStr = sstr.str();
-		type     = VT_NUMBER;
-	}
-	void Value::Set(const bool value)
-	{
-		if (value)
-			valueStr = "true";
-		else
-			valueStr = "false";
-		type = VT_BOOL;
+		if (isValue())
+		{
+			detach();
+			data->type = T_BOOL;
+			data->valueStr = (value ? "true" : "false");
+		}
 	}
 
-	Value &Value::operator=(const Value &rhs)
+	Node &Node::operator=(const Node &rhs)
 	{
 		if (this != &rhs)
-			Set(rhs);
+		{
+			if (data != NULL && data->release())
+			{
+				delete data;
+			}
+			data = rhs.data;
+			if (data != NULL)
+			{
+				data->addRef();
+			}
+		}
 		return *this;
 	}
-	Value &Value::operator=(const Node &rhs)
+	Node &Node::operator=(const std::string &rhs) { set(rhs); return *this; }
+	Node &Node::operator=(const char *rhs) { set(rhs); return *this; }
+	Node &Node::operator=(int rhs) { set(rhs); return *this; }
+	Node &Node::operator=(unsigned int rhs) { set(rhs); return *this; }
+	Node &Node::operator=(long long rhs) { set(rhs); return *this; }
+	Node &Node::operator=(unsigned long long rhs) { set(rhs); return *this; }
+	Node &Node::operator=(float rhs) { set(rhs); return *this; }
+	Node &Node::operator=(double rhs) { set(rhs); return *this; }
+	Node &Node::operator=(bool rhs) { set(rhs); return *this; }
+
+	void Node::add(const Node &node)
 	{
-		if (this != &rhs)
-			Set(rhs.AsValue());
-		return *this;
+		if (isArray())
+		{
+			detach();
+			data->children.push_back(std::make_pair(std::string(), node));
+		}
 	}
-	Value &Value::operator=(const std::string &rhs)
+	void Node::add(const std::string &name, const Node &node)
 	{
-		Set(rhs);
-		return *this;
+		if (isObject())
+		{
+			detach();
+			data->children.push_back(std::make_pair(name, node));
+		}
 	}
-	Value &Value::operator=(const char *rhs)
+	void Node::append(const Node &node)
 	{
-		Set(rhs);
-		return *this;
+		if ((isObject() && node.isObject()) || (isArray() && node.isArray()))
+		{
+			detach();
+			data->children.insert(data->children.end(), node.data->children.begin(), node.data->children.end());
+		}
 	}
-	Value &Value::operator=(const int rhs)
+	void Node::remove(size_t index)
 	{
-		Set(rhs);
-		return *this;
+		if (isContainer() && index < data->children.size())
+		{
+			detach();
+			NamedNodeList::iterator it = data->children.begin()+index;
+			data->children.erase(it);
+		}
 	}
-	Value &Value::operator=(const float rhs)
+	void Node::remove(const std::string &name)
 	{
-		Set(rhs);
-		return *this;
+		if (isObject())
+		{
+			detach();
+			NamedNodeList &children = data->children;
+			for (NamedNodeList::iterator it = children.begin(); it != children.end(); ++it)
+			{
+				if ((*it).first == name)
+				{
+					children.erase(it);
+					break;
+				}
+			}
+		}
 	}
-	Value &Value::operator=(const double rhs)
+	void Node::clear()
 	{
-		Set(rhs);
-		return *this;
-	}
-	Value &Value::operator=(const bool rhs)
-	{
-		Set(rhs);
-		return *this;
+		if (data != NULL && !data->children.empty())
+		{
+			detach();
+			data->children.clear();
+		}
 	}
 
-	bool Value::operator==(const Value &other) const
+	bool Node::has(const std::string &name) const
 	{
-		return ((type == other.type)&&(valueStr == other.valueStr));
+		if (isObject())
+		{
+			NamedNodeList &children = data->children;
+			for (NamedNodeList::const_iterator it = children.begin(); it != children.end(); ++it)
+			{
+				if ((*it).first == name)
+				{
+					return true;
+				}
+			}
+		}
+		return false;
 	}
-	bool Value::operator!=(const Value &other) const
+	size_t Node::getCount() const
+	{
+		return data != NULL ? data->children.size() : 0;
+	}
+	Node Node::get(const std::string &name) const
+	{
+		if (isObject())
+		{
+			NamedNodeList &children = data->children;
+			for (NamedNodeList::const_iterator it = children.begin(); it != children.end(); ++it)
+			{
+				if ((*it).first == name)
+				{
+					return (*it).second;
+				}
+			}
+		}
+		return Node(T_INVALID);
+	}
+	Node Node::get(size_t index) const
+	{
+		if (isContainer() && index < data->children.size())
+		{
+			return data->children.at(index).second;
+		}
+		return Node(T_INVALID);
+	}
+
+	Node::iterator Node::begin()
+	{
+		if (data != NULL && !data->children.empty())
+			return Node::iterator(&data->children.front());
+		else
+			return Node::iterator(NULL);
+	}
+	Node::const_iterator Node::begin() const
+	{
+		if (data != NULL && !data->children.empty())
+			return Node::const_iterator(&data->children.front());
+		else
+			return Node::const_iterator(NULL);
+	}
+	Node::iterator Node::end()
+	{
+		if (data != NULL && !data->children.empty())
+			return Node::iterator(&data->children.back()+1);
+		else
+			return Node::iterator(NULL);
+	}
+	Node::const_iterator Node::end() const
+	{
+		if (data != NULL && !data->children.empty())
+			return Node::const_iterator(&data->children.back()+1);
+		else
+			return Node::const_iterator(NULL);
+	}
+
+	bool Node::operator==(const Node &other) const
+	{
+		return (
+			(data == other.data) ||
+			(isValue() && (data->type == other.data->type)&&(data->valueStr == other.data->valueStr)));
+	}
+	bool Node::operator!=(const Node &other) const
 	{
 		return !(*this == other);
 	}
 
-	Node *Value::GetCopy() const
+	Node::Data::Data(Type type) : refCount(1), type(type)
 	{
-		return new Value(*this);
+	}
+	Node::Data::Data(const Data &other) : refCount(1), type(other.type), valueStr(other.valueStr), children(other.children)
+	{
+	}
+	Node::Data::~Data()
+	{
+		assert(refCount == 0);
+	}
+	void Node::Data::addRef()
+	{
+		++refCount;
+	}
+	bool Node::Data::release()
+	{
+		return (--refCount == 0);
 	}
 
-	// This is not the most beautiful place for these, but it'll do
-	static const char charsUnescaped[] = { '\\'  , '/'  , '\"'  , '\n' , '\t' , '\b' , '\f' , '\r' };
-	static const char *charsEscaped[]  = { "\\\\", "\\/", "\\\"", "\\n", "\\t", "\\b", "\\f", "\\r" };
-	static const unsigned int numEscapeChars = 8;
-	static const char nullUnescaped = '\0';
-	static const char *nullEscaped  = "\0\0";
-	const char *&getEscaped(const char &c)
-	{
-		for (unsigned int i = 0; i < numEscapeChars; ++i)
-		{
-			const char &ue = charsUnescaped[i];
 
-			if (c == ue)
-			{
-				const char *&e = charsEscaped[i];
-				return e;
-			}
-		}
-		return nullEscaped;
-	}
-	const char &getUnescaped(const char &c1, const char &c2)
-	{
-		for (unsigned int i = 0; i < numEscapeChars; ++i)
-		{
-			const char *&e = charsEscaped[i];
-
-			if (c1 == e[0] && c2 == e[1])
-			{
-				const char &ue = charsUnescaped[i];
-				return ue;
-			}
-		}
-		return nullUnescaped;
-	}
-
-	std::string Value::EscapeString(const std::string &value)
+	std::string escapeString(const std::string &value)
 	{
 		std::string escaped;
+		escaped.reserve(value.length());
 
 		for (std::string::const_iterator it = value.begin(); it != value.end(); ++it)
 		{
 			const char &c = (*it);
 
-			const char *&a = getEscaped(c);
+			const char *a = getEscaped(c);
 			if (a[0] != '\0')
 			{
 				escaped += a[0];
@@ -445,18 +450,18 @@ namespace Jzon
 
 		return escaped;
 	}
-	std::string Value::UnescapeString(const std::string &value)
+	std::string unescapeString(const std::string &value)
 	{
 		std::string unescaped;
 
 		for (std::string::const_iterator it = value.begin(); it != value.end(); ++it)
 		{
-			const char &c = (*it);
+			const char c = (*it);
 			char c2 = '\0';
 			if (it+1 != value.end())
 				c2 = *(it+1);
 
-			const char &a = getUnescaped(c, c2);
+			const char a = getUnescaped(c, c2);
 			if (a != '\0')
 			{
 				unescaped += a;
@@ -472,518 +477,232 @@ namespace Jzon
 		return unescaped;
 	}
 
-
-	Object::Object() : Node()
+	Node invalid()
 	{
+		return Node(Node::T_INVALID);
 	}
-	Object::Object(const Object &other) : Node()
+	Node null()
 	{
-		for (ChildList::const_iterator it = other.children.begin(); it != other.children.end(); ++it)
-		{
-			const std::string &name = (*it).first;
-			Node &value = *(*it).second;
-
-			children.push_back(NamedNodePtr(name, value.GetCopy()));
-		}
+		return Node(Node::T_NULL);
 	}
-	Object::Object(const Node &other) : Node()
+	Node object()
 	{
-		const Object &object = other.AsObject();
-
-		for (ChildList::const_iterator it = object.children.begin(); it != object.children.end(); ++it)
-		{
-			const std::string &name = (*it).first;
-			Node &value = *(*it).second;
-
-			children.push_back(NamedNodePtr(name, value.GetCopy()));
-		}
+		return Node(Node::T_OBJECT);
 	}
-	Object::~Object()
+	Node array()
 	{
-		Clear();
-	}
-
-	Node::Type Object::GetType() const
-	{
-		return T_OBJECT;
-	}
-
-	void Object::Add(const std::string &name, Node &node)
-	{
-		children.push_back(NamedNodePtr(name, node.GetCopy()));
-	}
-	void Object::Add(const std::string &name, Value node)
-	{
-		children.push_back(NamedNodePtr(name, new Value(node)));
-	}
-	void Object::Remove(const std::string &name)
-	{
-		for (ChildList::iterator it = children.begin(); it != children.end(); ++it)
-		{
-			if ((*it).first == name)
-			{
-				delete (*it).second;
-				children.erase(it);
-				break;
-			}
-		}
-	}
-	void Object::Clear()
-	{
-		for (ChildList::iterator it = children.begin(); it != children.end(); ++it)
-		{
-			delete (*it).second;
-			(*it).second = NULL;
-		}
-		children.clear();
-	}
-
-	Object::iterator Object::begin()
-	{
-		if (!children.empty())
-			return Object::iterator(&children.front());
-		else
-			return Object::iterator(NULL);
-	}
-	Object::const_iterator Object::begin() const
-	{
-		if (!children.empty())
-			return Object::const_iterator(&children.front());
-		else
-			return Object::const_iterator(NULL);
-	}
-	Object::iterator Object::end()
-	{
-		if (!children.empty())
-			return Object::iterator(&children.back()+1);
-		else
-			return Object::iterator(NULL);
-	}
-	Object::const_iterator Object::end() const
-	{
-		if (!children.empty())
-			return Object::const_iterator(&children.back()+1);
-		else
-			return Object::const_iterator(NULL);
-	}
-
-	bool Object::Has(const std::string &name) const
-	{
-		for (ChildList::const_iterator it = children.begin(); it != children.end(); ++it)
-		{
-			if ((*it).first == name)
-			{
-				return true;
-			}
-		}
-		return false;
-	}
-	size_t Object::GetCount() const
-	{
-		return children.size();
-	}
-	Node &Object::Get(const std::string &name) const
-	{
-		for (ChildList::const_iterator it = children.begin(); it != children.end(); ++it)
-		{
-			if ((*it).first == name)
-			{
-				return *(*it).second;
-			}
-		}
-
-		throw NotFoundException();
-	}
-
-	Node *Object::GetCopy() const
-	{
-		return new Object(*this);
+		return Node(Node::T_ARRAY);
 	}
 
 
-	Array::Array() : Node()
+	Writer::Writer(const Format &format)
 	{
-	}
-	Array::Array(const Array &other) : Node()
-	{
-		for (ChildList::const_iterator it = other.children.begin(); it != other.children.end(); ++it)
-		{
-			const Node &value = *(*it);
-
-			children.push_back(value.GetCopy());
-		}
-	}
-	Array::Array(const Node &other) : Node()
-	{
-		const Array &array = other.AsArray();
-
-		for (ChildList::const_iterator it = array.children.begin(); it != array.children.end(); ++it)
-		{
-			const Node &value = *(*it);
-
-			children.push_back(value.GetCopy());
-		}
-	}
-	Array::~Array()
-	{
-		Clear();
-	}
-
-	Node::Type Array::GetType() const
-	{
-		return T_ARRAY;
-	}
-
-	void Array::Add(Node &node)
-	{
-		children.push_back(node.GetCopy());
-	}
-	void Array::Add(Value node)
-	{
-		children.push_back(new Value(node));
-	}
-	void Array::Remove(size_t index)
-	{
-		if (index < children.size())
-		{
-			ChildList::iterator it = children.begin()+index;
-			delete (*it);
-			children.erase(it);
-		}
-	}
-	void Array::Clear()
-	{
-		for (ChildList::iterator it = children.begin(); it != children.end(); ++it)
-		{
-			delete (*it);
-			(*it) = NULL;
-		}
-		children.clear();
-	}
-
-	Array::iterator Array::begin()
-	{
-		if (!children.empty())
-			return Array::iterator(&children.front());
-		else
-			return Array::iterator(NULL);
-	}
-	Array::const_iterator Array::begin() const
-	{
-		if (!children.empty())
-			return Array::const_iterator(&children.front());
-		else
-			return Array::const_iterator(NULL);
-	}
-	Array::iterator Array::end()
-	{
-		if (!children.empty())
-			return Array::iterator(&children.back()+1);
-		else
-			return Array::iterator(NULL);
-	}
-	Array::const_iterator Array::end() const
-	{
-		if (!children.empty())
-			return Array::const_iterator(&children.back()+1);
-		else
-			return Array::const_iterator(NULL);
-	}
-
-	size_t Array::GetCount() const
-	{
-		return children.size();
-	}
-	Node &Array::Get(size_t index) const
-	{
-		if (index < children.size())
-		{
-			return *children.at(index);
-		}
-
-		throw NotFoundException();
-	}
-
-	Node *Array::GetCopy() const
-	{
-		return new Array(*this);
-	}
-
-
-	FileWriter::FileWriter(const std::string &filename) : filename(filename)
-	{
-	}
-	FileWriter::~FileWriter()
-	{
-	}
-
-	void FileWriter::WriteFile(const std::string &filename, const Node &root, const Format &format)
-	{
-		FileWriter writer(filename);
-		writer.Write(root, format);
-	}
-
-	void FileWriter::Write(const Node &root, const Format &format)
-	{
-		Writer writer(root, format);
-		writer.Write();
-
-		std::fstream file(filename.c_str(), std::ios::out | std::ios::trunc);
-		file << writer.GetResult();
-		file.close();
-	}
-
-
-	FileReader::FileReader(const std::string &filename)
-	{
-		if (!loadFile(filename, json))
-		{
-			error = "Failed to load file";
-		}
-	}
-	FileReader::~FileReader()
-	{
-	}
-
-	bool FileReader::ReadFile(const std::string &filename, Node &node)
-	{
-		FileReader reader(filename);
-		return reader.Read(node);
-	}
-
-	bool FileReader::Read(Node &node)
-	{
-		if (!error.empty())
-			return false;
-
-		Parser parser(json);
-		if (!parser.Parse(node))
-		{
-			error = parser.GetError();
-			return false;
-		}
-		else
-		{
-			return true;
-		}
-	}
-
-	Node::Type FileReader::DetermineType()
-	{
-		return Node::DetermineType(json);
-	}
-
-	const std::string &FileReader::GetError() const
-	{
-		return error;
-	}
-
-	bool FileReader::loadFile(const std::string &filename, std::string &json)
-	{
-		std::fstream file(filename.c_str(), std::ios::in | std::ios::binary);
-
-		if (!file.is_open())
-		{
-			return false;
-		}
-
-		file.seekg(0, std::ios::end);
-		std::ios::pos_type size = file.tellg();
-		file.seekg(0, std::ios::beg);
-
-		json.resize(static_cast<std::string::size_type>(size), '\0');
-		file.read(&json[0], size);
-
-		return true;
-	}
-
-
-	Writer::Writer(const Node &root, const Format &format) : fi(new FormatInterpreter), root(root)
-	{
-		SetFormat(format);
+		setFormat(format);
 	}
 	Writer::~Writer()
 	{
-		delete fi;
-		fi = NULL;
 	}
 
-	void Writer::SetFormat(const Format &format)
+	void Writer::setFormat(const Format &format)
 	{
-		fi->SetFormat(format);
-	}
-	const std::string &Writer::Write()
-	{
-		result.clear();
-		writeNode(root, 0);
-		return result;
+		this->format = format;
+		indentationChar = (format.useTabs ? '\t' : ' ');
+		spacing = (format.spacing ? " " : "");
+		newline = (format.newline ? "\n" : spacing);
 	}
 
-	const std::string &Writer::GetResult() const
+	void Writer::writeStream(const Node &node, std::ostream &stream) const
 	{
-		return result;
+		writeNode(node, 0, stream);
+	}
+	void Writer::writeString(const Node &node, std::string &json) const
+	{
+		std::ostringstream stream(json);
+		writeStream(node, stream);
+		json = stream.str();
+	}
+	void Writer::writeFile(const Node &node, const std::string &filename) const
+	{
+		std::ofstream stream(filename.c_str(), std::ios::out | std::ios::trunc);
+		writeStream(node, stream);
 	}
 
-	void Writer::writeNode(const Node &node, unsigned int level)
+	void Writer::writeNode(const Node &node, unsigned int level, std::ostream &stream) const
 	{
-		switch (node.GetType())
+		switch (node.getType())
 		{
-		case Node::T_OBJECT : writeObject(node.AsObject(), level); break;
-		case Node::T_ARRAY  : writeArray(node.AsArray(), level);   break;
-		case Node::T_VALUE  : writeValue(node.AsValue());          break;
+		case Node::T_INVALID: break;
+		case Node::T_OBJECT: writeObject(node, level, stream); break;
+		case Node::T_ARRAY: writeArray(node, level, stream); break;
+		case Node::T_NULL: // Fallthrough
+		case Node::T_STRING: // Fallthrough
+		case Node::T_NUMBER: // Fallthrough
+		case Node::T_BOOL: writeValue(node, stream); break;
 		}
 	}
-	void Writer::writeObject(const Object &node, unsigned int level)
+	void Writer::writeObject(const Node &node, unsigned int level, std::ostream &stream) const
 	{
-		result += "{" + fi->GetNewline();
+		stream << "{" << newline;
 
-		for (Object::const_iterator it = node.begin(); it != node.end(); ++it)
+		for (Node::const_iterator it = node.begin(); it != node.end(); ++it)
 		{
 			const std::string &name = (*it).first;
 			const Node &value = (*it).second;
 
 			if (it != node.begin())
-				result += "," + fi->GetNewline();
-			result += fi->GetIndentation(level+1) + "\""+name+"\"" + ":" + fi->GetSpacing();
-			writeNode(value, level+1);
+				stream << "," << newline;
+			stream << getIndentation(level+1) << "\""<<name<<"\"" << ":" << spacing;
+			writeNode(value, level+1, stream);
 		}
 
-		result += fi->GetNewline() + fi->GetIndentation(level) + "}";
+		stream << newline << getIndentation(level) << "}";
 	}
-	void Writer::writeArray(const Array &node, unsigned int level)
+	void Writer::writeArray(const Node &node, unsigned int level, std::ostream &stream) const
 	{
-		result += "[" + fi->GetNewline();
+		stream << "[" << newline;
 
-		for (Array::const_iterator it = node.begin(); it != node.end(); ++it)
+		for (Node::const_iterator it = node.begin(); it != node.end(); ++it)
 		{
-			const Node &value = (*it);
+			const Node &value = (*it).second;
 
 			if (it != node.begin())
-				result += "," + fi->GetNewline();
-			result += fi->GetIndentation(level+1);
-			writeNode(value, level+1);
+				stream << "," << newline;
+			stream << getIndentation(level+1);
+			writeNode(value, level+1, stream);
 		}
 
-		result += fi->GetNewline() + fi->GetIndentation(level) + "]";
+		stream << newline << getIndentation(level) << "]";
 	}
-	void Writer::writeValue(const Value &node)
+	void Writer::writeValue(const Node &node, std::ostream &stream) const
 	{
-		if (node.IsString())
+		if (node.isString())
 		{
-			result += "\""+Value::EscapeString(node.ToString())+"\"";
+			stream << "\""<<escapeString(node.toString())<<"\"";
 		}
 		else
 		{
-			result += node.ToString();
+			stream << node.toString();
+		}
+	}
+
+	std::string Writer::getIndentation(unsigned int level) const
+	{
+		if (!format.newline)
+		{
+			return "";
+		}
+		else
+		{
+			return std::string(format.indentSize * level, indentationChar);
 		}
 	}
 
 
-	Parser::Parser() : jsonSize(0), cursor(0), root(NULL)
+	Parser::Parser()
 	{
-	}
-	Parser::Parser(const std::string &json) : cursor(0), root(NULL)
-	{
-		SetJson(json);
 	}
 	Parser::~Parser()
 	{
 	}
 
-	void Parser::SetJson(const std::string &json)
+	Node Parser::parseStream(std::istream &stream)
 	{
-		this->json = json;
-		jsonSize   = json.size();
+		TokenQueue tokens;
+		DataQueue data;
+
+		tokenize(stream, tokens, data);
+		Node node = assemble(tokens, data);
+
+		return node;
 	}
-	bool Parser::Parse(Node &root)
+	Node Parser::parseString(const std::string &json)
 	{
-		this->root = &root;
-		cursor = 0;
-
-		tokenize();
-		bool success = assemble();
-
-		this->root = NULL;
-		return success;
+		std::istringstream stream(json);
+		return parseStream(stream);
+	}
+	Node Parser::parseFile(const std::string &filename)
+	{
+		std::ifstream stream(filename.c_str(), std::ios::in);
+		return parseStream(stream);
 	}
 
-	const std::string &Parser::GetError() const
+	const std::string &Parser::getError() const
 	{
 		return error;
 	}
 
-	void Parser::tokenize()
+	void Parser::tokenize(std::istream &stream, TokenQueue &tokens, DataQueue &data)
 	{
 		Token token = T_UNKNOWN;
 		std::string valueBuffer;
 		bool saveBuffer;
 
 		char c = '\0';
-		for (; cursor < jsonSize; ++cursor)
+		while (stream.peek() != std::char_traits<char>::eof())
 		{
-			c = json.at(cursor);
+			stream.get(c);
 
-			if (IsWhitespace(c))
+			if (isWhitespace(c))
 				continue;
 
 			saveBuffer = true;
 
 			switch (c)
 			{
-			case '{' :
+			case '{':
 				{
 					token = T_OBJ_BEGIN;
 					break;
 				}
-			case '}' :
+			case '}':
 				{
 					token = T_OBJ_END;
 					break;
 				}
-			case '[' :
+			case '[':
 				{
 					token = T_ARRAY_BEGIN;
 					break;
 				}
-			case ']' :
+			case ']':
 				{
 					token = T_ARRAY_END;
 					break;
 				}
-			case ',' :
+			case ',':
 				{
 					token = T_SEPARATOR_NODE;
 					break;
 				}
-			case ':' :
+			case ':':
 				{
 					token = T_SEPARATOR_NAME;
 					break;
 				}
-			case '"' :
+			case '"':
 				{
 					token = T_VALUE;
-					readString();
+					readString(stream, data);
 					break;
 				}
-			case '/' :
+			case '/':
 				{
-					char p = peek();
+					char p = static_cast<char>(stream.peek());
 					if (p == '*')
 					{
-						jumpToCommentEnd();
+						jumpToCommentEnd(stream);
 						saveBuffer = false;
 						break;
 					}
 					else if (p == '/')
 					{
-						jumpToNext('\n');
+						jumpToNext('\n', stream);
 						saveBuffer = false;
 						break;
 					}
 					// Intentional fallthrough
 				}
-			default :
+			default:
 				{
 					valueBuffer += c;
 					saveBuffer = false;
@@ -991,25 +710,24 @@ namespace Jzon
 				}
 			}
 
-			if ((saveBuffer || cursor == jsonSize-1) && (!valueBuffer.empty())) // Always save buffer on the last character
+			if ((saveBuffer || stream.peek() == std::char_traits<char>::eof()) && (!valueBuffer.empty())) // Always save buffer on the last character
 			{
-				if (interpretValue(valueBuffer))
+				if (interpretValue(valueBuffer, data))
 				{
 					tokens.push(T_VALUE);
 				}
 				else
 				{
 					// Store the unknown token, so we can show it to the user
-					data.push(MakePair(Value::VT_STRING, valueBuffer));
+					data.push(std::make_pair(Node::T_STRING, valueBuffer));
 					tokens.push(T_UNKNOWN);
 				}
 
 				valueBuffer.clear();
 			}
 
-			// Push the token last so that any
-			// value token will get pushed first
-			// from above.
+			// Push the token last so that any data
+			// will get pushed first from above.
 			// If saveBuffer is false, it means that
 			// we are in the middle of a value, so we
 			// don't want to push any tokens now.
@@ -1019,11 +737,12 @@ namespace Jzon
 			}
 		}
 	}
-	bool Parser::assemble()
+	Node Parser::assemble(TokenQueue &tokens, DataQueue &data)
 	{
-		std::stack<Pair<std::string, Node*> > nodeStack;
+		std::stack<NamedNode> nodeStack;
+		Node root(Node::T_INVALID);
 
-		std::string name = "";
+		std::string nextName = "";
 
 		Token token;
 		while (!tokens.empty())
@@ -1033,203 +752,145 @@ namespace Jzon
 
 			switch (token)
 			{
-			case T_UNKNOWN :
+			case T_UNKNOWN:
 				{
 					const std::string &unknownToken = data.front().second;
 					error = "Unknown token: "+unknownToken;
 					data.pop();
-					return false;
+					return Node(Node::T_INVALID);
 				}
-			case T_OBJ_BEGIN :
+			case T_OBJ_BEGIN:
 				{
-					Node *node = NULL;
-					if (nodeStack.empty())
-					{
-						if (!root->IsObject())
-						{
-							error = "The given root node is not an object";
-							return false;
-						}
-
-						node = root;
-					}
-					else
-					{
-						node = new Object;
-					}
-
-					nodeStack.push(MakePair(name, node));
-					name.clear();
+					nodeStack.push(std::make_pair(nextName, object()));
+					nextName.clear();
 					break;
 				}
-			case T_ARRAY_BEGIN :
+			case T_ARRAY_BEGIN:
 				{
-					Node *node = NULL;
-					if (nodeStack.empty())
-					{
-						if (!root->IsArray())
-						{
-							error = "The given root node is not an array";
-							return false;
-						}
-
-						node = root;
-					}
-					else
-					{
-						node = new Array;
-					}
-
-					nodeStack.push(MakePair(name, node));
-					name.clear();
+					nodeStack.push(std::make_pair(nextName, array()));
+					nextName.clear();
 					break;
 				}
-			case T_OBJ_END :
-			case T_ARRAY_END :
+			case T_OBJ_END:
+			case T_ARRAY_END:
 				{
 					if (nodeStack.empty())
 					{
 						error = "Found end of object or array without beginning";
-						return false;
+						return Node(Node::T_INVALID);
 					}
-					if (token == T_OBJ_END && !nodeStack.top().second->IsObject())
+					if (token == T_OBJ_END && !nodeStack.top().second.isObject())
 					{
 						error = "Mismatched end and beginning of object";
-						return false;
+						return Node(Node::T_INVALID);
 					}
-					if (token == T_ARRAY_END && !nodeStack.top().second->IsArray())
+					if (token == T_ARRAY_END && !nodeStack.top().second.isArray())
 					{
 						error = "Mismatched end and beginning of array";
-						return false;
+						return Node(Node::T_INVALID);
 					}
 
-					std::string name = nodeStack.top().first;
-					Node *node = nodeStack.top().second;
+					std::string nodeName = nodeStack.top().first;
+					Node node = nodeStack.top().second;
 					nodeStack.pop();
 
 					if (!nodeStack.empty())
 					{
-						if (nodeStack.top().second->IsObject())
+						Node &stackTop = nodeStack.top().second;
+						if (stackTop.isObject())
 						{
-							nodeStack.top().second->AsObject().Add(name, *node);
+							stackTop.add(nodeName, node);
 						}
-						else if (nodeStack.top().second->IsArray())
+						else if (stackTop.isArray())
 						{
-							nodeStack.top().second->AsArray().Add(*node);
+							stackTop.add(node);
 						}
 						else
 						{
 							error = "Can only add elements to objects and arrays";
-							return false;
+							return Node(Node::T_INVALID);
 						}
-
-						delete node;
-						node = NULL;
+					}
+					else
+					{
+						root = node;
 					}
 					break;
 				}
-			case T_VALUE :
+			case T_VALUE:
 				{
 					if (data.empty())
 					{
 						error = "Missing data for value";
-						return false;
+						return Node(Node::T_INVALID);
 					}
 
-					const Pair<Value::ValueType, std::string> &dataPair = data.front();
+					const std::pair<Node::Type, std::string> &dataPair = data.front();
 					if (!tokens.empty() && tokens.front() == T_SEPARATOR_NAME)
 					{
 						tokens.pop();
-						if (dataPair.first != Value::VT_STRING)
+						if (dataPair.first != Node::T_STRING)
 						{
 							error = "A name has to be a string";
-							return false;
+							return Node(Node::T_INVALID);
 						}
 						else
 						{
-							name = dataPair.second;
+							nextName = dataPair.second;
 							data.pop();
 						}
 					}
 					else
 					{
-						Node *node = NULL;
-						if (nodeStack.empty())
-						{
-							if (!root->IsValue())
-							{
-								error = "The given root node is not a value";
-								return false;
-							}
-
-							node = root;
-						}
-						else
-						{
-							node = new Value;
-						}
-
-						if (dataPair.first == Value::VT_STRING)
-						{
-							node->AsValue().Set(dataPair.second); // This method calls UnescapeString()
-						}
-						else
-						{
-							node->AsValue().Set(dataPair.first, dataPair.second);
-						}
+						Node node(dataPair.first, dataPair.second);
 						data.pop();
 
 						if (!nodeStack.empty())
 						{
-							if (nodeStack.top().second->IsObject())
-								nodeStack.top().second->AsObject().Add(name, *node);
-							else if (nodeStack.top().second->IsArray())
-								nodeStack.top().second->AsArray().Add(*node);
+							Node &stackTop = nodeStack.top().second;
+							if (stackTop.isObject())
+								stackTop.add(nextName, node);
+							else if (stackTop.isArray())
+								stackTop.add(node);
 
-							delete node;
-							node = NULL;
-							name.clear();
+							nextName.clear();
 						}
 						else
 						{
-							nodeStack.push(MakePair(name, node));
-							name.clear();
+							error = "Outermost node must be an object or array";
+							return Node(Node::T_INVALID);
 						}
 					}
 					break;
 				}
-			case T_SEPARATOR_NAME :
-			case T_SEPARATOR_NODE : break;
+			case T_SEPARATOR_NAME:
+				break;
+			case T_SEPARATOR_NODE:
+				{
+					if (!tokens.empty() && tokens.front() == T_ARRAY_END) {
+						error = "Extra comma in array";
+						return Node(Node::T_INVALID);
+					}
+					break;
+				}
 			}
 		}
 
-		return true;
+		return root;
 	}
 
-	char Parser::peek()
+	void Parser::jumpToNext(char c, std::istream &stream)
 	{
-		if (cursor < jsonSize-1)
-		{
-			return json.at(cursor+1);
-		}
-		else
-		{
-			return '\0';
-		}
+		while (!stream.eof() && static_cast<char>(stream.get()) != c);
+		stream.unget();
 	}
-	void Parser::jumpToNext(char c)
+	void Parser::jumpToCommentEnd(std::istream &stream)
 	{
-		++cursor;
-		while (cursor < jsonSize && json.at(cursor) != c)
-			++cursor;
-	}
-	void Parser::jumpToCommentEnd()
-	{
-		cursor += 2;
+		stream.ignore(1);
 		char c1 = '\0', c2 = '\0';
-		for (; cursor < jsonSize; ++cursor)
+		while (stream.peek() != std::char_traits<char>::eof())
 		{
-			c2 = json.at(cursor);
+			stream.get(c2);
 
 			if (c1 == '*' && c2 == '/')
 				break;
@@ -1238,19 +899,14 @@ namespace Jzon
 		}
 	}
 
-	void Parser::readString()
+	void Parser::readString(std::istream &stream, DataQueue &data)
 	{
-		if (json.at(cursor) != '"')
-			return;
-
 		std::string str;
 
-		++cursor;
-
 		char c1 = '\0', c2 = '\0';
-		for (; cursor < jsonSize; ++cursor)
+		while (stream.peek() != std::char_traits<char>::eof())
 		{
-			c2 = json.at(cursor);
+			stream.get(c2);
 
 			if (c1 != '\\' && c2 == '"')
 			{
@@ -1262,9 +918,9 @@ namespace Jzon
 			c1 = c2;
 		}
 
-		data.push(MakePair(Value::VT_STRING, str));
+		data.push(std::make_pair(Node::T_STRING, str));
 	}
-	bool Parser::interpretValue(const std::string &value)
+	bool Parser::interpretValue(const std::string &value, DataQueue &data)
 	{
 		std::string upperValue(value.size(), '\0');
 
@@ -1272,31 +928,93 @@ namespace Jzon
 
 		if (upperValue == "NULL")
 		{
-			data.push(MakePair(Value::VT_NULL, std::string("")));
+			data.push(std::make_pair(Node::T_NULL, std::string()));
 		}
 		else if (upperValue == "TRUE")
 		{
-			data.push(MakePair(Value::VT_BOOL, std::string("true")));
+			data.push(std::make_pair(Node::T_BOOL, std::string("true")));
 		}
 		else if (upperValue == "FALSE")
 		{
-			data.push(MakePair(Value::VT_BOOL, std::string("false")));
+			data.push(std::make_pair(Node::T_BOOL, std::string("false")));
 		}
 		else
 		{
 			bool number = true;
-			for (std::string::const_iterator it = value.begin(); it != value.end(); ++it)
+			bool negative = false;
+			bool fraction = false;
+			bool scientific = false;
+			bool scientificSign = false;
+			bool scientificNumber = false;
+			for (std::string::const_iterator it = upperValue.begin(); number && it != upperValue.end(); ++it)
 			{
-				if (!IsNumber(*it))
+				char c = (*it);
+				switch (c)
 				{
-					number = false;
-					break;
+				case '-':
+					{
+						if (scientific)
+						{
+							if (scientificSign) // Only one - allowed after E
+								number = false;
+							else
+								scientificSign = true;
+						}
+						else
+						{
+							if (negative) // Only one - allowed before E
+								number = false;
+							else
+								negative = true;
+						}
+						break;
+					}
+				case '+':
+					{
+						if (!scientific || scientificSign)
+							number = false;
+						else
+							scientificSign = true;
+						break;
+					}
+				case '.':
+					{
+						if (fraction) // Only one . allowed
+							number = false;
+						else
+							fraction = true;
+						break;
+					}
+				case 'E':
+					{
+						if (scientific)
+							number = false;
+						else
+							scientific = true;
+						break;
+					}
+				default:
+					{
+						if (c >= '0' && c <= '9')
+						{
+							if (scientific)
+								scientificNumber = true;
+						}
+						else
+						{
+							number = false;
+						}
+						break;
+					}
 				}
 			}
 
+			if (scientific && !scientificNumber)
+				number = false;
+
 			if (number)
 			{
-				data.push(MakePair(Value::VT_NUMBER, value));
+				data.push(std::make_pair(Node::T_NUMBER, value));
 			}
 			else
 			{

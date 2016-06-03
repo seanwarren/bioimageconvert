@@ -431,7 +431,7 @@ void parse_metadata_fluoview (FormatHandle *fmtHndl, TagMap *hash ) {
 
   // magnification
   if (hash->hasKey("custom/Acquisition Parameters/Magnification"))
-      hash->append_tag(bim::OBJECTIVE_MAGNIFICATION, hash->get_value("custom/Acquisition Parameters/Objective Lens"));
+      hash->append_tag(bim::OBJECTIVE_MAGNIFICATION, hash->get_value("custom/Acquisition Parameters/Magnification"));
 
 
   //---------------------------------------
