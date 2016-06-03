@@ -40,5 +40,5 @@ v 2.0.9
 
 Win 8 MSVC 2013   425 tests: 458.929000139 seconds
 Win 8 MSVC 2013 J  35 tests: 12.489000082 seconds
-MacOSX 10.10      419 tests: X seconds
-hammer debian x64 419 tests: X seconds
+MacOSX 10.10      425 tests: X seconds
+hammer debian x64 425 tests: X seconds
