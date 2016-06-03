@@ -453,8 +453,8 @@ Image ImageStack::projectionYZAxis( unsigned int x ) const {
 TagMap metadataRearrange3D( const TagMap &md, const ImageStack *stack, const ImageStack::RearrangeDimensions &operation ) {
   TagMap metadata = md;
 
-  unsigned int sz_x = metadata.get_value_int("image_num_x", 0);
-  unsigned int sz_y = metadata.get_value_int("image_num_y", 0);
+  unsigned int sz_x = metadata.get_value_unsigned("image_num_x", 0);
+  unsigned int sz_y = metadata.get_value_unsigned("image_num_y", 0);
   double res_x = metadata.get_value_double("pixel_resolution_x", 0);
   double res_y = metadata.get_value_double("pixel_resolution_y", 0);
   xstring units_x = metadata.get_value("pixel_resolution_unit_x");
@@ -463,14 +463,14 @@ TagMap metadataRearrange3D( const TagMap &md, const ImageStack *stack, const Ima
   xstring image_num_z, pixel_resolution_z, pixel_resolution_unit_z;
   xstring image_num_t, pixel_resolution_t, pixel_resolution_unit_t;
 
-  if (metadata.get_value_int("image_num_z", 1)>1) { // image is a Z stack
+  if (metadata.get_value_unsigned("image_num_z", 1)>1) { // image is a Z stack
       image_num_z             = "image_num_z";
       pixel_resolution_z      = "pixel_resolution_z";
       pixel_resolution_unit_z = "pixel_resolution_unit_z";
       image_num_t             = "image_num_t";
       pixel_resolution_t      = "pixel_resolution_t";
       pixel_resolution_unit_t = "pixel_resolution_unit_t";
-  } else if (metadata.get_value_int("image_num_t", 1)>1) { // image is a T series
+  } else if (metadata.get_value_unsigned("image_num_t", 1)>1) { // image is a T series
       image_num_z             = "image_num_t";
       pixel_resolution_z      = "pixel_resolution_t";
       pixel_resolution_unit_z = "pixel_resolution_unit_t";
@@ -481,7 +481,7 @@ TagMap metadataRearrange3D( const TagMap &md, const ImageStack *stack, const Ima
 
   if (image_num_z.size()<=1) return metadata;
 
-  unsigned int sz_z = metadata.get_value_int(image_num_z, 1);
+  unsigned int sz_z = metadata.get_value_unsigned(image_num_z, 1);
   double res_z      = metadata.get_value_double(pixel_resolution_z, 0);
   xstring units_z   = metadata.get_value(pixel_resolution_unit_z);
 
