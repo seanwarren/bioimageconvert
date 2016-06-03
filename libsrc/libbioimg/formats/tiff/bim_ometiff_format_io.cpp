@@ -709,14 +709,14 @@ inline std::string colorOMEStringToRGBString(const xstring &c) {
 }
 
 
-void parse_json_object (bim::TagMap *hash, Jzon::Object &parent_node, const std::string &path) {
-  for (Jzon::Object::iterator it = parent_node.begin(); it != parent_node.end(); ++it) {
+void parse_json_object (bim::TagMap *hash, Jzon::Node &parent_node, const std::string &path) {
+  for (Jzon::Node::iterator it = parent_node.begin(); it != parent_node.end(); ++it) {
     std::string name = (*it).first;
     Jzon::Node &node = (*it).second;
-    if (node.IsObject()) {
-        parse_json_object (hash, node.AsObject(), path+name+'/');
+    if (node.isValid()) {
+        parse_json_object (hash, node, path+name+'/');
     }
-    std::string value = node.ToString();
+    std::string value = node.toString();
     hash->set_value( path+name, value );
   }
 }
@@ -995,19 +995,21 @@ bim::uint append_metadata_omeTiff(bim::FormatHandle *fmtHndl, bim::TagMap *hash)
   //----------------------------------------------------------------------------
 
   bim::xstring tag_MM = ifd->readTagString(TIFFTAG_MICROMANAGER);
-  if (tag_MM.size()<=0) return 0;
-  hash->append_tag( bim::RAW_TAGS_PREFIX+"micro-manager-raw", tag_MM );
+  if (tag_MM.size() > 0) {
+      tag_MM = tag_MM.erase_zeros();
+      hash->append_tag(bim::RAW_TAGS_PREFIX + "micro-manager-raw", tag_MM);
 
-  // parse micro-manager tags and append
-  Jzon::Object rootNode;
-  Jzon::Parser jparser(tag_MM);
-  if (jparser.Parse(rootNode)) {
-    std::string path = "MicroManager/";
-    parse_json_object (hash, rootNode, path);
+      // parse micro-manager tags and append
+      Jzon::Parser jparser;
+      Jzon::Node rootNode = jparser.parseString(tag_MM);
+      if (rootNode.isValid()) {
+          std::string path = "MicroManager/";
+          parse_json_object(hash, rootNode, path);
+      }
   }
 
   //----------------------------------------------------------------------------
-  // Reading Micro-Manager tag
+  // Reading generic tags
   //----------------------------------------------------------------------------
 
   generic_append_metadata(fmtHndl, hash);

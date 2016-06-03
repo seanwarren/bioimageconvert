@@ -18,7 +18,7 @@ LIBGDCMBIN=libsrc/gdcmbin
 LIBS=libs/linux
 PKG_CONFIG_PATH=$LIBVPX:$LIBX264:$LIBX265/build/linux
 QMAKEOPTS=
-VERSION=2.0.0
+VERSION=2.0.9
 
 all : imgcnv
 

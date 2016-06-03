@@ -4,11 +4,8 @@
 """ imgcnv building framework
 """
 
-__module__    = "imgcnv_testing"
 __author__    = "Dmitry Fedorov"
 __version__   = "1.6"
-__revision__  = "$Rev$"
-__date__      = "$Date$"
 __copyright__ = "Center for BioImage Informatics, University California, Santa Barbara"
 
 import sys
@@ -23,7 +20,7 @@ import zipfile
 
 url_libs_store = 'http://bitbucket.org/dimin/bioimageconvert/downloads/'
 local_store_libs  = 'libs'
-lib_version = '2-1-0'
+lib_version = '2-0-9'
 
 if os.name == 'nt':
     sys_libs_dif = 'vc2013_x64'

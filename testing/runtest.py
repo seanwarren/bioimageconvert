@@ -10,11 +10,8 @@
 """ imgcnv testing framework
 """
 
-__module__    = "imgcnv_testing"
 __author__    = "Dmitry Fedorov"
 __version__   = "1.6"
-__revision__  = "$Rev$"
-__date__      = "$Date$"
 __copyright__ = "Center for BioImage Informatics, University California, Santa Barbara"
 
 import sys
@@ -26,8 +23,8 @@ import urllib
 import posixpath
 
 IMGCNV = './imgcnv'
-IMGCNVVER = '2.0.3'
-url_image_store = 'http://hammer.ece.ucsb.edu/~bisque/test_data/images/'
+IMGCNVVER = '2.0.9'
+url_image_store = 'http://flour.ece.ucsb.edu/~bisque/test_data/images/'
 local_store_images  = 'images'
 local_store_tests   = 'tests'
 
@@ -571,7 +568,10 @@ fetch_file('219j_q080.webp')
 fetch_file('219j_q100.webp')
 fetch_file('219j.jp2')
 
-
+fetch_file('IMG_1913_16bit_prophoto_ts1024_q90.jp2')
+fetch_file('retina.jp2')
+fetch_file('IMG_1913_16bit_prophoto_q90.jxr')
+fetch_file('IMG_1913_prophoto_q90.webp')
 
 
 #**************************************************************
@@ -662,7 +662,7 @@ if 'all' in mode or 'writing' in mode:
     test_image_write( "OME-BigTIFF", "161pkcvampz1Live2-17-2004_11-57-21_AM.tif" )
     test_image_write( "JXR", "flowers_24bit_nointr.png" )
     test_image_write( "WEBP", "flowers_24bit_nointr.png" )
-    test_image_write( "J2K", "flowers_24bit_nointr.png" )
+    test_image_write( "JP2", "flowers_24bit_nointr.png" )
 
 if 'all' in mode or 'writingvideo' in mode:
     print
@@ -1361,9 +1361,9 @@ if 'all' in mode or 'readmeta' in mode:
     meta_test['pixel_resolution_x'] = '0.439453'
     meta_test['pixel_resolution_y'] = '0.439453'
     meta_test['pixel_resolution_z'] = '5.000000'
-    meta_test['pixel_resolution_unit_x'] = 'm'
-    meta_test['pixel_resolution_unit_y'] = 'm'
-    meta_test['pixel_resolution_unit_z'] = 'm'
+    #meta_test['pixel_resolution_unit_x'] = 'mm' # not stored in the image
+    #meta_test['pixel_resolution_unit_y'] = 'mm'
+    #meta_test['pixel_resolution_unit_z'] = 'mm'
     meta_test['NIFTI/affine_transform'] = '0.439453,0.000000,0.000000,-112.060516;0.000000,0.439453,0.000000,-112.060516;0.000000,0.000000,5.000000,-75.000000'
     test_metadata_read( "NIFTI transforms", "16_day1_1_patient_29C93FK6_1.nii", meta_test )
 
@@ -1379,9 +1379,10 @@ if 'all' in mode or 'readmeta' in mode:
     meta_test['pixel_resolution_x'] = '3.437500'
     meta_test['pixel_resolution_y'] = '3.437500'
     meta_test['pixel_resolution_z'] = '3.999421'
-    meta_test['pixel_resolution_unit_x'] = 'm'
-    meta_test['pixel_resolution_unit_y'] = 'm'
-    meta_test['pixel_resolution_unit_z'] = 'm'
+    #meta_test['pixel_resolution_unit_x'] = 'mm' # not stored in the image
+    #meta_test['pixel_resolution_unit_y'] = 'mm'
+    #meta_test['pixel_resolution_unit_z'] = 'mm'
+    meta_test['pixel_resolution_unit_t'] = 'ms'
     meta_test['NIFTI/quaternion'] = '0.000000,0.025615,0.999672;108.281250,103.739151,-83.445091'
     meta_test['XCEDE/study/series/acquisition_protocol/parameters/receivecoilname'] = 'HEAD'
     meta_test['XCEDE/study/series/id'] = '1'
@@ -1389,6 +1390,52 @@ if 'all' in mode or 'readmeta' in mode:
     meta_test['XCEDE/study/series/scanner/manufacturer'] = 'GE'
     meta_test['XCEDE/study/series/scanner/model'] = 'LX NVi 4T'
     test_metadata_read( "NIFTI XCEDE", "newsirp_final_XML.nii", meta_test )
+
+    meta_test = {}
+    meta_test['image_num_c'] = '3'
+    meta_test['image_num_t'] = '1'
+    meta_test['image_num_z'] = '1'
+    meta_test['image_num_x'] = '5472'
+    meta_test['image_num_y'] = '3648'
+    meta_test['image_num_z'] = '1'
+    meta_test['image_pixel_depth'] = '16'
+    meta_test['Exif/Photo/ExposureTime'] = '1/400 s'
+    meta_test['Exif/Photo/FNumber'] = 'F11'
+    meta_test['Exif/Photo/ISOSpeedRatings'] = '100'
+    meta_test['Iptc/Application2/ProvinceState'] = 'California'
+    meta_test['Exif/GPSInfo/GPSLatitude'] = '34deg 29.12550\''
+    test_metadata_read( "JPEG-XR", "IMG_1913_16bit_prophoto_q90.jxr", meta_test )
+    
+    # JPEG-2000 and WebP metadata are not yet implemented
+#    meta_test = {}
+#    meta_test['image_num_c'] = '3'
+#    meta_test['image_num_t'] = '1'
+#    meta_test['image_num_z'] = '1'
+#    meta_test['image_num_x'] = '5472'
+#    meta_test['image_num_y'] = '3648'
+#    meta_test['image_num_z'] = '1'
+#    meta_test['image_pixel_depth'] = '16'
+#    meta_test['Exif/Photo/ExposureTime'] = '1/400 s'
+#    meta_test['Exif/Photo/FNumber'] = 'F11'
+#    meta_test['Exif/Photo/ISOSpeedRatings'] = '100'
+#    meta_test['Iptc/Application2/ProvinceState'] = 'California'
+#    meta_test['Exif/GPSInfo/GPSLatitude'] = '34deg 29.12550'
+#    test_metadata_read( "JPEG-2000", "IMG_1913_16bit_prophoto_ts1024_q90.jp2", meta_test )
+#
+#    meta_test = {}
+#    meta_test['image_num_c'] = '3'
+#    meta_test['image_num_t'] = '1'
+#    meta_test['image_num_z'] = '1'
+#    meta_test['image_num_x'] = '5472'
+#    meta_test['image_num_y'] = '3648'
+#    meta_test['image_num_z'] = '1'
+#    meta_test['image_pixel_depth'] = '16'
+#    meta_test['Exif/Photo/ExposureTime'] = '1/400 s'
+#    meta_test['Exif/Photo/FNumber'] = 'F11'
+#    meta_test['Exif/Photo/ISOSpeedRatings'] = '100'
+#    meta_test['Iptc/Application2/ProvinceState'] = 'California'
+#    meta_test['Exif/GPSInfo/GPSLatitude'] = '34deg 29.12550'
+#    test_metadata_read( "WebP", "IMG_1913_prophoto_q90.webp", meta_test )        
 
 
 if 'all' in mode or 'video' in mode:
@@ -2035,9 +2082,53 @@ if 'all' in mode or 'pyramids' in mode:
     meta_test['image_pixel_depth'] = '8'
     test_image_commands( ['-t', 'tiff', '-tile', '256,1,1,2'], 'monument_imgcnv.ome.tif', meta_test ) # tile size different from stored
 
+    # JPEG-2000
+    
+    # meta
+    meta_test = {}
+    meta_test['image_num_c'] = '3'
+    meta_test['image_num_t'] = '1'
+    meta_test['image_num_z'] = '1'
+    meta_test['image_num_x'] = '17334'
+    meta_test['image_num_y'] = '17457'
+    meta_test['tile_num_x'] = '2048'
+    meta_test['tile_num_y'] = '2048'
+    meta_test['image_pixel_depth'] = '8'
+    meta_test['image_num_resolution_levels'] = '8'
+    meta_test['image_resolution_level_scales'] = '1.000000,0.500000,0.250000,0.125000,0.062500,0.031250,0.015625,0.007813'
+    meta_test['image_resolution_level_structure'] = 'flat'
+    test_metadata_read( "2048px tiles JPEG-2000 pyramid", "retina.jp2", meta_test )    
+    
+    # levels
+    meta_test = {}
+    meta_test['image_num_x'] = '271'
+    meta_test['image_num_y'] = '273'
+    meta_test['image_num_c'] = '3'
+    meta_test['image_num_z'] = '1'
+    meta_test['image_num_t'] = '1'
+    meta_test['image_pixel_depth'] = '8'
+    test_image_commands( ['-t', 'tiff', '-res-level', '6'], 'retina.jp2', meta_test )    
+    
+    # tiles
+    meta_test = {}
+    meta_test['image_num_x'] = '512'
+    meta_test['image_num_y'] = '512'
+    meta_test['image_num_c'] = '3'
+    meta_test['image_num_z'] = '1'
+    meta_test['image_num_t'] = '1'
+    meta_test['image_pixel_depth'] = '8'
+    test_image_commands( ['-t', 'tiff', '-tile', '512,0,0,4'], 'retina.jp2', meta_test ) # first tile
 
+    meta_test = {}
+    meta_test['image_num_x'] = '59'
+    meta_test['image_num_y'] = '67'
+    meta_test['image_num_c'] = '3'
+    meta_test['image_num_z'] = '1'
+    meta_test['image_num_t'] = '1'
+    meta_test['image_pixel_depth'] = '8'
+    test_image_commands( ['-t', 'tiff', '-tile', '512,2,2,4'], 'retina.jp2', meta_test ) # last tile
 
-
+    # testing tile size different from stored is not required for flat structure
 
 
 end = time.time()

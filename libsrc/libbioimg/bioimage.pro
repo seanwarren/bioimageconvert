@@ -604,7 +604,7 @@ dyn_openjpeg {
 #---------------------------------------------------------------------
 
 libraw {
-  DEFINES  += LIBRAW_BUILDLIB LIBRAW_NODLL USE_JPEG
+  DEFINES  += LIBRAW_BUILDLIB LIBRAW_NODLL USE_JPEG USE_ZLIB
   INCLUDEPATH += $$BIM_LIB_RAW
 
   SOURCES += $$BIM_LIB_RAW/src/libraw_c_api.cpp \

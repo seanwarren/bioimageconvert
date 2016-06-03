@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2013 Johannes Häggqvist
+Copyright (c) 2015 Johannes Häggqvist
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -26,399 +26,245 @@ THE SOFTWARE.
 #include <vector>
 #include <queue>
 #include <iterator>
-#include <stdexcept>
+#include <istream>
+#include <ostream>
+
+#ifndef JZON_API
+#	ifdef JZON_DLL
+#		if defined _WIN32 || defined __CYGWIN__
+#			define JZON_API __declspec(dllimport)
+#			define JZON_STL_EXTERN extern
+#		elif __GNUC__ >= 4
+#			define JZON_API __attribute__ ((visibility ("default")))
+#		else
+#			define JZON_API
+#		endif
+#	else
+#		define JZON_API
+#	endif
+#endif
+
+#ifdef JZON_STL_EXTERN
+JZON_STL_EXTERN template class JZON_API std::basic_string<char>;
+#undef JZON_STL_EXTERN
+#endif
 
 namespace Jzon
 {
-	template<typename T1, typename T2>
-	struct Pair
+	namespace Version
 	{
-		Pair(T1 first, T2 second) : first(first), second(second)
-		{}
-		Pair(const Pair<T1,T2> &other) : first(other.first), second(other.second)
-		{}
-
-		Pair<T1,T2> &operator=(const Pair<T1,T2> &rhs)
-		{
-			if (this != &rhs)
-			{
-				this->first  = rhs.first;
-				this->second = rhs.second;
-			}
-			return *this;
-		}
-
-		T1 first;
-		T2 second;
-	};
-	template<typename T1, typename T2>
-	static Pair<T1,T2> MakePair(T1 first, T2 second)
-	{
-		return Pair<T1,T2>(first, second);
+		const int MAJOR = 2;
+		const int MINOR = 1;
 	}
 
 	class Node;
-	class Value;
-	class Object;
-	class Array;
-	typedef Pair<std::string, Node&> NamedNode;
-	typedef Pair<std::string, Node*> NamedNodePtr;
+	typedef std::pair<std::string, Node> NamedNode;
 
-	class TypeException : public std::logic_error
+	class JZON_API Node
 	{
 	public:
-		TypeException() : std::logic_error("A Node was used as the wrong type")
-		{}
-	};
-	class NotFoundException : public std::out_of_range
-	{
-	public:
-		NotFoundException() : std::out_of_range("The node could not be found")
-		{}
+		class iterator : public std::iterator<std::input_iterator_tag, NamedNode>
+		{
+		public:
+            iterator() : p(0) {}
+			iterator(NamedNode *o) : p(o) {}
+			iterator(const iterator &it) : p(it.p) {}
+
+			iterator &operator++() { ++p; return *this; }
+			iterator operator++(int) { iterator tmp(*this); operator++(); return tmp; }
+
+			bool operator==(const iterator &rhs) { return p == rhs.p; }
+			bool operator!=(const iterator &rhs) { return p != rhs.p; }
+
+			NamedNode &operator*() { return *p; }
+			NamedNode *operator->() { return p; }
+
+		private:
+			NamedNode *p;
+		};
+		class const_iterator : public std::iterator<std::input_iterator_tag, const NamedNode>
+		{
+		public:
+			const_iterator() : p(0) {}
+			const_iterator(const NamedNode *o) : p(o) {}
+			const_iterator(const const_iterator &it) : p(it.p) {}
+
+			const_iterator &operator++() { ++p; return *this; }
+			const_iterator operator++(int) { const_iterator tmp(*this); operator++(); return tmp; }
+
+			bool operator==(const const_iterator &rhs) { return p == rhs.p; }
+			bool operator!=(const const_iterator &rhs) { return p != rhs.p; }
+
+			const NamedNode &operator*() { return *p; }
+			const NamedNode *operator->() { return p; }
+
+		private:
+			const NamedNode *p;
+		};
+
+		enum Type
+		{
+			T_INVALID,
+			T_OBJECT,
+			T_ARRAY,
+			T_NULL,
+			T_STRING,
+			T_NUMBER,
+			T_BOOL
+		};
+
+		Node();
+		explicit Node(Type type);
+		Node(const Node &other);
+		Node(Type type, const std::string &value);
+		Node(const std::string &value);
+		Node(const char *value);
+		Node(int value);
+		Node(unsigned int value);
+		Node(long long value);
+		Node(unsigned long long value);
+		Node(float value);
+		Node(double value);
+		Node(bool value);
+		~Node();
+
+		void detach();
+
+		inline Type getType() const { return (data == NULL ? T_INVALID : data->type); };
+
+		inline bool isValid()  const { return (getType() != T_INVALID); }
+		inline bool isObject() const { return (getType() == T_OBJECT);  }
+		inline bool isArray()  const { return (getType() == T_ARRAY);   }
+		inline bool isNull()   const { return (getType() == T_NULL);    }
+		inline bool isString() const { return (getType() == T_STRING);  }
+		inline bool isNumber() const { return (getType() == T_NUMBER);  }
+		inline bool isBool()   const { return (getType() == T_BOOL);    }
+
+		inline bool isContainer() const { return (isObject() || isArray()); }
+		inline bool isValue() const { return (isNull() || isString() || isNumber() || isBool()); }
+
+		std::string toString(const std::string &def = std::string()) const;
+		int toInt(int def = 0) const;
+		float toFloat(float def = 0.f) const;
+		double toDouble(double def = 0.0) const;
+		bool toBool(bool def = false) const;
+
+		void setNull();
+		void set(Type type, const std::string &value);
+		void set(const std::string &value);
+		void set(const char *value);
+		void set(int value);
+		void set(unsigned int value);
+		void set(long long value);
+		void set(unsigned long long value);
+		void set(float value);
+		void set(double value);
+		void set(bool value);
+
+		Node &operator=(const Node &rhs);
+		Node &operator=(const std::string &rhs);
+		Node &operator=(const char *rhs);
+		Node &operator=(int rhs);
+		Node &operator=(unsigned int rhs);
+		Node &operator=(long long rhs);
+		Node &operator=(unsigned long long rhs);
+		Node &operator=(float rhs);
+		Node &operator=(double rhs);
+		Node &operator=(bool rhs);
+
+		void add(const Node &node);
+		void add(const std::string &name, const Node &node);
+		void append(const Node &node);
+		void remove(size_t index);
+		void remove(const std::string &name);
+		void clear();
+
+		bool has(const std::string &name) const;
+		size_t getCount() const;
+		Node get(const std::string &name) const;
+		Node get(size_t index) const;
+
+		iterator begin();
+		const_iterator begin() const;
+		iterator end();
+		const_iterator end() const;
+
+		bool operator==(const Node &other) const;
+		bool operator!=(const Node &other) const;
+		inline operator bool() const { return isValid(); }
+
+	private:
+		typedef std::vector<NamedNode> NamedNodeList;
+		struct Data
+		{
+			explicit Data(Type type);
+			Data(const Data &other);
+			~Data();
+			void addRef();
+			bool release();
+			int refCount;
+
+			Type type;
+			std::string valueStr;
+			NamedNodeList children;
+		} *data;
 	};
 
-	struct Format
+	JZON_API std::string escapeString(const std::string &value);
+	JZON_API std::string unescapeString(const std::string &value);
+
+	JZON_API Node invalid();
+	JZON_API Node null();
+	JZON_API Node object();
+	JZON_API Node array();
+
+	struct JZON_API Format
 	{
 		bool newline;
 		bool spacing;
 		bool useTabs;
 		unsigned int indentSize;
 	};
-	static const Format StandardFormat = { true, true, true, 1 };
-	static const Format NoFormat = { false, false, false, 0 };
+	const Format StandardFormat = { true, true, true, 1 };
+	const Format NoFormat = { false, false, false, 0 };
 
-	class Node
-	{
-		// These are needed for GetCopy() access
-		friend class Object;
-		friend class Array;
-
-	public:
-		enum Type
-		{
-			T_OBJECT,
-			T_ARRAY,
-			T_VALUE
-		};
-
-		Node();
-		virtual ~Node();
-
-		virtual Type GetType() const = 0;
-
-		inline bool IsObject() const { return (GetType() == T_OBJECT); }
-		inline bool IsArray() const { return (GetType() == T_ARRAY); }
-		inline bool IsValue() const { return (GetType() == T_VALUE); }
-
-		Object &AsObject();
-		const Object &AsObject() const;
-		Array &AsArray();
-		const Array &AsArray() const;
-		Value &AsValue();
-		const Value &AsValue() const;
-
-		virtual inline bool IsNull() const { return false; }
-		virtual inline bool IsString() const { return false; }
-		virtual inline bool IsNumber() const { return false; }
-		virtual inline bool IsBool() const { return false; }
-
-		virtual std::string ToString() const { throw TypeException(); }
-		virtual int ToInt() const { throw TypeException(); }
-		virtual float ToFloat() const { throw TypeException(); }
-		virtual double ToDouble() const { throw TypeException(); }
-		virtual bool ToBool() const { throw TypeException(); }
-
-		virtual bool Has(const std::string &/*name*/) const { throw TypeException(); }
-		virtual size_t GetCount() const { return 0; }
-		virtual Node &Get(const std::string &/*name*/) const { throw TypeException(); }
-		virtual Node &Get(size_t /*index*/) const { throw TypeException(); }
-
-		static Type DetermineType(const std::string &json);
-
-	protected:
-		virtual Node *GetCopy() const = 0;
-	};
-
-	class Value : public Node
+	class JZON_API Writer
 	{
 	public:
-		enum ValueType
-		{
-			VT_NULL,
-			VT_STRING,
-			VT_NUMBER,
-			VT_BOOL
-		};
-
-		Value();
-		Value(const Value &rhs);
-		Value(const Node &rhs);
-		Value(ValueType type, const std::string &value);
-		Value(const std::string &value);
-		Value(const char *value);
-		Value(const int value);
-		Value(const float value);
-		Value(const double value);
-		Value(const bool value);
-		virtual ~Value();
-
-		virtual Type GetType() const;
-		ValueType GetValueType() const;
-
-		virtual inline bool IsNull() const { return (type == VT_NULL); }
-		virtual inline bool IsString() const { return (type == VT_STRING); }
-		virtual inline bool IsNumber() const { return (type == VT_NUMBER); }
-		virtual inline bool IsBool() const { return (type == VT_BOOL); }
-
-		virtual std::string ToString() const;
-		virtual int ToInt() const;
-		virtual float ToFloat() const;
-		virtual double ToDouble() const;
-		virtual bool ToBool() const;
-
-		void SetNull();
-		void Set(const Value &value);
-		void Set(ValueType type, const std::string &value);
-		void Set(const std::string &value);
-		void Set(const char *value);
-		void Set(const int value);
-		void Set(const float value);
-		void Set(const double value);
-		void Set(const bool value);
-
-		Value &operator=(const Value &rhs);
-		Value &operator=(const Node &rhs);
-		Value &operator=(const std::string &rhs);
-		Value &operator=(const char *rhs);
-		Value &operator=(const int rhs);
-		Value &operator=(const float rhs);
-		Value &operator=(const double rhs);
-		Value &operator=(const bool rhs);
-
-		bool operator==(const Value &other) const;
-		bool operator!=(const Value &other) const;
-
-		static std::string EscapeString(const std::string &value);
-		static std::string UnescapeString(const std::string &value);
-
-	protected:
-		virtual Node *GetCopy() const;
-
-	private:
-		std::string valueStr;
-		ValueType type;
-	};
-
-	static const Value null;
-
-	class Object : public Node
-	{
-	public:
-		class iterator : public std::iterator<std::input_iterator_tag, NamedNode>
-		{
-		public:
-			iterator(NamedNodePtr *o) : p(o) {}
-			iterator(const iterator &it) : p(it.p) {}
-
-			iterator &operator++() { ++p; return *this; }
-			iterator operator++(int) { iterator tmp(*this); operator++(); return tmp; }
-
-			bool operator==(const iterator &rhs) { return p == rhs.p; }
-			bool operator!=(const iterator &rhs) { return p != rhs.p; }
-
-			NamedNode operator*() { return NamedNode(p->first, *p->second); }
-
-		private:
-			NamedNodePtr *p;
-		};
-		class const_iterator : public std::iterator<std::input_iterator_tag, const NamedNode>
-		{
-		public:
-			const_iterator(const NamedNodePtr *o) : p(o) {}
-			const_iterator(const const_iterator &it) : p(it.p) {}
-
-			const_iterator &operator++() { ++p; return *this; }
-			const_iterator operator++(int) { const_iterator tmp(*this); operator++(); return tmp; }
-
-			bool operator==(const const_iterator &rhs) { return p == rhs.p; }
-			bool operator!=(const const_iterator &rhs) { return p != rhs.p; }
-
-			const NamedNode operator*() { return NamedNode(p->first, *p->second); }
-
-		private:
-			const NamedNodePtr *p;
-		};
-
-		Object();
-		Object(const Object &other);
-		Object(const Node &other);
-		virtual ~Object();
-
-		virtual Type GetType() const;
-
-		void Add(const std::string &name, Node &node);
-		void Add(const std::string &name, Value node);
-		void Remove(const std::string &name);
-		void Clear();
-
-		iterator begin();
-		const_iterator begin() const;
-		iterator end();
-		const_iterator end() const;
-
-		virtual bool Has(const std::string &name) const;
-		virtual size_t GetCount() const;
-		virtual Node &Get(const std::string &name) const;
-		using Node::Get;
-
-	protected:
-		virtual Node *GetCopy() const;
-
-	private:
-		typedef std::vector<NamedNodePtr> ChildList;
-		ChildList children;
-	};
-
-	class Array : public Node
-	{
-	public:
-		class iterator : public std::iterator<std::input_iterator_tag, Node>
-		{
-		public:
-			iterator(Node **o) : p(o) {}
-			iterator(const iterator &it) : p(it.p) {}
-
-			iterator &operator++() { ++p; return *this; }
-			iterator operator++(int) { iterator tmp(*this); operator++(); return tmp; }
-
-			bool operator==(const iterator &rhs) { return p == rhs.p; }
-			bool operator!=(const iterator &rhs) { return p != rhs.p; }
-
-			Node &operator*() { return **p; }
-
-		private:
-			Node **p;
-		};
-		class const_iterator : public std::iterator<std::input_iterator_tag, const Node>
-		{
-		public:
-			const_iterator(const Node *const *o) : p(o) {}
-			const_iterator(const const_iterator &it) : p(it.p) {}
-
-			const_iterator &operator++() { ++p; return *this; }
-			const_iterator operator++(int) { const_iterator tmp(*this); operator++(); return tmp; }
-
-			bool operator==(const const_iterator &rhs) { return p == rhs.p; }
-			bool operator!=(const const_iterator &rhs) { return p != rhs.p; }
-
-			const Node &operator*() { return **p; }
-
-		private:
-			const Node *const *p;
-		};
-
-		Array();
-		Array(const Array &other);
-		Array(const Node &other);
-		virtual ~Array();
-
-		virtual Type GetType() const;
-
-		void Add(Node &node);
-		void Add(Value node);
-		void Remove(size_t index);
-		void Clear();
-
-		iterator begin();
-		const_iterator begin() const;
-		iterator end();
-		const_iterator end() const;
-
-		virtual size_t GetCount() const;
-		virtual Node &Get(size_t index) const;
-		using Node::Get;
-
-	protected:
-		virtual Node *GetCopy() const;
-
-	private:
-		typedef std::vector<Node*> ChildList;
-		ChildList children;
-	};
-
-	class FileWriter
-	{
-	public:
-		FileWriter(const std::string &filename);
-		~FileWriter();
-
-		static void WriteFile(const std::string &filename, const Node &root, const Format &format = NoFormat);
-
-		void Write(const Node &root, const Format &format = NoFormat);
-
-	private:
-		std::string filename;
-	};
-
-	class FileReader
-	{
-	public:
-		FileReader(const std::string &filename);
-		~FileReader();
-
-		static bool ReadFile(const std::string &filename, Node &node);
-
-		bool Read(Node &node);
-
-		Node::Type DetermineType();
-
-		const std::string &GetError() const;
-
-	private:
-		bool loadFile(const std::string &filename, std::string &json);
-		std::string json;
-		std::string error;
-	};
-
-	class Writer
-	{
-	public:
-		Writer(const Node &root, const Format &format = NoFormat);
+		explicit Writer(const Format &format = NoFormat);
 		~Writer();
 
-		void SetFormat(const Format &format);
-		const std::string &Write();
+		void setFormat(const Format &format);
 
-		/// Return result from last call to Write()
-		const std::string &GetResult() const;
+		void writeStream(const Node &node, std::ostream &stream) const;
+		void writeString(const Node &node, std::string &json) const;
+		void writeFile(const Node &node, const std::string &filename) const;
 
 	private:
-		void writeNode(const Node &node, unsigned int level);
-		void writeObject(const Object &node, unsigned int level);
-		void writeArray(const Array &node, unsigned int level);
-		void writeValue(const Value &node);
+		void writeNode(const Node &node, unsigned int level, std::ostream &stream) const;
+		void writeObject(const Node &node, unsigned int level, std::ostream &stream) const;
+		void writeArray(const Node &node, unsigned int level, std::ostream &stream) const;
+		void writeValue(const Node &node, std::ostream &stream) const;
 
-		std::string result;
+		std::string getIndentation(unsigned int level) const;
 
-		class FormatInterpreter *fi;
-
-		const Node &root;
-
-		// Disable assignment operator
-		Writer &operator=(const Writer&);
+		Format format;
+		char indentationChar;
+		const char *newline;
+		const char *spacing;
 	};
 
-	class Parser
+	class JZON_API Parser
 	{
 	public:
 		Parser();
-		Parser(const std::string &json);
 		~Parser();
 
-		void SetJson(const std::string &json);
-		bool Parse(Node &root);
+		Node parseStream(std::istream &stream);
+		Node parseString(const std::string &json);
+		Node parseFile(const std::string &filename);
 
-		const std::string &GetError() const;
+		const std::string &getError() const;
 
 	private:
 		enum Token
@@ -432,31 +278,19 @@ namespace Jzon
 			T_SEPARATOR_NAME,
 			T_VALUE
 		};
+		typedef std::queue<Token> TokenQueue;
+		typedef std::queue<std::pair<Node::Type, std::string> > DataQueue;
 
-		void tokenize();
-		bool assemble();
+		void tokenize(std::istream &stream, TokenQueue &tokens, DataQueue &data);
+		Node assemble(TokenQueue &tokens, DataQueue &data);
 
-		char peek();
-		void jumpToNext(char c);
-		void jumpToCommentEnd();
+		void jumpToNext(char c, std::istream &stream);
+		void jumpToCommentEnd(std::istream &stream);
 
-		void readString();
-		bool interpretValue(const std::string &value);
-
-		std::string json;
-		std::size_t jsonSize;
-
-		std::queue<Token> tokens;
-		std::queue<Pair<Value::ValueType, std::string> > data;
-
-		std::size_t cursor;
-
-		Node *root;
+		void readString(std::istream &stream, DataQueue &data);
+		bool interpretValue(const std::string &value, DataQueue &data);
 
 		std::string error;
-
-		// Disable assignment operator
-		Parser &operator=(const Parser&);
 	};
 }
 
