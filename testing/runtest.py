@@ -2124,9 +2124,9 @@ if 'all' in mode or 'pyramids' in mode:
     meta_test['image_pixel_depth'] = '8'
     meta_test['image_num_resolution_levels'] = '8'
     if os.name == 'nt': #dima: some minor precision differences, to be checked
-        meta_test['image_resolution_level_scales'] = '1.000000,0.500000,0.250000,0.125000,0.062500,0.031250,0.015625,0.007812'
-    else:
         meta_test['image_resolution_level_scales'] = '1.000000,0.500000,0.250000,0.125000,0.062500,0.031250,0.015625,0.007813'
+    else:
+        meta_test['image_resolution_level_scales'] = '1.000000,0.500000,0.250000,0.125000,0.062500,0.031250,0.015625,0.007812'
     meta_test['image_resolution_level_structure'] = 'flat'
     test_metadata_read( "2048px tiles JPEG-2000 pyramid", "retina.jp2", meta_test )    
     
