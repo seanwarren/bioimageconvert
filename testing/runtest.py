@@ -11,7 +11,7 @@
 """
 
 __author__    = "Dmitry Fedorov"
-__version__   = "1.6"
+__version__   = "1.7"
 __copyright__ = "Center for BioImage Informatics, University California, Santa Barbara"
 
 import sys
@@ -1029,6 +1029,32 @@ if 'all' in mode or 'readmeta' in mode:
     meta_test['Exif/Photo/ExposureTime'] = '1/3 s'
     meta_test['Exif/Photo/FNumber'] = 'F5.6'
     test_metadata_read( "Canon CR2", "IMG_0040.CR2", meta_test )
+
+    # reading metadata from DCRAW - Canon 5DSr
+    meta_test = {}
+    meta_test['image_num_c'] = '3'
+    meta_test['image_num_t'] = '1'
+    meta_test['image_num_z'] = '1'
+    meta_test['image_num_x'] = '8736'
+    meta_test['image_num_y'] = '5856'
+    meta_test['image_num_z'] = '1'
+    meta_test['image_pixel_depth'] = '16'
+    meta_test['format'] = 'CANON-RAW'
+    meta_test['image_mode'] = 'RGB'
+    meta_test['Exif/Photo/Flash'] = 'No, compulsory'
+    meta_test['Exif/Photo/FocalLength'] = '13.0 mm'
+    meta_test['Exif/Photo/FNumber'] = 'F10'
+    meta_test['custom/aperture'] = '10.000000'
+    meta_test['custom/focal_length'] = '13.000000'
+    meta_test['custom/iso_speed'] = '100.000000'
+    meta_test['custom/make'] = 'Canon'
+    meta_test['custom/model'] = 'EOS 5DS R'
+    meta_test['custom/shutter'] = '0.005000'
+    meta_test['date_time'] = '2016-05-24 15:16:35'
+    meta_test['custom/aperture'] = '10.000000'
+    meta_test['custom/aperture'] = '10.000000'
+    meta_test['custom/aperture'] = '10.000000'
+    test_metadata_read( "Canon 5DSr CR2", "6J0A3548.CR2", meta_test )
 
     # reading metadata from DCRAW - Canon CRW
     meta_test = {}

@@ -26,6 +26,15 @@
 
 using namespace bim;
 
+namespace bim {
+
+    namespace VariantLimits {
+        static const int max_bool_string_sz = 20;
+        static const int max_int_string_sz = 40;
+        static const int max_float_string_sz = 40;
+    }
+}
+
 //******************************************************************************
 // Variant
 //******************************************************************************
@@ -71,10 +80,14 @@ xstring Variant::as_string(const std::string &def) const {
 int Variant::as_int(const int &def) const {
     xstring tt = this->t;
     size_t sz = this->v.size();
+
     if (tt.startsWith("int") && sz >= sizeof(int)) {
         int *v = (int *)&this->v[0];
         return *v;
-    } else if (tt.startsWith("string")) {
+    } else if (tt.startsWith("unsigned") && sz >= sizeof(unsigned int)) {
+        unsigned int *v = (unsigned int *)&this->v[0];
+        return (int) *v;
+    } else if (sz < VariantLimits::max_int_string_sz) {
         xstring str = this->as_string("");
         return str.toInt(def);
     }
@@ -87,7 +100,10 @@ unsigned int Variant::as_unsigned(const unsigned int &def) const {
     if (tt.startsWith("unsigned") && sz >= sizeof(unsigned int)) {
         unsigned int *v = (unsigned int *)&this->v[0];
         return *v;
-    } else if (tt.startsWith("string")) {
+    } else if (tt.startsWith("int") && sz >= sizeof(int)) {
+        int *v = (int *)&this->v[0];
+        return (unsigned int) *v;
+    } else if (sz < VariantLimits::max_int_string_sz) {
         xstring str = this->as_string("");
         return str.toInt(def);
     }
@@ -100,7 +116,10 @@ double Variant::as_double(const double &def) const {
     if (tt.startsWith("double") && sz >= sizeof(double)) {
         double *v = (double *)&this->v[0];
         return *v;
-    } else if (tt.startsWith("string")) {
+    } else if (tt.startsWith("float") && sz >= sizeof(float)) {
+        float *v = (float *)&this->v[0];
+        return (double) *v;
+    } else if (sz < VariantLimits::max_float_string_sz) {
         xstring str = this->as_string("");
         return str.toDouble(def);
     }
@@ -113,7 +132,10 @@ float Variant::as_float(const float &def) const {
     if (tt.startsWith("float") && sz >= sizeof(float)) {
         float *v = (float *)&this->v[0];
         return *v;
-    } else if (tt.startsWith("string")) {
+    } else if (tt.startsWith("double") && sz >= sizeof(double)) {
+        double *v = (double *)&this->v[0];
+        return (float) *v;
+    } else if (sz < VariantLimits::max_float_string_sz) {
         xstring str = this->as_string("");
         return str.toDouble(def);
     }
@@ -126,7 +148,7 @@ bool Variant::as_boolean(const bool &def) const {
     if (tt.startsWith("boolean") && sz >= sizeof(bool)) {
         bool *v = (bool *)&this->v[0];
         return *v;
-    } else if (tt.startsWith("string")) {
+    } else if (sz < VariantLimits::max_bool_string_sz) {
         xstring str = this->as_string("");
         return str.toLowerCase() == "true";
     }
