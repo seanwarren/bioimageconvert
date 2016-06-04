@@ -2155,7 +2155,11 @@ std::vector<bim::DisplayColor> init_fusion_from_meta(const Image &img) {
     std::vector<bim::DisplayColor> out_weighted_fuse_channels;
     std::vector<bim::DisplayColor> channel_colors_default = bim::defaultChannelColors();
     bim::TagMap m = img.get_metadata();
-    for (bim::uint i = 0; i<img.samples(); ++i) {
+    int num_samples = img.samples();
+    if (img.imageMode() == IM_RGBA) {
+        num_samples = 3;
+    }
+    for (bim::uint i = 0; i<num_samples; ++i) {
         xstring key = xstring::xprintf(bim::CHANNEL_COLOR_TEMPLATE.c_str(), i);
         if (m.hasKey(key)) {
             xstring t = m.get_value(key, "");
