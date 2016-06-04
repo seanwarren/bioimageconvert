@@ -73,26 +73,27 @@ MetaFormatManager::MetaFormatManager() : FormatManager() {
     pixel_format_strings.push_back("floating point");
     pixel_format_strings.push_back("complex");
 
-    image_mode_strings.push_back("monochrome");
-    image_mode_strings.push_back("grayscale");
-    image_mode_strings.push_back("indexed");
-    image_mode_strings.push_back("RGB");
+    // color spaces and image modes
+    image_mode_strings.push_back(bim::ICC_TAGS_COLORSPACE_MONO);
+    image_mode_strings.push_back(bim::ICC_TAGS_COLORSPACE_GRAY);
+    image_mode_strings.push_back(bim::ICC_TAGS_COLORSPACE_INDEXED);
+    image_mode_strings.push_back(bim::ICC_TAGS_COLORSPACE_RGB);
     image_mode_strings.push_back("");
-    image_mode_strings.push_back("HSL");
-    image_mode_strings.push_back("HSV");
-    image_mode_strings.push_back("RGBA");
+    image_mode_strings.push_back(bim::ICC_TAGS_COLORSPACE_HSL);
+    image_mode_strings.push_back(bim::ICC_TAGS_COLORSPACE_HSV);
+    image_mode_strings.push_back(bim::ICC_TAGS_COLORSPACE_RGBA);
     image_mode_strings.push_back("");
-    image_mode_strings.push_back("CMYK");
+    image_mode_strings.push_back(bim::ICC_TAGS_COLORSPACE_CMYK);
     image_mode_strings.push_back("");
     image_mode_strings.push_back("");
-    image_mode_strings.push_back("MULTICHANNEL");
-    image_mode_strings.push_back("RGBE");
-    image_mode_strings.push_back("YUV");
-    image_mode_strings.push_back("XYZ");
-    image_mode_strings.push_back("LAB");
-    image_mode_strings.push_back("CMY");
-    image_mode_strings.push_back("LUV");
-    image_mode_strings.push_back("YCbCr");
+    image_mode_strings.push_back(bim::ICC_TAGS_COLORSPACE_MULTICHANNEL);
+    image_mode_strings.push_back(bim::ICC_TAGS_COLORSPACE_RGBE);
+    image_mode_strings.push_back(bim::ICC_TAGS_COLORSPACE_YUV);
+    image_mode_strings.push_back(bim::ICC_TAGS_COLORSPACE_XYZ);
+    image_mode_strings.push_back(bim::ICC_TAGS_COLORSPACE_LAB);
+    image_mode_strings.push_back(bim::ICC_TAGS_COLORSPACE_CMY);
+    image_mode_strings.push_back(bim::ICC_TAGS_COLORSPACE_LUV);
+    image_mode_strings.push_back(bim::ICC_TAGS_COLORSPACE_YCBCR);
 }
 
 MetaFormatManager::~MetaFormatManager()
@@ -298,6 +299,8 @@ void MetaFormatManager::sessionParseMetaData(bim::uint page) {
     if (mode != bim::IM_MULTI) 
         info.imageMode = mode;
     appendMetadata(bim::IMAGE_MODE, image_mode_strings[info.imageMode]);
+    appendMetadata(bim::ICC_TAGS_COLORSPACE, image_mode_strings[info.imageMode]);
+
 
     appendMetadata(bim::IMAGE_NUM_RES_L, (int)info.number_levels);
     if (info.tileWidth > 0 && info.tileHeight > 0) {

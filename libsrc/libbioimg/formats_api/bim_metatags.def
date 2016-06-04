@@ -73,13 +73,13 @@ DECLARE_STR( CHANNEL_NAME_TEMPLATE, "channel_%d_name" )
 
 // display channels - used to map image channels to prefered display colors
 // display_channel_red: 3
-DECLARE_STR( DISPLAY_CHANNEL_RED    , "display_channel_red" )
-DECLARE_STR( DISPLAY_CHANNEL_GREEN  , "display_channel_green" )
-DECLARE_STR( DISPLAY_CHANNEL_BLUE   , "display_channel_blue" )
-DECLARE_STR( DISPLAY_CHANNEL_YELLOW , "display_channel_yellow" )
+DECLARE_STR( DISPLAY_CHANNEL_RED,     "display_channel_red" )
+DECLARE_STR( DISPLAY_CHANNEL_GREEN,   "display_channel_green" )
+DECLARE_STR( DISPLAY_CHANNEL_BLUE,    "display_channel_blue" )
+DECLARE_STR( DISPLAY_CHANNEL_YELLOW,  "display_channel_yellow" )
 DECLARE_STR( DISPLAY_CHANNEL_MAGENTA, "display_channel_magenta" )
-DECLARE_STR( DISPLAY_CHANNEL_CYAN   , "display_channel_cyan" )
-DECLARE_STR( DISPLAY_CHANNEL_GRAY   , "display_channel_gray" )
+DECLARE_STR( DISPLAY_CHANNEL_CYAN,    "display_channel_cyan" )
+DECLARE_STR( DISPLAY_CHANNEL_GRAY,    "display_channel_gray" )
 
 // channel colors - used to map image channels to exact display colors
 // channel_color_0: 255,255,0
@@ -91,8 +91,8 @@ DECLARE_STR( CHANNEL_COLOR_4, "channel_color_4" )
 DECLARE_STR( CHANNEL_COLOR_TEMPLATE, "channel_color_%d" )
 
 // video - information describing the video parameters
-DECLARE_STR( VIDEO_FORMAT_NAME      , "video_format_name" )
-DECLARE_STR( VIDEO_CODEC_NAME       , "video_codec_name" )
+DECLARE_STR( VIDEO_FORMAT_NAME, "video_format_name" )
+DECLARE_STR( VIDEO_CODEC_NAME, "video_codec_name" )
 DECLARE_STR( VIDEO_FRAMES_PER_SECOND, "video_frames_per_second" )
 
 // custom - any other tags in proprietary files should go further prefixed by the custom parent
@@ -123,18 +123,25 @@ DECLARE_STR( ICC_TAGS_DEFINITION_EMBEDDED, "embedded_icc" )
 DECLARE_STR( ICC_TAGS_DEFINITION_SRGB, "sRGB" )
 
 DECLARE_STR( ICC_TAGS_COLORSPACE, "ColorProfile/color_space" )
-DECLARE_STR( ICC_TAGS_COLORSPACE_MULTICHANNEL, "MULTICHANNEL" )
-DECLARE_STR( ICC_TAGS_COLORSPACE_RGB,          "RGB" )
-DECLARE_STR( ICC_TAGS_COLORSPACE_XYZ,          "XYZ" )
-DECLARE_STR( ICC_TAGS_COLORSPACE_LAB,          "Lab" )
-DECLARE_STR( ICC_TAGS_COLORSPACE_LUV,          "Luv" )
-DECLARE_STR( ICC_TAGS_COLORSPACE_YCBCR,        "YCbr" )
-DECLARE_STR( ICC_TAGS_COLORSPACE_YXY,          "Yxy" )
-DECLARE_STR( ICC_TAGS_COLORSPACE_GRAY,         "GRAY" )
-DECLARE_STR( ICC_TAGS_COLORSPACE_HSV,          "HSV" )
-DECLARE_STR( ICC_TAGS_COLORSPACE_HSL,          "HLS" )
-DECLARE_STR( ICC_TAGS_COLORSPACE_CMYK,         "CMYK" )
-DECLARE_STR( ICC_TAGS_COLORSPACE_CMY,          "CMY" )
+DECLARE_STR( ICC_TAGS_COLORSPACE_MULTICHANNEL, "multichannel" )
+DECLARE_STR( ICC_TAGS_COLORSPACE_RGB,   "RGB" )
+DECLARE_STR( ICC_TAGS_COLORSPACE_XYZ,   "XYZ" )
+DECLARE_STR( ICC_TAGS_COLORSPACE_LAB,   "Lab" )
+DECLARE_STR( ICC_TAGS_COLORSPACE_LUV,   "Luv" )
+DECLARE_STR( ICC_TAGS_COLORSPACE_YCBCR, "YCbCr" )
+DECLARE_STR( ICC_TAGS_COLORSPACE_YXY,   "Yxy" )
+DECLARE_STR( ICC_TAGS_COLORSPACE_GRAY,  "grayscale" )
+DECLARE_STR( ICC_TAGS_COLORSPACE_HSV,   "HSV" )
+DECLARE_STR( ICC_TAGS_COLORSPACE_HSL,   "HLS" )
+DECLARE_STR( ICC_TAGS_COLORSPACE_CMYK,  "CMYK" )
+DECLARE_STR( ICC_TAGS_COLORSPACE_CMY,   "CMY" )
+
+// additional image modes
+DECLARE_STR( ICC_TAGS_COLORSPACE_MONO,    "monochrome" )
+DECLARE_STR( ICC_TAGS_COLORSPACE_INDEXED, "indexed" )
+DECLARE_STR( ICC_TAGS_COLORSPACE_RGBA,    "RGBA" )
+DECLARE_STR( ICC_TAGS_COLORSPACE_RGBE,    "RGBE" )
+DECLARE_STR( ICC_TAGS_COLORSPACE_YUV,     "YUV" )
 
 DECLARE_STR( ICC_TAGS_VERSION,     "ColorProfile/version" )
 DECLARE_STR( ICC_TAGS_DESCRIPTION, "ColorProfile/description" )
