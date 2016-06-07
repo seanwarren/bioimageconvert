@@ -1,4 +1,4 @@
-BioImageConvertor ver: 2.0
+BioImageConvertor ver: 2.0.9
 
 Author: Dima V. Fedorov <http://www.dimin.net/>
 
@@ -100,6 +100,14 @@ Here ch1 will go to red, ch2 to cyan, ch3 not rendered and ch4 to blue
 
 -i                    - input file name, multiple -i are allowed, but in multiple case each will be interpreted as a 1 page image.
 
+-icc-load             - Load ICC profile from a file
+
+-icc-save             - Save ICC profile into a file if present
+
+-icc-transform-file   - Transform image to ICC profile loaded from a file
+
+-icc-transform-name   - Transform image to ICC profile given by a name: srgb|lab|xyz|cmyk
+
 -ihst                 - read image histogram from the file and use for nhancement operations
 
 -il                   - list input file name, containing input file name per line of the text file
@@ -118,11 +126,15 @@ Here ch1 will go to red, ch2 to cyan, ch3 not rendered and ch4 to blue
 
 -meta-custom          - print image's custom meta-data fields
 
+-meta-keep            - removes all except provided comma separated tags, ex: -meta-keep pixel_resolution,raw/icc_profile
+
 -meta-parsed          - print image's parsed meta-data, excluding custom fields
 
 -meta-raw             - print image's raw meta-data in one huge pile
 
--meta-tag             - prints contents of a requested tag, ex: -tag pixel_resolution
+-meta-remove          - removes provided comma separated tags, ex: -meta-remove pixel_resolution,raw/icc_profile
+
+-meta-tag             - prints contents of a requested tag, ex: -meta-tag pixel_resolution
 
 -minv                 - sets min value for histogram conversion, ex: -minv 20
 
@@ -162,10 +174,18 @@ JPEG encoder options:
   progressive yes - enables progressive JPEG encoding (default)
 
 TIFF encoder options:
-  compression N - where N can be: none, packbits, lzw, fax, ex: -options "compression none"
+  compression N - where N can be: none, packbits, lzw, fax, jpeg, zip, lzma, jxr. ex: -options "compression lzw"
+  quality N - specify encoding quality 0-100, where 100 is best, ex: -options "quality 90"
   tiles N - write tiled TIFF where N defined tile size, ex: tiles -options "512"
   pyramid N - writes TIFF pyramid where N is a storage type: subdirs, topdirs, ex: -options "compression lzw tiles 512 pyramid subdirs"
 
+JPEG-2000 encoder options:
+  tiles N - write tiled TIFF where N defined tile size, ex: tiles -options "2048"
+  quality N - specify encoding quality 0-100, where 100 is lossless, ex: -options "quality 90"
+JPEG-XR encoder options:
+  quality N - specify encoding quality 0-100, where 100 is lossless, ex: -options "quality 90"
+WebP encoder options:
+  quality N - specify encoding quality 0-100, where 100 is lossless, ex: -options "quality 90"
 
 
 -overlap-sampling     - Defines sampling after overlap detected until no overlap, used to reduce sampling if overlapping, ex: -overlap-sampling 5
@@ -279,6 +299,11 @@ guess will extract suggested rotation from EXIF
   Providing more arguments will instruct extraction of embedded tiles with -tile SZ,XID,YID,L ex: -tile 256,2,4,3
     SZ: defines the size of the tile in pixels
     XID and YID - are tile indices in X and Y, where the first tile is 0,0, second in X is: 1,0 and so on    L - is a resolution level, L=0 is native resolution, L=1 is 2x smaller, and so on
+
+-tile-roi             - region of interest, should be followed by: x1,y1,x2,y2 that defines ROI rectangle, ex: -tile-roi 10,10,100,100
+the difference from -roi is in how the image is loaded, in this case if operating on a tiled image
+only the required sub-region will be loaded, similar to tile interface but with arbitrary position
+this means that all enhancements will be local to the ROI and glogal histogram will be needed
 
 -transform            - transforms input image, ex: -transform fft
     chebyshev - outputs a transformed image in double precision
