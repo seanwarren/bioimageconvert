@@ -38,7 +38,7 @@ Win 8 MSVC 2015 J  35 tests: 12.7630000114 seconds
 
 v 2.0.9
 
-Win 8 MSVC 2013   425 tests: 458.929000139 seconds
+Win 8 MSVC 2013   426 tests: 401.576999903 seconds
 Win 8 MSVC 2013 J  35 tests: 12.489000082 seconds
-MacOSX 10.10      425 tests: X seconds
-loup debian x64   425 tests: 276.380623102 seconds
+MacOSX 10.10      426 tests: X seconds
+loup debian x64   426 tests: X seconds
