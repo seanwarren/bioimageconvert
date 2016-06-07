@@ -332,37 +332,48 @@ void MetaFormatManager::sessionParseMetaData(bim::uint page) {
 
     // Output channel names, only set if reders didn't define their own
     if (info.imageMode == bim::IM_RGB) {
-        std::vector<std::string> names = {"Red", "Green", "Blue"};
+        std::vector<std::string> names(3);// = { "Red", "Green", "Blue" };
+        names[0] = "Red"; names[1] = "Green"; names[2] = "Blue";
         this->append_channel_names(names);
     } else if (info.imageMode == bim::IM_RGBA) {
-        std::vector<std::string> names = { "Red", "Green", "Blue", "Alpha" };
+        std::vector<std::string> names(4);// = { "Red", "Green", "Blue", "Alpha" };
+        names[0] = "Red"; names[1] = "Green"; names[2] = "Blue"; names[3] = "Alpha";
         this->append_channel_names(names);
     } else if (info.imageMode == bim::IM_HSL) {
-        std::vector<std::string> names = { "Hue", "Saturation", "Lightness" };
+        std::vector<std::string> names(3);// = { "Hue", "Saturation", "Lightness" };
+        names[0] = "Hue"; names[1] = "Saturation"; names[2] = "Lightness";
         this->append_channel_names(names);
     } else if (info.imageMode == bim::IM_HSV) {
-        std::vector<std::string> names = { "Hue", "Saturation", "Brightness" };
+        std::vector<std::string> names(3);// = { "Hue", "Saturation", "Brightness" };
+        names[0] = "Hue"; names[1] = "Saturation"; names[2] = "Brightness";
         this->append_channel_names(names);
     } else if (info.imageMode == bim::IM_CMYK) {
-        std::vector<std::string> names = { "Cyan", "Magenta", "Yallow", "Black (Key)" };
+        std::vector<std::string> names(4);// = { "Cyan", "Magenta", "Yellow", "Black" };
+        names[0] = "Cyan"; names[1] = "Magenta"; names[2] = "Yellow"; names[3] = "Black";
         this->append_channel_names(names);
     } else if (info.imageMode == bim::IM_YUV) {
-        std::vector<std::string> names = { "Y", "U", "V" };
+        std::vector<std::string> names(3);// = { "Y", "U", "V" };
+        names[0] = "Y"; names[1] = "U"; names[2] = "V";
         this->append_channel_names(names);
     } else if (info.imageMode == bim::IM_XYZ) {
-        std::vector<std::string> names = { "X", "Y", "Z" };
+        std::vector<std::string> names(3);// = { "X", "Y", "Z" };
+        names[0] = "X"; names[1] = "Y"; names[2] = "Z";
         this->append_channel_names(names);
     } else if (info.imageMode == bim::IM_LAB) {
-        std::vector<std::string> names = { "Lightness", "a*", "b*" };
+        std::vector<std::string> names(3);// = { "Lightness", "a*", "b*" };
+        names[0] = "Lightness"; names[1] = "a*"; names[2] = "b*";
         this->append_channel_names(names);
     } else if (info.imageMode == bim::IM_CMY) {
-        std::vector<std::string> names = { "Cyan", "Magenta", "Yallow" };
+        std::vector<std::string> names(3);// = { "Cyan", "Magenta", "Yellow" };
+        names[0] = "Cyan"; names[1] = "Magenta"; names[2] = "Yellow";
         this->append_channel_names(names);
     } else if (info.imageMode == bim::IM_LUV) {
-        std::vector<std::string> names = { "Lightness", "u*", "v*" };
+        std::vector<std::string> names(3);// = { "Lightness", "u*", "v*" };
+        names[0] = "Lightness"; names[1] = "u*"; names[2] = "v*";
         this->append_channel_names(names);
     } else if (info.imageMode == bim::IM_YCbCr) {
-        std::vector<std::string> names = { "Luminance", "Cb", "Cr" };
+        std::vector<std::string> names(3);// = { "Luminance", "Cb", "Cr" };
+        names[0] = "Luminance"; names[1] = "Cb"; names[2] = "Cr";
         this->append_channel_names(names);
     }
 
