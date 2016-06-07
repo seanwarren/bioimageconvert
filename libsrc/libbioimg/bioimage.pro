@@ -541,6 +541,7 @@ dyn_gdcm {
 #---------------------------------------------------------------------
 
 stat_openjpeg {
+  DEFINES  += OPJ_HAVE_LIBLCMS2
   INCLUDEPATH += $${BIM_LIB_OPENJPEG}/lib
   INCLUDEPATH += $${BIM_LIB_OPENJPEG}/lib/openjp2
   INCLUDEPATH += $${BIM_LIB_OPENJPEG}/bin
@@ -604,7 +605,7 @@ dyn_openjpeg {
 #---------------------------------------------------------------------
 
 libraw {
-  DEFINES  += LIBRAW_BUILDLIB LIBRAW_NODLL USE_JPEG USE_ZLIB
+  DEFINES  += LIBRAW_BUILDLIB LIBRAW_NODLL USE_JPEG USE_ZLIB USE_LCMS2
   INCLUDEPATH += $$BIM_LIB_RAW
 
   SOURCES += $$BIM_LIB_RAW/src/libraw_c_api.cpp \

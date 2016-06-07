@@ -1,5 +1,35 @@
 = Version Change Log =
 
+== 2.0.9 ==
+ This is an intermediate release towards version 3, these will be the features of the final v3 release.
+ 
+ * New: Added support for new formats
+        * JPEG-XR using jxrlib 1.1
+        * WebP using libwebp 0.4
+        * JPEG-2000 using openjpeg 2.1.0, work with Mario Emmenlauer (will be updated to optimized GROK distro for v3)
+        * NIFTI-1 using niftilib
+        * ITK MediaHeader RAW
+        * NRRD RAW
+ * New: major rewrite of metadata handling with extended support (JPEG, JPEG-XR, JPEG-2000, TIFF, PNG, WebP)
+        * GeoTIFF
+        * ICC
+        * EXIF
+        * IPTC
+        * XMP
+ * New: Added tile-based ROI interface
+ * New: Added full support for color spaces, profiles and conversions using LCMS2
+ * New: Added support for RGBA imagery: 
+        * metadata based fusion will ignore alpha channel
+        * default alpha mapping to false color image is set to transarent
+        * image mode is reported in the metadata and properly indicates RGBA for most formats
+        ** TIFF format is one exception due to inability of defining an alpha channel reliably via photometric tag
+           and since tiff is mostly used to transmit false color images the alpha channel can not be automatically detected
+ * Update: DCRAW updated libraw to 0.18 and supported Canon 5DSr camera CR2 files
+ * Update: TIFF added compressions: jpeg, zip, lzma
+ * Update: OME-TIFF added preferred color support
+ * Update: Metaxpress improved metadata parsing
+ * Update: optimizated openmp based parallelization, ignoring small images
+ 
 == 2.0 ==
 
  * New: All command line operations are now ordered and thus may render different results to version 1.X
