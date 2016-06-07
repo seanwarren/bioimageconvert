@@ -114,7 +114,7 @@ int MetaFormatManager::sessionStartRead(const bim::Filename fileName) {
   pixel_size[1] = 0;
   pixel_size[2] = 0;
   pixel_size[3] = 0;
-  channel_names.clear();
+  //channel_names.clear();
   display_lut.clear();
   metadata.clear();
   info = initImageInfo();
@@ -137,7 +137,7 @@ int MetaFormatManager::sessionReadImage ( ImageBitmap *bmp, bim::uint page ) {
   int res = FormatManager::sessionReadImage( bmp, page );
   info = bmp->i;
 
-  channel_names.clear();
+  //channel_names.clear();
   display_lut.clear();
   //metadata.clear();
 
@@ -194,10 +194,18 @@ void MetaFormatManager::sessionWriteSetOMEXML( const std::string &omexml ) {
     metadata.set_value(bim::RAW_TAGS_OMEXML, omexml, bim::RAW_TYPES_OMEXML);
 }
 
+void MetaFormatManager::append_channel_names(const std::vector<std::string> &names) {
+    xstring tag_name;
+    for (unsigned int i=0; i<names.size(); ++i) {
+        tag_name.sprintf(bim::CHANNEL_NAME_TEMPLATE.c_str(), i);
+        appendMetadata(tag_name.c_str(), names[i].c_str());
+    }
+}
+
 void MetaFormatManager::sessionParseMetaData(bim::uint page) {
     if (got_meta_for_session == page) return;
 
-    channel_names.clear();
+    //channel_names.clear();
     display_lut.clear();
     metadata.clear();
 
@@ -294,13 +302,15 @@ void MetaFormatManager::sessionParseMetaData(bim::uint page) {
     appendMetadata(bim::PIXEL_DEPTH, (int)info.depth);
     appendMetadata(bim::PIXEL_FORMAT, pixel_format_strings[info.pixelType]);
     appendMetadata(bim::RAW_ENDIAN, (bim::bigendian) ? "big" : "little");
+    
     // overwrite imageMode from metadata colorspace
-    bim::ImageModes mode = lcms_image_mode(metadata.get_value(bim::ICC_TAGS_COLORSPACE));
-    if (mode != bim::IM_MULTI) 
-        info.imageMode = mode;
-    appendMetadata(bim::IMAGE_MODE, image_mode_strings[info.imageMode]);
-    appendMetadata(bim::ICC_TAGS_COLORSPACE, image_mode_strings[info.imageMode]);
-
+    if (metadata.hasKey(bim::ICC_TAGS_COLORSPACE)) {
+        bim::ImageModes mode = lcms_image_mode(metadata.get_value(bim::ICC_TAGS_COLORSPACE));
+        if (!(mode == bim::IM_RGB && info.imageMode == bim::IM_RGBA))
+            info.imageMode = mode;
+    }
+    this->set_metadata_tag(bim::IMAGE_MODE, image_mode_strings[info.imageMode]);
+    this->appendMetadata(bim::ICC_TAGS_COLORSPACE, image_mode_strings[info.imageMode]);
 
     appendMetadata(bim::IMAGE_NUM_RES_L, (int)info.number_levels);
     if (info.tileWidth > 0 && info.tileHeight > 0) {
@@ -320,22 +330,58 @@ void MetaFormatManager::sessionParseMetaData(bim::uint page) {
     }
     appendMetadata(bim::IMAGE_DIMENSIONS, dimensions);
 
-
-    for (unsigned int i = 0; i < channel_names.size(); ++i) {
-        xstring tag_name;
-        tag_name.sprintf(bim::CHANNEL_NAME_TEMPLATE.c_str(), i);
-        appendMetadata(tag_name.c_str(), channel_names[i].c_str());
+    // Output channel names, only set if reders didn't define their own
+    if (info.imageMode == bim::IM_RGB) {
+        std::vector<std::string> names = {"Red", "Green", "Blue"};
+        this->append_channel_names(names);
+    } else if (info.imageMode == bim::IM_RGBA) {
+        std::vector<std::string> names = { "Red", "Green", "Blue", "Alpha" };
+        this->append_channel_names(names);
+    } else if (info.imageMode == bim::IM_HSL) {
+        std::vector<std::string> names = { "Hue", "Saturation", "Lightness" };
+        this->append_channel_names(names);
+    } else if (info.imageMode == bim::IM_HSV) {
+        std::vector<std::string> names = { "Hue", "Saturation", "Brightness" };
+        this->append_channel_names(names);
+    } else if (info.imageMode == bim::IM_CMYK) {
+        std::vector<std::string> names = { "Cyan", "Magenta", "Yallow", "Black (Key)" };
+        this->append_channel_names(names);
+    } else if (info.imageMode == bim::IM_YUV) {
+        std::vector<std::string> names = { "Y", "U", "V" };
+        this->append_channel_names(names);
+    } else if (info.imageMode == bim::IM_XYZ) {
+        std::vector<std::string> names = { "X", "Y", "Z" };
+        this->append_channel_names(names);
+    } else if (info.imageMode == bim::IM_LAB) {
+        std::vector<std::string> names = { "Lightness", "a*", "b*" };
+        this->append_channel_names(names);
+    } else if (info.imageMode == bim::IM_CMY) {
+        std::vector<std::string> names = { "Cyan", "Magenta", "Yallow" };
+        this->append_channel_names(names);
+    } else if (info.imageMode == bim::IM_LUV) {
+        std::vector<std::string> names = { "Lightness", "u*", "v*" };
+        this->append_channel_names(names);
+    } else if (info.imageMode == bim::IM_YCbCr) {
+        std::vector<std::string> names = { "Luminance", "Cb", "Cr" };
+        this->append_channel_names(names);
     }
 
+    // set channel preferred colors
     for (int i = 0; i < (int)bim::min<size_t>(display_lut.size(), display_channel_tag_names.size()); ++i)
         appendMetadata(display_channel_tag_names[i], display_lut[i]);
 
     if (info.samples == 1)
         appendMetadata(xstring::xprintf(bim::CHANNEL_COLOR_TEMPLATE.c_str(), 0), "255,255,255");
-    else
-    for (int i = 0; i < (int)bim::min<size_t>(info.samples, channel_colors_default.size()); ++i)
-        appendMetadata(xstring::xprintf(bim::CHANNEL_COLOR_TEMPLATE.c_str(), i),
-        xstring::xprintf("%d,%d,%d", channel_colors_default[i].r, channel_colors_default[i].g, channel_colors_default[i].b));
+    else if (info.samples == 4 && info.imageMode == bim::IM_RGBA) {
+        appendMetadata(xstring::xprintf(bim::CHANNEL_COLOR_TEMPLATE.c_str(), 0), "255,0,0");
+        appendMetadata(xstring::xprintf(bim::CHANNEL_COLOR_TEMPLATE.c_str(), 1), "0,255,0");
+        appendMetadata(xstring::xprintf(bim::CHANNEL_COLOR_TEMPLATE.c_str(), 2), "0,0,255");
+        appendMetadata(xstring::xprintf(bim::CHANNEL_COLOR_TEMPLATE.c_str(), 3), "0,0,0");
+    } else {
+        for (int i = 0; i < (int)bim::min<size_t>(info.samples, channel_colors_default.size()); ++i)
+            appendMetadata(xstring::xprintf(bim::CHANNEL_COLOR_TEMPLATE.c_str(), i),
+                xstring::xprintf("%d,%d,%d", channel_colors_default[i].r, channel_colors_default[i].g, channel_colors_default[i].b));
+    }
 }
 
 double MetaFormatManager::getPixelSizeX()
@@ -413,7 +459,7 @@ void MetaFormatManager::fill_static_metadata_from_map() {
 
   // ------------------------------------------
   // Channel Names
- 
+  /*
   if (channel_names.size()<info.samples) channel_names.resize( info.samples );
   for (unsigned int i=0; i<channel_names.size(); ++i) {
     xstring tag_name;
@@ -422,6 +468,7 @@ void MetaFormatManager::fill_static_metadata_from_map() {
     s = get_metadata_tag( tag_name, "" );
     if (s.size()>0) channel_names[i] = s;
   }
+  */
 }
 
 

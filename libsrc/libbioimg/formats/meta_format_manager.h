@@ -90,7 +90,7 @@ public:
   inline const TagMap                      *meta() const              { return &metadata; }
   inline const TagMap                      &get_metadata() const      { return metadata; }
   inline const std::vector< int >          &get_display_lut() const   { return display_lut; }
-  inline const std::vector< std::string >  &get_channel_names() const { return channel_names; }
+  //inline const std::vector< std::string >  &get_channel_names() const { return channel_names; }
 
   inline std::string get_metadata_tag( const std::string &key, const std::string &def ) const { return metadata.get_value( key, def ); }
   inline int         get_metadata_tag_int( const std::string &key, const int &def ) const { return metadata.get_value_int( key, def ); }
@@ -123,10 +123,11 @@ private:
   // META
   double pixel_size[4]; //XYZ in microns, T in seconds
   xstring imaging_time; // "YYYY-MM-DD HH:MM:SS" ANSI date and 24h time
-  std::vector< std::string > channel_names;
+  //std::vector< std::string > channel_names;
   std::vector< int > display_lut;
 
   void fill_static_metadata_from_map();
+  void append_channel_names(const std::vector<std::string> &names);
 };
 
 } // namespace bim

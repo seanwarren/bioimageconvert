@@ -574,7 +574,7 @@ fetch_file('IMG_1913_16bit_prophoto_q90.jxr')
 fetch_file('IMG_1913_prophoto_q90.webp')
 
 fetch_file('6J0A3548.CR2')
-
+fetch_file('IMG_0184_RGBA.png')
 
 #**************************************************************
 # run tests
@@ -853,6 +853,22 @@ if 'all' in mode or 'readmeta' in mode:
     meta_test['Iptc/Application2/City']    = 'Santa Barbara'
     meta_test['Iptc/Application2/ProvinceState'] = 'CA'
     test_metadata_read( "JPEG IPTC", "IMG_0184.JPG", meta_test )
+
+    # testing reading RGBA PNG image
+    meta_test = {}
+    meta_test['image_mode'] = 'RGBA'
+    meta_test['ColorProfile/color_space'] = 'RGB'
+    meta_test['ColorProfile/description'] = 'sRGB IEC61966-2.1'
+    meta_test['ColorProfile/size'] = '3144'
+    meta_test['channel_color_0'] = '255,0,0'
+    meta_test['channel_color_1'] = '0,255,0'
+    meta_test['channel_color_2'] = '0,0,255'
+    meta_test['channel_color_3'] = '0,0,0'
+    meta_test['channel_0_name'] = 'Red'
+    meta_test['channel_1_name'] = 'Green'
+    meta_test['channel_2_name'] = 'Blue'
+    meta_test['channel_3_name'] = 'Alpha'
+    test_metadata_read( "PNG RGBA", "IMG_0184_RGBA.png", meta_test )
 
     # reading metadata from OIB v 2.0.0.0
     meta_test = {}

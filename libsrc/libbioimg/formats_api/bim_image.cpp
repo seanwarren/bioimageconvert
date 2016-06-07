@@ -2156,7 +2156,7 @@ std::vector<bim::DisplayColor> init_fusion_from_meta(const Image &img) {
     std::vector<bim::DisplayColor> channel_colors_default = bim::defaultChannelColors();
     bim::TagMap m = img.get_metadata();
     int num_samples = img.samples();
-    if (img.imageMode() == IM_RGBA) {
+    if (img.imageMode()==IM_RGBA || (img.imageMode()==IM_RGB && num_samples==4)) {
         num_samples = 3;
     }
     for (bim::uint i = 0; i<num_samples; ++i) {
@@ -2166,8 +2166,7 @@ std::vector<bim::DisplayColor> init_fusion_from_meta(const Image &img) {
             std::vector<int> cmp = t.splitInt(",");
             cmp.resize(3, 0);
             out_weighted_fuse_channels.push_back(bim::DisplayColor(cmp[0], cmp[1], cmp[2]));
-        }
-        else if (i<channel_colors_default.size()) {
+        } else if (i<channel_colors_default.size()) {
             out_weighted_fuse_channels.push_back(channel_colors_default[i]);
         }
     }
