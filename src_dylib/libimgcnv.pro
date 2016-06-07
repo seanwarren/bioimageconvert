@@ -29,7 +29,7 @@ TARGET = imgcnv
 
 TEMPLATE = lib
 CONFIG  += dll
-VERSION = 2.0.0
+VERSION = 2.0.9
 
 CONFIG += console
 
@@ -54,6 +54,8 @@ CONFIG += stat_openjpeg
 CONFIG += stat_jxrlib
 CONFIG += stat_libwebp
 CONFIG += stat_lcms2
+
+CONFIG += dyn_lzma
 
 CONFIG(debug, debug|release) {
    message(Building in DEBUG mode!)
@@ -202,6 +204,29 @@ INCLUDEPATH += $$DN_FMTS_API
 INCLUDEPATH += $$DN_FMTS
 INCLUDEPATH += $$DN_CORE
 
+#unix:LIBS += -lbz2
+#unix:LIBS += -ldl
+##SUBDIRS = $$DN_LIB_BIO/bioimage.pro
+
+#macx {
+#  LIBS += $$BIM_LIBS_PLTFM/libfftw3.a
+#  LIBS += -lz
+#} else:unix {
+#  LIBS += -lfftw3
+#}
+
+PRE_TARGETDEPS = $$DN_LIB_BIO/.generated/libbioimage.a
+LIBS += $$DN_LIB_BIO/.generated/libbioimage.a
+
+BimLib.target = $$DN_LIB_BIO/.generated/libbioimage.a
+#BimLib.commands = cd $$DN_LIB_BIO && qmake bioimage.pro && make
+BimLib.depends = $$DN_LIB_BIO/Makefile
+QMAKE_EXTRA_TARGETS += BimLib
+
+#---------------------------------------------------------------------
+# required libs
+#---------------------------------------------------------------------
+
 unix:LIBS += -lbz2
 unix:LIBS += -ldl
 #SUBDIRS = $$DN_LIB_BIO/bioimage.pro
@@ -212,15 +237,6 @@ macx {
 } else:unix {
   LIBS += -lfftw3
 }
-
-PRE_TARGETDEPS = $$DN_LIB_BIO/.generated/libbioimage.a
-LIBS += $$DN_LIB_BIO/.generated/libbioimage.a
-
-BimLib.target = $$DN_LIB_BIO/.generated/libbioimage.a
-#BimLib.commands = cd $$DN_LIB_BIO && qmake bioimage.pro && make
-BimLib.depends = $$DN_LIB_BIO/Makefile
-QMAKE_EXTRA_TARGETS += BimLib
-
 
 #---------------------------------------------------------------------
 # eigen
@@ -244,6 +260,22 @@ stat_libjpeg_turbo {
   }
 
 } # JPEG-TURBO
+
+#---------------------------------------------------------------------
+# LZMA
+#---------------------------------------------------------------------
+
+dyn_lzma {
+
+  win32 {
+    LIBS += $$BIM_LIBS_PLTFM/liblzma.lib
+  } else:macx {
+    #LIBS += $$BIM_LIBS_PLTFM/liblzma.a
+  } else {
+    LIBS += -llzma
+  }
+
+} # LZMA
 
 #---------------------------------------------------------------------
 # ffmpeg
@@ -372,6 +404,8 @@ stat_jxrlib {
 stat_libwebp {
   unix {
     LIBS += $$BIM_LIBS_PLTFM/libwebp.a
+    LIBS += $$BIM_LIBS_PLTFM/libwebpmux.a
+    LIBS += $$BIM_LIBS_PLTFM/libwebpdemux.a
   }
 }
 
