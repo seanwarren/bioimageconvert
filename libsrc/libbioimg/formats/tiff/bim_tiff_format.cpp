@@ -274,11 +274,11 @@ bim::uint getTiffMode( TIFF *tif) {
   TIFFGetField(tif, TIFFTAG_SAMPLESPERPIXEL, &samplesperpixel);
 
   if (photometric == PHOTOMETRIC_RGB && samplesperpixel==3) return IM_RGB;
+  //if (photometric == PHOTOMETRIC_RGB && samplesperpixel==4) return IM_RGBA;
   if (photometric == PHOTOMETRIC_CIELAB) return IM_LAB;
   if (photometric == PHOTOMETRIC_ICCLAB) return IM_LAB;
   if (photometric == PHOTOMETRIC_ITULAB) return IM_LAB;
   if (photometric == PHOTOMETRIC_YCBCR) return IM_RGB; // return IM_YCbCr; // we convert in the driver
-  //if (photometric == PHOTOMETRIC_RGB && samplesperpixel==4) return IM_RGBA;
   if (photometric == PHOTOMETRIC_PALETTE) return IM_INDEXED;
   if (samplesperpixel > 1) return IM_MULTI;
     

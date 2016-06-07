@@ -160,32 +160,19 @@ bool pngGetImageInfo( FormatHandle *fmtHndl )
   info->samples = 1;
   info->imageMode = IM_GRAYSCALE;
 
-  if ( color_type == PNG_COLOR_TYPE_GRAY ) 
-  {
+  if ( color_type == PNG_COLOR_TYPE_GRAY ) {
     info->samples = 1;
     info->imageMode = IM_GRAYSCALE;
-  }
-
-  if ( color_type == PNG_COLOR_TYPE_GRAY_ALPHA ) 
-  {
+  } else if ( color_type == PNG_COLOR_TYPE_GRAY_ALPHA ) {
     info->samples = 2;
     info->imageMode = IM_GRAYSCALE;
-  }
-
-  if ( color_type == PNG_COLOR_TYPE_PALETTE ) 
-  {
+  } else if ( color_type == PNG_COLOR_TYPE_PALETTE ) {
     info->samples = 1;
     info->imageMode = IM_INDEXED;
-  }
-
-  if ( color_type == PNG_COLOR_TYPE_RGB ) 
-  {
+  } else if ( color_type == PNG_COLOR_TYPE_RGB ) {
     info->samples = 3;
     info->imageMode = IM_RGB;
-  }
- 
-  if ( color_type == PNG_COLOR_TYPE_RGB_ALPHA ) 
-  {
+  } else if ( color_type == PNG_COLOR_TYPE_RGB_ALPHA ) {
     info->samples = 4;
     info->imageMode = IM_RGBA;
   }
@@ -204,7 +191,7 @@ bool pngGetImageInfo( FormatHandle *fmtHndl )
   //-------------------------------------------------
   // init palette
   //-------------------------------------------------
-  if ( (color_type == PNG_COLOR_TYPE_GRAY) ||
+  if ( ( color_type == PNG_COLOR_TYPE_GRAY) ||
        ( color_type == PNG_COLOR_TYPE_GRAY_ALPHA ) ||
        ( color_type == PNG_COLOR_TYPE_PALETTE ) ) 
   {
