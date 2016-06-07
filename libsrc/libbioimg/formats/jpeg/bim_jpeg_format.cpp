@@ -235,8 +235,8 @@ FormatHeader jpegHeader = {
 
   sizeof(FormatHeader),
   "1.4.0",
-  "DIMIN JPEG CODEC",
-  "JPEG-JFIF Compliant CODEC",
+  "JPEG",
+  "JPEG-JFIF compliant codec",
   
   3,                      // 0 or more, specify number of bytes needed to identify the file
   {1, 1, jpegItems},   // jpegSupported,

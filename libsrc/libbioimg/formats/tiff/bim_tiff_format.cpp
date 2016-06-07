@@ -937,7 +937,7 @@ FormatHeader tiffHeader = {
 
   sizeof(FormatHeader),
   "4.0.4",
-  "BIM TIFF CODEC",
+  "TIFF",
   "Tagged Image File Format variants",
   
   4,                      // 0 or more, specify number of bytes needed to identify the file

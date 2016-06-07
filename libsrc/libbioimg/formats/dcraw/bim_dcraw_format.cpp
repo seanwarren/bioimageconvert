@@ -459,7 +459,7 @@ FormatItem dcrawItems[BIM_DCRAW_NUM_FORMATS] = {
 FormatHeader dcrawHeader = {
 
   sizeof(FormatHeader),
-  "1.0.16",
+  "1.0.18",
   "DCRAW",
   "Digital Camera Raw",
   

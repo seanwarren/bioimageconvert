@@ -373,8 +373,8 @@ FormatHeader bioRadPicHeader = {
 
   sizeof(FormatHeader),
   "1.0.0",
-  "DIMIN BIORAD PIC CODEC",
-  "BIORAD PIC CODEC",
+  "BioRad PIC",
+  "BioRad PIC",
   
   56,                      // 0 or more, specify number of bytes needed to identify the file
   {1, 1, bioRadPicItems},   //dimJpegSupported,
