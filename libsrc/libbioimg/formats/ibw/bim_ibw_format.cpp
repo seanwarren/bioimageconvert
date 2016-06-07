@@ -339,8 +339,8 @@ FormatHeader ibwHeader = {
 
   sizeof(FormatHeader),
   "1.0.0",
-  "IBW CODEC",
-  "IBW CODEC",
+  "IBW",
+  "IBW",
   
   12,                      // 0 or more, specify number of bytes needed to identify the file
   {1, 1, ibwItems},   //dimJpegSupported,

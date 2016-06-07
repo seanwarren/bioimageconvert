@@ -683,7 +683,7 @@ FormatHeader bmpHeader = {
 
   sizeof(FormatHeader),
   "1.0.0",
-  "DIMIN BMP CODEC",
+  "BMP",
   "BMP CODEC",
   
   2,                     // 0 or more, specify number of bytes needed to identify the file

@@ -752,7 +752,7 @@ FormatHeader pngHeader = {
 
   sizeof(FormatHeader),
   "1.6.16",
-  "DIMIN PNG CODEC",
+  "PNG",
   "PNG CODEC",
   
   8,                     // 0 or more, specify number of bytes needed to identify the file
