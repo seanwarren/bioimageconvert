@@ -17,6 +17,7 @@
 #include <cmath>
 
 #include <algorithm>
+#include <list>
 
 #include <xstring.h>
 #include <tag_map.h>
@@ -520,72 +521,92 @@ int LsmScanInfoEntry::readEntry (TIFF *tif, bim::uint32 offset) {
   return 0;
 }
 
-void lsm_read_ScanInformation (TiffParams *tiffParams) {
-  if (tiffParams == NULL) return;
-  if (tiffParams->tiff == NULL) return;
-  if (!tiffParams->ifds.isValid()) return;
+xstring LsmScanInfoEntry::toString() const {
+    return xstring();
+}
 
-  ImageInfo *info = &tiffParams->info;
-  LsmInfo *lsm = &tiffParams->lsmInfo;
-  CZ_LSMINFO *lsmi = &lsm->lsm_info;
+void lsm_read_ScanInformation(TiffParams *tiffParams) {
+    if (tiffParams == NULL) return;
+    if (tiffParams->tiff == NULL) return;
+    if (!tiffParams->ifds.isValid()) return;
 
-  //---------------------------------------------------------------
-  // read CZ_ScanInformation
-  //---------------------------------------------------------------
-  std::vector< std::string > path;
-  int block_track=1, block_laser=1, block_detection_channel=1, block_illumination_channel=1, 
-      block_beam_plitter=1, block_data_channel=1, block_timer=1, block_marker=1;
+    ImageInfo *info = &tiffParams->info;
+    LsmInfo *lsm = &tiffParams->lsmInfo;
+    CZ_LSMINFO *lsmi = &lsm->lsm_info;
 
-  int level = 0;
-  lsm->scan_info_entries.clear();
-  unsigned int offset = lsm->lsm_info.u32OffsetScanInformation;
-  while (offset > 0) {
-    LsmScanInfoEntry block;
-    if (block.readEntry (tiffParams->tiff, offset)!=0) break;
+    //---------------------------------------------------------------
+    // read CZ_ScanInformation
+    //---------------------------------------------------------------
+    std::vector<xstring> path;
+    int block_track = 1, block_laser = 1, block_detection_channel = 1, block_illumination_channel = 1,
+        block_beam_plitter = 1, block_data_channel = 1, block_timer = 1, block_marker = 1;
 
-    if (block.data_type == TYPE_SUBBLOCK) {
+    int level = 0;
+    lsm->scan_info_entries.clear();
+    lsm->data_channels.clear();
+    lsm->detection_channels.clear();
+    lsm->illumination_channels.clear();
+    unsigned int offset = lsm->lsm_info.u32OffsetScanInformation;
+    while (offset > 0) {
+        LsmScanInfoEntry block;
+        if (block.readEntry(tiffParams->tiff, offset) != 0) break;
 
-      if (block.entry_type == SUBBLOCK_RECORDING) { level++; path.push_back("Recording"); }
-      if (block.entry_type == SUBBLOCK_END) {level--; path.pop_back(); }
+        if (block.data_type == TYPE_SUBBLOCK) {
+            offset += 12;
+            if (block.entry_type == SUBBLOCK_END) {
+                --level;
+                if (level == 0) break;
+            } else
+                ++level;
 
-      if (block.entry_type == SUBBLOCK_LASERS) { level++; path.push_back("Lasers"); }
-      if (block.entry_type == SUBBLOCK_TRACKS) { level++; path.push_back("Tracks"); }
-      if (block.entry_type == SUBBLOCK_DETECTION_CHANNELS) { level++; path.push_back("Detection channels"); }
-      if (block.entry_type == SUBBLOCK_ILLUMINATION_CHANNELS) { level++; path.push_back("Illumination channels"); }
-      if (block.entry_type == SUBBLOCK_BEAM_SPLITTERS) { level++; path.push_back("Beam splitters"); }
-      if (block.entry_type == SUBBLOCK_DATA_CHANNELS) { level++; path.push_back("Data channels"); }
-      if (block.entry_type == SUBBLOCK_TIMERS) { level++; path.push_back("Timers"); }
-      if (block.entry_type == SUBBLOCK_MARKERS) { level++; path.push_back("Markers"); }
-
-      xstring s;
-      if (block.entry_type == SUBBLOCK_TRACK) { level++; s.sprintf("Track%d", block_track++); path.push_back(s); }
-      if (block.entry_type == SUBBLOCK_LASER) { level++; s.sprintf("Laser%d", block_laser++); path.push_back(s); }
-      if (block.entry_type == SUBBLOCK_DETECTION_CHANNEL) { level++; s.sprintf("Detection channel%d", block_detection_channel++); path.push_back(s); }
-      if (block.entry_type == SUBBLOCK_ILLUMINATION_CHANNEL) { level++; s.sprintf("Illumination channel%d", block_illumination_channel++); path.push_back(s); }
-      if (block.entry_type == SUBBLOCK_BEAM_SPLITTER) { level++; s.sprintf("Beam splitter%d", block_beam_plitter++); path.push_back(s); }
-      if (block.entry_type == SUBBLOCK_DATA_CHANNEL) { level++; s.sprintf("Data channel%d", block_data_channel++); path.push_back(s); }
-      if (block.entry_type == SUBBLOCK_TIMER) { level++; s.sprintf("Timer%d", block_timer++); path.push_back(s); }
-      if (block.entry_type == SUBBLOCK_MARKER) { level++; s.sprintf("Marker%d", block_marker++); path.push_back(s); }
-      
-      offset += 12;
-    }
-    else 
-      offset += (unsigned int) block.offsetSize();
-
-    if (level > 0) {  
-      xstring path_str;
-      if (path.size() > 0)
-      for (int i=0; i<path.size(); ++i) {
-        path_str += path[i];
-        path_str += "/";
-      }
-      block.path = path_str;
-      lsm->scan_info_entries.push_back( block );
-    }
-
-    if (level == 0) break;
-  }
-
+            if (block.entry_type == SUBBLOCK_RECORDING) { 
+                path.push_back("Recording");
+            } else if (block.entry_type == SUBBLOCK_END) { 
+                path.pop_back();
+            } else if (block.entry_type == SUBBLOCK_LASERS) { 
+                path.push_back("Lasers");
+            } else if (block.entry_type == SUBBLOCK_TRACKS) { 
+                path.push_back("Tracks");
+            } else if (block.entry_type == SUBBLOCK_DETECTION_CHANNELS) { 
+                path.push_back("Detection channels");
+            } else if (block.entry_type == SUBBLOCK_ILLUMINATION_CHANNELS) { 
+                path.push_back("Illumination channels");
+            } else if (block.entry_type == SUBBLOCK_BEAM_SPLITTERS) { 
+                path.push_back("Beam splitters");
+            } else if (block.entry_type == SUBBLOCK_DATA_CHANNELS) { 
+                path.push_back("Data channels");
+            } else if (block.entry_type == SUBBLOCK_TIMERS) { 
+                path.push_back("Timers");
+            } else if (block.entry_type == SUBBLOCK_MARKERS) { 
+                path.push_back("Markers"); 
+            } else if (block.entry_type == SUBBLOCK_TRACK) { 
+                path.push_back(xstring::xprintf("Track%d", block_track++));
+            } else if (block.entry_type == SUBBLOCK_LASER) { 
+                path.push_back(xstring::xprintf("Laser%d", block_laser++));
+            } else if (block.entry_type == SUBBLOCK_DETECTION_CHANNEL) { 
+                path.push_back(xstring::xprintf("Detection channel%d", block_detection_channel++));
+                lsm->detection_channels.push_back(xstring::join(path, "/"));
+            } else if (block.entry_type == SUBBLOCK_ILLUMINATION_CHANNEL) {
+                path.push_back(xstring::xprintf("Illumination channel%d", block_illumination_channel++));
+                lsm->illumination_channels.push_back(xstring::join(path, "/"));
+            } else if (block.entry_type == SUBBLOCK_BEAM_SPLITTER) { 
+                path.push_back(xstring::xprintf("Beam splitter%d", block_beam_plitter++));
+            } else if (block.entry_type == SUBBLOCK_DATA_CHANNEL) { 
+                path.push_back(xstring::xprintf("Data channel%d", block_data_channel++));
+                // we first enumerate all data channels and then need to look for linked detection channels, etc.
+                lsm->data_channels.push_back(LsmDataChannel(block_data_channel-1, block_track-1, xstring::join(path, "/")));
+            } else if (block.entry_type == SUBBLOCK_TIMER) { 
+                path.push_back(xstring::xprintf("Timer%d", block_timer++));
+            } else if (block.entry_type == SUBBLOCK_MARKER) { 
+                path.push_back(xstring::xprintf("Marker%d", block_marker++));
+            }
+        } else {
+            // not a TYPE_SUBBLOCK
+            offset += (unsigned int)block.offsetSize();
+            block.path = xstring::join(path, "/");
+            lsm->scan_info_entries.push_back(block);
+        }
+    } // while (offset > 0)
 }
 
 //----------------------------------------------------------------------------
@@ -655,6 +676,48 @@ void lsm_read_TimeStamps (TiffParams *par, bim::uint32 offset, std::vector<CZ_Ti
 // METADATA FUNCTIONS
 //----------------------------------------------------------------------------
 
+void get_and_set_double(TagMap *hash, const xstring &key_in, const xstring &key_out ) {
+    if (hash->hasKey(key_in)) {
+        double v = hash->get_value_double(key_in, 0);
+        hash->set_value(key_out, v);
+    }
+}
+
+void get_and_set_int(TagMap *hash, const xstring &key_in, const xstring &key_out) {
+    if (hash->hasKey(key_in)) {
+        int v = hash->get_value_int(key_in, 0);
+        hash->set_value(key_out, v);
+    }
+}
+
+void get_and_set_string(TagMap *hash, const xstring &key_in, const xstring &key_out) {
+    if (hash->hasKey(key_in)) {
+        xstring v = hash->get_value(key_in);
+        hash->set_value(key_out, v);
+    }
+}
+
+void set_objective_from_string(TagMap *hash, const bim::xstring &objective) {
+    hash->set_value(bim::OBJECTIVE_DESCRIPTION, objective);
+
+    std::vector<xstring> tokens = objective.split(" ");
+    for (int t = 0; t < tokens.size(); ++t) {
+        if (!tokens[t].contains("/")) continue;
+        std::vector<xstring> pars = tokens[t].toLowerCase().split("/");
+        if (pars[0].contains("x")) {
+            double magnification = pars[0].replace("x", "").toDouble();
+            if (magnification>0)
+                hash->set_value(bim::OBJECTIVE_MAGNIFICATION, magnification);
+        }
+
+        double num_aperture = pars[1].toDouble();
+        if (num_aperture>0)
+            hash->set_value(bim::OBJECTIVE_NUM_APERTURE, num_aperture);
+
+        break;
+    }
+}
+
 bim::uint append_metadata_lsm (FormatHandle *fmtHndl, TagMap *hash ) {
   if (fmtHndl == NULL) return 1;
   if (fmtHndl->internalParams == NULL) return 1;
@@ -709,29 +772,28 @@ bim::uint append_metadata_lsm (FormatHandle *fmtHndl, TagMap *hash ) {
   // All other tags in custom field
   //----------------------------------------------------------------------------
   initMetaHash(lsm);
-  xstring key, val;
   for (int i=0; i<lsm->scan_info_entries.size(); i++) {
-    if (lsm->scan_info_entries[i].data.size()<=0) continue;
-    if (lsm->key_names[lsm->scan_info_entries[i].entry_type]=="") continue;
+      LsmScanInfoEntry *e = &lsm->scan_info_entries.at(i);
 
-    key = xstring(bim::CUSTOM_TAGS_PREFIX) + lsm->scan_info_entries[i].path + lsm->key_names[lsm->scan_info_entries[i].entry_type];
+      if (e->data.size()<=0) continue;
+      if (lsm->key_names[e->entry_type]=="") continue;
 
-    if (lsm->scan_info_entries[i].data_type == TYPE_ASCII && lsm->scan_info_entries[i].data.size()>0) {
-      char* line = (char*) &lsm->scan_info_entries[i].data[0];
-      val = line;
-    } else
-    if (lsm->scan_info_entries[i].data_type == TYPE_LONG && lsm->scan_info_entries[i].data.size()>0) {
-      val.sprintf("%d", *(int*) &lsm->scan_info_entries[i].data[0]);
-    } else
-    if (lsm->scan_info_entries[i].data_type == TYPE_RATIONAL && lsm->scan_info_entries[i].data.size()>0) {
-      val.sprintf("%f", *(double*) &lsm->scan_info_entries[i].data[0]);
-    }
+      xstring key = xstring(bim::CUSTOM_TAGS_PREFIX) + e->path + "/" + lsm->key_names[e->entry_type];
 
-    hash->append_tag( key, val );
-
-    //if (lsm->scan_info_entries[i].entry_type == 0x90000001) lsm->channel_names.push_back(val);
-    if (lsm->scan_info_entries[i].entry_type == 0x10000004) hash->append_tag( bim::OBJECTIVE_DESCRIPTION, val );
-    if (lsm->scan_info_entries[i].entry_type == 0x10000001) hash->append_tag( bim::IMAGE_LABEL, val );
+      if (e->data_type == TYPE_ASCII && e->data.size()>1) {
+          xstring line = (char*) &e->data[0];
+          line = line.replace("\r", "").strip(" ");
+          if (line.size()>0)
+              hash->append_tag(key, line);
+      } else if (e->data_type == TYPE_LONG && e->data.size()>=4) {
+          hash->append_tag(key, *(int*)&e->data[0] );
+      } else if (e->data_type == TYPE_RATIONAL && e->data.size()>=8) {
+          hash->append_tag(key, *(double*)&e->data[0]);
+      } else if (e->data_type == TYPE_BOOLEAN && e->data.size()>=4) {
+          hash->append_tag(key, *(int*)&e->data[0] == 0);
+      } else if (e->data_type == TYPE_DATE && e->data.size()>=4) {
+          hash->append_tag(key, *(int*)&e->data[0]);
+      }
   }
 
   //----------------------------------------------------------------------------
@@ -750,26 +812,180 @@ bim::uint append_metadata_lsm (FormatHandle *fmtHndl, TagMap *hash ) {
   }
 
   //----------------------------------------------------------------------------
-  // Construct channel names
+  // New style channel description
   //----------------------------------------------------------------------------
-  for (unsigned int i=0; i<info->samples; ++i) {
-      xstring tag_name = xstring::xprintf( bim::CHANNEL_NAME_TEMPLATE.c_str(), i );
-      xstring tag_value = xstring::xprintf( "Ch%d", i+1 );
 
-      xstring dye_name = hash->get_value(xstring::xprintf( "custom/Recording/Tracks/Track1/Detection channels/Detection channel%d/Dye Name", i+1 ));
-      if (dye_name.empty()) 
-          dye_name = hash->get_value(xstring::xprintf( "custom/Recording/Tracks/Track%d/Detection channels/Detection channel%d/Dye Name", i+1, i+1 ));
-      if (!dye_name.empty())
-          tag_value += xstring(" - ") + dye_name;
+  // find all valid illumination channels
+  std::vector<xstring> valid_illumination_channels;
+  for (std::vector<xstring>::const_iterator it = lsm->illumination_channels.begin(); it != lsm->illumination_channels.end(); ++it) {
+      xstring k = xstring(bim::CUSTOM_TAGS_PREFIX) + *it + "/" + lsm->key_names[ILLUMCHANNEL_ENTRY_AQUIRE];
+      int acquire = hash->get_value_int(k, 0);
+      k = xstring(bim::CUSTOM_TAGS_PREFIX) + *it + "/" + lsm->key_names[ILLUMCHANNEL_ENTRY_WAVELENGTH];
+      double wavelength = hash->get_value_double(k, 0);
 
-      xstring laser_fq = hash->get_value(xstring::xprintf( "custom/Recording/Tracks/Track1/Illumination channels/Illumination channel%d/Name", i+1 ));
-      if (laser_fq.empty()) 
-          laser_fq = hash->get_value(xstring::xprintf( "custom/Recording/Tracks/Track%d/Illumination channels/Illumination channel%d/Name", i+1, i+1 ));
-      if (!laser_fq.empty())
-          tag_value += xstring(" (") + laser_fq + xstring(")");
-
-      hash->set_value( tag_name, tag_value );
+      if (acquire != 0 && wavelength != 0) {
+            valid_illumination_channels.push_back(*it);
+      }
   }
+  lsm->illumination_channels = valid_illumination_channels;
+
+  // for all data channels find their detection channels and illumination channels
+  std::map<int, bool> valid_tracks; // needed to find unique valid tracks
+  for (unsigned int i = 0; i < lsm->data_channels.size(); ++i) {
+      LsmDataChannel *dc = &lsm->data_channels.at(i);
+      valid_tracks[dc->track] = true;
+
+      xstring k = xstring(bim::CUSTOM_TAGS_PREFIX) + dc->path + "/" + lsm->key_names[DATACHANNEL_ENTRY_NAME];
+      dc->name = hash->get_value(k);
+      if (dc->name.size() == 0) continue;
+      std::vector<xstring> p = dc->path.split("/");
+      p.pop_back(); p.pop_back(); // get to the track level
+      xstring track_path = xstring::join(p, "/");
+
+      // we now have to find detection channel with the same name in the same Track
+      for (std::vector<xstring>::const_iterator it = lsm->detection_channels.begin(); it != lsm->detection_channels.end(); ++it) {
+          if (it->startsWith(track_path)) {
+              xstring k = xstring(bim::CUSTOM_TAGS_PREFIX) + *it + "/" + lsm->key_names[DETCHANNEL_DETECTION_CHANNEL_NAME];
+              xstring name = hash->get_value(k);
+              if (name == dc->name) {
+                  dc->path_detection_channel = *it;
+                  break;
+              }
+          }
+      }
+
+      // dima: valid illumination channles seem to be stored in the same order as data channels
+      int num_illum = std::min<int>(i, lsm->illumination_channels.size()-1);
+      dc->path_illumination_channel = lsm->illumination_channels[num_illum];
+  }
+
+  // fill in channel information
+  int num_tracks = valid_tracks.size();
+  int num_channels = std::min<int>(info->samples, lsm->data_channels.size());
+  for (unsigned int i = 0; i<num_channels; ++i) {
+      LsmDataChannel *dc = &lsm->data_channels.at(i);
+
+      xstring k;
+      xstring old_tag = xstring::xprintf( bim::CHANNEL_NAME_TEMPLATE.c_str(), i );
+      xstring tag = xstring::xprintf(bim::CHANNEL_INFO_TEMPLATE.c_str(), i);
+      xstring det_channel_path = xstring(bim::CUSTOM_TAGS_PREFIX) + dc->path_detection_channel + "/";
+      xstring ilum_channel_path = xstring(bim::CUSTOM_TAGS_PREFIX) + dc->path_illumination_channel + "/";
+
+      // name
+      xstring name = dc->name;
+      if (name.size()==0)
+          name = xstring::xprintf("Ch%d", i+1);
+      
+      // Zeiss standard to set track number if multiple 
+      if (num_tracks>1) {
+          name += xstring::xprintf("-T%d", dc->track);
+      }
+      hash->set_value(tag + bim::CHANNEL_INFO_NAME, name);
+      hash->set_value(old_tag, name);
+
+      // dye
+      k = xstring(bim::CUSTOM_TAGS_PREFIX) + dc->path + "/" + lsm->key_names[DATACHANNEL_ENTRY_DYE_NAME];
+      xstring dye = hash->get_value(k);
+      if (dye.empty()) {
+          k = det_channel_path + lsm->key_names[DETCHANNEL_ENTRY_DYE_NAME];
+          dye = hash->get_value(k);
+      }
+      if (!dye.empty())
+          hash->set_value(tag + bim::CHANNEL_INFO_DYE, dye);
+
+      // track description
+      if (num_tracks > 1) {
+          std::vector<xstring> p = dc->path.split("/");
+          p.pop_back(); p.pop_back(); // get to the track level
+          xstring track_path = xstring::join(p, "/");
+          k = xstring(bim::CUSTOM_TAGS_PREFIX) + track_path + "/" + lsm->key_names[DATACHANNEL_ENTRY_NAME];
+          if (hash->hasKey(k)) {
+              xstring descr = hash->get_value(k);
+              hash->set_value(tag + bim::CHANNEL_INFO_DESCRIPTION, descr);
+          }
+      }
+
+      // color
+      xstring color = xstring::xprintf("%d,%d,%d", lsm->channel_colors[i].r, lsm->channel_colors[i].g, lsm->channel_colors[i].b);
+      hash->set_value(tag + CHANNEL_INFO_COLOR, color);
+
+      // pinhole
+      k = det_channel_path + lsm->key_names[DETCHANNEL_ENTRY_PINHOLE_DIAMETER];
+      if (hash->hasKey(k)) {
+          double pinhole_diameter = hash->get_value_double(k, 0);
+          hash->set_value(tag + bim::CHANNEL_INFO_PINHOLE_RADIUS, pinhole_diameter / 2.0);
+      }
+      
+      // direct values
+      
+      get_and_set_double(hash,
+          det_channel_path + lsm->key_names[DETCHANNEL_ENTRY_DETECTOR_GAIN],
+          tag + bim::CHANNEL_INFO_DETECTOR_GAIN);
+
+      get_and_set_double(hash,
+          det_channel_path + lsm->key_names[DETCHANNEL_ENTRY_AMPLIFIER_GAIN],
+          tag + bim::CHANNEL_INFO_AMPLIFIER_GAIN);
+
+      get_and_set_double(hash,
+          det_channel_path + lsm->key_names[DETCHANNEL_ENTRY_AMPLIFIER_OFFS],
+          tag + bim::CHANNEL_INFO_AMPLIFIER_OFFS);
+
+      get_and_set_string(hash,
+          det_channel_path + lsm->key_names[DETCHANNEL_FILTER_NAME],
+          tag + bim::CHANNEL_INFO_FILTER_NAME);
+
+      get_and_set_string(hash,
+          det_channel_path + lsm->key_names[DETCHANNEL_FILTER_NAME],
+          tag + bim::CHANNEL_INFO_EM_WAVELENGTH);
+
+      // fetch data from illumination channel
+      get_and_set_double(hash,
+          ilum_channel_path + lsm->key_names[ILLUMCHANNEL_ENTRY_WAVELENGTH],
+          tag + bim::CHANNEL_INFO_EX_WAVELENGTH);
+
+      get_and_set_double(hash,
+          ilum_channel_path + lsm->key_names[ILLUMCHANNEL_ENTRY_POWER],
+          tag + bim::CHANNEL_INFO_POWER);
+
+      //DECLARE_STR(CHANNEL_INFO_OBJECTIVE, "objective")
+      //DECLARE_STR(CHANNEL_INFO_FLUOR, "fluor")
+  }
+
+  // find some other attributes of interest
+  xstring rec_path = xstring(bim::CUSTOM_TAGS_PREFIX) + "Recording/";
+
+  get_and_set_string(hash,
+      rec_path + lsm->key_names[RECORDING_ENTRY_DESCRIPTION],
+      bim::IMAGE_DESCRIPTION);
+
+  get_and_set_string(hash,
+      rec_path + lsm->key_names[RECORDING_ENTRY_NOTES],
+      bim::IMAGE_NOTES);
+
+  get_and_set_string(hash,
+      rec_path + lsm->key_names[RECORDING_ENTRY_USER],
+      bim::IMAGE_USER);
+
+  // objective
+  xstring objective = hash->get_value(rec_path + lsm->key_names[RECORDING_ENTRY_OBJECTIVE]);
+  set_objective_from_string(hash, objective);
+
+  // zoom
+  double zoom_x = hash->get_value_double(rec_path + lsm->key_names[RECORDING_ENTRY_ZOOM_X], 1);
+  double zoom_y = hash->get_value_double(rec_path + lsm->key_names[RECORDING_ENTRY_ZOOM_Y], 1);
+  hash->set_value(bim::IMAGE_ZOOM, xstring::xprintf("%.2f,%.2f,1.0", zoom_x, zoom_y));
+
+  // position
+  double pos_x = hash->get_value_double(rec_path + lsm->key_names[RECORDING_ENTRY_SAMPLE_0X], 0);
+  double pos_y = hash->get_value_double(rec_path + lsm->key_names[RECORDING_ENTRY_SAMPLE_0Y], 0);
+  double pos_z = hash->get_value_double(rec_path + lsm->key_names[RECORDING_ENTRY_SAMPLE_0Z], 0);
+  hash->set_value(bim::IMAGE_POSITION, xstring::xprintf("%f,%f,%f", pos_x, pos_y, pos_z));
+
+  // size
+  /*double w = hash->get_value_double(rec_path + lsm->key_names[RECORDING_ENTRY_PLANE_WIDTH], 0);
+  double h = hash->get_value_double(rec_path + lsm->key_names[RECORDING_ENTRY_PLANE_HEIGHT], 0);
+  double d = hash->get_value_double(rec_path + lsm->key_names[RECORDING_ENTRY_VOLUME_DEPTH], 0);
+  hash->set_value(bim::IMAGE_SIZE, xstring::xprintf("%.2f,%.2f,%.2f", w, h, d));*/
 
   return 0;
 }
