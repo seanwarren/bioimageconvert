@@ -73,8 +73,8 @@ public:
   int    toInt( int def = 0 ) const;
   double toDouble(double def = 0.0) const;
 
-  std::string toLowerCase() const;
-  std::string toUpperCase() const;
+  xstring toLowerCase() const;
+  xstring toUpperCase() const;
 
   bool operator==(const xstring &s) const;
   bool operator==(const char *s) const;

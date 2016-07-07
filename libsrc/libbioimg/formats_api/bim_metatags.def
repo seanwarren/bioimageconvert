@@ -14,7 +14,6 @@
 DECLARE_STR( IMAGE_DATE_TIME, "date_time" )
 DECLARE_STR( IMAGE_FORMAT, "format" )
 DECLARE_STR( IMAGE_NAME_TEMPLATE, "image_%d_name" )
-DECLARE_STR( IMAGE_LABEL, "image_label" )
 
 // image geometry - describes image parameters
 DECLARE_STR( IMAGE_NUM_X, "image_num_x" ) // number pixels in X
@@ -58,10 +57,19 @@ DECLARE_STR( PIXEL_RESOLUTION_UNIT_MICRONS, "microns" )
 DECLARE_STR( PIXEL_RESOLUTION_UNIT_SECONDS, "seconds" )
 DECLARE_STR( PIXEL_RESOLUTION_UNIT_METERS,  "meters" )
 
+// some typical image descriptions
+DECLARE_STR( IMAGE_LABEL, "image/label" )
+DECLARE_STR( IMAGE_DESCRIPTION, "image/description" )
+DECLARE_STR( IMAGE_NOTES, "image/notes" )
+DECLARE_STR( IMAGE_ZOOM, "image/zoom" )
+DECLARE_STR( IMAGE_USER, "image/user" )
+DECLARE_STR( IMAGE_POSITION, "image/position" )
+DECLARE_STR( IMAGE_SIZE, "image/size" )
+
 // objective - information about objective lens
-DECLARE_STR( OBJECTIVE_DESCRIPTION  , "objective" )
-DECLARE_STR( OBJECTIVE_MAGNIFICATION, "magnification" )
-DECLARE_STR( OBJECTIVE_NUM_APERTURE, "objective_numerical_aperture" )
+DECLARE_STR( OBJECTIVE_DESCRIPTION, "objective/name" )
+DECLARE_STR( OBJECTIVE_MAGNIFICATION, "objective/magnification" )
+DECLARE_STR( OBJECTIVE_NUM_APERTURE, "objective/numerical_aperture" )
 
 // channels - used for textual descriptions about image channels
 DECLARE_STR( CHANNEL_NAME_0, "channel_0_name" )
@@ -89,6 +97,26 @@ DECLARE_STR( CHANNEL_COLOR_2, "channel_color_2" )
 DECLARE_STR( CHANNEL_COLOR_3, "channel_color_3" )
 DECLARE_STR( CHANNEL_COLOR_4, "channel_color_4" )
 DECLARE_STR( CHANNEL_COLOR_TEMPLATE, "channel_color_%d" )
+
+// new style channel information
+DECLARE_STR( CHANNEL_INFO_TEMPLATE, "channels/channel_%.5d/" )
+DECLARE_STR( CHANNEL_INFO_NAME, "name" )
+DECLARE_STR( CHANNEL_INFO_DESCRIPTION, "description" )
+DECLARE_STR( CHANNEL_INFO_COLOR, "color" ) // channels/channel_00001/color: 255,255,0
+DECLARE_STR( CHANNEL_INFO_COLOR_RANGE, "range" )
+DECLARE_STR( CHANNEL_INFO_OPACITY, "opacity" )
+DECLARE_STR( CHANNEL_INFO_FLUOR, "fluor" )
+DECLARE_STR( CHANNEL_INFO_GAMMA, "gamma" )
+DECLARE_STR( CHANNEL_INFO_DYE, "dye" )
+DECLARE_STR( CHANNEL_INFO_EM_WAVELENGTH, "lsm_emission_wavelength" )
+DECLARE_STR( CHANNEL_INFO_EX_WAVELENGTH, "lsm_excitation_wavelength" )
+DECLARE_STR( CHANNEL_INFO_PINHOLE_RADIUS, "lsm_pinhole_radius" )
+DECLARE_STR( CHANNEL_INFO_OBJECTIVE, "objective" )
+DECLARE_STR( CHANNEL_INFO_DETECTOR_GAIN, "detector_gain" )
+DECLARE_STR( CHANNEL_INFO_AMPLIFIER_GAIN, "amplifier_gain" )
+DECLARE_STR( CHANNEL_INFO_AMPLIFIER_OFFS, "amplifier_offset" )
+DECLARE_STR( CHANNEL_INFO_FILTER_NAME, "filter" )
+DECLARE_STR( CHANNEL_INFO_POWER, "power" )
 
 // video - information describing the video parameters
 DECLARE_STR( VIDEO_FORMAT_NAME, "video_format_name" )

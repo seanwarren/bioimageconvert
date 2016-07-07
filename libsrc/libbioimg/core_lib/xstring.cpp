@@ -276,14 +276,14 @@ xstring xstring::join(std::vector<unsigned char> v, const xstring &separator) {
 }
 
 //******************************************************************************
-std::string xstring::toLowerCase() const {
-  std::string s = *this;
+xstring xstring::toLowerCase() const {
+  xstring s = *this;
   std::transform(s.begin(), s.end(), s.begin(), tolower);
   return s;
 }
 
-std::string xstring::toUpperCase() const {
-  std::string s = *this;
+xstring xstring::toUpperCase() const {
+  xstring s = *this;
   std::transform(s.begin(), s.end(), s.begin(), toupper);
   return s;
 }
