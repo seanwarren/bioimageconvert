@@ -20,6 +20,7 @@
 #include <xstring.h>
 #include <tag_map.h>
 #include <bim_metatags.h>
+#include <bim_img_format_utils.h>
 
 #include "xtiffio.h"
 #include "bim_tiny_tiff.h"
@@ -425,14 +426,17 @@ void parse_metadata_fluoview (FormatHandle *fmtHndl, TagMap *hash ) {
   // Parsing some additional specific tags
   //----------------------------------------------------------------------------
 
-  // objective
-  if (hash->hasKey("custom/Acquisition Parameters/Objective Lens"))
-      hash->append_tag(bim::OBJECTIVE_DESCRIPTION, hash->get_value("custom/Acquisition Parameters/Objective Lens"));
-
   // magnification
-  if (hash->hasKey("custom/Acquisition Parameters/Magnification"))
-      hash->append_tag(bim::OBJECTIVE_MAGNIFICATION, hash->get_value("custom/Acquisition Parameters/Magnification"));
+  if (hash->hasKey("custom/Acquisition Parameters/Magnification")) {
+      double mag = bim::objective_parse_magnification(hash->get_value("custom/Acquisition Parameters/Magnification"));
+      if (mag>0) hash->append_tag(bim::OBJECTIVE_MAGNIFICATION, mag);
+  }
 
+  // objective
+  if (hash->hasKey("custom/Acquisition Parameters/Objective Lens")) {
+      //hash->append_tag(bim::OBJECTIVE_DESCRIPTION, hash->get_value("custom/Acquisition Parameters/Objective Lens"));
+      bim::parse_objective_from_string(hash->get_value("custom/Acquisition Parameters/Objective Lens"), hash);
+  }
 
   //---------------------------------------
   //Date=02-17-2004
@@ -447,6 +451,14 @@ void parse_metadata_fluoview (FormatHandle *fmtHndl, TagMap *hash ) {
        time[0].toInt(), time[1].toInt(), time[2].toInt() );
     hash->append_tag( bim::IMAGE_DATE_TIME, imaging_time );
   }
+
+  // new format channel info
+  /*for (int i = 0; i<fvi->ch; ++i) {
+      if (hash->hasKey("custom/Acquisition Parameters/Magnification")) {
+          double mag = bim::objective_parse_magnification(hash->get_value("custom/Acquisition Parameters/Magnification"));
+          if (mag>0) hash->append_tag(bim::OBJECTIVE_MAGNIFICATION, mag);
+      }
+  }*/
 }
 
 void parse_metadata_andor (FormatHandle *fmtHndl, TagMap *hash ) {
@@ -629,8 +641,10 @@ bim::uint append_metadata_fluoview (FormatHandle *fmtHndl, TagMap *hash ) {
   //----------------------------------------------------------------------------
   // Channel names and preferred mapping
   //----------------------------------------------------------------------------
-  for (unsigned int i=0; i<fvi->sample_names.size(); ++i)
-    hash->append_tag( xstring::xprintf(bim::CHANNEL_NAME_TEMPLATE.c_str(), i), fvi->sample_names[i] );
+  for (unsigned int i = 0; i < fvi->sample_names.size(); ++i) {
+      hash->append_tag(xstring::xprintf(bim::CHANNEL_NAME_TEMPLATE.c_str(), i), fvi->sample_names[i]);
+      hash->append_tag(xstring::xprintf(bim::CHANNEL_INFO_TEMPLATE.c_str(), i)+bim::CHANNEL_INFO_NAME, fvi->sample_names[i]);
+  }
 
   // preferred lut mapping
   if (fvi->display_lut.size() >= bim::NumberDisplayChannels) {
@@ -647,6 +661,7 @@ bim::uint append_metadata_fluoview (FormatHandle *fmtHndl, TagMap *hash ) {
     xstring tag_name  = xstring::xprintf( bim::CHANNEL_COLOR_TEMPLATE.c_str(), i );
     xstring tag_value = xstring::xprintf( "%d,%d,%d", fvi->channel_mapping[i].r, fvi->channel_mapping[i].g, fvi->channel_mapping[i].b );
     hash->append_tag( tag_name, tag_value );
+    hash->append_tag(xstring::xprintf(bim::CHANNEL_INFO_TEMPLATE.c_str(), i) + bim::CHANNEL_INFO_COLOR, tag_value);
   }
 
   //----------------------------------------------------------------------------
