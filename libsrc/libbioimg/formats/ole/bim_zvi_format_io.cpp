@@ -21,6 +21,7 @@
 #include <xstring.h>
 #include <tag_map.h>
 #include <bim_metatags.h>
+#include <bim_img_format_utils.h>
 
 #include <pole.h>
 
@@ -234,14 +235,20 @@ bim::uint zvi_append_metadata (FormatHandle *fmtHndl, TagMap *hash ) {
   //-------------------------------------------
   // objective
   //-------------------------------------------
-  if (z->meta()->hasKey("Objective Name"))
-    hash->set_value( bim::OBJECTIVE_DESCRIPTION, z->meta()->get_value("Objective Name") );
+  if (z->meta()->hasKey("Objective Name")) {
+      //hash->set_value( bim::OBJECTIVE_DESCRIPTION, z->meta()->get_value("Objective Name") );
+      bim::parse_objective_from_string(z->meta()->get_value("Objective Name"), hash);
+  }
 
-  if (z->meta()->hasKey("Objective Magnification"))
-    hash->set_value( bim::OBJECTIVE_MAGNIFICATION, z->meta()->get_value("Objective Magnification") );
+  if (z->meta()->hasKey("Objective Magnification")) {
+      double mag = bim::objective_parse_magnification(z->meta()->get_value("Objective Magnification")+"X");
+      if (mag>0) hash->set_value(bim::OBJECTIVE_MAGNIFICATION, mag);
+  }
 
-  if (z->meta()->hasKey("Objective N.A."))
-    hash->set_value( bim::OBJECTIVE_NUM_APERTURE, z->meta()->get_value("Objective N.A.") );
+  if (z->meta()->hasKey("Objective N.A.")) {
+      double na = bim::objective_parse_num_aperture(z->meta()->get_value("Objective N.A."));
+      if (na>0) hash->set_value(bim::OBJECTIVE_NUM_APERTURE, na);
+  }
 
   //-------------------------------------------
   // include all other tags into custom tag location

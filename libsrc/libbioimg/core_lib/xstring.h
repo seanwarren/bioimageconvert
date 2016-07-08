@@ -59,15 +59,15 @@ public:
 
   static xstring xprintf(const char *fmt, ...);
 
-  xstring &rstrip(const xstring &chars); // strips trailing chars
-  xstring &lstrip(const xstring &chars); // strips leading chars
-  xstring &strip(const xstring &chars); // strips leading and trailing chars
+  xstring rstrip(const xstring &chars) const; // strips trailing chars
+  xstring lstrip(const xstring &chars) const; // strips leading chars
+  xstring strip(const xstring &chars) const; // strips leading and trailing chars
 
-  xstring &erase_zeros(); // removes all 0 chars from the string
+  xstring erase_zeros() const; // removes all 0 chars from the string
 
-  xstring &removeSpacesLeft()  { return lstrip(" "); }
-  xstring &removeSpacesRight() { return rstrip(" "); }
-  xstring &removeSpacesBoth()  { return strip(" "); }
+  xstring removeSpacesLeft() const { return lstrip(" "); }
+  xstring removeSpacesRight() const { return rstrip(" "); }
+  xstring removeSpacesBoth() const { return strip(" "); }
 
   bool   toBool(bool def = false) const; // converts from either numeric 0 or 1 or from textual 'true' or 'false'
   int    toInt( int def = 0 ) const;
@@ -87,7 +87,7 @@ public:
   int compare(const xstring &s) const;
   static inline int compare(const xstring &s1, const xstring &s2) { return s1.compare(s2); }
 
-  std::vector<xstring> split( const xstring &separator ) const;
+  std::vector<xstring> split( const xstring &separator, const bool &ignore_empty = true ) const;
   std::vector<int>     splitInt( const xstring &separator, const int &def=0 ) const;
   std::vector<double>  splitDouble( const xstring &separator, const double &def=0.0 ) const;
 

@@ -102,6 +102,13 @@ class InfoComparator(object):
 
 class InfoEquality(InfoComparator):
     def compare(self, iv, tv):
+        try:
+            if isinstance(tv, (int, long)):
+                return (int(iv)==tv)
+            if isinstance(tv, (float)):
+                return (float(iv)==tv)
+        except:
+            pass
         return (iv==tv)
     def fail(self, k, iv, tv):
         print_failed('%s failed comparison %s = %s'%(k, iv, tv))
@@ -586,7 +593,7 @@ if 'all' in mode or 'reading' in mode:
     print
     print
     print '***************************************************'
-    print 'Reading formats, converting and creating thumbnails'
+    print '"reading" - Reading formats, converting and creating thumbnails'
     print '***************************************************'
 
     test_image_read( "BMP", "107_07661.bmp" )
@@ -620,7 +627,7 @@ if 'all' in mode or 'reading' in mode:
     test_image_read( "JPEG-2000", "219j.jp2" )
     test_image_read( "WEBP", "219j_q080.webp" )
     test_image_read( "WEBP LOSSLESS", "219j_q100.webp" )
-    
+
     # DICOM
     test_image_read( "DICOM", "10" )
     test_image_read( "DICOM", "0015.DCM" )
@@ -652,7 +659,7 @@ if 'all' in mode or 'writing' in mode:
     print
     print
     print '***************************************************'
-    print 'Writing formats'
+    print '"writing" - Writing formats'
     print '***************************************************'
 
     test_image_write( "JPEG", "flowers_24bit_nointr.png" )
@@ -670,7 +677,7 @@ if 'all' in mode or 'writingvideo' in mode:
     print
     print
     print '***************************************************'
-    print 'Writing video'
+    print '"writingvideo" - Writing video'
     print '***************************************************'
 
     test_video_write( "AVI", "161pkcvampz1Live2-17-2004_11-57-21_AM.tif" )
@@ -691,7 +698,7 @@ if 'all' in mode or 'meta' in mode:
     print
     print
     print '***************************************************'
-    print 'Reading and converting metadata'
+    print '"meta" - Reading and converting metadata'
     print '***************************************************'
 
     meta_test = {}
@@ -716,9 +723,10 @@ if 'all' in mode or 'meta' in mode:
     meta_test['pixel_resolution_unit_z'] = 'microns'
     meta_test['channel_0_name'] = 'FITC'
     meta_test['channel_1_name'] = 'Cy3'
+    # the following fields will not be tested for conversion into OME-TIFF
     meta_test_full = deepcopy(meta_test)
-    meta_test_full['objective'] = 'UPLAPO 40XO'
-    meta_test_full['magnification'] = '40X'
+    meta_test_full['objective/name'] = 'UPLAPO 40XO'
+    meta_test_full['objective/magnification'] = 40.0
     test_image_metadata( "TIFF Fluoview", "161pkcvampz1Live2-17-2004_11-57-21_AM.tif", meta_test_full, meta_test )
 
     meta_test = {}
@@ -730,8 +738,21 @@ if 'all' in mode or 'meta' in mode:
     meta_test['pixel_resolution_unit_x'] = 'microns'
     meta_test['pixel_resolution_unit_y'] = 'microns'
     meta_test['pixel_resolution_unit_z'] = 'microns'
+    # the following fields will not be tested for conversion into OME-TIFF
     meta_test_full = deepcopy(meta_test)
-    meta_test_full['objective'] = 'Achroplan 63x/0.95 W'
+    meta_test_full['objective/name'] = 'Achroplan 63x/0.95 W'
+    meta_test_full['objective/magnification'] = 63.0
+    meta_test_full['objective/numerical_aperture'] = 0.95
+    meta_test_full['channels/channel_00000/color'] = '0,255,0'
+    meta_test_full['channels/channel_00000/lsm_excitation_wavelength'] = 514.0
+    meta_test_full['channels/channel_00000/lsm_pinhole_radius'] = 185.0
+    meta_test_full['channels/channel_00000/name'] = 'Ch3-T3'
+    meta_test_full['channels/channel_00000/power'] = 38.8
+    meta_test_full['channels/channel_00001/color'] = '255,0,0'
+    meta_test_full['channels/channel_00001/lsm_excitation_wavelength'] = 458.0
+    meta_test_full['channels/channel_00001/lsm_pinhole_radius'] = 255.5
+    meta_test_full['channels/channel_00001/name'] = 'Ch2-T4'
+    meta_test_full['channels/channel_00001/power'] = 63.5
     test_image_metadata( "TIFF Zeiss LSM", "combinedsubtractions.lsm", meta_test_full, meta_test )
 
     meta_test = {}
@@ -746,9 +767,11 @@ if 'all' in mode or 'meta' in mode:
     meta_test['channel_0_name'] = 'Alexa Fluor 488 - 488nm'
     meta_test['channel_1_name'] = 'Alexa Fluor 546 - 543nm'
     meta_test['channel_2_name'] = 'DRAQ5 - 633nm'
+    # the following fields will not be tested for conversion into OME-TIFF
     meta_test_full = deepcopy(meta_test)
-    meta_test_full['objective'] = 'UPLFLN    40X O  NA:1.30'
-    meta_test_full['magnification'] = '40X'
+    meta_test_full['objective/name'] = 'UPLFLN    40X O  NA:1.30'
+    meta_test_full['objective/magnification'] = 40.0
+    meta_test_full['objective/numerical_aperture'] = 1.3
     test_image_metadata( "OME-TIFF", "wta.ome.tif", meta_test_full, meta_test )
 
     meta_test = {}
@@ -766,6 +789,7 @@ if 'all' in mode or 'meta' in mode:
     meta_test['pixel_resolution_unit_x'] = 'microns'
     meta_test['pixel_resolution_unit_y'] = 'microns'
     meta_test['pixel_resolution_unit_z'] = 'microns'
+    # the following fields will not be tested for conversion into OME-TIFF
     meta_test_full = deepcopy(meta_test)
     meta_test_full['stage_distance_z'] = '0.488000'
     meta_test_full['stage_position_x'] = '3712.200000'
@@ -839,7 +863,7 @@ if 'all' in mode or 'readmeta' in mode:
     print
     print
     print '***************************************************'
-    print 'Reading and parsing metadata'
+    print '"readmeta" - Reading and parsing metadata'
     print '***************************************************'
 
     # testing extracting GPS tags from EXIF
@@ -947,9 +971,9 @@ if 'all' in mode or 'readmeta' in mode:
     meta_test['channel_1_name'] = 'TRITC'
     meta_test['channel_2_name'] = 'FITC'
     meta_test['channel_3_name'] = 'DAPI'
-    meta_test['magnification'] = '40.000000'
-    meta_test['objective'] = 'Plan Neofluar 40x/1.30 Oil Ph3 (DIC III) (440451)'
-    meta_test['objective_numerical_aperture'] = '1.300000'
+    meta_test['objective/name'] = 'Plan Neofluar 40x/1.30 Oil Ph3 (DIC III) (440451)'
+    meta_test['objective/magnification'] = 40.0
+    meta_test['objective/numerical_aperture'] = 1.3
     test_metadata_read( "Zeiss ZVI", "23D3HA-cy3 psd-gfp-488 Homer-647 DIV 14 - 3.zvi", meta_test )
 
     # reading metadata from Zeiss ZVI
@@ -977,9 +1001,9 @@ if 'all' in mode or 'readmeta' in mode:
     meta_test['display_channel_magenta'] = '-1'
     meta_test['display_channel_cyan'] = '-1'
     meta_test['display_channel_gray'] = '-1'
-    meta_test['magnification'] = '63.000000'
-    meta_test['objective'] = 'C-Apochromat 63x/1.20 W Korr UV VIS IR'
-    meta_test['objective_numerical_aperture'] = '1.200000'
+    meta_test['objective/name'] = 'C-Apochromat 63x/1.20 W Korr UV VIS IR'
+    meta_test['objective/magnification'] = 63.0
+    meta_test['objective/numerical_aperture'] = 1.2
     test_metadata_read( "Zeiss ZVI", "0022.zvi", meta_test )
 
 
@@ -1181,7 +1205,7 @@ if 'all' in mode or 'readmeta' in mode:
     meta_test['image_num_z'] = '1'
     meta_test['image_pixel_depth'] = '8'
     test_metadata_read( "JPEG-2000", "219j.jp2", meta_test )
-    
+
     meta_test = {}
     meta_test['image_num_x'] = '1200'
     meta_test['image_num_y'] = '1650'
@@ -1189,7 +1213,7 @@ if 'all' in mode or 'readmeta' in mode:
     meta_test['image_num_t'] = '1'
     meta_test['image_num_z'] = '1'
     meta_test['image_pixel_depth'] = '8'
-    test_metadata_read( "WEBP", "219j_q080.webp", meta_test )    
+    test_metadata_read( "WEBP", "219j_q080.webp", meta_test )
 
     # DICOMs
 
@@ -1449,7 +1473,7 @@ if 'all' in mode or 'readmeta' in mode:
     meta_test['Iptc/Application2/ProvinceState'] = 'California'
     meta_test['Exif/GPSInfo/GPSLatitude'] = '34deg 29.12550\''
     test_metadata_read( "JPEG-XR", "IMG_1913_16bit_prophoto_q90.jxr", meta_test )
-    
+
     # JPEG-2000 and WebP metadata are not yet implemented
 #    meta_test = {}
 #    meta_test['image_num_c'] = '3'
@@ -1479,14 +1503,14 @@ if 'all' in mode or 'readmeta' in mode:
 #    meta_test['Exif/Photo/ISOSpeedRatings'] = '100'
 #    meta_test['Iptc/Application2/ProvinceState'] = 'California'
 #    meta_test['Exif/GPSInfo/GPSLatitude'] = '34deg 29.12550'
-#    test_metadata_read( "WebP", "IMG_1913_prophoto_q90.webp", meta_test )        
+#    test_metadata_read( "WebP", "IMG_1913_prophoto_q90.webp", meta_test )
 
 
 if 'all' in mode or 'video' in mode:
     print
     print
     print '***************************************************'
-    print 'Reading video meta'
+    print '"video" - Reading video meta'
     print '***************************************************'
 
     meta_test = {}
@@ -1724,7 +1748,7 @@ if 'all' in mode or 'transforms' in mode:
     print
     print
     print '***************************************************'
-    print 'Computing transforms'
+    print '"transforms" - Computing transforms'
     print '***************************************************'
 
     meta_test = {}
@@ -1811,7 +1835,7 @@ if 'all' in mode or 'commands' in mode:
     print
     print
     print '***************************************************'
-    print 'Computing commands'
+    print '"commands" - Computing commands'
     print '***************************************************'
 
     meta_test = {}
@@ -1905,7 +1929,7 @@ if 'all' in mode or 'pyramids' in mode:
     print
     print
     print '***************************************************'
-    print 'Testing pyramidal images'
+    print '"pyramids" - Testing pyramidal images'
     print '***************************************************'
 
     # test reading pyramidal metadata
@@ -2127,7 +2151,7 @@ if 'all' in mode or 'pyramids' in mode:
     test_image_commands( ['-t', 'tiff', '-tile', '256,1,1,2'], 'monument_imgcnv.ome.tif', meta_test ) # tile size different from stored
 
     # JPEG-2000
-    
+
     # meta
     meta_test = {}
     meta_test['image_num_c'] = '3'
@@ -2144,8 +2168,8 @@ if 'all' in mode or 'pyramids' in mode:
     else:
         meta_test['image_resolution_level_scales'] = '1.000000,0.500000,0.250000,0.125000,0.062500,0.031250,0.015625,0.007812'
     meta_test['image_resolution_level_structure'] = 'flat'
-    test_metadata_read( "2048px tiles JPEG-2000 pyramid", "retina.jp2", meta_test )    
-    
+    test_metadata_read( "2048px tiles JPEG-2000 pyramid", "retina.jp2", meta_test )
+
     # levels
     meta_test = {}
     meta_test['image_num_x'] = '271'
@@ -2154,8 +2178,8 @@ if 'all' in mode or 'pyramids' in mode:
     meta_test['image_num_z'] = '1'
     meta_test['image_num_t'] = '1'
     meta_test['image_pixel_depth'] = '8'
-    test_image_commands( ['-t', 'tiff', '-res-level', '6'], 'retina.jp2', meta_test )    
-    
+    test_image_commands( ['-t', 'tiff', '-res-level', '6'], 'retina.jp2', meta_test )
+
     # tiles
     meta_test = {}
     meta_test['image_num_x'] = '512'

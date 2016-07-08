@@ -27,6 +27,7 @@
 #include <tag_map.h>
 #include <bim_metatags.h>
 #include <bim_image.h>
+#include <bim_img_format_utils.h>
 
 #include "xtiffio.h"
 #include "bim_tiny_tiff.h"
@@ -942,15 +943,37 @@ bim::uint append_metadata_omeTiff(bim::FormatHandle *fmtHndl, bim::TagMap *hash)
     bim::xstring tag_objective = tag_270.section("<Objective", ">", p);
     tag_objective = ometiff_normalize_xml_spaces(tag_objective);
     if (tag_objective.size() > 0) {
-        bim::xstring model = tag_objective.section(" Model=\"", "\"");
-        if (model.size() > 0)
-            hash->append_tag(bim::OBJECTIVE_DESCRIPTION, model);
+        // v4
+        //<Objective Model="UPLFLN    40X O  NA:1.30"><LensNA>1.3</LensNA><NominalMagnification>40</NominalMagnification><Correction>Unknown</Correction>
+        bim::xstring s = tag_objective.section(" Model=\"", "\"");
+        if (s.size() > 0)
+            bim::parse_objective_from_string(s, hash);
+
+        // v5
+        //<Objective Correction="PlanApo" Immersion="Other" Iris="false" LensNA="0.8" NominalMagnification="20.0"/>
+        if (s.size() == 0) {
+            s = tag_objective.section(" Correction=\"", "\"");
+            if (s.size() > 0)
+                bim::parse_objective_from_string(s, hash);
+        }
+
+        s = tag_objective.section(" NominalMagnification=\"", "\"");
+        if (s.size() > 0)
+            hash->append_tag(bim::OBJECTIVE_MAGNIFICATION, s.toDouble());
+
+        s = tag_objective.section(" LensNA=\"", "\"");
+        if (s.size() > 0)
+            hash->append_tag(bim::OBJECTIVE_NUM_APERTURE, s.toDouble());
     }
 
+    //v4
     bim::xstring tag_magnification = tag_270.section("<NominalMagnification>", "</NominalMagnification>", p);
     if (tag_magnification.size() > 0)
-        hash->append_tag(bim::OBJECTIVE_MAGNIFICATION, tag_magnification + "X");
+        hash->append_tag(bim::OBJECTIVE_MAGNIFICATION, tag_magnification.toDouble());
 
+    bim::xstring tag_NA = tag_270.section("<LensNA>", "</LensNA>", p);
+    if (tag_NA.size() > 0)
+        hash->append_tag(bim::OBJECTIVE_NUM_APERTURE, tag_NA.toDouble());
 
     //----------------------------------------------------------------------------
     // read all custom attributes

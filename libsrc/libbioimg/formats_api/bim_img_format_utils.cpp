@@ -41,6 +41,7 @@
 
 #include <xstring.h>
 #include <bim_metatags.h>
+#include <tag_map.h>
 
 // Disables Visual Studio 2005 warnings for deprecated code
 #if ( defined(_MSC_VER) && (_MSC_VER >= 1400) )
@@ -50,6 +51,71 @@
 using namespace bim;
 
 const char *dimNames[6] = { "none", "X", "Y", "C", "Z", "T" };
+
+//------------------------------------------------------------------------------
+// common parsing
+//------------------------------------------------------------------------------
+
+double bim::objective_parse_magnification(const bim::xstring &s) {
+    if (!s.toLowerCase().contains("x")) return 0;
+    double mag = s.toLowerCase().strip(" ").left("x").toDouble(0);
+    if (mag == 0) return 0;
+    // typical values are in between 2X and 200X
+    if (mag<2 || mag>200) return 0;
+
+    // stringent test: 2 4 10 20 40 60 100 150 200 ?
+    return mag;
+}
+
+double bim::objective_parse_num_aperture(const bim::xstring &s) {
+    double na = s.strip(" ").toLowerCase().replace("na:", "").toDouble(0);
+    // typical values are in between 0 and 2
+    if (na>0 && na<2) return na;
+    return 0;
+}
+
+void bim::parse_objective_from_string(const bim::xstring &objective, bim::TagMap *hash) {
+    hash->set_value(bim::OBJECTIVE_DESCRIPTION, objective);
+    bool set_mag = false, set_na = false;
+
+    std::vector<xstring> tokens = objective.split(" ");
+    for (int t = 0; t < tokens.size(); ++t) {
+        // the most likely token is similar to 40X/1.30 
+        if (tokens[t].contains("/")) {
+            std::vector<xstring> pars = tokens[t].toLowerCase().split("/");
+            double mag = bim::objective_parse_magnification(pars[0]);
+            if (mag>0) {
+                hash->set_value(bim::OBJECTIVE_MAGNIFICATION, mag);
+                set_mag = true;
+            }
+
+            double NA = bim::objective_parse_num_aperture(pars[1]);
+            if (NA > 0) {
+                hash->set_value(bim::OBJECTIVE_NUM_APERTURE, NA);
+                set_na = true;
+            }
+
+            if (mag > 0 && NA > 0) break;
+            continue;
+        }
+
+        double mag = bim::objective_parse_magnification(tokens[t]);
+        if (mag>0 && set_mag==false) {
+            hash->set_value(bim::OBJECTIVE_MAGNIFICATION, mag);
+            set_mag = true;
+            continue;
+        }
+
+        double NA = bim::objective_parse_num_aperture(tokens[t]);
+        if (NA > 0 && set_na==false) {
+            hash->set_value(bim::OBJECTIVE_NUM_APERTURE, NA);
+            set_na = true;
+            continue;
+        }
+
+        if (set_mag==true && set_na==true) break;
+    }
+}
 
 //------------------------------------------------------------------------------
 // tests for provided callbacks

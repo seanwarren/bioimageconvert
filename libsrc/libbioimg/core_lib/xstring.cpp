@@ -100,41 +100,48 @@ xstring &xstring::insertAfterLast(const char *p, const xstring &s) {
 //******************************************************************************
 
 // strips trailing chars
-xstring &xstring::rstrip(const xstring &chars) {
-  size_t p = this->find_last_not_of(chars);
-  if (p != std::string::npos) {
-    this->resize(p+1, ' ');
-  } else { // if the string is only composed of those chars
-    for (unsigned int i=0; i<chars.size(); ++i)
-      if ((*this)[0]==chars[i]) { this->resize(0); break; }
-  }
-  return *this;
+xstring xstring::rstrip(const xstring &chars) const {
+    xstring s(*this);
+    size_t p = s.find_last_not_of(chars);
+    if (p != std::string::npos) {
+        s.resize(p+1, ' ');
+    } else { // if the string is only composed of those chars
+        for (unsigned int i=0; i<chars.size(); ++i)
+            if (s[0]==chars[i]) { 
+                s.resize(0); 
+                break; 
+            }
+    }
+    return s;
 }
 
 // strips leading chars
-xstring &xstring::lstrip(const xstring &chars) {
-  size_t p = this->find_first_not_of(chars);
-  if (p != std::string::npos) {
-    *this = this->substr( p, std::string::npos );
-  } else { // if the string is only composed of those chars
-    for (unsigned int i=0; i<chars.size(); ++i)
-      if ((*this)[0]==chars[i]) { this->resize(0); break; }
-  }
-  return *this;
+xstring xstring::lstrip(const xstring &chars) const {
+    xstring s(*this);
+    size_t p = s.find_first_not_of(chars);
+    if (p != std::string::npos) {
+        s =s.substr( p, std::string::npos );
+    } else { // if the string is only composed of those chars
+        for (unsigned int i=0; i<chars.size(); ++i)
+            if (s[0]==chars[i]) { 
+                s.resize(0); 
+                break; 
+            }
+    }
+    return s;
 }
 
 // strips leading and trailing chars
-xstring &xstring::strip(const xstring &chars) {
-  rstrip(chars);
-  lstrip(chars);
-  return *this;
+xstring xstring::strip(const xstring &chars) const {
+    return this->rstrip(chars).lstrip(chars);
 }
 
 bool is_zero(int i) { return i == 0; }
 
-xstring &xstring::erase_zeros() {
-    this->erase(std::remove_if(this->begin(), this->end(), is_zero), this->end() );
-    return *this;
+xstring xstring::erase_zeros() const {
+    xstring s(*this);
+    s.erase(std::remove_if(s.begin(), s.end(), is_zero), s.end() );
+    return s;
 }
 
 //******************************************************************************
@@ -199,7 +206,7 @@ bool xstring::endsWith(const xstring &s) const {
 
 
 //******************************************************************************
-std::vector<xstring> xstring::split( const xstring &s ) const {
+std::vector<xstring> xstring::split(const xstring &s, const bool &ignore_empty) const {
 
   std::vector<xstring> list;
   xstring part;
@@ -211,12 +218,14 @@ std::vector<xstring> xstring::split( const xstring &s ) const {
     end = this->find ( s, start );
     if (end == std::string::npos) {
       part = this->substr( start );
-      list.push_back( part );
+      if (!ignore_empty || ignore_empty && part.size()>0)
+          list.push_back( part );
       break;
     } else {
       part = this->substr( start, end-start );
       start = end + s.size();
-      list.push_back( part );
+      if (!ignore_empty || ignore_empty && part.size()>0)
+          list.push_back(part);
     }
   }
  

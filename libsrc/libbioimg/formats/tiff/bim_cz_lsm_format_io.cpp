@@ -22,6 +22,7 @@
 #include <xstring.h>
 #include <tag_map.h>
 #include <bim_metatags.h>
+#include <bim_img_format_utils.h>
 
 #include "xtiffio.h"
 #include "bim_tiny_tiff.h"
@@ -697,27 +698,6 @@ void get_and_set_string(TagMap *hash, const xstring &key_in, const xstring &key_
     }
 }
 
-void set_objective_from_string(TagMap *hash, const bim::xstring &objective) {
-    hash->set_value(bim::OBJECTIVE_DESCRIPTION, objective);
-
-    std::vector<xstring> tokens = objective.split(" ");
-    for (int t = 0; t < tokens.size(); ++t) {
-        if (!tokens[t].contains("/")) continue;
-        std::vector<xstring> pars = tokens[t].toLowerCase().split("/");
-        if (pars[0].contains("x")) {
-            double magnification = pars[0].replace("x", "").toDouble();
-            if (magnification>0)
-                hash->set_value(bim::OBJECTIVE_MAGNIFICATION, magnification);
-        }
-
-        double num_aperture = pars[1].toDouble();
-        if (num_aperture>0)
-            hash->set_value(bim::OBJECTIVE_NUM_APERTURE, num_aperture);
-
-        break;
-    }
-}
-
 bim::uint append_metadata_lsm (FormatHandle *fmtHndl, TagMap *hash ) {
   if (fmtHndl == NULL) return 1;
   if (fmtHndl->internalParams == NULL) return 1;
@@ -968,7 +948,7 @@ bim::uint append_metadata_lsm (FormatHandle *fmtHndl, TagMap *hash ) {
 
   // objective
   xstring objective = hash->get_value(rec_path + lsm->key_names[RECORDING_ENTRY_OBJECTIVE]);
-  set_objective_from_string(hash, objective);
+  bim::parse_objective_from_string(objective, hash);
 
   // zoom
   double zoom_x = hash->get_value_double(rec_path + lsm->key_names[RECORDING_ENTRY_ZOOM_X], 1);

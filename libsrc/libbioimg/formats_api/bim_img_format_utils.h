@@ -35,9 +35,9 @@
 #ifndef BIM_IMG_FMT_UTL_H
 #define BIM_IMG_FMT_UTL_H
 
-#include "bim_img_format_interface.h"
-
 #include <string>
+
+#include "bim_img_format_interface.h"
 
 //------------------------------------------------------------------------------
 // Safe calls for memory/io prototypes, if they are not supplied then
@@ -45,6 +45,9 @@
 //------------------------------------------------------------------------------
 
 namespace bim {
+
+class TagMap;
+class xstring;
 
 void* xmalloc ( FormatHandle *fmtHndl, BIM_SIZE_T size );
 inline void* xmalloc ( BIM_SIZE_T size ) {
@@ -74,7 +77,17 @@ int          xseek  ( FormatHandle *fmtHndl, BIM_OFFSET_T offset, int origin );
 BIM_SIZE_T   xsize  ( FormatHandle *fmtHndl );
 BIM_OFFSET_T xtell  ( FormatHandle *fmtHndl );
 int          xeof   ( FormatHandle *fmtHndl );
-   
+
+//------------------------------------------------------------------------------
+// common parsing
+//------------------------------------------------------------------------------
+
+// parse objective string and fill in proper tags into TagMap
+void parse_objective_from_string(const bim::xstring &objective, bim::TagMap *hash);
+
+double objective_parse_magnification(const bim::xstring &s);
+double objective_parse_num_aperture(const bim::xstring &s);
+
 //------------------------------------------------------------------------------
 // tests for provided callbacks
 //------------------------------------------------------------------------------
