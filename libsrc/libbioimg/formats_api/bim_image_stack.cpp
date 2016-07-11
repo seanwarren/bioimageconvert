@@ -179,6 +179,9 @@ bool ImageStack::toFile( const char *fileName, const char *formatName, const cha
   MetaFormatManager fm;
   if (!fm.isFormatSupportsWMP( formatName )) return false;
 
+  this->metadata.set_value("image_num_z", (int) this->length());
+  this->metadata.set_value("image_num_t", 1);
+
   handling_image = true;
   int pages = (int)images.size();
   int res = 1;
