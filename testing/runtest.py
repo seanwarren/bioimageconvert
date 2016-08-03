@@ -24,7 +24,7 @@ import posixpath
 
 IMGCNV = './imgcnv'
 IMGCNVVER = '2.0.9'
-url_image_store = 'http://flour.ece.ucsb.edu/~bisque/test_data/images/'
+url_image_store = 'http://flour.ece.ucsb.edu:8080/~bisque/test_data/images/'
 local_store_images  = 'images'
 local_store_tests   = 'tests'
 
