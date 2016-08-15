@@ -33,7 +33,7 @@
 TEMPLATE = lib
 VERSION = 0.2.1
 
-CONFIG  += staticlib
+CONFIG += staticlib
 
 CONFIG += release
 CONFIG += warn_off
@@ -194,7 +194,7 @@ macx {
 # generation: fixed
 #---------------------------------------------------------------------
 
-CONFIG  -= qt x11 windows
+CONFIG -= qt x11 windows
 
 MOC_DIR = $$BIM_GENS
 DESTDIR = $$BIM_BIN
@@ -335,10 +335,10 @@ HEADERS += $$BIM_FMTS/dcraw/bim_dcraw_format.h \
 # Transforms
 #---------------------------------------------------------------------
 
-DEFINES  += BIM_USE_FILTERS
+DEFINES += BIM_USE_FILTERS
 
 libbioimage_transforms {
-  DEFINES  += BIM_USE_TRANSFORMS
+  DEFINES += BIM_USE_TRANSFORMS
 
   macx {
     INCLUDEPATH += $$BIM_LIB_FFT/api
@@ -429,7 +429,7 @@ SOURCES += $$BIM_FMTS/nifti/bim_nifti_format.cpp
 #---------------------------------------------------------------------
 
 ffmpeg {
-  DEFINES  += BIM_FFMPEG_FORMAT FFMPEG_VIDEO_DISABLE_MATLAB __STDC_CONSTANT_MACROS
+  DEFINES += BIM_FFMPEG_FORMAT FFMPEG_VIDEO_DISABLE_MATLAB __STDC_CONSTANT_MACROS
   INCLUDEPATH += $$BIM_LIB_FFMPEG/include
   win32:INCLUDEPATH += $$BIM_LIB_FFMPEG/include-win
 
@@ -541,7 +541,7 @@ dyn_gdcm {
 #---------------------------------------------------------------------
 
 stat_openjpeg {
-  DEFINES  += OPJ_HAVE_LIBLCMS2
+  DEFINES += OPJ_HAVE_LIBLCMS2
   INCLUDEPATH += $${BIM_LIB_OPENJPEG}/lib
   INCLUDEPATH += $${BIM_LIB_OPENJPEG}/lib/openjp2
   INCLUDEPATH += $${BIM_LIB_OPENJPEG}/bin
@@ -605,7 +605,7 @@ dyn_openjpeg {
 #---------------------------------------------------------------------
 
 libraw {
-  DEFINES  += LIBRAW_BUILDLIB LIBRAW_NODLL USE_JPEG USE_ZLIB USE_LCMS2
+  DEFINES += LIBRAW_BUILDLIB LIBRAW_NODLL USE_JPEG USE_ZLIB USE_LCMS2
   INCLUDEPATH += $$BIM_LIB_RAW
 
   SOURCES += $$BIM_LIB_RAW/src/libraw_c_api.cpp \
@@ -625,13 +625,13 @@ libraw {
 #---------------------------------------------------------------------
 
 #some configs first
-unix:DEFINES  += HAVE_UNISTD_H
-unix:DEFINES  -= HAVE_IO_H
+unix:DEFINES += HAVE_UNISTD_H
+unix:DEFINES -= HAVE_IO_H
 win32:DEFINES += HAVE_IO_H
 
-macx:DEFINES  += HAVE_UNISTD_H
-#macx:DEFINES  += WORDS_BIGENDIAN
-macx:DEFINES  -= HAVE_IO_H
+macx:DEFINES += HAVE_UNISTD_H
+#macx:DEFINES += WORDS_BIGENDIAN
+macx:DEFINES -= HAVE_IO_H
 
 #---------------------------------------------------------------------
 # libTiff
@@ -658,7 +658,7 @@ stat_libtiff {
              $$BIM_LIB_TIF/tif_write.c $$BIM_LIB_TIF/tif_zip.c \
              $$BIM_LIB_TIF/tif_stream.cxx $$BIM_LIB_TIF/tif_lzma.c
 
-  unix:SOURCES  += $$BIM_LIB_TIF/tif_unix.c
+  unix:SOURCES += $$BIM_LIB_TIF/tif_unix.c
   win32:SOURCES += $$BIM_LIB_TIF/tif_win32.c
 }
 
