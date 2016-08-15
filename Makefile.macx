@@ -86,7 +86,7 @@ full:
 	(cd $(LIBOGG); $(MAKE))
 	(cp $(LIBOGG)/src/.libs/libogg.a $(LIBS)/)
 
-    # relative paths to libogg seem not to be working
+	# relative paths to libogg seem not to be working
 	@echo
 	@echo
 	@echo "Building libvorbis 1.3.4 in $(LIBVORBIS)"
@@ -100,9 +100,9 @@ full:
 	(cp $(LIBVORBIS)/lib/.libs/libvorbisenc.a $(LIBS)/)
 	(cp $(LIBVORBIS)/lib/.libs/libvorbisfile.a $(LIBS)/)
 
-    # relative paths to libogg and libvorbis seem not to be working
-    # after configure required creating a libtool shell script in the libtheora root pointing to gnu libtool:
-    # /usr/local/Cellar/libtool/2.4.4/bin/glibtool "$@"
+	# relative paths to libogg and libvorbis seem not to be working
+	# after configure required creating a libtool shell script in the libtheora root pointing to gnu libtool:
+	# /usr/local/Cellar/libtool/2.4.4/bin/glibtool "$@"
 	@echo
 	@echo
 	@echo "Building libtheora 1.1.1 in $(LIBTHEORA)"
@@ -119,7 +119,7 @@ full:
 	(cp $(LIBTHEORA)/lib/.libs/libtheoradec.a $(LIBS)/)
 	(cp $(LIBTHEORA)/lib/.libs/libtheoraenc.a $(LIBS)/)
 
-    # required removing -no-cpp-precomp from configure
+	# required removing -no-cpp-precomp from configure
 	@echo
 	@echo
 	@echo "Building xvidcore 1.3.3 in $(LIBXVID)"
@@ -133,7 +133,7 @@ full:
 
 	@echo
 	@echo
-	@echo "Building libvpx 1.4.0 in $(LIBVPX)"
+	@echo "Building libvpx 1.5.0 in $(LIBVPX)"
 	(cd $(LIBVPX); chmod -f u+x configure)
 	(cd $(LIBVPX); chmod -f u+x build/make/version.sh)
 	(cd $(LIBVPX); chmod -f u+x build/make/rtcd.sh)
