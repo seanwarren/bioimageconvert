@@ -36,20 +36,20 @@ imgcnv:
 	@echo
 	@echo
 	@echo "Building libbioimage in $(LIBBIM)"
-	(cd $(LIBBIM); qmake $(QMAKEOPTS) bioimage.pro)
-	(cd $(LIBBIM); $(MAKE))
+	(cd $(LIBBIM) && qmake $(QMAKEOPTS) bioimage.pro)
+	(cd $(LIBBIM) && $(MAKE))
 
 	@echo
 	@echo
 	@echo "Building imgcnv"
-	(cd src; qmake $(QMAKEOPTS) imgcnv.pro)
-	(cd src; $(MAKE))
+	(cd src && qmake $(QMAKEOPTS) imgcnv.pro)
+	(cd src && $(MAKE))
 
 	@echo
 	@echo
 	@echo "Building libimgcnv"
-	(cd src_dylib; qmake $(QMAKEOPTS) libimgcnv.pro)
-	(cd src_dylib; $(MAKE))
+	(cd src_dylib && qmake $(QMAKEOPTS) libimgcnv.pro)
+	(cd src_dylib && $(MAKE))
 
 full:
 	-mkdir -p .generated/obj
@@ -58,33 +58,33 @@ full:
 	@echo
 	@echo
 	@echo "Building libbioimage in $(LIBBIM)"
-	(cd $(LIBBIM); qmake $(QMAKEOPTS) bioimage.pro)
-	(cd $(LIBBIM); $(MAKE))
+	(cd $(LIBBIM) && qmake $(QMAKEOPTS) bioimage.pro)
+	(cd $(LIBBIM) && $(MAKE))
 
 	@echo
 	@echo
 	@echo "Building libvpx 1.5.0 in $(LIBVPX)"
 	#git clone https://chromium.googlesource.com/webm/libvpx
 	#git checkout v1.5.0
-	(cd $(LIBVPX); chmod -f u+x configure)
-	(cd $(LIBVPX); chmod -f u+x build/make/version.sh)
-	(cd $(LIBVPX); chmod -f u+x build/make/rtcd.sh)
-	(cd $(LIBVPX); chmod -f u+x build/make/gen_asm_deps.sh)
-	(cd $(LIBVPX); chmod -f u+x build/make/gen_asm_deps.sh)
-	(cd $(LIBVPX); ./configure --enable-vp8 --enable-vp9 --enable-pic --disable-examples --disable-unit-tests --disable-docs )
-	(cd $(LIBVPX); $(MAKE) $(MAKEFLAGS))
+	(cd $(LIBVPX) && chmod -f u+x configure)
+	(cd $(LIBVPX) && chmod -f u+x build/make/version.sh)
+	(cd $(LIBVPX) && chmod -f u+x build/make/rtcd.sh)
+	(cd $(LIBVPX) && chmod -f u+x build/make/gen_asm_deps.sh)
+	(cd $(LIBVPX) && chmod -f u+x build/make/gen_asm_deps.sh)
+	(cd $(LIBVPX) && ./configure --enable-vp8 --enable-vp9 --enable-pic --disable-examples --disable-unit-tests --disable-docs )
+	(cd $(LIBVPX) && $(MAKE) $(MAKEFLAGS))
 	(cp $(LIBVPX)/libvpx.a $(LIBS)/)
 
 	@echo
 	@echo
 	@echo "Building libwebp 0.4.3 in $(LIBWEBP)"
-	(cd $(LIBWEBP); chmod -f u+x configure)
-	(cd $(LIBWEBP); chmod -f u+x autogen.sh)
-	(cd $(LIBWEBP); chmod -f u+x config.guess)
-	(cd $(LIBWEBP); chmod -f u+x config.sub)
-	(cd $(LIBWEBP); chmod -f u+x config.status)
-	(cd $(LIBWEBP); ./configure --with-pic --enable-libwebpmux --enable-libwebpdemux --enable-libwebpdecoder)
-	(cd $(LIBWEBP); $(MAKE) $(MAKEFLAGS))
+	(cd $(LIBWEBP) && chmod -f u+x configure)
+	(cd $(LIBWEBP) && chmod -f u+x autogen.sh)
+	(cd $(LIBWEBP) && chmod -f u+x config.guess)
+	(cd $(LIBWEBP) && chmod -f u+x config.sub)
+	(cd $(LIBWEBP) && chmod -f u+x config.status)
+	(cd $(LIBWEBP) && ./configure --with-pic --enable-libwebpmux --enable-libwebpdemux --enable-libwebpdecoder)
+	(cd $(LIBWEBP) && $(MAKE) $(MAKEFLAGS))
 	(cp $(LIBWEBP)/src/.libs/libwebp.a $(LIBS)/)
 	(cp $(LIBWEBP)/src/mux/.libs/libwebpmux.a $(LIBS)/)
 	(cp $(LIBWEBP)/src/demux/.libs/libwebpdemux.a $(LIBS)/)
@@ -92,73 +92,73 @@ full:
 	@echo
 	@echo
 	@echo "Building jxrlib 1.1.0 in $(LIBJXR)"
-	(cd $(LIBJXR); $(MAKE) $(MAKEFLAGS))
+	(cd $(LIBJXR) && $(MAKE) $(MAKEFLAGS))
 	(cp $(LIBJXR)/libjpegxr.a $(LIBS)/)
 	(cp $(LIBJXR)/libjxrglue.a $(LIBS)/)
 
 	@echo
 	@echo
 	@echo "Building lcms 2.7.0 in $(LCMS2)"
-	(cd $(LCMS2); chmod -f u+x configure)
-	(cd $(LCMS2); chmod -f u+x autogen.sh)
-	(cd $(LCMS2); chmod -f u+x config.guess)
-	(cd $(LCMS2); chmod -f u+x config.sub)
-	(cd $(LCMS2); ./configure --with-pic )
-	(cd $(LCMS2); $(MAKE) $(MAKEFLAGS))
+	(cd $(LCMS2) && chmod -f u+x configure)
+	(cd $(LCMS2) && chmod -f u+x autogen.sh)
+	(cd $(LCMS2) && chmod -f u+x config.guess)
+	(cd $(LCMS2) && chmod -f u+x config.sub)
+	(cd $(LCMS2) && ./configure --with-pic )
+	(cd $(LCMS2) && $(MAKE) $(MAKEFLAGS))
 	(cp $(LCMS2)/src/.libs/liblcms2.a $(LIBS)/)
 
 	@echo
 	@echo
 	@echo "Building openjpeg 2.1.0 in $(LIBOPENJPEG)"
-	(cd $(LIBOPENJPEG); cmake . -DCMAKE_C_FLAGS=-fPIC -DBUILD_SHARED_LIBS:bool=off )
-	(cd $(LIBOPENJPEG); $(MAKE) $(MAKEFLAGS))
+	(cd $(LIBOPENJPEG) && cmake . -DCMAKE_C_FLAGS=-fPIC -DBUILD_SHARED_LIBS:bool=off )
+	(cd $(LIBOPENJPEG) && $(MAKE) $(MAKEFLAGS))
 	(cp $(LIBOPENJPEG)/bin/libopenjp2.a $(LIBS)/)
 
 	@echo
 	@echo
 	@echo "Building libx264 20150223 in $(LIBX264)"
-	(cd $(LIBX264); chmod -f u+x configure)
-	(cd $(LIBX264); chmod -f u+x version.sh)
-	(cd $(LIBX264); chmod -f u+x config.guess)
-	(cd $(LIBX264); chmod -f u+x config.sub)
-	(cd $(LIBX264); ./configure --enable-pic --enable-static --disable-opencl )
-	(cd $(LIBX264); $(MAKE) $(MAKEFLAGS))
+	(cd $(LIBX264) && chmod -f u+x configure)
+	(cd $(LIBX264) && chmod -f u+x version.sh)
+	(cd $(LIBX264) && chmod -f u+x config.guess)
+	(cd $(LIBX264) && chmod -f u+x config.sub)
+	(cd $(LIBX264) && ./configure --enable-pic --enable-static --disable-opencl )
+	(cd $(LIBX264) && $(MAKE) $(MAKEFLAGS))
 	(cp $(LIBX264)/libx264.a $(LIBS)/)
 
 	@echo
 	@echo
 	@echo "Building libx265 20150509 in $(LIBX265)"
-	#(cd $(LIBX265)/build/linux; chmod -f u+x make-Makefiles.bash)
-	#(cd $(LIBX265)/build/linux; bash make-Makefiles.bash )
-	(cd $(LIBX265)/build/linux; cmake -G "Unix Makefiles" ../../source -DCMAKE_CXX_FLAGS=-fPIC -DCMAKE_C_FLAGS=-fPIC )
-	(cd $(LIBX265)/build/linux; $(MAKE) $(MAKEFLAGS))
+	#(cd $(LIBX265)/build/linux && chmod -f u+x make-Makefiles.bash)
+	#(cd $(LIBX265)/build/linux && bash make-Makefiles.bash )
+	(cd $(LIBX265)/build/linux && cmake -G "Unix Makefiles" ../../source -DCMAKE_CXX_FLAGS=-fPIC -DCMAKE_C_FLAGS=-fPIC )
+	(cd $(LIBX265)/build/linux && $(MAKE) $(MAKEFLAGS))
 	(cp $(LIBX265)/build/linux/libx265.a $(LIBS)/)
 
 	@echo
 	@echo
 	@echo "Building libjpeg-turbo 1.4.0 in $(LIBJPEGTURBO)"
-	(cd $(LIBJPEGTURBO); chmod -f u+x configure)
-	(cd $(LIBJPEGTURBO); chmod -f u+x config.guess)
-	(cd $(LIBJPEGTURBO); chmod -f u+x config.sub)
-	(cd $(LIBJPEGTURBO); ./configure --enable-pic --enable-static --enable-shared=no )
-	(cd $(LIBJPEGTURBO); $(MAKE) $(MAKEFLAGS))
+	(cd $(LIBJPEGTURBO) && chmod -f u+x configure)
+	(cd $(LIBJPEGTURBO) && chmod -f u+x config.guess)
+	(cd $(LIBJPEGTURBO) && chmod -f u+x config.sub)
+	(cd $(LIBJPEGTURBO) && ./configure --enable-pic --enable-static --enable-shared=no )
+	(cd $(LIBJPEGTURBO) && $(MAKE) $(MAKEFLAGS))
 	(cp $(LIBJPEGTURBO)/.libs/libturbojpeg.a $(LIBS)/)
 
 	@echo
 	@echo
 	@echo "Building libGDCM 2.4.4 in $(LIBGDCM)"
 	-mkdir -p $(LIBGDCMBIN)
-	(cd $(LIBGDCMBIN); cmake ../gdcm -DCMAKE_CXX_FLAGS=-fPIC -DCMAKE_C_FLAGS=-fPIC -DGDCM_USE_OPENJPEG_V2=ON )
-	(cd $(LIBGDCMBIN); $(MAKE) $(MAKEFLAGS))
+	(cd $(LIBGDCMBIN) && cmake ../gdcm -DCMAKE_CXX_FLAGS=-fPIC -DCMAKE_C_FLAGS=-fPIC -DGDCM_USE_OPENJPEG_V2=ON )
+	(cd $(LIBGDCMBIN) && $(MAKE) $(MAKEFLAGS))
 	(cp $(LIBGDCMBIN)/bin/*.a $(LIBS)/gdcm/)
 
 	@echo
 	@echo
 	@echo "Building ffmpeg 2.6.3 in $(FFMPEG)"
-	(cd $(FFMPEG)/ffmpeg; chmod -f u+x configure)
-	(cd $(FFMPEG)/ffmpeg; chmod -f u+x version.sh)
+	(cd $(FFMPEG)/ffmpeg && chmod -f u+x configure)
+	(cd $(FFMPEG)/ffmpeg && chmod -f u+x version.sh)
 	-mkdir -p $(FFMPEG)/ffmpeg-obj
-	(cd $(FFMPEG)/ffmpeg-obj; ../ffmpeg/configure \
+	(cd $(FFMPEG)/ffmpeg-obj && ../ffmpeg/configure \
 		--enable-static --disable-shared --enable-pic --enable-gray \
 		--prefix=../ffmpeg-out \
 		--extra-cflags="-fPIC -I../../libvpx -I../../libx264 -I../../libx265/source" \
@@ -174,7 +174,7 @@ full:
 		--enable-libtheora --enable-libvpx --enable-libx264 --enable-encoder=libx264 --enable-libx265 --enable-libxvid \
 		--disable-libvo-aacenc --disable-libvo-amrwbenc )
 
-	(cd $(FFMPEG)/ffmpeg-obj; $(MAKE) $(MAKEFLAGS) all install)
+	(cd $(FFMPEG)/ffmpeg-obj && $(MAKE) $(MAKEFLAGS) all install)
 
 	(cp -f $(FFMPEG)/ffmpeg-out/lib/libavcodec.a $(LIBS)/)
 	(cp -f $(FFMPEG)/ffmpeg-out/lib/libavformat.a $(LIBS)/)
@@ -190,32 +190,32 @@ full:
 	@echo
 	@echo
 	@echo "Building imgcnv"
-	(cd src; qmake $(QMAKEOPTS) imgcnv.pro)
-	(cd src; $(MAKE) $(MAKEFLAGS))
+	(cd src && qmake $(QMAKEOPTS) imgcnv.pro)
+	(cd src && $(MAKE) $(MAKEFLAGS))
 
 	@echo
 	@echo
 	@echo "Building libimgcnv"
-	(cd src_dylib; qmake $(QMAKEOPTS) libimgcnv.pro)
-	(cd src_dylib; $(MAKE) $(MAKEFLAGS))
+	(cd src_dylib && qmake $(QMAKEOPTS) libimgcnv.pro)
+	(cd src_dylib && $(MAKE) $(MAKEFLAGS))
 
 clean:
-	(cd src; $(MAKE) clean)
+	(cd src && $(MAKE) clean)
 	rm -rf .generated *.o *~
 	rm -rf $(LIBBIM)/.generated $(LIBBIM)/*.o $(LIBBIM)/*~ $(LIBBIM)/.qmake.stash
-	(cd $(LIBBIM); $(MAKE) clean)
-	(cd $(LIBBIM); $(MAKE) clean)
+	(cd $(LIBBIM) && $(MAKE) clean)
+	(cd $(LIBBIM) && $(MAKE) clean)
 
 cleanfull:
-	(cd src; $(MAKE) clean)
+	(cd src && $(MAKE) clean)
 	rm -rf .generated *.o *~
 	rm -rf $(LIBBIM)/.generated $(LIBBIM)/*.o $(LIBBIM)/*~ $(LIBBIM)/.qmake.stash
-	(cd $(LIBBIM); $(MAKE) clean)
-	(cd $(LIBVPX); $(MAKE) clean)
-	(cd $(LIBX264); $(MAKE) clean)
+	(cd $(LIBBIM) && $(MAKE) clean)
+	(cd $(LIBVPX) && $(MAKE) clean)
+	(cd $(LIBX264) && $(MAKE) clean)
 	rm -rf $(FFMPEG)/ffmpeg-obj
 	rm -rf $(FFMPEG)/ffmpeg-out
-	#(cd $(FFMPEG)/ffmpeg; $(MAKE) clean)
+	#(cd $(FFMPEG)/ffmpeg && $(MAKE) clean)
 
 realclean: clean
 	rm -f imgcnv
