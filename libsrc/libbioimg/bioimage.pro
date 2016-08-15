@@ -39,17 +39,16 @@ CONFIG += release
 CONFIG += warn_off
 
 # static library config
-
 CONFIG += stat_libtiff
 #CONFIG += stat_libjpeg # pick one or the other
 CONFIG += stat_libjpeg_turbo # pick one or the other
 CONFIG += stat_libpng
 CONFIG += stat_zlib
 CONFIG += ffmpeg
+#CONFIG += stat_bzlib
 CONFIG += stat_exiv2
 CONFIG += stat_eigen
-CONFIG += libraw
-#CONFIG += stat_bzlib
+CONFIG += stat_libraw
 CONFIG += stat_libgeotiff
 CONFIG += stat_proj4
 CONFIG += libbioimage_transforms
@@ -604,7 +603,7 @@ dyn_openjpeg {
 # libraw
 #---------------------------------------------------------------------
 
-libraw {
+stat_libraw {
   DEFINES += LIBRAW_BUILDLIB LIBRAW_NODLL USE_JPEG USE_ZLIB USE_LCMS2
   INCLUDEPATH += $$BIM_LIB_RAW
 
