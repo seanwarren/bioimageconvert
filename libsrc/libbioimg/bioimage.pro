@@ -2,26 +2,26 @@
 # Manually generated !!!
 # libBioImage v 1.55 Project file
 # run:
-#   qmake libbioimage.pro - in order to generate Makefile for your platform
+#   qmake bioimage.pro - in order to generate Makefile for your platform
 #   make all - to compile the library
 #
 #
 # Copyright (c) 2005-2010, Bio-Image Informatic Center, UCSB
 #
 # To generate Makefile on any platform:
-#   qmake libbioimage.pro
+#   qmake bioimage.pro
 #
 # To generate VisualStudio project file:
-#   qmake -t vcapp -spec win32-msvc2005 libbioimage.pro
-#   qmake -t vcapp -spec win32-msvc.net libbioimage.pro
-#   qmake -t vcapp -spec win32-msvc libbioimage.pro
-#   qmake -spec win32-icc libbioimage.pro # to use pure Intel Compiler
+#   qmake -t vcapp -spec win32-msvc2005 bioimage.pro
+#   qmake -t vcapp -spec win32-msvc.net bioimage.pro
+#   qmake -t vcapp -spec win32-msvc bioimage.pro
+#   qmake -spec win32-icc bioimage.pro # to use pure Intel Compiler
 #
 # To generate xcode project file:
-#   qmake -spec macx-xcode libbioimage.pro
+#   qmake -spec macx-xcode bioimage.pro
 #
 # To generate Makefile on MacOSX with binary install:
-#   qmake -spec macx-g++ libbioimage.pro
+#   qmake -spec macx-g++ bioimage.pro
 #
 ######################################################################
 
