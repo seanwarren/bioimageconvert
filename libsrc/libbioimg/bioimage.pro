@@ -8,23 +8,31 @@
 #
 # Copyright (c) 2005-2010, Bio-Image Informatic Center, UCSB
 #
-# To generate Makefile on any platform:
+# To generate Makefiles on any platform:
 #   qmake bioimage.pro
 #
-# To generate VisualStudio project file:
+# To generate VisualStudio project files:
 #   qmake -t vcapp -spec win32-msvc2005 bioimage.pro
 #   qmake -t vcapp -spec win32-msvc.net bioimage.pro
 #   qmake -t vcapp -spec win32-msvc bioimage.pro
 #   qmake -spec win32-icc bioimage.pro # to use pure Intel Compiler
 #
-# To generate xcode project file:
+# To generate xcode project files:
 #   qmake -spec macx-xcode bioimage.pro
 #
-# To generate Makefile on MacOSX with binary install:
+# To generate Makefiles on MacOSX with binary install:
 #   qmake -spec macx-g++ bioimage.pro
 #
 ######################################################################
 
+win32 {
+    *-g++* {
+        message(detected platform Windows with compiler gcc (typically MinGW, MinGW64, Cygwin, MSYS2, or similar))
+        CONFIG += mingw
+        GCCMACHINETYPE=$$system("gcc -dumpmachine")
+        contains(GCCMACHINETYPE, x86_64.*):CONFIG += win64
+    }
+}
 
 #---------------------------------------------------------------------
 # configuration: editable
@@ -44,7 +52,7 @@ CONFIG += stat_libtiff
 CONFIG += stat_libjpeg_turbo # pick one or the other
 CONFIG += stat_libpng
 CONFIG += stat_zlib
-CONFIG += ffmpeg
+#CONFIG += ffmpeg
 #CONFIG += stat_bzlib
 CONFIG += stat_exiv2
 CONFIG += stat_eigen
@@ -92,14 +100,13 @@ BIM_IMGS = $${_PRO_FILE_PWD_}/../../images
 
 HOSTTYPE = $$(HOSTTYPE)
 
-unix {
-  BIM_GENS = .generated/$$HOSTTYPE
+unix | mingw {
+  BIM_GENS = ../../.generated/$$HOSTTYPE
   # path for object files
   BIM_OBJ = $$BIM_GENS/obj
   # path for generated binary
   BIM_BIN = $$BIM_GENS
-}
-win32 {
+} else:win32 {
   BIM_GENS = ../../.generated/$(PlatformName)/$(ConfigurationName)
   # path for object files
   BIM_OBJ = $$BIM_GENS
@@ -152,12 +159,14 @@ BIM_LIB_LCMS2    = $$BIM_LSRC/lcms2
 #macx:CONFIG+=x86 ppc
 #QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.4
 
-win32 {
+win32:!mingw {
   DEFINES += _CRT_SECURE_NO_WARNINGS
 }
 
 BIM_LIBS_PLTFM = $$BIM_LIBS
-win32: {
+mingw {
+  BIM_LIBS_PLTFM = $$BIM_LIBS/mingw
+} else:win32 {
   BIM_LIBS_PLTFM = $$BIM_LIBS/vc2008
 } else:macx {
   BIM_LIBS_PLTFM = $$BIM_LIBS/macosx
@@ -430,7 +439,7 @@ SOURCES += $$BIM_FMTS/nifti/bim_nifti_format.cpp
 ffmpeg {
   DEFINES += BIM_FFMPEG_FORMAT FFMPEG_VIDEO_DISABLE_MATLAB __STDC_CONSTANT_MACROS
   INCLUDEPATH += $$BIM_LIB_FFMPEG/include
-  win32:INCLUDEPATH += $$BIM_LIB_FFMPEG/include-win
+  win32:!mingw:INCLUDEPATH += $$BIM_LIB_FFMPEG/include-win
 
   SOURCES += $$BIM_FMT_FFMPEG/debug.cpp $$BIM_FMT_FFMPEG/bim_ffmpeg_format.cpp \
              $$BIM_FMT_FFMPEG/FfmpegCommon.cpp $$BIM_FMT_FFMPEG/FfmpegIVideo.cpp \
@@ -476,10 +485,10 @@ stat_gdcm {
   DEFINES += BIM_GDCM_FORMAT OPJ_STATIC
   SOURCES += $$BIM_FMT_DICOM/bim_dicom_format.cpp
 
-  win32 {
-    INCLUDEPATH += $$BIM_LIB_GDCM/projects/win64
-  } else {
+  unix | mingw {
     INCLUDEPATH += $$BIM_LIB_GDCM/projects/unix
+  } else {
+    INCLUDEPATH += $$BIM_LIB_GDCM/projects/win64
   }
 
   INCLUDEPATH += $$BIM_LIB_GDCM/Source/Common
@@ -624,9 +633,9 @@ stat_libraw {
 #---------------------------------------------------------------------
 
 #some configs first
-unix:DEFINES += HAVE_UNISTD_H
-unix:DEFINES -= HAVE_IO_H
-win32:DEFINES += HAVE_IO_H
+unix | mingw:DEFINES += HAVE_UNISTD_H
+unix | mingw:DEFINES -= HAVE_IO_H
+win32:!mingw:DEFINES += HAVE_IO_H
 
 macx:DEFINES += HAVE_UNISTD_H
 #macx:DEFINES += WORDS_BIGENDIAN
@@ -907,8 +916,8 @@ stat_eigen {
 
 stat_jxrlib {
   DEFINES += __ANSI__ DISABLE_PERF_MEASUREMENT
+  win32:!mingw:INCLUDEPATH += $$BIM_LIB_JXRLIB/common/include
   INCLUDEPATH += $$BIM_LIB_JXRLIB/image/sys
-  INCLUDEPATH += $$BIM_LIB_JXRLIB/common/include
   INCLUDEPATH += $$BIM_LIB_JXRLIB/jxrgluelib
   SOURCES += $$BIM_FMTS/jxr/bim_jxr_format.cpp
 }
