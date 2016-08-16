@@ -2,3 +2,8 @@
 .*\.swp
 .*\.swo
 \.DS_Store$
+libsrc/libbioimg/Makefile
+libsrc/libbioimg/Makefile.Debug
+libsrc/libbioimg/Makefile.Release
+libsrc/libbioimg/object_script.libbioimage.Debug
+libsrc/libbioimg/object_script.libbioimage.Release
