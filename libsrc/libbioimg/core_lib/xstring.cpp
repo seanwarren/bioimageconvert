@@ -20,6 +20,7 @@
 #include <algorithm>
 #include <iostream>
 #include <fstream>
+#include <locale>
 
 #include "xstring.h"
 
