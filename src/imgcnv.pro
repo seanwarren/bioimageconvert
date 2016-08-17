@@ -1,31 +1,44 @@
 ######################################################################
 # Manually generated !!!
-# BioImageConvert v 1.50 Project file
-# run: qmake imgcnv.pro in order to generate Makefile for your platform
+# libBioImage v 1.55 Project file
+# run:
+#   qmake -r imgcnv.pro - in order to generate Makefile for your platform
+#   make all - to compile the library
+#
+#
 # Copyright (c) 2005-2010, Bio-Image Informatic Center, UCSB
 #
-# To generate Makefile on any platform:
+# To generate Makefiles on any platform:
 #   qmake imgcnv.pro
 #
-# To generate VisualStudio project file:
+# To generate VisualStudio project files:
 #   qmake -t vcapp -spec win32-msvc2005 imgcnv.pro
 #   qmake -t vcapp -spec win32-msvc.net imgcnv.pro
 #   qmake -t vcapp -spec win32-msvc imgcnv.pro
 #   qmake -spec win32-icc imgcnv.pro # to use pure Intel Compiler
 #
-# To generate xcode project file:
+# To generate xcode project files:
 #   qmake -spec macx-xcode imgcnv.pro
 #
-# To generate Makefile on MacOSX with binary install:
+# To generate Makefiles on MacOSX with binary install:
 #   qmake -spec macx-g++ imgcnv.pro
 #
 ######################################################################
+
+win32 {
+    *-g++* {
+        message(detected platform Windows with compiler gcc (typically MinGW, MinGW64, Cygwin, MSYS2, or similar))
+        CONFIG += mingw
+        GCCMACHINETYPE=$$system("gcc -dumpmachine")
+        contains(GCCMACHINETYPE, x86_64.*):CONFIG += win64
+    }
+}
 
 #---------------------------------------------------------------------
 # configuration: editable
 #---------------------------------------------------------------------
 APP_NAME = imgcnv
-TARGET = imgcnv
+TARGET = $$APP_NAME
 
 TEMPLATE = app
 VERSION = 2.1.1
@@ -42,13 +55,18 @@ CONFIG += stat_libtiff
 CONFIG += stat_libjpeg_turbo # pick one or the other
 CONFIG += stat_libpng
 CONFIG += stat_zlib
-CONFIG += sys_bzlib
-CONFIG += stat_exiv2
+#CONFIG += ffmpeg
+#CONFIG += stat_bzlib
+CONFIG += dyn_bzlib
+#CONFIG += stat_exiv2
+CONFIG += dyn_exiv2
 CONFIG += stat_eigen
 CONFIG += stat_libraw
 CONFIG += stat_openjpeg
-CONFIG += stat_jxrlib
-CONFIG += stat_libwebp
+#CONFIG += stat_jxrlib
+CONFIG += dyn_jxrlib
+#CONFIG += stat_libwebp
+CONFIG += dyn_libwebp
 CONFIG += stat_lcms2
 CONFIG += dyn_lzma
 
@@ -62,8 +80,8 @@ macx {
 }
 
 CONFIG(debug, debug|release) {
-   message(Building in DEBUG mode!)
-   DEFINES += _DEBUG _DEBUG_
+  message(Building in DEBUG mode!)
+  DEFINES += DEBUG _DEBUG _DEBUG_
 }
 
 macx {
@@ -81,85 +99,97 @@ macx {
   QMAKE_LFLAGS_RELEASE += -fPIC -fopenmp -O3 -ftree-vectorize -msse2 -ffast-math -ftree-vectorizer-verbose=0
 }
 
-
 #---------------------------------------------------------------------
 # configuration paths: editable
 #---------------------------------------------------------------------
 
-BIM_SRC = $${_PRO_FILE_PWD_}/../src
-DN_LSRC = $${_PRO_FILE_PWD_}/../libsrc
-DN_LIBS = $${_PRO_FILE_PWD_}/../libs
-DN_IMGS = $${_PRO_FILE_PWD_}/../images
+BIM_SRC  = $${_PRO_FILE_PWD_}/../src
+BIM_LSRC = $${_PRO_FILE_PWD_}/../libsrc
+BIM_LIBS = $${_PRO_FILE_PWD_}/../libs
+BIM_IMGS = $${_PRO_FILE_PWD_}/../images
 
 HOSTTYPE = $$(HOSTTYPE)
 
-unix {
-  DN_GENS = ../.generated/$$HOSTTYPE
+unix | mingw {
+  BIM_GENS = ../.generated/$$HOSTTYPE
   # path for object files
-  DN_OBJ = $$DN_GENS/obj
+  BIM_OBJ = $$BIM_GENS/obj
   # path for generated binary
-  DN_BIN = ../$$HOSTTYPE
-}
-win32 {
-  DN_GENS = ../.generated/$(PlatformName)/$(ConfigurationName)
+  BIM_BIN = ../$$HOSTTYPE
+} else:win32 {
+  BIM_GENS = ../.generated/$(PlatformName)/$(ConfigurationName)
   # path for object files
-  DN_OBJ = $$DN_GENS
+  BIM_OBJ = $$BIM_GENS
   # path for generated binary
-  DN_BIN = ../$(PlatformName)/$(ConfigurationName)
+  BIM_BIN = ../$(PlatformName)/$(ConfigurationName)
 }
 
-DN_LIB_TIF = $$DN_LSRC/libtiff
 DN_LIB_JPG = $$DN_LSRC/libjpeg
 DN_LIB_PNG = $$DN_LSRC/libpng
 DN_LIB_Z   = $$DN_LSRC/zlib
 DN_LIB_BZ2 = $$DN_LSRC/bzip2
 DN_LIB_BIO = $$DN_LSRC/libbioimg
 
-DN_CORE     = $$DN_LIB_BIO/core_lib
-DN_FMTS     = $$DN_LIB_BIO/formats
-DN_FMTS_API = $$DN_LIB_BIO/formats_api
+BIM_LIB_TIF = $$BIM_LSRC/libtiff
+stat_libjpeg_turbo {
+  BIM_LIB_JPG    = $$BIM_LSRC/libjpeg-turbo
+} else {
+  BIM_LIB_JPG    = $$BIM_LSRC/libjpeg
+}
+BIM_LIB_PNG = $$BIM_LSRC/libpng
+BIM_LIB_Z   = $$BIM_LSRC/zlib
+BIM_LIB_BZ2 = $$BIM_LSRC/bzip2
+BIM_LIB_BIO = $$BIM_LSRC/libbioimg
+
+BIM_CORE     = $$BIM_LIB_BIO/core_lib
+BIM_FMTS     = $$BIM_LIB_BIO/formats
+BIM_FMTS_API = $$BIM_LIB_BIO/formats_api
+BIM_TRANSFORMS   = $$BIM_LIB_BIO/transforms
 
 ffmpeg {
-  DN_LIB_FFMPEG = $$DN_LSRC/ffmpeg
-  DN_FMT_FFMPEG = $$DN_FMTS/mpeg
+  BIM_LIB_FFMPEG = $$BIM_LSRC/ffmpeg
+  BIM_FMT_FFMPEG = $$BIM_FMTS/mpeg
 }
-DN_LIB_EXIV2   = $$DN_LSRC/exiv2
-DN_LIB_EIGEN   = $$DN_LSRC/eigen
-DN_LIB_RAW     = $$DN_LSRC/libraw
-BIM_LIB_GDCM   = $$DN_LSRC/gdcm
+BIM_LIB_EXIV2    = $$BIM_LSRC/exiv2
+BIM_LIB_EIGEN    = $$BIM_LSRC/eigen
+BIM_LIB_RAW      = $$BIM_LSRC/libraw
+BIM_LIB_GDCM     = $$BIM_LSRC/gdcm
 
 #---------------------------------------------------------------------
 # configuration: automatic
 #---------------------------------------------------------------------
 
-win32 {
+win32:!mingw {
   DEFINES += _CRT_SECURE_NO_WARNINGS
 }
 
-win32: {
-  BIM_LIBS_PLTFM = $$DN_LIBS/vc2008
+BIM_LIBS_PLTFM = $$BIM_LIBS
+mingw {
+  BIM_LIBS_PLTFM = $$BIM_LIBS/mingw
+} else:win32 {
+  BIM_LIBS_PLTFM = $$BIM_LIBS/vc2008
 } else:macx {
-  BIM_LIBS_PLTFM = $$DN_LIBS/macosx
+  BIM_LIBS_PLTFM = $$BIM_LIBS/macosx
 } else:unix {
-  BIM_LIBS_PLTFM = $$DN_LIBS/linux/$$HOSTTYPE
+  BIM_LIBS_PLTFM = $$BIM_LIBS/linux/$$HOSTTYPE
 } else {
-  BIM_LIBS_PLTFM = $$DN_LIBS/linux
+  BIM_LIBS_PLTFM = $$BIM_LIBS/linux
 }
 
 unix {
-  !exists( $$DN_GENS ) {
-    message( "Cannot find directory: $$DN_GENS, creating..." )
-    system( mkdir -p $$DN_GENS )
+  !exists( $$BIM_GENS ) {
+    message( "Cannot find directory: $$BIM_GENS, creating..." )
+    system( mkdir -p $$BIM_GENS )
   }
-  !exists( $$DN_OBJ ) {
-    message( "Cannot find directory: $$DN_OBJ, creating..." )
-    system( mkdir -p $$DN_OBJ )
+  !exists( $$BIM_OBJ ) {
+    message( "Cannot find directory: $$BIM_OBJ, creating..." )
+    system( mkdir -p $$BIM_OBJ )
   }
 }
 
 win32 {
-  !exists( $$DN_GENS ) {
-    message( "Cannot find directory: $$DN_GENS, creating..." )
+  !exists( $$BIM_GENS ) {
+    message( "Cannot find directory: $$BIM_GENS, creating..." )
     !exists( ../.generated/Win32/Debug       ) { system( mkdir ..\\.generated\\Win32\\Debug ) }
     !exists( ../.generated/Win32/Release     ) { system( mkdir ..\\.generated\\Win32\\Release ) }
     !exists( ../.generated/Win32/ICC_Release ) { system( mkdir ..\\.generated\\Win32\\ICC_Release ) }
@@ -167,8 +197,8 @@ win32 {
     !exists( ../.generated/x64/Release       ) { system( mkdir ..\\.generated\\x64\\Release ) }
     !exists( ../.generated/x64/ICC_Release   ) { system( mkdir ..\\.generated\\x64\\ICC_Release ) }
   }
-  !exists( $$DN_OBJ ) {
-    message( "Cannot find directory: $$DN_GENS, creating..." )
+  !exists( $$BIM_OBJ ) {
+    message( "Cannot find directory: $$BIM_GENS, creating..." )
     !exists( ../.generated/Win32/Debug   ) { system( mkdir ..\\.generated\\Win32\\Debug ) }
     !exists( ../.generated/Win32/Release ) { system( mkdir ..\\.generated\\Win32\\Release ) }
     !exists( ../.generated/x64/Debug     ) { system( mkdir ..\\.generated\\x64\\Debug ) }
@@ -177,15 +207,15 @@ win32 {
 }
 
 #---------------------------------------------------------------------
-# generation: required
+# generation: fixed
 #---------------------------------------------------------------------
 
-CONFIG  -= qt x11 windows
+CONFIG -= qt x11 windows
 
-MOC_DIR = $$DN_GENS
-DESTDIR = $$DN_BIN
-OBJECTS_DIR = $$DN_OBJ
-INCLUDEPATH += $$DN_GENS
+MOC_DIR = $$BIM_GENS
+DESTDIR = $$BIM_BIN
+OBJECTS_DIR = $$BIM_OBJ
+INCLUDEPATH += $$BIM_GENS
 
 #---------------------------------------------------------------------
 # main sources
@@ -203,17 +233,17 @@ DEFINES += BIM_USE_OPENMP
 DEFINES += BIM_USE_TRANSFORMS
 DEFINES += BIM_USE_FILTERS
 
-INCLUDEPATH += $$DN_LIB_BIO
-INCLUDEPATH += $$DN_FMTS_API
-INCLUDEPATH += $$DN_FMTS
-INCLUDEPATH += $$DN_CORE
+INCLUDEPATH += $$BIM_LIB_BIO
+INCLUDEPATH += $$BIM_FMTS_API
+INCLUDEPATH += $$BIM_FMTS
+INCLUDEPATH += $$BIM_CORE
 
-PRE_TARGETDEPS = $$DN_GENS/libbioimage.a
-LIBS += $$DN_GENS/libbioimage.a
+PRE_TARGETDEPS = $$BIM_LIB_BIO/.generated/libbioimage.a
+LIBS += $$BIM_LIB_BIO/.generated/libbioimage.a
 
-BimLib.target = $$DN_GENS/libbioimage.a
-#BimLib.commands = cd $$DN_LIB_BIO && qmake bioimage.pro && make
-BimLib.depends = $$DN_LIB_BIO/Makefile
+BimLib.target = $$BIM_LIB_BIO/.generated/libbioimage.a
+#BimLib.commands = cd $$BIM_LIB_BIO && qmake bioimage.pro && make
+BimLib.depends = $$BIM_LIB_BIO/Makefile
 QMAKE_EXTRA_TARGETS += BimLib
 
 #---------------------------------------------------------------------
@@ -221,7 +251,7 @@ QMAKE_EXTRA_TARGETS += BimLib
 #---------------------------------------------------------------------
 
 stat_eigen {
-  INCLUDEPATH += $$DN_LIB_EIGEN
+  INCLUDEPATH += $$BIM_LIB_EIGEN
 }
 
 #---------------------------------------------------------------------
@@ -296,7 +326,54 @@ ffmpeg {
 
 } # FFMPEG
 
-dyn_ffmpeg {
+#---------------------------------------------------------------------
+# GDCM - under linux we only use system dynamic version right now
+#---------------------------------------------------------------------
+
+stat_gdcm {
+
+  win32 {
+    LIBS += $$BIM_LIBS_PLTFM/gdcm/gdcmjpeg12.lib
+    LIBS += $$BIM_LIBS_PLTFM/gdcm/gdcmjpeg16.lib
+    LIBS += $$BIM_LIBS_PLTFM/gdcm/gdcmjpeg8.lib
+    LIBS += $$BIM_LIBS_PLTFM/gdcm/gdcmcharls.lib
+    LIBS += $$BIM_LIBS_PLTFM/gdcm/gdcmCommon.lib
+    LIBS += $$BIM_LIBS_PLTFM/gdcm/gdcmDICT.lib
+    LIBS += $$BIM_LIBS_PLTFM/gdcm/gdcmDSED.lib
+    LIBS += $$BIM_LIBS_PLTFM/gdcm/gdcmexpat.lib
+    LIBS += $$BIM_LIBS_PLTFM/gdcm/gdcmgetopt.lib
+    LIBS += $$BIM_LIBS_PLTFM/gdcm/gdcmIOD.lib
+    LIBS += $$BIM_LIBS_PLTFM/gdcm/gdcmMEXD.lib
+    LIBS += $$BIM_LIBS_PLTFM/gdcm/gdcmMSFF.lib
+    LIBS += $$BIM_LIBS_PLTFM/gdcm/gdcmopenjpeg.lib
+    LIBS += $$BIM_LIBS_PLTFM/gdcm/gdcmzlib.lib
+    LIBS += $$BIM_LIBS_PLTFM/gdcm/socketxx.lib
+  } else {
+    LIBS += $$BIM_LIBS_PLTFM/gdcm/libgdcmDICT.a
+    LIBS += $$BIM_LIBS_PLTFM/gdcm/libgdcmMSFF.a
+    LIBS += $$BIM_LIBS_PLTFM/gdcm/libgdcmCommon.a
+    LIBS += $$BIM_LIBS_PLTFM/gdcm/libgdcmDSED.a
+    LIBS += $$BIM_LIBS_PLTFM/gdcm/libgdcmIOD.a
+    LIBS += $$BIM_LIBS_PLTFM/gdcm/libgdcmcharls.a
+    LIBS += $$BIM_LIBS_PLTFM/gdcm/libgdcmexpat.a
+    LIBS += $$BIM_LIBS_PLTFM/gdcm/libgdcmjpeg8.a
+    LIBS += $$BIM_LIBS_PLTFM/gdcm/libgdcmjpeg12.a
+    LIBS += $$BIM_LIBS_PLTFM/gdcm/libgdcmjpeg16.a
+    LIBS += $$BIM_LIBS_PLTFM/gdcm/libgdcmopenjpeg.a
+    LIBS += $$BIM_LIBS_PLTFM/gdcm/libgdcmzlib.a
+  }
+
+  macx {
+    LIBS += -framework CoreFoundation
+  }
+
+} # static GDCM
+
+
+dyn_gdcm {
+  DEFINES += BIM_GDCM_FORMAT
+  SOURCES += $$BIM_FMT_DICOM/bim_dicom_format.cpp
+
   win32 {
     #LIBS += -lavformat
   } else:macx {

@@ -2,7 +2,7 @@
 # Manually generated !!!
 # libBioImage v 1.55 Project file
 # run:
-#   qmake bioimage.pro - in order to generate Makefile for your platform
+#   qmake -r bioimage.pro - in order to generate Makefile for your platform
 #   make all - to compile the library
 #
 #
@@ -53,7 +53,9 @@ CONFIG += stat_libjpeg_turbo # pick one or the other
 CONFIG += stat_libpng
 CONFIG += stat_zlib
 #CONFIG += stat_bzlib
-CONFIG += stat_exiv2
+CONFIG += dyn_bzlib
+#CONFIG += stat_exiv2
+CONFIG += dyn_exiv2
 CONFIG += stat_eigen
 CONFIG += stat_libraw
 CONFIG += stat_libgeotiff
@@ -61,8 +63,10 @@ CONFIG += stat_proj4
 CONFIG += libbioimage_transforms
 CONFIG += stat_pugixml
 CONFIG += stat_openjpeg
-CONFIG += stat_jxrlib
-CONFIG += stat_libwebp
+#CONFIG += stat_jxrlib
+CONFIG += dyn_jxrlib
+#CONFIG += stat_libwebp
+CONFIG += dyn_libwebp
 CONFIG += stat_lcms2
 macx:CONFIG += stat_lzma
 
@@ -77,7 +81,7 @@ macx {
 
 CONFIG(debug, debug|release) {
   message(Building in DEBUG mode!)
-  DEFINES += _DEBUG _DEBUG_
+  DEFINES += DEBUG _DEBUG _DEBUG_
 }
 
 macx {
@@ -121,7 +125,16 @@ unix | mingw {
 }
 
 
-BIM_LIB_TIF      = $$BIM_LSRC/libtiff
+BIM_LIB_TIF = $$(BIM_LIB_TIF)
+isEmpty(BIM_LIB_TIF) {
+    message("No external libtiff source directory given, will use internal libtiff.")
+    BIM_LIB_TIF = $$BIM_LSRC
+    !exists($$BIM_LIB_TIF/libtiff/tiff.h):error("Missing internal libtiff header at $$BIM_LIB_TIF/libtiff/tiff.h, please initialize the git submodules, or provide a separate checkout.")
+} else {
+    message("External libtiff source directory given at '$${BIM_LIB_TIF}'.")
+    !exists($$BIM_LIB_TIF/libtiff/tiff.h):error("Can not find tiff.h in external libtiff header at $$BIM_LIB_TIF/libtiff/tiff.h, please specify the root of the source tree.")
+}
+
 stat_libjpeg_turbo {
   BIM_LIB_JPG    = $$BIM_LSRC/libjpeg-turbo
 } else {
@@ -664,28 +677,28 @@ stat_lzma {
 #---------------------------------------------------------------------
 
 stat_libtiff {
-  INCLUDEPATH += $$BIM_LIB_TIF
-  SOURCES += $$BIM_LIB_TIF/tif_fax3sm.c $$BIM_LIB_TIF/tif_aux.c \
-             $$BIM_LIB_TIF/tif_close.c $$BIM_LIB_TIF/tif_codec.c \
-             $$BIM_LIB_TIF/tif_color.c $$BIM_LIB_TIF/tif_compress.c \
-             $$BIM_LIB_TIF/tif_dir.c $$BIM_LIB_TIF/tif_dirinfo.c \
-             $$BIM_LIB_TIF/tif_dirread.c $$BIM_LIB_TIF/tif_dirwrite.c \
-             $$BIM_LIB_TIF/tif_dumpmode.c $$BIM_LIB_TIF/tif_error.c \
-             $$BIM_LIB_TIF/tif_extension.c $$BIM_LIB_TIF/tif_fax3.c \
-             $$BIM_LIB_TIF/tif_flush.c $$BIM_LIB_TIF/tif_getimage.c \
-             $$BIM_LIB_TIF/tif_jpeg.c $$BIM_LIB_TIF/tif_luv.c \
-             $$BIM_LIB_TIF/tif_lzw.c $$BIM_LIB_TIF/tif_next.c \
-             $$BIM_LIB_TIF/tif_open.c $$BIM_LIB_TIF/tif_packbits.c \
-             $$BIM_LIB_TIF/tif_pixarlog.c $$BIM_LIB_TIF/tif_predict.c \
-             $$BIM_LIB_TIF/tif_print.c $$BIM_LIB_TIF/tif_read.c \
-             $$BIM_LIB_TIF/tif_strip.c $$BIM_LIB_TIF/tif_swab.c \
-             $$BIM_LIB_TIF/tif_thunder.c $$BIM_LIB_TIF/tif_tile.c \
-             $$BIM_LIB_TIF/tif_version.c $$BIM_LIB_TIF/tif_warning.c \
-             $$BIM_LIB_TIF/tif_write.c $$BIM_LIB_TIF/tif_zip.c \
-             $$BIM_LIB_TIF/tif_stream.cxx $$BIM_LIB_TIF/tif_lzma.c
+  INCLUDEPATH += $$BIM_LIB_TIF/libtiff $$BIM_LIB_TIF/project/qt
+  SOURCES += $$BIM_LIB_TIF/libtiff/tif_fax3sm.c $$BIM_LIB_TIF/libtiff/tif_aux.c \
+             $$BIM_LIB_TIF/libtiff/tif_close.c $$BIM_LIB_TIF/libtiff/tif_codec.c \
+             $$BIM_LIB_TIF/libtiff/tif_color.c $$BIM_LIB_TIF/libtiff/tif_compress.c \
+             $$BIM_LIB_TIF/libtiff/tif_dir.c $$BIM_LIB_TIF/libtiff/tif_dirinfo.c \
+             $$BIM_LIB_TIF/libtiff/tif_dirread.c $$BIM_LIB_TIF/libtiff/tif_dirwrite.c \
+             $$BIM_LIB_TIF/libtiff/tif_dumpmode.c $$BIM_LIB_TIF/libtiff/tif_error.c \
+             $$BIM_LIB_TIF/libtiff/tif_extension.c $$BIM_LIB_TIF/libtiff/tif_fax3.c \
+             $$BIM_LIB_TIF/libtiff/tif_flush.c $$BIM_LIB_TIF/libtiff/tif_getimage.c \
+             $$BIM_LIB_TIF/libtiff/tif_jpeg.c $$BIM_LIB_TIF/libtiff/tif_luv.c \
+             $$BIM_LIB_TIF/libtiff/tif_lzw.c $$BIM_LIB_TIF/libtiff/tif_next.c \
+             $$BIM_LIB_TIF/libtiff/tif_open.c $$BIM_LIB_TIF/libtiff/tif_packbits.c \
+             $$BIM_LIB_TIF/libtiff/tif_pixarlog.c $$BIM_LIB_TIF/libtiff/tif_predict.c \
+             $$BIM_LIB_TIF/libtiff/tif_print.c $$BIM_LIB_TIF/libtiff/tif_read.c \
+             $$BIM_LIB_TIF/libtiff/tif_strip.c $$BIM_LIB_TIF/libtiff/tif_swab.c \
+             $$BIM_LIB_TIF/libtiff/tif_thunder.c $$BIM_LIB_TIF/libtiff/tif_tile.c \
+             $$BIM_LIB_TIF/libtiff/tif_version.c $$BIM_LIB_TIF/libtiff/tif_warning.c \
+             $$BIM_LIB_TIF/libtiff/tif_write.c $$BIM_LIB_TIF/libtiff/tif_zip.c \
+             $$BIM_LIB_TIF/libtiff/tif_stream.cxx $$BIM_LIB_TIF/libtiff/tif_lzma.c
 
-  unix:SOURCES += $$BIM_LIB_TIF/tif_unix.c
-  win32:SOURCES += $$BIM_LIB_TIF/tif_win32.c
+  unix:SOURCES += $$BIM_LIB_TIF/libtiff/tif_unix.c
+  win32:SOURCES += $$BIM_LIB_TIF/libtiff/tif_win32.c
 }
 
 #---------------------------------------------------------------------
@@ -918,9 +931,9 @@ stat_exiv2 {
              $$BIM_LIB_EXIV2/exiv2/utils.cpp $$BIM_LIB_EXIV2/exiv2/value.cpp \
              $$BIM_LIB_EXIV2/exiv2/version.cpp $$BIM_LIB_EXIV2/exiv2/xmp.cpp \
              $$BIM_LIB_EXIV2/exiv2/xmpsidecar.cpp
-} else {
-#  unix:LIBS += -lexiv2
-#  win32:LIBS += $$BIM_LIBS_PLTFM/libexiv2.lib
+} else:dyn_exiv2 {
+  unix | mingw:LIBS += -lexiv2
+  #win32:LIBS += $$BIM_LIBS_PLTFM/libexiv2.lib
 }
 
 #---------------------------------------------------------------------
@@ -941,6 +954,8 @@ stat_jxrlib {
   INCLUDEPATH += $$BIM_LIB_JXRLIB/image/sys
   INCLUDEPATH += $$BIM_LIB_JXRLIB/jxrgluelib
   SOURCES += $$BIM_FMTS/jxr/bim_jxr_format.cpp
+} else:dyn_jxrlib {
+  unix | mingw:LIBS += -ljxrglue
 }
 
 #---------------------------------------------------------------------
@@ -950,6 +965,8 @@ stat_jxrlib {
 stat_libwebp {
   INCLUDEPATH += $$BIM_LIB_LIBWEBP/src
   SOURCES += $$BIM_FMTS/webp/bim_webp_format.cpp
+} else:dyn_libwebp {
+  unix | mingw:LIBS += -lwebp
 }
 
 #---------------------------------------------------------------------
@@ -958,5 +975,6 @@ stat_libwebp {
 
 stat_lcms2 {
   INCLUDEPATH += $$BIM_LIB_LCMS2/include
+  unix | mingw:LIBS += -llcms2
 }
 
