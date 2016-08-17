@@ -1,0 +1,6 @@
+;File: dll_exports.def (explicitly export the global object names.)
+LIBRARY imgcnv.dll
+EXPORTS
+   imgcnv
+   imgcnv_clear
+

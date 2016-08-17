@@ -1,0 +1,161 @@
+= Version Change Log =
+
+== 2.0.9 ==
+ This is an intermediate release towards version 3, these will be the features of the final v3 release.
+ 
+ * New: Added support for new formats
+        * JPEG-XR using jxrlib 1.1
+        * WebP using libwebp 0.4
+        * JPEG-2000 using openjpeg 2.1.0, work with Mario Emmenlauer (will be updated to optimized GROK distro for v3)
+        * NIFTI-1 using niftilib
+        * ITK MediaHeader RAW
+        * NRRD RAW
+ * New: major rewrite of metadata handling with extended support (JPEG, JPEG-XR, JPEG-2000, TIFF, PNG, WebP)
+        * GeoTIFF
+        * ICC
+        * EXIF
+        * IPTC
+        * XMP
+ * New: Added tile-based ROI interface
+ * New: Added full support for color spaces, profiles and conversions using LCMS2
+ * New: Added support for RGBA imagery: 
+        * metadata based fusion will ignore alpha channel
+        * default alpha mapping to false color image is set to transarent
+        * image mode is reported in the metadata and properly indicates RGBA for most formats
+        ** TIFF format is one exception due to inability of defining an alpha channel reliably via photometric tag
+           and since tiff is mostly used to transmit false color images the alpha channel can not be automatically detected
+ * Update: DCRAW updated libraw to 0.18 and supported Canon 5DSr camera CR2 files
+ * Update: TIFF added compressions: jpeg, zip, lzma
+ * Update: OME-TIFF added preferred color support
+ * Update: Metaxpress improved metadata parsing
+ * Update: optimizated openmp based parallelization, ignoring small images
+ 
+== 2.0 ==
+
+ * New: All command line operations are now ordered and thus may render different results to version 1.X
+ * New: Added DICOM support using GDCM 2.4.4 
+ * New: Added Hounsfield space enhancements for CT DICOM data
+ * New: Added MPEG H265 encoding/decoding support
+ * New: Added interleaved data support for RAW decoder/encoder
+ * New: Added support for multi-file images with channels stored in separate files via -geometry 1,1,Ch and -il for list of files
+ * New: Added support for reading pyramidal files: reading resolution levels and/or specific tiles and applying all requested operations
+        Supported formats:
+          TIFF pyramids in two variuants: with top level pages with low-res images as well as low res stored in sub-ifds
+          OME-TIFF files support only sub-ifd storage in order to keep compatibility
+ * New: Added support for writing pyramidal files in both variants
+ * New: Support for virtual tiles, where reader will export tiles in requested sizes independent of what is stored in the image
+ * New: Added mosaicking command to assemble a large image from aligned non-overlapping tiles
+ * Update: replaced libjpeg with libjpeg-turbo 1.4.0 for faster decoding and encoding
+ * Update: improved parsing of OME-TIFF metadata using pugixml parser, improved parsing of channel data
+ * Update: added parsing of MetaXpress versions of STK files
+ * Update: updated ffmpeg to version 2.5.3 supporting H265
+ * Update: updated libpng to 1.6.16
+ * Fix: Fix for libpng reading 16-bit files
+
+== 1.70 ==
+ * New: GeoTIFF metadata parsing and coordinate conversions
+
+== 1.68 ==
+
+ * Update: OME-TIFF encoder/decoder updated to read and write new format, still compatible with the old one
+ * Update: Full support of unicode filenames for windows
+ * Fix: Report errors when tile could not be created due to unreadable format
+ * Fix: Removed error during PNG reading due to incorrect color space
+
+== 1.66 ==
+ * New: texture atlas generation
+ * New: support for multiple ROIs
+ * Update: Improved generation of video files, specifically H264 codec based
+ * Update: updated to ffmpeg 2.2.1
+ * Update: updated all image libraries
+
+== 1.65 ==
+ * New: thresholding, gamma correction, brightness and contrast
+ * New: Image transformations: color, space, etc
+ * New: Most operations are parallelized 
+ * New: rotation, flip and mirror commands
+ * New: slic superpixels
+ * New: guessing rotation based on EXIF
+ * New: reading input files from a text file
+ * New: combined channel enhancements for RGB images
+ * New: Axis reprojection: XYZ -> XZY and XYZ -> YZX
+ * Update: many speed updates to large tiff files, meta and info calls
+ * Fix: many fixes for very large files, pixel formats, 3D interpolation
+
+== 1.55 ==
+ * New: Support for Digital Camera RAW - Adobe DNG, Canon CR2, CRW, Nikon NEF...
+ * New: Support for MicroManager OME-TIFF JSON metadata
+ * New: Parallelized resize and pyramid construction functions
+
+== 1.54 ==
+ * New: Channel fusion to RGB image given RGB components for each channel
+ * New: Decoding of preferred RGB components for each channel for all formats
+ * Updated: Zeiss LSM parser improved to decode more meatdata
+ * Updated: More information is printed about formats in XML
+
+== 1.53 ==
+ * New: Full support for OME-BigTIFF
+ * ffmpeg 1.0 support with WebM, x264, etc
+ * video deinterlacing
+
+== 1.52 ==
+
+ * New: No upsample argument in resize
+ * Update: Many improvements and fixes to OIB reader
+
+== 1.51 ==
+
+ * Support Zeiss ZVI file format
+ * EXIF/IPTC metadata parsing
+ * improve preferred channel mapping for OIB and Fluoview
+ * add support for 7 channel visual mapping: R,G,B,Y,C,M,Gray
+ * add registration based "overlapping frames" constraint for sampling
+ * add skipping frames in the beginning and at the end
+ * new binary: gobjects renderer, separate due to Qt usage
+ * new: store to and use histogram from the file
+ * support progressive jpeg encoding, make it default but allow option to disable
+
+== 1.45 ==
+
+ * New: Channel fusion that allows combining channels, ex: 1+4,2+4,3
+ * New: 3D interpolation (for 3D images) with Nearest Neighbor, Trilinear and Tricubic
+ * New: Append channels from another file, images must match sizes and pixel formats
+ * Fix: Writing OME-TIFF images with multiple channels
+
+== 1.44 ==
+
+==== General ====
+
+ * Major library updates and support for new platforms
+ * Added testing framework and all releases are now tested against exhaustive benchmark
+ * Full support for Windows64
+ * Full support for Intel based MacOSX
+ * Full support for Signed, Unsigned and Float images in: 8/16/32/64 bits (includes resize, histogram and Luts)
+ * Updated Matlab MEX: bimread
+ * Updated libraries: ffmpeg, libtiff, libjpeg, libpng
+
+==== Command line ====
+
+ * Support for definition of 5D geometry from command line
+ * All metadata is now transfered by default 
+ * Add tiling command (generates a tiled pyramid is specified format in desired location)
+
+==== Formats ====
+
+ * Full support for BigTIFF 
+ * Added support for OIB version 2.0.0.0
+ * Many OME-TIFF fixes
+ 
+
+== 1.40 ==
+
+ * Heavily improved metadata system: extraction of many more tags for all formats, code clean-up, new command line options
+ * Added full support for OME-TIFF file format
+ * Heavily improved parsing for STK, LSM, Fluoview
+ * Improved command line parsing
+ * Several improvements and fixes for OIB format, mostly fixed loading of mosaics, greatly improved speed for large files
+ * Support for 1 and 4 bit images, they will be converted to 8 bit images
+
+== 1.33 ==
+
+ * Start of changelog

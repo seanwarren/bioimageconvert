@@ -1,0 +1,57 @@
+Only in ./: libtiff_4.0.4.patch
+diff -u ../../_files/tiff/tiff-4.0.4/libtiff/tif_dir.c ./tif_dir.c
+--- ../../_files/tiff/tiff-4.0.4/libtiff/tif_dir.c	2015-05-31 16:11:43.000000000 -0700
++++ ./tif_dir.c	2015-07-14 17:27:03.032140600 -0700
+@@ -1501,12 +1501,12 @@
+ /*
+  * Count the number of directories in a file.
+  */
+-uint16
++uint64
+ TIFFNumberOfDirectories(TIFF* tif)
+ {
+ 	static const char module[] = "TIFFNumberOfDirectories";
+ 	uint64 nextdir;
+-	uint16 n;
++	uint64 n;
+ 	if (!(tif->tif_flags&TIFF_BIGTIFF))
+ 		nextdir = tif->tif_header.classic.tiff_diroff;
+ 	else
+diff -u ../../_files/tiff/tiff-4.0.4/libtiff/tif_open.c ./tif_open.c
+--- ../../_files/tiff/tiff-4.0.4/libtiff/tif_open.c	2010-12-08 16:48:54.000000000 -0800
++++ ./tif_open.c	2015-07-14 17:27:39.232222400 -0700
+@@ -592,7 +592,7 @@
+ /*
+  * Return index of the current directory.
+  */
+-uint16
++uint64
+ TIFFCurrentDirectory(TIFF* tif)
+ {
+ 	return (tif->tif_curdir);
+diff -u ../../_files/tiff/tiff-4.0.4/libtiff/tiffio.h ./tiffio.h
+--- ../../_files/tiff/tiff-4.0.4/libtiff/tiffio.h	2012-07-29 09:34:26.000000000 -0700
++++ ./tiffio.h	2015-07-14 17:28:28.689066500 -0700
+@@ -388,8 +388,8 @@
+ extern TIFFMapFileProc TIFFGetMapFileProc(TIFF*);
+ extern TIFFUnmapFileProc TIFFGetUnmapFileProc(TIFF*);
+ extern uint32 TIFFCurrentRow(TIFF*);
+-extern uint16 TIFFCurrentDirectory(TIFF*);
+-extern uint16 TIFFNumberOfDirectories(TIFF*);
++extern uint64 TIFFCurrentDirectory(TIFF*);
++extern uint64 TIFFNumberOfDirectories(TIFF*);
+ extern uint64 TIFFCurrentDirOffset(TIFF*);
+ extern uint32 TIFFCurrentStrip(TIFF*);
+ extern uint32 TIFFCurrentTile(TIFF* tif);
+diff -u ../../_files/tiff/tiff-4.0.4/libtiff/tiffiop.h ./tiffiop.h
+--- ../../_files/tiff/tiff-4.0.4/libtiff/tiffiop.h	2015-06-21 09:23:51.000000000 -0700
++++ ./tiffiop.h	2015-07-14 17:29:04.872147500 -0700
+@@ -136,7 +136,7 @@
+ 	} tif_header;
+ 	uint16               tif_header_size;  /* file's header block and its length */
+ 	uint32               tif_row;          /* current scanline */
+-	uint16               tif_curdir;       /* current directory (index) */
++	uint64               tif_curdir;       /* current directory (index) */
+ 	uint32               tif_curstrip;     /* current strip for read/write */
+ 	uint64               tif_curoff;       /* current offset for read/write */
+ 	uint64               tif_dataoff;      /* current offset for writing dir */

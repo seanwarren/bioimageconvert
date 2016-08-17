@@ -1,0 +1,44 @@
+Win 8 MSVC 2012 237 tests: 151.068000078 seconds
+Win 8 MSVC 2010 237 tests: 152.319000006 seconds
+Win 8 MSVC 2012 237 tests: 109.282000065 seconds - v 1.60 improving info
+Win 8 MSVC 2012 237 tests: 102.585999966 seconds - v 1.60 improving info, meta, most ops parallel 
+Win 8 MSVC 2012 245 tests: 98.8040001392 seconds - v 1.60 final
+Win 8 MSVC 2012 248 tests: 144.770999908 seconds - v 1.61 
+Win 8 MSVC 2012 251 tests: 106.473000050 seconds - v 1.64 
+Win 8 MSVC 2012 254 tests: 144.105999947 seconds - v 1.65
+
+Win 8 MSVC 2012 256 tests: 158.661999941 seconds - v 1.65
+hammer debian x64 256 tests: 286.821927071 seconds - v 1.65 
+hammer debian x64 256 tests: 278.074404955 seconds - v 1.65 gcc auto-vectorized
+
+v 1.72
+Win 8 MSVC 2012 256 tests: 124.365999937 seconds - jpeg-ijg
+Win 8 MSVC 2012 256 tests: 122.053999901 seconds - jpeg-turbo
+
+v 2.0
+
+jpeg tests:
+Win 8 MSVC 2013    35 tests: 14.4049999714 seconds - jpeg-ijg
+Win 8 MSVC 2013    35 tests: 11.3450000286 seconds - jpeg-turbo
+MacOSX 10.10       35 tests: 14.7353031635 seconds - jpeg-ijg
+MacOSX 10.10       35 tests: 10.6649692059 seconds - jpeg-turbo
+hammer debian x64  35 tests: 16.4180080891 seconds - jpeg-turbo
+
+tests:
+Win 8 MSVC 2013   360 tests: 221.73300004 seconds
+MacOSX 10.10      360 tests: X seconds
+hammer debian x64 360 tests: 421.298635006 seconds
+
+v 2.0.8
+
+Win 8 MSVC 2013   419 tests: 359.450999975 seconds
+Win 8 MSVC 2013 J  35 tests: 12.8759999275 seconds
+Win 8 MSVC 2015   419 tests: 365.124000072 seconds
+Win 8 MSVC 2015 J  35 tests: 12.7630000114 seconds
+
+v 2.0.9
+
+Win 8 MSVC 2013   426 tests: 401.576999903 seconds
+Win 8 MSVC 2013 J  35 tests: 12.489000082 seconds
+MacOSX 10.10      426 tests: X seconds
+loup debian x64   426 tests: X seconds

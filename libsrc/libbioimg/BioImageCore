@@ -1,0 +1,5 @@
+#include "core_lib/xpointer.h"
+#include "core_lib/xtypes.h"
+#include "core_lib/xstring.h"
+#include "core_lib/tag_map.h"
+#include "core_lib/xconf.h"
