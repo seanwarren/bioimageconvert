@@ -2,6 +2,8 @@
 *.swp
 *.swo
 .DS_Store
+.generated
+.qmake.stash
 src/Makefile
 libsrc/libbioimg/Makefile
 libsrc/libbioimg/Makefile.Debug
