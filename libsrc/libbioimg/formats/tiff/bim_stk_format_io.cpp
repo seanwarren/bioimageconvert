@@ -429,7 +429,7 @@ bool stkIsTiffValid(TIFF *tif) {
   res[2] = TIFFGetField(tif, TIFFTAG_STK_UIC4, &d_list_count, &l_list);
   res[3] = TIFFGetField(tif, TIFFTAG_STK_UIC1, &d_list_count, &d_list);
 
-  // if tag 33629 exists then the file is valid STAK file
+  // if tag 33629 exists then the file is valid STK file
   if (res[0] == 1) return true;
   if (res[1] == 1) return true;
   if (res[2] == 1) return true;
