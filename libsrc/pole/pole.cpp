@@ -50,6 +50,7 @@
 #include <vector>
 #include <queue>
 #include <limits>
+#include <locale>
 
 #include <cstring>
 
