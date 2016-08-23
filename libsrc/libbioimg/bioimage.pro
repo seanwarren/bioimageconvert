@@ -916,7 +916,7 @@ stat_eigen {
 
 stat_jxrlib {
   DEFINES += __ANSI__ DISABLE_PERF_MEASUREMENT
-  win32:!mingw:INCLUDEPATH += $$BIM_LIB_JXRLIB/common/include
+  !mingw:INCLUDEPATH += $$BIM_LIB_JXRLIB/common/include
   INCLUDEPATH += $$BIM_LIB_JXRLIB/image/sys
   INCLUDEPATH += $$BIM_LIB_JXRLIB/jxrgluelib
   SOURCES += $$BIM_FMTS/jxr/bim_jxr_format.cpp
