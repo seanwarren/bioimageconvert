@@ -39,7 +39,7 @@ public:
     std::vector<double> res;
     std::vector<xstring> units;
     xstring datafile;
-    void *datastream = 0;
+    void *datastream;
     TagMap header;
     std::vector<char> uncompressed;
 };

@@ -305,13 +305,13 @@ bim::uint dicomOpenImageProc  (FormatHandle *fmtHndl, ImageIOModes io_mode) {
     fmtHndl->internalParams = (void *)par;
 
     if (io_mode == IO_READ) {
-        #if defined(BIM_WIN)
+#if (defined(BIM_WIN) && !defined(__MINGW32__))
         bim::xstring fn(fmtHndl->fileName);
         par->file = new std::fstream((const wchar_t *)fn.toUTF16().c_str(), std::fstream::in | std::fstream::binary);
         par->reader->SetStream(*par->file);
-        #else
+#else
         par->reader->SetFileName(fmtHndl->fileName);
-        #endif       
+#endif       
         try {
             //par->reader->Read();
             if (!par->reader->ReadInformation()) return 1;

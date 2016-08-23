@@ -1,7 +1,7 @@
-.*~
-.*\.swp
-.*\.swo
-\.DS_Store$
+*~
+*.swp
+*.swo
+.DS_Store
 libsrc/libbioimg/Makefile
 libsrc/libbioimg/Makefile.Debug
 libsrc/libbioimg/Makefile.Release

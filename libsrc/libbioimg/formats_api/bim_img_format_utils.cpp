@@ -388,7 +388,7 @@ ImageInfo bim::initImageInfo() {
 
   tp.file_format_id = 0;
 
-  uint i;
+  bim::uint i;
 
   // dimensions
   for (i=0; i<BIM_MAX_DIMS; ++i)
@@ -427,21 +427,21 @@ uint64 bim::getImgSizeInBytes(ImageBitmap *img) {
     return (uint64) ceil( ((double)(img->i.width * img->i.depth)) / 8.0 ) * img->i.height;
 }
 
-uint bim::getImgNumColors(ImageBitmap *img) {
-    return (uint) pow( 2.0f, (float)(img->i.depth * img->i.samples) );
+bim::uint bim::getImgNumColors(ImageBitmap *img) {
+    return (bim::uint) pow( 2.0f, (float)(img->i.depth * img->i.samples) );
 }
 
 void bim::initImagePlanes(ImageBitmap *bmp) {
     if (!bmp) return;
     bmp->i = initImageInfo();
-    for (uint i=0; i<512; i++)
+    for (bim::uint i=0; i<512; i++)
         bmp->bits[i] = NULL;  
 }
 
-int bim::allocImg( ImageBitmap *img, uint w, uint h, uint samples, uint depth) {
+int bim::allocImg( ImageBitmap *img, bim::uint w, bim::uint h, bim::uint samples, bim::uint depth) {
     if (!img) return 1;
   
-    for (uint sample=0; sample<img->i.samples; sample++) 
+    for (bim::uint sample=0; sample<img->i.samples; sample++) 
         if (img->bits[sample] != NULL) 
             xfree( &img->bits[sample] );
 
@@ -453,17 +453,17 @@ int bim::allocImg( ImageBitmap *img, uint w, uint h, uint samples, uint depth) {
     img->i.samples = samples;
     img->i.depth = depth;
     uint64 size = getImgSizeInBytes( img );
-    for (uint sample=0; sample<img->i.samples; sample++) {
+    for (bim::uint sample=0; sample<img->i.samples; sample++) {
         img->bits[sample] = new uchar [size];
         if (!img->bits[sample]) return 1;
     }
     return 0;
 }
 
-int bim::allocImg( FormatHandle *fmtHndl, ImageBitmap *img, uint w, uint h, uint samples, uint depth) {
+int bim::allocImg( FormatHandle *fmtHndl, ImageBitmap *img, bim::uint w, bim::uint h, bim::uint samples, bim::uint depth) {
     if (!img) return 1;
   
-    for (uint sample=0; sample<img->i.samples; sample++) 
+    for (bim::uint sample=0; sample<img->i.samples; sample++) 
         if (img->bits[sample] != NULL) 
             img->bits[sample] = xfree( fmtHndl, img->bits[sample] );
 
@@ -475,7 +475,7 @@ int bim::allocImg( FormatHandle *fmtHndl, ImageBitmap *img, uint w, uint h, uint
     img->i.depth = depth;
     uint64 size = getImgSizeInBytes( img );
 
-    for (uint sample=0; sample<img->i.samples; sample++) {
+    for (bim::uint sample=0; sample<img->i.samples; sample++) {
         img->bits[sample] = (uchar *) xmalloc( fmtHndl, size );
         if (img->bits[sample] == NULL) return 1;
     }
@@ -501,10 +501,10 @@ int bim::allocImg( FormatHandle *fmtHndl, ImageInfo *info ) {
 
 void bim::deleteImg(ImageBitmap *img) {
   if (!img) return;
-  for (uint sample=0; sample<img->i.samples; ++sample) {
+  for (bim::uint sample=0; sample<img->i.samples; ++sample) {
     if (img->bits[sample]) {
       void *p = img->bits[sample];
-      for (uint i=0; i<img->i.samples; ++i)
+      for (bim::uint i=0; i<img->i.samples; ++i)
         if (img->bits[i] == p) img->bits[i] = NULL;
       delete (uchar*) p;
     } // if channel found
@@ -513,7 +513,7 @@ void bim::deleteImg(ImageBitmap *img) {
 
 void bim::deleteImg( FormatHandle *fmtHndl, ImageBitmap *img) {
   if (!img) return;
-  for (uint sample=0; sample<img->i.samples; ++sample) {
+  for (bim::uint sample=0; sample<img->i.samples; ++sample) {
     if (img->bits[sample]) {
       void *p = img->bits[sample];
       for (unsigned int i=0; i<img->i.samples; ++i)
@@ -526,11 +526,11 @@ void bim::deleteImg( FormatHandle *fmtHndl, ImageBitmap *img) {
 int bim::getSampleHistogram(ImageBitmap *img, long *hist, int sample)
 {
   if (img == 0) return -1;
-  uint i;
+  bim::uint i;
   int num_used = 0;
   unsigned long size = img->i.width * img->i.height;
-  uint max_uint16 = (uint16) -1;
-  uint max_uchar = (uchar) -1;  
+  bim::uint max_uint16 = (uint16) -1;
+  bim::uint max_uchar = (uchar) -1;  
 
   if (img->i.depth == 16) 
   {
