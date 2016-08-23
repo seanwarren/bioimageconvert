@@ -42,6 +42,7 @@ using namespace bim;
 //****************************************************************************
 
 bim::RawParams::RawParams() {
+    datastream = 0;
     i = initImageInfo();
     header_offset = 0;
     big_endian = false;
