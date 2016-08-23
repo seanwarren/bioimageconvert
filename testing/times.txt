@@ -38,11 +38,13 @@ Win 8 MSVC 2015 J  35 tests: 12.7630000114 seconds
 
 v 2.0.9
 
-Win10 MSVC2013    426 tests: 401.576999903 seconds
-Win10 MSVC2013 i7 426 tests:  seconds
-Win10 MSVC2013     35 tests: 12.489000082 seconds
-Win10 MSVC2013 i7  35 tests:  seconds
-MacOSX 10.10      426 tests: X seconds
-loup debian x64   426 tests: X seconds
-ubuntu16 i7core6  426 tests: 134.525382996 seconds
-ubuntu16 i7core6   35 tests: 5.96899390221 seconds
+Win10 MSVC2013     426 tests: 401.576999903 seconds
+Win10 MSVC2013      35 tests: 12.489000082 seconds
+Win10 MSVC2013 i7  426 tests:  seconds
+Win10 MSVC2013 i7   35 tests:  seconds
+MacOSX 10.10       426 tests: X seconds
+MacOSX 10.10        35 tests: X seconds
+loup debian jessie 426 tests: X seconds
+loup debian jessie  35 tests: 12.4541 seconds
+ubuntu16 i7core6   426 tests: 134.525382996 seconds
+ubuntu16 i7core6    35 tests: 5.96899390221 seconds
