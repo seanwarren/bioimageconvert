@@ -11,7 +11,7 @@
 """
 
 __author__    = "Dmitry Fedorov"
-__version__   = "1.7"
+__version__   = "2.0.9"
 __copyright__ = "Center for BioImage Informatics, University California, Santa Barbara"
 
 import sys
@@ -23,7 +23,7 @@ import urllib
 import posixpath
 
 IMGCNV = './imgcnv'
-IMGCNVVER = '2.0.9'
+IMGCNVVER = __version__
 url_image_store = 'http://flour.ece.ucsb.edu:8080/~bisque/test_data/images/'
 local_store_images  = 'images'
 local_store_tests   = 'tests'
