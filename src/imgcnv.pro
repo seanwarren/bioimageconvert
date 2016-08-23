@@ -205,10 +205,10 @@ INCLUDEPATH += $$DN_FMTS_API
 INCLUDEPATH += $$DN_FMTS
 INCLUDEPATH += $$DN_CORE
 
-PRE_TARGETDEPS = $$DN_LIB_BIO/.generated/libbioimage.a
-LIBS += $$DN_LIB_BIO/.generated/libbioimage.a
+PRE_TARGETDEPS = $$DN_GENS/libbioimage.a
+LIBS += $$DN_GENS/libbioimage.a
 
-BimLib.target = $$DN_LIB_BIO/.generated/libbioimage.a
+BimLib.target = $$DN_GENS/libbioimage.a
 #BimLib.commands = cd $$DN_LIB_BIO && qmake bioimage.pro && make
 BimLib.depends = $$DN_LIB_BIO/Makefile
 QMAKE_EXTRA_TARGETS += BimLib
