@@ -52,7 +52,8 @@ CONFIG += stat_libtiff
 CONFIG += stat_libjpeg_turbo # pick one or the other
 CONFIG += stat_libpng
 CONFIG += stat_zlib
-#CONFIG += ffmpeg
+CONFIG += ffmpeg
+#CONFIG += dyn_ffmpeg
 #CONFIG += stat_bzlib
 CONFIG += stat_exiv2
 CONFIG += stat_eigen
@@ -475,6 +476,17 @@ ffmpeg {
 #
 #    LIBS += -lpthread -lxvidcore -lopenjpeg -lschroedinger-1.0 -ltheora -ltheoraenc -ltheoradec -lbz2
 #  }
+} # FFMPEG
+
+
+dyn_ffmpeg {
+  DEFINES += BIM_FFMPEG_FORMAT FFMPEG_VIDEO_DISABLE_MATLAB __STDC_CONSTANT_MACROS
+  #INCLUDEPATH += /usr/include
+  win32:!mingw:INCLUDEPATH += $$BIM_LIB_FFMPEG/include-win
+
+  SOURCES += $$BIM_FMT_FFMPEG/debug.cpp $$BIM_FMT_FFMPEG/bim_ffmpeg_format.cpp \
+             $$BIM_FMT_FFMPEG/FfmpegCommon.cpp $$BIM_FMT_FFMPEG/FfmpegIVideo.cpp \
+             $$BIM_FMT_FFMPEG/FfmpegOVideo.cpp $$BIM_FMT_FFMPEG/registry.cpp
 } # FFMPEG
 
 #---------------------------------------------------------------------
