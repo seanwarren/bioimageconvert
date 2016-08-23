@@ -38,7 +38,7 @@ CONFIG += warn_off
 
 # static library config
 CONFIG += stat_libtiff
-#CONFIG += stat_libjpeg
+#CONFIG += stat_libjpeg # pick one or the other
 CONFIG += stat_libjpeg_turbo # pick one or the other
 CONFIG += stat_libpng
 CONFIG += stat_zlib
@@ -46,7 +46,7 @@ CONFIG += ffmpeg
 CONFIG += sys_bzlib
 CONFIG += stat_exiv2
 CONFIG += stat_eigen
-CONFIG += libraw
+CONFIG += stat_libraw
 CONFIG += stat_gdcm
 #CONFIG += dyn_gdcm
 CONFIG += stat_openjpeg
@@ -62,9 +62,10 @@ CONFIG(debug, debug|release) {
 }
 
 macx {
-  QMAKE_CFLAGS_RELEASE = -m64 -fPIC -fopenmp -O3 -ftree-vectorize -msse2 -ffast-math -ftree-vectorizer-verbose=0
-  QMAKE_CXXFLAGS_RELEASE = -m64 -fPIC -fopenmp -O3 -ftree-vectorize -msse2 -ffast-math -ftree-vectorizer-verbose=0
-  QMAKE_LFLAGS_RELEASE = -m64 -fPIC -fopenmp -O3 -ftree-vectorize -msse2 -ffast-math -ftree-vectorizer-verbose=0
+  QMAKE_CFLAGS_RELEASE += -m64 -fPIC -fopenmp -O3 -ftree-vectorize -msse2 -ffast-math -ftree-vectorizer-verbose=0
+  QMAKE_CXXFLAGS_RELEASE += -m64 -fPIC -fopenmp -O3 -ftree-vectorize -msse2 -ffast-math -ftree-vectorizer-verbose=0
+  QMAKE_LFLAGS_RELEASE += -m64 -fPIC -fopenmp -O3 -ftree-vectorize -msse2 -ffast-math -ftree-vectorizer-verbose=0
+
   QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.7
 } else:unix {
   QMAKE_CFLAGS_DEBUG += -pg -fPIC -ggdb
@@ -81,10 +82,10 @@ macx {
 # configuration paths: editable
 #---------------------------------------------------------------------
 
-BIM_SRC = ../src
-DN_LSRC = ../libsrc
-DN_LIBS = ../libs
-DN_IMGS = ../images
+BIM_SRC = $${_PRO_FILE_PWD_}/../src
+DN_LSRC = $${_PRO_FILE_PWD_}/../libsrc
+DN_LIBS = $${_PRO_FILE_PWD_}/../libs
+DN_IMGS = $${_PRO_FILE_PWD_}/../images
 
 HOSTTYPE = $$(HOSTTYPE)
 

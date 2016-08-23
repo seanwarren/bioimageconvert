@@ -102,12 +102,12 @@ bim::JP2Params::~JP2Params() {
 
 void bim::JP2Params::open(const char *filename, bim::ImageIOModes io_mode) {
     std::ios_base::openmode mode = io_mode == IO_READ ? std::fstream::in : std::fstream::out;
-    #if defined(BIM_WIN)
+#if (defined(BIM_WIN) && !defined(__MINGW32__))
     bim::xstring fn(filename);
     this->file = new std::fstream((const wchar_t *)fn.toUTF16().c_str(), mode | std::fstream::binary);
-    #else
+#else
     this->file = new std::fstream(filename, mode | std::fstream::binary);
-    #endif
+#endif
 
     this->stream = opj_stream_create(OPJ_J2K_STREAM_CHUNK_SIZE, io_mode == IO_READ ? OPJ_TRUE : OPJ_FALSE);
     if (this->stream) {

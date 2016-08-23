@@ -2,29 +2,37 @@
 # Manually generated !!!
 # libBioImage v 1.55 Project file
 # run:
-#   qmake libbioimage.pro - in order to generate Makefile for your platform
+#   qmake bioimage.pro - in order to generate Makefile for your platform
 #   make all - to compile the library
 #
 #
 # Copyright (c) 2005-2010, Bio-Image Informatic Center, UCSB
 #
-# To generate Makefile on any platform:
-#   qmake libbioimage.pro
+# To generate Makefiles on any platform:
+#   qmake bioimage.pro
 #
-# To generate VisualStudio project file:
-#   qmake -t vcapp -spec win32-msvc2005 libbioimage.pro
-#   qmake -t vcapp -spec win32-msvc.net libbioimage.pro
-#   qmake -t vcapp -spec win32-msvc libbioimage.pro
-#   qmake -spec win32-icc libbioimage.pro # to use pure Intel Compiler
+# To generate VisualStudio project files:
+#   qmake -t vcapp -spec win32-msvc2005 bioimage.pro
+#   qmake -t vcapp -spec win32-msvc.net bioimage.pro
+#   qmake -t vcapp -spec win32-msvc bioimage.pro
+#   qmake -spec win32-icc bioimage.pro # to use pure Intel Compiler
 #
-# To generate xcode project file:
-#   qmake -spec macx-xcode libbioimage.pro
+# To generate xcode project files:
+#   qmake -spec macx-xcode bioimage.pro
 #
-# To generate Makefile on MacOSX with binary install:
-#   qmake -spec macx-g++ libbioimage.pro
+# To generate Makefiles on MacOSX with binary install:
+#   qmake -spec macx-g++ bioimage.pro
 #
 ######################################################################
 
+win32 {
+    *-g++* {
+        message(detected platform Windows with compiler gcc (typically MinGW, MinGW64, Cygwin, MSYS2, or similar))
+        CONFIG += mingw
+        GCCMACHINETYPE=$$system("gcc -dumpmachine")
+        contains(GCCMACHINETYPE, x86_64.*):CONFIG += win64
+    }
+}
 
 #---------------------------------------------------------------------
 # configuration: editable
@@ -33,23 +41,22 @@
 TEMPLATE = lib
 VERSION = 0.2.1
 
-CONFIG  += staticlib
+CONFIG += staticlib
 
 CONFIG += release
 CONFIG += warn_off
 
 # static library config
-
 CONFIG += stat_libtiff
 #CONFIG += stat_libjpeg # pick one or the other
 CONFIG += stat_libjpeg_turbo # pick one or the other
 CONFIG += stat_libpng
 CONFIG += stat_zlib
-CONFIG += ffmpeg
+#CONFIG += ffmpeg
+#CONFIG += stat_bzlib
 CONFIG += stat_exiv2
 CONFIG += stat_eigen
-CONFIG += libraw
-#CONFIG += stat_bzlib
+CONFIG += stat_libraw
 CONFIG += stat_libgeotiff
 CONFIG += stat_proj4
 CONFIG += libbioimage_transforms
@@ -93,14 +100,13 @@ BIM_IMGS = $${_PRO_FILE_PWD_}/../../images
 
 HOSTTYPE = $$(HOSTTYPE)
 
-unix {
-  BIM_GENS = .generated/$$HOSTTYPE
+unix | mingw {
+  BIM_GENS = ../../.generated/$$HOSTTYPE
   # path for object files
   BIM_OBJ = $$BIM_GENS/obj
   # path for generated binary
   BIM_BIN = $$BIM_GENS
-}
-win32 {
+} else:win32 {
   BIM_GENS = ../../.generated/$(PlatformName)/$(ConfigurationName)
   # path for object files
   BIM_OBJ = $$BIM_GENS
@@ -153,12 +159,14 @@ BIM_LIB_LCMS2    = $$BIM_LSRC/lcms2
 #macx:CONFIG+=x86 ppc
 #QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.4
 
-win32 {
+win32:!mingw {
   DEFINES += _CRT_SECURE_NO_WARNINGS
 }
 
 BIM_LIBS_PLTFM = $$BIM_LIBS
-win32: {
+mingw {
+  BIM_LIBS_PLTFM = $$BIM_LIBS/mingw
+} else:win32 {
   BIM_LIBS_PLTFM = $$BIM_LIBS/vc2008
 } else:macx {
   BIM_LIBS_PLTFM = $$BIM_LIBS/macosx
@@ -194,7 +202,7 @@ macx {
 # generation: fixed
 #---------------------------------------------------------------------
 
-CONFIG  -= qt x11 windows
+CONFIG -= qt x11 windows
 
 MOC_DIR = $$BIM_GENS
 DESTDIR = $$BIM_BIN
@@ -335,10 +343,10 @@ HEADERS += $$BIM_FMTS/dcraw/bim_dcraw_format.h \
 # Transforms
 #---------------------------------------------------------------------
 
-DEFINES  += BIM_USE_FILTERS
+DEFINES += BIM_USE_FILTERS
 
 libbioimage_transforms {
-  DEFINES  += BIM_USE_TRANSFORMS
+  DEFINES += BIM_USE_TRANSFORMS
 
   macx {
     INCLUDEPATH += $$BIM_LIB_FFT/api
@@ -429,9 +437,9 @@ SOURCES += $$BIM_FMTS/nifti/bim_nifti_format.cpp
 #---------------------------------------------------------------------
 
 ffmpeg {
-  DEFINES  += BIM_FFMPEG_FORMAT FFMPEG_VIDEO_DISABLE_MATLAB __STDC_CONSTANT_MACROS
+  DEFINES += BIM_FFMPEG_FORMAT FFMPEG_VIDEO_DISABLE_MATLAB __STDC_CONSTANT_MACROS
   INCLUDEPATH += $$BIM_LIB_FFMPEG/include
-  win32:INCLUDEPATH += $$BIM_LIB_FFMPEG/include-win
+  win32:!mingw:INCLUDEPATH += $$BIM_LIB_FFMPEG/include-win
 
   SOURCES += $$BIM_FMT_FFMPEG/debug.cpp $$BIM_FMT_FFMPEG/bim_ffmpeg_format.cpp \
              $$BIM_FMT_FFMPEG/FfmpegCommon.cpp $$BIM_FMT_FFMPEG/FfmpegIVideo.cpp \
@@ -477,10 +485,10 @@ stat_gdcm {
   DEFINES += BIM_GDCM_FORMAT OPJ_STATIC
   SOURCES += $$BIM_FMT_DICOM/bim_dicom_format.cpp
 
-  win32 {
-    INCLUDEPATH += $$BIM_LIB_GDCM/projects/win64
-  } else {
+  unix | mingw {
     INCLUDEPATH += $$BIM_LIB_GDCM/projects/unix
+  } else {
+    INCLUDEPATH += $$BIM_LIB_GDCM/projects/win64
   }
 
   INCLUDEPATH += $$BIM_LIB_GDCM/Source/Common
@@ -541,7 +549,7 @@ dyn_gdcm {
 #---------------------------------------------------------------------
 
 stat_openjpeg {
-  DEFINES  += OPJ_HAVE_LIBLCMS2
+  DEFINES += OPJ_HAVE_LIBLCMS2
   INCLUDEPATH += $${BIM_LIB_OPENJPEG}/lib
   INCLUDEPATH += $${BIM_LIB_OPENJPEG}/lib/openjp2
   INCLUDEPATH += $${BIM_LIB_OPENJPEG}/bin
@@ -604,8 +612,8 @@ dyn_openjpeg {
 # libraw
 #---------------------------------------------------------------------
 
-libraw {
-  DEFINES  += LIBRAW_BUILDLIB LIBRAW_NODLL USE_JPEG USE_ZLIB USE_LCMS2
+stat_libraw {
+  DEFINES += LIBRAW_BUILDLIB LIBRAW_NODLL USE_JPEG USE_ZLIB USE_LCMS2
   INCLUDEPATH += $$BIM_LIB_RAW
 
   SOURCES += $$BIM_LIB_RAW/src/libraw_c_api.cpp \
@@ -625,13 +633,13 @@ libraw {
 #---------------------------------------------------------------------
 
 #some configs first
-unix:DEFINES  += HAVE_UNISTD_H
-unix:DEFINES  -= HAVE_IO_H
-win32:DEFINES += HAVE_IO_H
+unix | mingw:DEFINES += HAVE_UNISTD_H
+unix | mingw:DEFINES -= HAVE_IO_H
+win32:!mingw:DEFINES += HAVE_IO_H
 
-macx:DEFINES  += HAVE_UNISTD_H
-#macx:DEFINES  += WORDS_BIGENDIAN
-macx:DEFINES  -= HAVE_IO_H
+macx:DEFINES += HAVE_UNISTD_H
+#macx:DEFINES += WORDS_BIGENDIAN
+macx:DEFINES -= HAVE_IO_H
 
 #---------------------------------------------------------------------
 # libTiff
@@ -658,7 +666,7 @@ stat_libtiff {
              $$BIM_LIB_TIF/tif_write.c $$BIM_LIB_TIF/tif_zip.c \
              $$BIM_LIB_TIF/tif_stream.cxx $$BIM_LIB_TIF/tif_lzma.c
 
-  unix:SOURCES  += $$BIM_LIB_TIF/tif_unix.c
+  unix:SOURCES += $$BIM_LIB_TIF/tif_unix.c
   win32:SOURCES += $$BIM_LIB_TIF/tif_win32.c
 }
 
@@ -908,8 +916,8 @@ stat_eigen {
 
 stat_jxrlib {
   DEFINES += __ANSI__ DISABLE_PERF_MEASUREMENT
+  !mingw:INCLUDEPATH += $$BIM_LIB_JXRLIB/common/include
   INCLUDEPATH += $$BIM_LIB_JXRLIB/image/sys
-  INCLUDEPATH += $$BIM_LIB_JXRLIB/common/include
   INCLUDEPATH += $$BIM_LIB_JXRLIB/jxrgluelib
   SOURCES += $$BIM_FMTS/jxr/bim_jxr_format.cpp
 }
