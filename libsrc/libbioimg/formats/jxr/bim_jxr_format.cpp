@@ -612,7 +612,7 @@ bim::uint jxrReadImageProc(FormatHandle *fmtHndl, bim::uint page) {
 
     PKFormatConverter *pConverter = NULL;
     unsigned char *pb = NULL;
-    const PKRect rect = { 0, 0, info->width, info->height };
+    const PKRect rect = { 0, 0, (I32)info->width, (I32)info->height };
    
     try {
         PKPixelFormatGUID guid_format_in;

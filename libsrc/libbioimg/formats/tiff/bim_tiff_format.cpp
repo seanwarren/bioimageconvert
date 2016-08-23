@@ -338,7 +338,7 @@ void detectTiffPyramid(TiffParams *tiffParams) {
     // ImageMagick multi-page pyramidal version
     // the first directory is not guaranteed to have subfile type
     //----------------------------------------------------------------
-    double prev_sz[2] = { width, height };
+    double prev_sz[2] = { (double)width, (double)height };
     if (pyramid->number_levels < 2) {
         TIFFSetDirectory(tif, current_dir);
         if (tif->tif_nextdiroff > 0) {
