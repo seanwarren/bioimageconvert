@@ -23,6 +23,7 @@
  * Still in the public domain.
  */
 
+#include <exv_conf.h>
 #include <sys/types.h>
 #ifdef EXV_HAVE_STDINT_H
 # include <stdint.h>
