@@ -148,9 +148,9 @@ inline my_jpeg_source_mgr::my_jpeg_source_mgr(FormatHandle *new_hndl)
 const unsigned char icc_signature[12] = { 0x49, 0x43, 0x43, 0x5F, 0x50, 0x52, 0x4F, 0x46, 0x49, 0x4C, 0x45, 0x00 };
 
 static inline boolean marker_is_icc(jpeg_saved_marker_ptr marker) {
-    return marker->marker == ICC_MARKER &&
-           marker->data_length >= ICC_HEADER_SIZE &&
-           (memcmp(icc_signature, marker->data, sizeof(icc_signature)) == 0);
+    return (boolean)(marker->marker == ICC_MARKER &&
+                     marker->data_length >= ICC_HEADER_SIZE &&
+                     (memcmp(icc_signature, marker->data, sizeof(icc_signature)) == 0));
 }
 
 static bool jpeg_read_icc(bim::JpegParams *par) {
