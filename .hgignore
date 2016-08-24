@@ -3,6 +3,7 @@
 .*\.swo
 \.DS_Store$
 .generated
+src/Makefile
 libsrc/libbioimg/Makefile
 libsrc/libbioimg/Makefile.Debug
 libsrc/libbioimg/Makefile.Release
