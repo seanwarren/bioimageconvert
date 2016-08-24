@@ -43,13 +43,14 @@ CONFIG += stat_libtiff
 CONFIG += stat_libjpeg_turbo # pick one or the other
 CONFIG += stat_libpng
 CONFIG += stat_zlib
-CONFIG += ffmpeg
+#CONFIG += ffmpeg
+CONFIG += dyn_ffmpeg # ubuntu 16 comes with a reasonably new version of FFmpeg
 CONFIG += sys_bzlib
 CONFIG += stat_exiv2
 CONFIG += stat_eigen
 CONFIG += libraw
 CONFIG += stat_gdcm
-#CONFIG += dyn_gdcm
+#CONFIG += dyn_gdcm # ubuntu 16 comes with a reasonably new version of GDCM
 CONFIG += stat_openjpeg
 CONFIG += stat_jxrlib
 CONFIG += stat_libwebp
@@ -291,6 +292,21 @@ ffmpeg {
   }
 
 } # FFMPEG
+
+dyn_ffmpeg {
+  win32 {
+    #LIBS += -lavformat
+  } else:macx {
+    #LIBS += -lavformat
+  } else:unix {
+    LIBS += -lavformat
+    LIBS += -lavcodec
+    LIBS += -lavutil
+    LIBS += -lswresample
+    LIBS += -lswscale
+  }
+
+} # System FFMPEG
 
 #---------------------------------------------------------------------
 # GDCM - under linux we only use system dynamic version right now
