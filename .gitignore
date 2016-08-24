@@ -2,6 +2,7 @@
 *.swp
 *.swo
 .DS_Store
+src/Makefile
 libsrc/libbioimg/Makefile
 libsrc/libbioimg/Makefile.Debug
 libsrc/libbioimg/Makefile.Release
