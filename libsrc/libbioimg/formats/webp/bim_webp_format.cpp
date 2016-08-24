@@ -227,7 +227,7 @@ bim::uint webpOpenImageProc(FormatHandle *fmtHndl, ImageIOModes io_mode) {
     fmtHndl->internalParams = (void *)par;
 
     if (io_mode == IO_READ) {
-#if defined(BIM_WIN)
+#if defined(BIM_WIN) && !defined(__MINGW32__)
         bim::xstring fn(fmtHndl->fileName);
         par->file = new std::fstream((const wchar_t *)fn.toUTF16().c_str(), std::fstream::in | std::fstream::binary);
 #else
@@ -501,7 +501,7 @@ bim::uint webpWriteImageProc(FormatHandle *fmtHndl) {
     }
 
     // write image to a file
-#if defined(BIM_WIN)
+#if defined(BIM_WIN) && !defined(__MINGW32__)
     bim::xstring fn(fmtHndl->fileName);
     std::fstream file((const wchar_t *)fn.toUTF16().c_str(), std::fstream::out | std::fstream::binary);
 #else

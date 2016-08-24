@@ -67,7 +67,7 @@ namespace VideoIO
   *  stderr stream and are manually fflush-ed.
   */
 
-#if defined(_WIN32) || defined(WIN32) || defined(_WIN64) || defined(WIN64)
+#if (defined(_WIN32) || defined(WIN32) || defined(_WIN64) || defined(WIN64)) && !defined(__MINGW32__)
   // Perhaps this should be __FUNCDNAME__ instead.
 #define __PRETTY_FUNCTION__ __FUNCSIG__
 #endif

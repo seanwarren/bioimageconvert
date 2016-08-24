@@ -61,11 +61,12 @@ wide string into utf8 char*:
 #include <cstdio>
 #include <string>
 #include <list>
+#include <locale>
 
 namespace POLE
 {
 
-#if defined WIN32 || defined WIN64 || defined _WIN32 || defined _WIN64 || defined _MSVC
+#if ((defined WIN32 || defined WIN64 || defined _WIN32 || defined _WIN64 || defined _MSVC) && !defined(__MINGW32__))
 #define POLE_USE_UTF16_FILENAMES
 #define POLE_WIN
 typedef __int32 int32;
