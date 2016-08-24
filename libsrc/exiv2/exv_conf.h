@@ -17,7 +17,9 @@
 
 /* Define to 1 if you have the declaration of `strerror_r', and to 0 if you
    don't. */
+#if !defined(__MINGW32__)
 #define EXV_HAVE_DECL_STRERROR_R 1
+#endif
 
 /* Define to 1 if you have the `gmtime_r' function. */
 #define EXV_HAVE_GMTIME_R 1
@@ -71,7 +73,9 @@
 #define EXV_HAVE_MEMSET 1
 
 /* Define to 1 if you have the `lstat' function. */
+#if !defined(__MINGW32__)
 #define EXV_HAVE_LSTAT 1
+#endif
 
 /* Define to 1 if your system has a GNU libc compatible `realloc' function,
    and to 0 otherwise. */
@@ -105,10 +109,14 @@
 #define EXV_HAVE_STRTOL 1
 
 /* Define to 1 if you have the `mmap' function. */
+#if !defined(__MINGW32__)
 #define EXV_HAVE_MMAP 1
+#endif
 
 /* Define to 1 if you have the `munmap' function. */
+#if !defined(__MINGW32__)
 #define EXV_HAVE_MUNMAP 1
+#endif
 
 /* Define to 1 if you have the <sys/stat.h> header file. */
 #define EXV_HAVE_SYS_STAT_H 1
@@ -120,7 +128,9 @@
 #define EXV_HAVE_SYS_TYPES_H 1
 
 /* Define to 1 if you have the `timegm' function. */
+#if !defined(__MINGW32__)
 #define EXV_HAVE_TIMEGM 1
+#endif
 
 /* Define to 1 if you have the <unistd.h> header file. */
 #define EXV_HAVE_UNISTD_H 1
@@ -132,7 +142,9 @@
 /* #undef EXV_HAVE_WCHAR_H */
 
 /* Define to 1 if you have the <sys/mman.h> header file. */
+#if !defined(__MINGW32__)
 #define EXV_HAVE_SYS_MMAN_H 1
+#endif
 
 /* Define to 1 if you have the `zlib' library. */
 #define EXV_HAVE_LIBZ 1
@@ -227,7 +239,7 @@
 #endif
 
 /* Windows unicode path support */
-#if defined WIN32 && !defined __CYGWIN__ && !defined __MINGW__
+#if (defined(WIN32) && !defined(__CYGWIN__) && !defined(__MINGW32__))
 # define EXV_UNICODE_PATH 1
 #endif
 
