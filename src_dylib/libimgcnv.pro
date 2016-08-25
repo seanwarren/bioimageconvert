@@ -39,24 +39,28 @@ CONFIG += warn_off
 
 # static library config
 CONFIG += stat_libtiff
-#CONFIG += stat_libjpeg
+#CONFIG += stat_libjpeg # pick one or the other
 CONFIG += stat_libjpeg_turbo # pick one or the other
 CONFIG += stat_libpng
 CONFIG += stat_zlib
-#CONFIG += ffmpeg
-CONFIG += dyn_ffmpeg # ubuntu 16 comes with a reasonably new version of FFmpeg
 CONFIG += sys_bzlib
 CONFIG += stat_exiv2
 CONFIG += stat_eigen
-CONFIG += libraw
-CONFIG += stat_gdcm
-#CONFIG += dyn_gdcm # ubuntu 16 comes with a reasonably new version of GDCM
+CONFIG += stat_libraw
 CONFIG += stat_openjpeg
 CONFIG += stat_jxrlib
 CONFIG += stat_libwebp
 CONFIG += stat_lcms2
-
 CONFIG += dyn_lzma
+
+CONFIG += stat_gdcm
+#CONFIG += dyn_gdcm # ubuntu 16 comes with a reasonably new version of GDCM
+
+macx {
+    CONFIG += ffmpeg
+} else:unix {
+    CONFIG += dyn_ffmpeg # debian 8 and ubuntu 16 come with a reasonably new version of FFmpeg
+}
 
 CONFIG(debug, debug|release) {
    message(Building in DEBUG mode!)
@@ -64,10 +68,10 @@ CONFIG(debug, debug|release) {
 }
 
 macx {
-  QMAKE_CFLAGS_RELEASE = -m64 -fPIC -fopenmp -O3 -ftree-vectorize -msse2 -ffast-math -ftree-vectorizer-verbose=0
-  QMAKE_CXXFLAGS_RELEASE = -m64 -fPIC -fopenmp -O3 -ftree-vectorize -msse2 -ffast-math -ftree-vectorizer-verbose=0
-  QMAKE_LFLAGS_RELEASE = -m64 -fPIC -fopenmp -O3 -ftree-vectorize -msse2 -ffast-math -ftree-vectorizer-verbose=0
-  QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.7
+  QMAKE_CFLAGS_RELEASE += -m64 -fPIC -fopenmp -O3 -ftree-vectorize -msse2 -ffast-math -ftree-vectorizer-verbose=0
+  QMAKE_CXXFLAGS_RELEASE += -m64 -fPIC -fopenmp -O3 -ftree-vectorize -msse2 -ffast-math -ftree-vectorizer-verbose=0
+  QMAKE_LFLAGS_RELEASE += -m64 -fPIC -fopenmp -O3 -ftree-vectorize -msse2 -ffast-math -ftree-vectorizer-verbose=0
+  QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.11
 } else:unix {
   QMAKE_CFLAGS_DEBUG += -pg -fPIC -ggdb
   QMAKE_CXXFLAGS_DEBUG += -pg -fPIC -ggdb
@@ -83,10 +87,10 @@ macx {
 # configuration paths: editable
 #---------------------------------------------------------------------
 
-BIM_SRC = ../src
-DN_LSRC = ../libsrc
-DN_LIBS = ../libs
-DN_IMGS = ../images
+BIM_SRC = $${_PRO_FILE_PWD_}/../src
+DN_LSRC = $${_PRO_FILE_PWD_}/../libsrc
+DN_LIBS = $${_PRO_FILE_PWD_}/../libs
+DN_IMGS = $${_PRO_FILE_PWD_}/../images
 
 HOSTTYPE = $$(HOSTTYPE)
 
@@ -245,7 +249,7 @@ dyn_lzma {
   win32 {
     LIBS += $$BIM_LIBS_PLTFM/liblzma.lib
   } else:macx {
-    #LIBS += $$BIM_LIBS_PLTFM/liblzma.a
+    LIBS += -llzma
   } else {
     LIBS += -llzma
   }
@@ -309,63 +313,6 @@ dyn_ffmpeg {
 } # System FFMPEG
 
 #---------------------------------------------------------------------
-# GDCM - under linux we only use system dynamic version right now
-#---------------------------------------------------------------------
-
-stat_gdcm {
-
-  win32 {
-    LIBS += $$BIM_LIBS_PLTFM/gdcm/gdcmjpeg12.lib
-    LIBS += $$BIM_LIBS_PLTFM/gdcm/gdcmjpeg16.lib
-    LIBS += $$BIM_LIBS_PLTFM/gdcm/gdcmjpeg8.lib
-    LIBS += $$BIM_LIBS_PLTFM/gdcm/gdcmcharls.lib
-    LIBS += $$BIM_LIBS_PLTFM/gdcm/gdcmCommon.lib
-    LIBS += $$BIM_LIBS_PLTFM/gdcm/gdcmDICT.lib
-    LIBS += $$BIM_LIBS_PLTFM/gdcm/gdcmDSED.lib
-    LIBS += $$BIM_LIBS_PLTFM/gdcm/gdcmexpat.lib
-    LIBS += $$BIM_LIBS_PLTFM/gdcm/gdcmgetopt.lib
-    LIBS += $$BIM_LIBS_PLTFM/gdcm/gdcmIOD.lib
-    LIBS += $$BIM_LIBS_PLTFM/gdcm/gdcmMEXD.lib
-    LIBS += $$BIM_LIBS_PLTFM/gdcm/gdcmMSFF.lib
-    LIBS += $$BIM_LIBS_PLTFM/gdcm/gdcmopenjpeg.lib
-    LIBS += $$BIM_LIBS_PLTFM/gdcm/gdcmzlib.lib
-    LIBS += $$BIM_LIBS_PLTFM/gdcm/socketxx.lib
-  } else {
-    LIBS += $$BIM_LIBS_PLTFM/gdcm/libgdcmDICT.a
-    LIBS += $$BIM_LIBS_PLTFM/gdcm/libgdcmMSFF.a
-    LIBS += $$BIM_LIBS_PLTFM/gdcm/libgdcmCommon.a
-    LIBS += $$BIM_LIBS_PLTFM/gdcm/libgdcmDSED.a
-    LIBS += $$BIM_LIBS_PLTFM/gdcm/libgdcmIOD.a
-    LIBS += $$BIM_LIBS_PLTFM/gdcm/libgdcmcharls.a
-    LIBS += $$BIM_LIBS_PLTFM/gdcm/libgdcmexpat.a
-    LIBS += $$BIM_LIBS_PLTFM/gdcm/libgdcmjpeg8.a
-    LIBS += $$BIM_LIBS_PLTFM/gdcm/libgdcmjpeg12.a
-    LIBS += $$BIM_LIBS_PLTFM/gdcm/libgdcmjpeg16.a
-    LIBS += $$BIM_LIBS_PLTFM/gdcm/libgdcmopenjpeg.a
-    LIBS += $$BIM_LIBS_PLTFM/gdcm/libgdcmzlib.a
-  }
-
-  macx {
-    LIBS += -framework CoreFoundation
-  }
-
-} # static GDCM
-
-dyn_gdcm {
-  DEFINES += BIM_GDCM_FORMAT
-  SOURCES += $$BIM_FMT_DICOM/bim_dicom_format.cpp
-
-  win32 {
-#    LIBS += $$BIM_LIBS_PLTFM/gdcm/gdcmIOD.lib
-  } else:macx {
-#    LIBS += $$BIM_LIBS_PLTFM/gdcm/gdcmIOD.a
-  } else:unix {
-    LIBS += -lgdcm
-  }
-
-} # System GDCM
-
-#---------------------------------------------------------------------
 # openjpeg
 #---------------------------------------------------------------------
 
@@ -410,6 +357,77 @@ stat_lcms2 {
 }
 
 #---------------------------------------------------------------------
+# GDCM - under linux we only use system dynamic version right now
+#---------------------------------------------------------------------
+
+stat_gdcm {
+
+  win32 {
+    LIBS += $$BIM_LIBS_PLTFM/gdcm/gdcmjpeg12.lib
+    LIBS += $$BIM_LIBS_PLTFM/gdcm/gdcmjpeg16.lib
+    LIBS += $$BIM_LIBS_PLTFM/gdcm/gdcmjpeg8.lib
+    LIBS += $$BIM_LIBS_PLTFM/gdcm/gdcmcharls.lib
+    LIBS += $$BIM_LIBS_PLTFM/gdcm/gdcmCommon.lib
+    LIBS += $$BIM_LIBS_PLTFM/gdcm/gdcmDICT.lib
+    LIBS += $$BIM_LIBS_PLTFM/gdcm/gdcmDSED.lib
+    LIBS += $$BIM_LIBS_PLTFM/gdcm/gdcmexpat.lib
+    LIBS += $$BIM_LIBS_PLTFM/gdcm/gdcmgetopt.lib
+    LIBS += $$BIM_LIBS_PLTFM/gdcm/gdcmIOD.lib
+    LIBS += $$BIM_LIBS_PLTFM/gdcm/gdcmMEXD.lib
+    LIBS += $$BIM_LIBS_PLTFM/gdcm/gdcmMSFF.lib
+    LIBS += $$BIM_LIBS_PLTFM/gdcm/gdcmopenjpeg.lib
+    LIBS += $$BIM_LIBS_PLTFM/gdcm/gdcmzlib.lib
+    LIBS += $$BIM_LIBS_PLTFM/gdcm/socketxx.lib
+  } else:macx {
+    LIBS += $$BIM_LIBS_PLTFM/gdcm/libgdcmDICT.a
+    LIBS += $$BIM_LIBS_PLTFM/gdcm/libgdcmMSFF.a
+    LIBS += $$BIM_LIBS_PLTFM/gdcm/libgdcmCommon.a
+    LIBS += $$BIM_LIBS_PLTFM/gdcm/libgdcmDSED.a
+    LIBS += $$BIM_LIBS_PLTFM/gdcm/libgdcmIOD.a
+    LIBS += $$BIM_LIBS_PLTFM/gdcm/libgdcmcharls.a
+    LIBS += $$BIM_LIBS_PLTFM/gdcm/libgdcmexpat.a
+    LIBS += $$BIM_LIBS_PLTFM/gdcm/libgdcmjpeg8.a
+    LIBS += $$BIM_LIBS_PLTFM/gdcm/libgdcmjpeg12.a
+    LIBS += $$BIM_LIBS_PLTFM/gdcm/libgdcmjpeg16.a
+    LIBS += $$BIM_LIBS_PLTFM/gdcm/libgdcmopenjpeg.a
+    #LIBS += $$BIM_LIBS_PLTFM/gdcm/libgdcmzlib.a
+    LIBS += -framework CoreFoundation
+  } else {
+    LIBS += $$BIM_LIBS_PLTFM/gdcm/libgdcmDICT.a
+    LIBS += $$BIM_LIBS_PLTFM/gdcm/libgdcmMSFF.a
+    LIBS += $$BIM_LIBS_PLTFM/gdcm/libgdcmCommon.a
+    LIBS += $$BIM_LIBS_PLTFM/gdcm/libgdcmDSED.a
+    LIBS += $$BIM_LIBS_PLTFM/gdcm/libgdcmIOD.a
+    LIBS += $$BIM_LIBS_PLTFM/gdcm/libgdcmcharls.a
+    LIBS += $$BIM_LIBS_PLTFM/gdcm/libgdcmexpat.a
+    LIBS += $$BIM_LIBS_PLTFM/gdcm/libgdcmjpeg8.a
+    LIBS += $$BIM_LIBS_PLTFM/gdcm/libgdcmjpeg12.a
+    LIBS += $$BIM_LIBS_PLTFM/gdcm/libgdcmjpeg16.a
+    LIBS += $$BIM_LIBS_PLTFM/gdcm/libgdcmopenjpeg.a
+    LIBS += $$BIM_LIBS_PLTFM/gdcm/libgdcmzlib.a
+  }
+
+} # static GDCM
+
+dyn_gdcm {
+  win32 {
+#    LIBS += $$BIM_LIBS_PLTFM/gdcm/gdcmIOD.lib
+  } else:macx {
+#    LIBS += $$BIM_LIBS_PLTFM/gdcm/gdcmIOD.a
+  } else:unix {
+    LIBS += -lgdcmDICT
+    LIBS += -lgdcmMSFF
+    LIBS += -lgdcmCommon
+    LIBS += -lgdcmDSED
+    LIBS += -lgdcmIOD
+    LIBS += -lgdcmjpeg8
+    LIBS += -lgdcmjpeg12
+    LIBS += -lgdcmjpeg16
+  }
+
+} # System GDCM
+
+#---------------------------------------------------------------------
 # required libs
 #---------------------------------------------------------------------
 
@@ -418,6 +436,7 @@ unix:LIBS += -ldl
 
 macx {
   LIBS += $$BIM_LIBS_PLTFM/libfftw3.a
+  LIBS += -liconv
   LIBS += -lz
 } else:unix {
   LIBS += -lfftw3

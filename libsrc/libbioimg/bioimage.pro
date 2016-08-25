@@ -52,8 +52,6 @@ CONFIG += stat_libtiff
 CONFIG += stat_libjpeg_turbo # pick one or the other
 CONFIG += stat_libpng
 CONFIG += stat_zlib
-CONFIG += ffmpeg
-#CONFIG += dyn_ffmpeg
 #CONFIG += stat_bzlib
 CONFIG += stat_exiv2
 CONFIG += stat_eigen
@@ -62,12 +60,20 @@ CONFIG += stat_libgeotiff
 CONFIG += stat_proj4
 CONFIG += libbioimage_transforms
 CONFIG += stat_pugixml
-CONFIG += stat_gdcm
-#CONFIG += dyn_gdcm
 CONFIG += stat_openjpeg
 CONFIG += stat_jxrlib
 CONFIG += stat_libwebp
 CONFIG += stat_lcms2
+macx:CONFIG += stat_lzma
+
+CONFIG += stat_gdcm
+#CONFIG += dyn_gdcm
+
+macx {
+    CONFIG += ffmpeg
+} else:unix {
+    CONFIG += dyn_ffmpeg # debian 8 and ubuntu 16 come with a reasonably new version of FFmpeg
+}
 
 CONFIG(debug, debug|release) {
   message(Building in DEBUG mode!)
@@ -78,8 +84,7 @@ macx {
   QMAKE_CFLAGS_RELEASE += -m64 -fPIC -fopenmp -O3 -ftree-vectorize -msse2 -ffast-math -ftree-vectorizer-verbose=0
   QMAKE_CXXFLAGS_RELEASE += -m64 -fPIC -fopenmp -O3 -ftree-vectorize -msse2 -ffast-math -ftree-vectorizer-verbose=0
   QMAKE_LFLAGS_RELEASE += -m64 -fPIC -fopenmp -O3 -ftree-vectorize -msse2 -ffast-math -ftree-vectorizer-verbose=0
-
-  QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.7
+  QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.11
 } else:unix {
   QMAKE_CFLAGS_DEBUG += -pg -fPIC -ggdb
   QMAKE_CXXFLAGS_DEBUG += -pg -fPIC -ggdb
@@ -149,16 +154,11 @@ BIM_LIB_OPENJPEG = $$BIM_LSRC/openjpeg/src
 BIM_LIB_JXRLIB   = $$BIM_LSRC/jxrlib
 BIM_LIB_LIBWEBP  = $$BIM_LSRC/libwebp
 BIM_LIB_LCMS2    = $$BIM_LSRC/lcms2
+BIM_LIB_LZMA     = $$BIM_LSRC/liblzma
 
 #---------------------------------------------------------------------
 # configuration: automatic
 #---------------------------------------------------------------------
-
-# enable the following only for 10.4 and universal binary generation
-#macx:QMAKE_MAC_SDK=/Developer/SDKs/MacOSX10.4u.sdk
-#macx:LIBS += -faltivec -framework vecLib
-#macx:CONFIG+=x86 ppc
-#QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.4
 
 win32:!mingw {
   DEFINES += _CRT_SECURE_NO_WARNINGS
@@ -195,7 +195,7 @@ unix {
 
 # mac os x
 macx {
-  CONFIG -= stat_zlib
+#  CONFIG -= stat_zlib
 }
 
 
@@ -289,7 +289,7 @@ SOURCES += $$BIM_FMTS/bim_format_manager.cpp \
            $$BIM_FMTS/ole/zvi.cpp \
            $$BIM_FMTS/dcraw/bim_dcraw_format.cpp \
            $$BIM_FMTS/jp2/bim_jp2_format.cpp
-           
+
            #$$BIM_FMTS/jp2/bim_jp2_color.cpp \
            #$$BIM_FMTS/jp2/bim_jp2_compress.cpp \
            #$$BIM_FMTS/jp2/bim_jp2_decompress.cpp \
@@ -337,8 +337,8 @@ HEADERS += $$BIM_FMTS/dcraw/bim_dcraw_format.h \
            #$$BIM_FMTS/jp2/bim_jp2_compress.h \
            #$$BIM_FMTS/jp2/bim_jp2_decompress.h \
            #$$BIM_FMTS/jp2/bim_jp2_format_io.h \
-           
-           
+
+
 
 #---------------------------------------------------------------------
 # Transforms
@@ -652,6 +652,16 @@ win32:!mingw:DEFINES += HAVE_IO_H
 macx:DEFINES += HAVE_UNISTD_H
 #macx:DEFINES += WORDS_BIGENDIAN
 macx:DEFINES -= HAVE_IO_H
+
+#---------------------------------------------------------------------
+# LZMA - XZ Utils
+#---------------------------------------------------------------------
+
+stat_lzma {
+  INCLUDEPATH += $$BIM_LIB_LZMA/liblzma/api
+  #SOURCES += $$BIM_LIB_TIF/tif_fax3sm.c $$BIM_LIB_TIF/tif_aux.c \
+  #           $$BIM_LIB_TIF/tif_close.c $$BIM_LIB_TIF/tif_codec.c
+}
 
 #---------------------------------------------------------------------
 # libTiff

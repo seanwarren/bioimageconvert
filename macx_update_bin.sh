@@ -5,6 +5,9 @@ APPBIN=$APPROOT/MacOS/imgcnv
 APPLIB=$APPROOT/Frameworks
 RELLIB=@executable_path/../Frameworks
 GCCLIB=/usr/local/lib/gcc/4.9
+GCCLIBO=/usr/local/opt/gcc49/lib/gcc/4.9 # optional location that may be linked by ld
+
+LIBBIN=./libimgcnv.dylib
 
 mkdir -p $APPLIB
 cp -n $GCCLIB/libstdc++.6.dylib $APPLIB/
@@ -19,8 +22,13 @@ chmod 664 $APPLIB/libgcc_s.1.dylib
 
 # update app
 install_name_tool -change $GCCLIB/libstdc++.6.dylib $RELLIB/libstdc++.6.dylib $APPBIN
+install_name_tool -change $GCCLIBO/libstdc++.6.dylib $RELLIB/libstdc++.6.dylib $APPBIN
+
 install_name_tool -change $GCCLIB/libgomp.1.dylib $RELLIB/libgomp.1.dylib $APPBIN
+install_name_tool -change $GCCLIBO/libgomp.1.dylib $RELLIB/libgomp.1.dylib $APPBIN
+
 install_name_tool -change $GCCLIB/libgcc_s.1.dylib $RELLIB/libgcc_s.1.dylib $APPBIN
+install_name_tool -change $GCCLIBO/libgcc_s.1.dylib $RELLIB/libgcc_s.1.dylib $APPBIN
 
 # update libs - libimgcnv.dylib @loader_path
 #install_name_tool -id $RELLIB/libimgcnv.dylib $APPLIB/libimgcnv.dylib
@@ -47,7 +55,7 @@ install_name_tool -change $GCCLIB/libgcc_s.1.dylib $RELLIB/libgcc_s.1.dylib $APP
 file $APPBIN
 otool -L $APPBIN
 
-#otool -L $APPLIB/libimgcnv.dylib
+otool -L $LIBBIN
 
 otool -L $APPLIB/libstdc++.6.dylib
 otool -L $APPLIB/libgomp.1.dylib
