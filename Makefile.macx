@@ -154,7 +154,6 @@ full:
 	(cd $(LIBWEBP) && chmod -f u+x autogen.sh)
 	(cd $(LIBWEBP) && chmod -f u+x config.guess)
 	(cd $(LIBWEBP) && chmod -f u+x config.sub)
-	#(cd $(LIBWEBP) && chmod -f u+x config.status)
 	(cd $(LIBWEBP) && ./configure --with-pic --enable-libwebpmux --enable-libwebpdemux --enable-libwebpdecoder)
 	(cd $(LIBWEBP) && $(MAKE) $(MAKEFLAGS))
 	(cp $(LIBWEBP)/src/.libs/libwebp.a $(LIBS)/)
@@ -285,7 +284,7 @@ full:
 	@echo
 	@echo "Building libimgcnv"
 	(cd src_dylib && qmake $(QMAKEOPTS) libimgcnv.pro)
-	(cd src_dylib && $(MAKE))
+	(cd src_dylib && $(MAKE) $(MAKEFLAGS))
 
 	@echo
 	@echo
