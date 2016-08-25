@@ -137,10 +137,9 @@ BIM_FMTS         = $$BIM_LIB_BIO/formats
 BIM_FMTS_API     = $$BIM_LIB_BIO/formats_api
 BIM_TRANSFORMS   = $$BIM_LIB_BIO/transforms
 
-ffmpeg {
-  BIM_LIB_FFMPEG = $$BIM_LSRC/ffmpeg
-  BIM_FMT_FFMPEG = $$BIM_FMTS/mpeg
-}
+BIM_LIB_FFMPEG = $$BIM_LSRC/ffmpeg
+BIM_FMT_FFMPEG = $$BIM_FMTS/mpeg
+
 BIM_LIB_EXIV2    = $$BIM_LSRC/exiv2
 BIM_LIB_EIGEN    = $$BIM_LSRC/eigen
 BIM_LIB_RAW      = $$BIM_LSRC/libraw
@@ -543,16 +542,11 @@ stat_gdcm {
 
 
 dyn_gdcm {
-  DEFINES += BIM_GDCM_FORMAT
+  DEFINES += BIM_GDCM_FORMAT OPJ_STATIC
   SOURCES += $$BIM_FMT_DICOM/bim_dicom_format.cpp
-
-#  win32 {
-#    LIBS += $$BIM_LIBS_PLTFM/gdcm/gdcmIOD.lib
-#  } else:macx {
-#    LIBS += $$BIM_LIBS_PLTFM/gdcm/gdcmIOD.a
-#  } else:unix {
-#    LIBS += -lgdcm
-#  }
+  
+  # 
+  INCLUDEPATH += /usr/include/gdcm-2.6
 } # System GDCM
 
 

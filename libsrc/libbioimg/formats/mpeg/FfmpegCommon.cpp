@@ -47,7 +47,7 @@ extern "C" {
 #else
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
-#include <libavformat/url.h>
+//#include <libavformat/url.h>
 #endif
 };
 
@@ -67,7 +67,7 @@ extern "C" {
 #define AVERROR_NOMEM AVERROR(ENOMEM)
 #define AVERROR_NOTSUPP AVERROR(ENOSYS)
 //#define CODEC_TYPE_VIDEO AVMEDIA_TYPE_VIDEO
-URLProtocol *first_protocol = NULL;
+//URLProtocol *first_protocol = NULL;
 #endif
 
 using namespace std;
@@ -164,7 +164,7 @@ namespace VideoIO
     ishort.clear();   oshort.clear();
     icodecs.clear();  ocodecs.clear();
 
-    URLProtocol *up;
+    //URLProtocol *up;
     const char **pp, *last_name;
     
     // formats
@@ -253,9 +253,9 @@ namespace VideoIO
     }
 
     // file protocols
-    for(up = first_protocol; up != NULL; up = up->next) {
-      protocols.insert(up->name);
-    }
+    //for(up = first_protocol; up != NULL; up = up->next) {
+    //  protocols.insert(up->name);
+    //}
   }
 
   set<FfmpegFormatName> const &getFfmpegInputFileFormats() {

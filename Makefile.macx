@@ -1,7 +1,7 @@
 prefix=/usr
 BINDIR=$(prefix)/bin
 LIBDIR=$(prefix)/lib
-MAKEFLAGS += -j
+#MAKEFLAGS += -j
 LIBBIM=libsrc/libbioimg
 LIBRAW=libsrc/libraw
 LIBVPX=libsrc/libvpx
