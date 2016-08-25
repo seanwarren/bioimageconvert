@@ -68,7 +68,7 @@ full:
 	#git checkout v1.5.0
 	(cd $(LIBVPX) && chmod -f u+x configure)
 	(cd $(LIBVPX) && chmod -f u+x build/make/version.sh)
-	(cd $(LIBVPX) && chmod -f u+x build/make/rtcd.sh)
+	(cd $(LIBVPX) && chmod -f u+x build/make/rtcd.pl)
 	(cd $(LIBVPX) && chmod -f u+x build/make/gen_asm_deps.sh)
 	(cd $(LIBVPX) && chmod -f u+x build/make/gen_asm_deps.sh)
 	(cd $(LIBVPX) && ./configure --enable-vp8 --enable-vp9 --enable-pic --disable-examples --disable-unit-tests --disable-docs )
@@ -82,7 +82,6 @@ full:
 	(cd $(LIBWEBP) && chmod -f u+x autogen.sh)
 	(cd $(LIBWEBP) && chmod -f u+x config.guess)
 	(cd $(LIBWEBP) && chmod -f u+x config.sub)
-	(cd $(LIBWEBP) && chmod -f u+x config.status)
 	(cd $(LIBWEBP) && ./configure --with-pic --enable-libwebpmux --enable-libwebpdemux --enable-libwebpdecoder)
 	(cd $(LIBWEBP) && $(MAKE) $(MAKEFLAGS))
 	(cp $(LIBWEBP)/src/.libs/libwebp.a $(LIBS)/)
@@ -103,7 +102,7 @@ full:
 	(cd $(LCMS2) && chmod -f u+x autogen.sh)
 	(cd $(LCMS2) && chmod -f u+x config.guess)
 	(cd $(LCMS2) && chmod -f u+x config.sub)
-	(cd $(LCMS2) && ./configure --with-pic )
+	(cd $(LCMS2) && ./configure --with-pic --enable-shared=no --without-zlib )
 	(cd $(LCMS2) && $(MAKE) $(MAKEFLAGS))
 	(cp $(LCMS2)/src/.libs/liblcms2.a $(LIBS)/)
 
