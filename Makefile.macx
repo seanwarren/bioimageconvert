@@ -22,9 +22,11 @@ LIBGDCM=libsrc/gdcm
 LIBGDCMBIN=libsrc/gdcmbin
 LIBS=libs/macosx
 PKG_CONFIG_PATH=$LIBVPX:$LIBX264:$LIBX265/build/linux
+
 #QMAKEOPTS=-spec macx-g++
+# standard clang up to 10.11 does not support OpenMP, use "brew insatll gcc49" and modify mkspec from qmake for g++-49
 QMAKEOPTS=-spec macx-g++49
-MACOSX_DEPLOYMENT_TARGET=10.7
+MACOSX_DEPLOYMENT_TARGET=10.11
 VERSION=2.0.9
 
 all : imgcnv
@@ -74,27 +76,25 @@ full:
 	(cd $(LIBBIM) && qmake $(QMAKEOPTS) bioimage.pro)
 	(cd $(LIBBIM) && $(MAKE))
 
-
 	@echo
 	@echo
 	@echo "Building libogg 1.3.2 in $(LIBOGG)"
 	(cd $(LIBOGG) && chmod -f u+x configure)
-	#(cd $(LIBOGG) && chmod -f u+x version.sh)
 	(cd $(LIBOGG) && chmod -f u+x config.guess)
 	(cd $(LIBOGG) && chmod -f u+x config.sub)
-	(cd $(LIBOGG) && ./configure --enable-pic )
+	(cd $(LIBOGG) && ./configure --with-pic )
 	(cd $(LIBOGG) && $(MAKE))
 	(cp $(LIBOGG)/src/.libs/libogg.a $(LIBS)/)
 
 	# relative paths to libogg seem not to be working
 	@echo
 	@echo
-	@echo "Building libvorbis 1.3.4 in $(LIBVORBIS)"
+	@echo "Building libvorbis 1.3.5 in $(LIBVORBIS)"
 	(cd $(LIBVORBIS) && chmod -f u+x configure)
 	#(cd $(LIBVORBIS) && chmod -f u+x version.sh)
 	(cd $(LIBVORBIS) && chmod -f u+x config.guess)
 	(cd $(LIBVORBIS) && chmod -f u+x config.sub)
-	(cd $(LIBVORBIS) && ./configure --disable-oggtest --build=x86_64 --enable-pic --with-ogg=../libogg --with-ogg-includes=../libogg/include --with-ogg-libraries=../libogg/src/.libs )
+	(cd $(LIBVORBIS) && ./configure --with-pic --disable-oggtest --build=x86_64 --with-ogg=$(LIBOGG) --with-ogg-includes=$(LIBOGG)/include --with-ogg-libraries=$(LIBOGG)/src/.libs )
 	(cd $(LIBVORBIS) && $(MAKE))
 	(cp $(LIBVORBIS)/lib/.libs/libvorbis.a $(LIBS)/)
 	(cp $(LIBVORBIS)/lib/.libs/libvorbisenc.a $(LIBS)/)
@@ -110,10 +110,10 @@ full:
 	(cd $(LIBTHEORA) && chmod -f u+x version.sh)
 	(cd $(LIBTHEORA) && chmod -f u+x config.guess)
 	(cd $(LIBTHEORA) && chmod -f u+x config.sub)
-	(cd $(LIBTHEORA) && ./configure --build=x86_64 --disable-oggtest --disable-vorbistest --disable-examples --disable-asm \
-		--enable-shared=no --enable-static=yes --enable-pic \
-		--with-ogg=../libogg --with-ogg-includes=../libogg/include --with-ogg-libraries=../libogg/src/.libs \
-		--with-vorbis=../libvorbis --with-vorbis-includes=../libvorbis/include --with-vorbis-libraries=../libvorbis/lib/.libs )
+	(cd $(LIBTHEORA) && ./configure --with-pic --build=x86_64 --disable-oggtest --disable-vorbistest --disable-examples --disable-asm \
+		--enable-shared=no --enable-static=yes \
+		--with-ogg=$(LIBOGG) --with-ogg-includes=$(LIBOGG)/include --with-ogg-libraries=$(LIBOGG)/src/.libs \
+		--with-vorbis=$(LIBVORBIS) --with-vorbis-includes=$(LIBVORBIS)/include --with-vorbis-libraries=$(LIBVORBIS)/lib/.libs )
 	(cd $(LIBTHEORA) && $(MAKE))
 	(cp $(LIBTHEORA)/lib/.libs/libtheora.a $(LIBS)/)
 	(cp $(LIBTHEORA)/lib/.libs/libtheoradec.a $(LIBS)/)
@@ -122,12 +122,14 @@ full:
 	# required removing -no-cpp-precomp from configure
 	@echo
 	@echo
-	@echo "Building xvidcore 1.3.3 in $(LIBXVID)"
+	@echo "Building xvidcore 1.3.4 in $(LIBXVID)"
+	(export CFLAGS=-fPIC)
+	(export CPPFLAGS=-fPIC)
 	(cd $(LIBXVID)/build/generic && chmod -f u+x configure)
 	(cd $(LIBXVID)/build/generic && chmod -f u+x bootstrap.sh)
 	(cd $(LIBXVID)/build/generic && chmod -f u+x config.guess)
 	(cd $(LIBXVID)/build/generic && chmod -f u+x config.sub)
-	(cd $(LIBXVID)/build/generic && ./configure --disable-assembly --enable-pic )
+	(cd $(LIBXVID)/build/generic && ./configure --disable-assembly )
 	(cd $(LIBXVID)/build/generic && $(MAKE))
 	(cp $(LIBXVID)/build/generic/=build/libxvidcore.a $(LIBS)/)
 
@@ -138,7 +140,7 @@ full:
 	#git checkout v1.5.0
 	(cd $(LIBVPX) && chmod -f u+x configure)
 	(cd $(LIBVPX) && chmod -f u+x build/make/version.sh)
-	(cd $(LIBVPX) && chmod -f u+x build/make/rtcd.sh)
+	(cd $(LIBVPX) && chmod -f u+x build/make/rtcd.pl)
 	(cd $(LIBVPX) && chmod -f u+x build/make/gen_asm_deps.sh)
 	(cd $(LIBVPX) && chmod -f u+x build/make/gen_asm_deps.sh)
 	(cd $(LIBVPX) && ./configure --enable-vp8 --enable-vp9 --enable-pic --disable-examples --disable-unit-tests --disable-docs --extra-cflags="-Wa,-q" )
@@ -152,7 +154,7 @@ full:
 	(cd $(LIBWEBP) && chmod -f u+x autogen.sh)
 	(cd $(LIBWEBP) && chmod -f u+x config.guess)
 	(cd $(LIBWEBP) && chmod -f u+x config.sub)
-	(cd $(LIBWEBP) && chmod -f u+x config.status)
+	#(cd $(LIBWEBP) && chmod -f u+x config.status)
 	(cd $(LIBWEBP) && ./configure --with-pic --enable-libwebpmux --enable-libwebpdemux --enable-libwebpdecoder)
 	(cd $(LIBWEBP) && $(MAKE) $(MAKEFLAGS))
 	(cp $(LIBWEBP)/src/.libs/libwebp.a $(LIBS)/)
@@ -173,10 +175,10 @@ full:
 	(cd $(LCMS2) && chmod -f u+x autogen.sh)
 	(cd $(LCMS2) && chmod -f u+x config.guess)
 	(cd $(LCMS2) && chmod -f u+x config.sub)
-	(cd $(LCMS2) && ./configure --with-pic )
+	(cd $(LCMS2) && ./configure --with-pic --enable-shared=no --with-gnu-ld --without-zlib )
 	(cd $(LCMS2) && $(MAKE) $(MAKEFLAGS))
 	(cp $(LCMS2)/src/.libs/liblcms2.a $(LIBS)/)
-	
+
 	@echo
 	@echo
 	@echo "Building openjpeg 2.1.0 in $(LIBOPENJPEG)"
@@ -266,7 +268,7 @@ full:
 	(cp -f $(FFMPEG)/ffmpeg-out/lib/libavformat.a $(LIBS)/)
 	(cp -f $(FFMPEG)/ffmpeg-out/lib/libavutil.a $(LIBS)/)
 	(cp -f $(FFMPEG)/ffmpeg-out/lib/libswscale.a $(LIBS)/)
-	-mkdir -p $(FFMPEG)/include
+	(mkdir -p $(FFMPEG)/include)
 	(cp -Rf $(FFMPEG)/ffmpeg-out/include/libavcodec $(FFMPEG)/include/)
 	(cp -Rf $(FFMPEG)/ffmpeg-out/include/libavformat $(FFMPEG)/include/)
 	(cp -Rf $(FFMPEG)/ffmpeg-out/include/libavutil $(FFMPEG)/include/)
@@ -283,7 +285,7 @@ full:
 	@echo
 	@echo "Building libimgcnv"
 	(cd src_dylib && qmake $(QMAKEOPTS) libimgcnv.pro)
-        (cd src_dylib && $(MAKE) $(MAKEFLAGS))
+	(cd src_dylib && $(MAKE))
 
 	@echo
 	@echo
@@ -311,7 +313,6 @@ cleanfull:
 realclean: clean
 	rm -f imgcnv
 	rm -fR imgcnv.app
-	rm -f imgcnv.dylib*
-
+	rm -f libimgcnv*.dylib
 
 .FORCE: imgcnv
