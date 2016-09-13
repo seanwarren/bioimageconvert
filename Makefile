@@ -20,8 +20,10 @@ PKG_CONFIG_PATH=$LIBVPX:$LIBX264:$LIBX265/build/linux
 QMAKEOPTS=
 VERSION=2.0.9
 
-all : imgcnv
+all : binlibs imgcnv
 
+binlibs:
+	python download_build_libs.py
 
 install: imgcnv
 	install -d $(DESTDIR)$(BINDIR)
@@ -35,7 +37,7 @@ qmake:
 	(cd src_dylib && qmake $(QMAKEOPTS) libimgcnv.pro)
 
 
-imgcnv: qmake
+imgcnv:  binlibs qmake
 	-mkdir -p .generated/obj
 
 	@echo
@@ -53,7 +55,7 @@ imgcnv: qmake
 	@echo "Building libimgcnv"
 	(cd src_dylib && $(MAKE))
 
-full: qmake
+full: binlibs qmake
 	-mkdir -p .generated/obj
 	-mkdir -p $(LIBS)
 
