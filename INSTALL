@@ -1,0 +1,12 @@
+First download prebuilt dependencies:
+python download_build_libs.py
+
+For most systems symply use:
+make -j 8
+make install
+
+For system where pre-compiled libraries fail attempt full compilation:
+make full -j 8
+make install
+
+For Visual Studio use solution at msvc2012

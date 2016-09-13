@@ -1,0 +1,547 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="DLL Debug|Win32">
+      <Configuration>DLL Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="DLL Debug|x64">
+      <Configuration>DLL Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="DLL Release|Win32">
+      <Configuration>DLL Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="DLL Release|x64">
+      <Configuration>DLL Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="LIB Debug|Win32">
+      <Configuration>LIB Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="LIB Debug|x64">
+      <Configuration>LIB Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="LIB Release|Win32">
+      <Configuration>LIB Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="LIB Release|x64">
+      <Configuration>LIB Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmAnonymizeEvent.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmAnonymizer.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmApplicationEntity.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmAudioCodec.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmBitmap.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmBitmapToBitmapFilter.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmCurve.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmDataSetHelper.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmDICOMDIR.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmDICOMDIRGenerator.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmDictPrinter.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmDirectionCosines.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmDirectoryHelper.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmDumper.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmEncapsulatedDocument.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmFiducials.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmFileAnonymizer.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmFileChangeTransferSyntax.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmFileDerivation.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmFileExplicitFilter.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmFileStreamer.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmIconImage.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmIconImageFilter.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmIconImageGenerator.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmImage.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmImageApplyLookupTable.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmImageChangePhotometricInterpretation.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmImageChangePlanarConfiguration.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmImageChangeTransferSyntax.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmImageCodec.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmImageConverter.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmImageFragmentSplitter.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmImageHelper.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmImageReader.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmImageRegionReader.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmImageToImageFilter.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmImageWriter.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmIPPSorter.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmJPEG12Codec.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmJPEG16Codec.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmJPEG2000Codec.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmJPEG8Codec.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmJPEGCodec.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmJPEGLSCodec.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmJSON.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmKAKADUCodec.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmLookupTable.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmMeshPrimitive.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmOrientation.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmOverlay.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmPDFCodec.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmPersonName.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmPGXCodec.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmPhotometricInterpretation.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmPixelFormat.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmPixmap.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmPixmapReader.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmPixmapToPixmapFilter.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmPixmapWriter.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmPNMCodec.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmPrinter.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmPVRGCodec.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmRAWCodec.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmRescaler.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmRLECodec.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmScanner.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmSegment.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmSegmentedPaletteColorLookupTable.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmSegmentHelper.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmSegmentReader.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmSegmentWriter.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmSerieHelper.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmSimpleSubjectWatcher.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmSorter.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmSpacing.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmSpectroscopy.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmSplitMosaicFilter.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmStreamImageReader.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmStreamImageWriter.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmStringFilter.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmSurface.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmSurfaceHelper.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmSurfaceReader.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmSurfaceWriter.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmTagPath.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmUIDGenerator.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmUUIDGenerator.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmValidate.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmWaveform.cxx" />
+    <ClCompile Include="..\..\Source\MediaStorageAndFileFormat\gdcmXMLPrinter.cxx" />
+    <ClCompile Include="..\..\Utilities\gdcmrle\info.cxx" />
+    <ClCompile Include="..\..\Utilities\gdcmrle\io.cxx" />
+    <ClCompile Include="..\..\Utilities\gdcmrle\rle.cxx" />
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{B2357DEB-D7FD-46BA-8910-EFACE8A8CC36}</ProjectGuid>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='LIB Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseOfMfc>false</UseOfMfc>
+    <PlatformToolset>v120</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DLL Debug|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseOfMfc>false</UseOfMfc>
+    <PlatformToolset>v120</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='LIB Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseOfMfc>false</UseOfMfc>
+    <PlatformToolset>v120</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DLL Release|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseOfMfc>false</UseOfMfc>
+    <PlatformToolset>v120</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='LIB Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseOfMfc>false</UseOfMfc>
+    <PlatformToolset>v120</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DLL Debug|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseOfMfc>false</UseOfMfc>
+    <PlatformToolset>v120</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='LIB Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseOfMfc>false</UseOfMfc>
+    <PlatformToolset>v120</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DLL Release|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseOfMfc>false</UseOfMfc>
+    <PlatformToolset>v120</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='LIB Release|Win32'" Label="PropertySheets">
+    <Import Project="gdcm.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='LIB Debug|Win32'" Label="PropertySheets">
+    <Import Project="gdcm.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='LIB Release|x64'" Label="PropertySheets">
+    <Import Project="gdcm.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='LIB Debug|x64'" Label="PropertySheets">
+    <Import Project="gdcm.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='DLL Release|Win32'" Label="PropertySheets">
+    <Import Project="gdcm.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='DLL Debug|Win32'" Label="PropertySheets">
+    <Import Project="gdcm.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='DLL Release|x64'" Label="PropertySheets">
+    <Import Project="gdcm.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='DLL Debug|x64'" Label="PropertySheets">
+    <Import Project="gdcm.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.30319.1</_ProjectFileVersion>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='DLL Release|Win32'">$(Platform)\$(Configuration)\$(ProjectName)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='DLL Release|Win32'">$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='DLL Release|Win32'">false</LinkIncremental>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='DLL Release|x64'">$(Platform)\$(Configuration)\$(ProjectName)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='DLL Release|x64'">$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='DLL Release|x64'">false</LinkIncremental>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='LIB Debug|Win32'">.\$(Platform)\$(Configuration)\$(ProjectName)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='LIB Debug|Win32'">.\$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='LIB Debug|x64'">$(Platform)\$(Configuration)\$(ProjectName)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='LIB Debug|x64'">$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='DLL Debug|Win32'">.\$(Platform)\$(Configuration)\$(ProjectName)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='DLL Debug|Win32'">.\$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='DLL Debug|Win32'">true</LinkIncremental>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='DLL Debug|x64'">$(Platform)\$(Configuration)\$(ProjectName)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='DLL Debug|x64'">$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='DLL Debug|x64'">true</LinkIncremental>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='LIB Release|Win32'">.\$(Platform)\$(Configuration)\$(ProjectName)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='LIB Release|Win32'">.\$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='LIB Release|x64'">$(Platform)\$(Configuration)\$(ProjectName)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='LIB Release|x64'">$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='DLL Release|Win32'">
+    <Midl>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MkTypLibCompatible>true</MkTypLibCompatible>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <TargetEnvironment>Win32</TargetEnvironment>
+      <TypeLibraryName>$(Platform)\$(Configuration)\$(ProjectName)/gdcmMSFF.tlb</TypeLibraryName>
+      <HeaderFileName>
+      </HeaderFileName>
+    </Midl>
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <PrecompiledHeaderOutputFile>$(Platform)\$(Configuration)\$(ProjectName)/gdcmMSFF.pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>$(Platform)\$(Configuration)\$(ProjectName)/</AssemblerListingLocation>
+      <ObjectFileName>$(Platform)\$(Configuration)\$(ProjectName)/</ObjectFileName>
+      <ProgramDataBaseFileName>$(Platform)\$(Configuration)\$(ProjectName)/</ProgramDataBaseFileName>
+      <WarningLevel>Level3</WarningLevel>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0409</Culture>
+    </ResourceCompile>
+    <Link>
+      <AdditionalDependencies>odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>$(Platform)\$(Configuration)\$(ProjectName)\gdcmMSFF.dll</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <ProgramDatabaseFile>$(Platform)\$(Configuration)\$(ProjectName)/gdcmMSFF.pdb</ProgramDatabaseFile>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <DataExecutionPrevention>
+      </DataExecutionPrevention>
+      <ImportLibrary>$(Platform)\$(Configuration)\$(ProjectName)/gdcmMSFF.lib</ImportLibrary>
+      <TargetMachine>MachineX86</TargetMachine>
+    </Link>
+    <Bscmake>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <OutputFile>$(Platform)\$(Configuration)\$(ProjectName)/gdcmMSFF.bsc</OutputFile>
+    </Bscmake>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='DLL Release|x64'">
+    <Midl>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MkTypLibCompatible>true</MkTypLibCompatible>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <TargetEnvironment>X64</TargetEnvironment>
+      <TypeLibraryName>$(Platform)\$(Configuration)\$(ProjectName)/gdcmMSFF.tlb</TypeLibraryName>
+      <HeaderFileName>
+      </HeaderFileName>
+    </Midl>
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <PrecompiledHeaderOutputFile>$(Platform)\$(Configuration)\$(ProjectName)/gdcmMSFF.pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>$(Platform)\$(Configuration)\$(ProjectName)/</AssemblerListingLocation>
+      <ObjectFileName>$(Platform)\$(Configuration)\$(ProjectName)/</ObjectFileName>
+      <ProgramDataBaseFileName>$(Platform)\$(Configuration)\$(ProjectName)/</ProgramDataBaseFileName>
+      <WarningLevel>Level3</WarningLevel>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0409</Culture>
+    </ResourceCompile>
+    <Link>
+      <AdditionalDependencies>odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>$(Platform)\$(Configuration)\$(ProjectName)\gdcmMSFF.dll</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <ProgramDatabaseFile>$(Platform)\$(Configuration)\$(ProjectName)/gdcmMSFF.pdb</ProgramDatabaseFile>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <DataExecutionPrevention>
+      </DataExecutionPrevention>
+      <ImportLibrary>$(Platform)\$(Configuration)\$(ProjectName)/gdcmMSFF.lib</ImportLibrary>
+      <TargetMachine>MachineX64</TargetMachine>
+    </Link>
+    <Bscmake>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <OutputFile>$(Platform)\$(Configuration)\$(ProjectName)/gdcmMSFF.bsc</OutputFile>
+    </Bscmake>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='LIB Debug|Win32'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MinimalRebuild>true</MinimalRebuild>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <PrecompiledHeaderOutputFile>.\$(Platform)\$(Configuration)\$(ProjectName)/gdcmMSFF.pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>.\$(Platform)\$(Configuration)\$(ProjectName)/</AssemblerListingLocation>
+      <ObjectFileName>.\$(Platform)\$(Configuration)\$(ProjectName)/</ObjectFileName>
+      <ProgramDataBaseFileName>.\$(Platform)\$(Configuration)\$(ProjectName)/</ProgramDataBaseFileName>
+      <WarningLevel>Level3</WarningLevel>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0409</Culture>
+    </ResourceCompile>
+    <Lib>
+      <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+    </Lib>
+    <Bscmake>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <OutputFile>.\$(Platform)\$(Configuration)\$(ProjectName)/gdcmMSFF.bsc</OutputFile>
+    </Bscmake>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='LIB Debug|x64'">
+    <Midl>
+      <TargetEnvironment>X64</TargetEnvironment>
+    </Midl>
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <PrecompiledHeaderOutputFile>.\$(Platform)\$(Configuration)\$(ProjectName)/gdcmMSFF.pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>.\$(Platform)\$(Configuration)\$(ProjectName)/</AssemblerListingLocation>
+      <ObjectFileName>.\$(Platform)\$(Configuration)\$(ProjectName)/</ObjectFileName>
+      <ProgramDataBaseFileName>.\$(Platform)\$(Configuration)\$(ProjectName)/</ProgramDataBaseFileName>
+      <WarningLevel>Level3</WarningLevel>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0409</Culture>
+    </ResourceCompile>
+    <Lib>
+      <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+    </Lib>
+    <Bscmake>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <OutputFile>.\$(Platform)\$(Configuration)\$(ProjectName)/gdcmMSFF.bsc</OutputFile>
+    </Bscmake>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='DLL Debug|Win32'">
+    <Midl>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MkTypLibCompatible>true</MkTypLibCompatible>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <TargetEnvironment>Win32</TargetEnvironment>
+      <TypeLibraryName>.\$(Platform)\$(Configuration)\$(ProjectName)/gdcmMSFF.tlb</TypeLibraryName>
+      <HeaderFileName>
+      </HeaderFileName>
+    </Midl>
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MinimalRebuild>true</MinimalRebuild>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <PrecompiledHeaderOutputFile>.\$(Platform)\$(Configuration)\$(ProjectName)/gdcmMSFF.pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>.\$(Platform)\$(Configuration)\$(ProjectName)/</AssemblerListingLocation>
+      <ObjectFileName>.\$(Platform)\$(Configuration)\$(ProjectName)/</ObjectFileName>
+      <ProgramDataBaseFileName>.\$(Platform)\$(Configuration)\$(ProjectName)/</ProgramDataBaseFileName>
+      <WarningLevel>Level3</WarningLevel>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0409</Culture>
+    </ResourceCompile>
+    <Link>
+      <AdditionalDependencies>odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>$(Platform)\$(Configuration)\$(ProjectName)\gdcmMSFF.dll</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <ModuleDefinitionFile>$(Platform)\$(Configuration)\$(ProjectName)\gdcmMSFF.def</ModuleDefinitionFile>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <ProgramDatabaseFile>.\$(Platform)\$(Configuration)\$(ProjectName)/gdcmMSFF.pdb</ProgramDatabaseFile>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <DataExecutionPrevention>
+      </DataExecutionPrevention>
+      <ImportLibrary>.\$(Platform)\$(Configuration)\$(ProjectName)/gdcmMSFF.lib</ImportLibrary>
+      <TargetMachine>MachineX86</TargetMachine>
+    </Link>
+    <Bscmake>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <OutputFile>.\$(Platform)\$(Configuration)\$(ProjectName)/gdcmMSFF.bsc</OutputFile>
+    </Bscmake>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='DLL Debug|x64'">
+    <Midl>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MkTypLibCompatible>true</MkTypLibCompatible>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <TargetEnvironment>X64</TargetEnvironment>
+      <TypeLibraryName>.\$(Platform)\$(Configuration)\$(ProjectName)/gdcmMSFF.tlb</TypeLibraryName>
+      <HeaderFileName>
+      </HeaderFileName>
+    </Midl>
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MinimalRebuild>true</MinimalRebuild>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <PrecompiledHeaderOutputFile>.\$(Platform)\$(Configuration)\$(ProjectName)/gdcmMSFF.pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>.\$(Platform)\$(Configuration)\$(ProjectName)/</AssemblerListingLocation>
+      <ObjectFileName>.\$(Platform)\$(Configuration)\$(ProjectName)/</ObjectFileName>
+      <ProgramDataBaseFileName>.\$(Platform)\$(Configuration)\$(ProjectName)/</ProgramDataBaseFileName>
+      <WarningLevel>Level3</WarningLevel>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0409</Culture>
+    </ResourceCompile>
+    <Link>
+      <AdditionalDependencies>odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>$(Platform)\$(Configuration)\$(ProjectName)\gdcmMSFF.dll</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <ModuleDefinitionFile>$(Platform)\$(Configuration)\$(ProjectName)\gdcmMSFF.def</ModuleDefinitionFile>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <ProgramDatabaseFile>.\$(Platform)\$(Configuration)\$(ProjectName)/gdcmMSFF.pdb</ProgramDatabaseFile>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <DataExecutionPrevention>
+      </DataExecutionPrevention>
+      <ImportLibrary>.\$(Platform)\$(Configuration)\$(ProjectName)/gdcmMSFF.lib</ImportLibrary>
+      <TargetMachine>MachineX64</TargetMachine>
+    </Link>
+    <Bscmake>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <OutputFile>.\$(Platform)\$(Configuration)\$(ProjectName)/gdcmMSFF.bsc</OutputFile>
+    </Bscmake>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='LIB Release|Win32'">
+    <ClCompile>
+      <Optimization>Full</Optimization>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <PrecompiledHeaderOutputFile>.\$(Platform)\$(Configuration)\$(ProjectName)/gdcmMSFF.pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>.\$(Platform)\$(Configuration)\$(ProjectName)/</AssemblerListingLocation>
+      <ObjectFileName>.\$(Platform)\$(Configuration)\$(ProjectName)/</ObjectFileName>
+      <ProgramDataBaseFileName>.\$(Platform)\$(Configuration)\$(ProjectName)/</ProgramDataBaseFileName>
+      <WarningLevel>Level3</WarningLevel>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0409</Culture>
+    </ResourceCompile>
+    <Lib>
+      <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+    </Lib>
+    <Bscmake>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <OutputFile>.\$(Platform)\$(Configuration)\$(ProjectName)/gdcmMSFF.bsc</OutputFile>
+    </Bscmake>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='LIB Release|x64'">
+    <Midl>
+      <TargetEnvironment>X64</TargetEnvironment>
+    </Midl>
+    <ClCompile>
+      <Optimization>Full</Optimization>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <PrecompiledHeaderOutputFile>.\$(Platform)\$(Configuration)\$(ProjectName)/gdcmMSFF.pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>.\$(Platform)\$(Configuration)\$(ProjectName)/</AssemblerListingLocation>
+      <ObjectFileName>.\$(Platform)\$(Configuration)\$(ProjectName)/</ObjectFileName>
+      <ProgramDataBaseFileName>.\$(Platform)\$(Configuration)\$(ProjectName)/</ProgramDataBaseFileName>
+      <WarningLevel>Level3</WarningLevel>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0409</Culture>
+    </ResourceCompile>
+    <Lib>
+      <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+    </Lib>
+    <Bscmake>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <OutputFile>.\$(Platform)\$(Configuration)\$(ProjectName)/gdcmMSFF.bsc</OutputFile>
+    </Bscmake>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

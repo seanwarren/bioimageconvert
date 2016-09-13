@@ -1,0 +1,59 @@
+imgcnv (2.0.9-1) unstable; urgency=low
+
+  * upstream
+
+ -- kristian kvilekval <kgk@loup.ece.ucsb.edu>  Tue, 23 Aug 2016 16:55:32 -0700
+
+imgcnv (2.0-1) unstable; urgency=low
+
+  * upstream
+
+ -- kristian kvilekval <kgk@loup.ece.ucsb.edu>  Fri, 20 Mar 2015 15:43:29 -0700
+
+imgcnv (1.70.1) unstable; urgency=low
+
+  *  upstream bug fix
+
+ -- kristian kvilekval <kgk@loup.ece.ucsb.edu>  Wed, 07 Jan 2015 23:03:12 -0800
+
+imgcnv (1.70) unstable; urgency=low
+
+  * new upstream
+
+ -- kristian kvilekval <kgk@loup.ece.ucsb.edu>  Wed, 17 Dec 2014 12:22:34 -0800
+
+imgcnv (1.69) unstable; urgency=low
+
+  * new upstream
+
+ -- kristian kvilekval <kgk@loup.ece.ucsb.edu>  Fri, 03 Oct 2014 15:48:15 -0700
+
+imgcnv (1.68) unstable; urgency=low
+
+  *  new upstream
+
+ -- kristian kvilekval <kgk@loup.ece.ucsb.edu>  Mon, 19 May 2014 11:14:35 -0700
+
+imgcnv (1.66) unstable; urgency=low
+
+  *  new upstream
+
+ -- kristian kvilekval <kgk@loup.ece.ucsb.edu>  Fri, 18 Apr 2014 12:05:05 -0700
+
+imgcnv (1.65) unstable; urgency=low
+
+  * new upstream
+
+ -- kristian kvilekval <kgk@loup.ece.ucsb.edu>  Fri, 22 Nov 2013 15:47:04 -0800
+
+imgcnv (1.64) unstable; urgency=low
+
+  * new upostream
+
+ -- kristian kvilekval <kgk@loup.ece.ucsb.edu>  Thu, 26 Sep 2013 16:38:18 -0700
+
+imgcnv (1.62-1) unstable; urgency=low
+
+  * Initial release (Closes: #nnnn)  <nnnn is the bug number of your ITP>
+
+ -- kristian kvilekval <kgk@loup.ece.ucsb.edu>  Thu, 22 Aug 2013 10:54:53 -0700

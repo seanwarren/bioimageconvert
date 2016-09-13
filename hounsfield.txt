@@ -1,0 +1,45 @@
+Hounsfield space typical values:
+
+Air	-1000
+Lung	-500
+Fat	-100 to -50
+Water	0
+CSF	15
+Kidney	30
+Blood	+30 to +45
+Muscle	+10 to +40
+Grey matter	+37 to +45
+White matter	+20 to +30
+Liver	+40 to +60
+J-O Blast	+20 to +30
+Soft Tissue, Contrast	+100 to +300
+Bone	+700 (cancellous bone) to +3000 (dense bone)
+
+
+DR systems ranges:
+
+
+    //    HeadSFT:          40 / 80  head soft tissue
+    //    Brain             30 / 110
+    //    NeckSFT :         60 / 300
+    //    Bone :            400 / 2000 
+    //    Temporal bones:   400 / 4000  (bones of the scull)
+    //    Bone body:        350 / 2500 
+    //    Soft Tissue :     40 / 500
+    //    SoftTissue(PEDS): 40 / 400   just soft tissue CT (pediatric )
+    //    Mediastinum:      400/1800
+    //    Bronchial:        -180 / 2600
+    //    Lung :            -350 / 2000
+    //    Lung 2:           -700 / 1200
+    //    Abdomen           -20 / 400
+    //    Liver:            60 / 180
+    //    Liver W/O:        40 / 150 without contrast
+    //    Liver W/C:        100 / 150 with contrast
+    //    P Fossa :         30 / 180
+    //    CSpineSFT w/o :   40 / 250   Cervical spine without contrast
+    //    TLSpineSFT w/o:   40 / 500   Thoracic and Lumbar spine
+    //    INFARCT :         40 / 60
+    //    OBLIQUE MIP :     200 / 700
+    //    MYELOGRAM W/L:    60 / 650
+
+

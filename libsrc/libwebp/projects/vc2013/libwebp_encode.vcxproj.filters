@@ -1,0 +1,70 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="..\..\src\enc\alpha.c">
+      <Filter>sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\enc\analysis.c">
+      <Filter>sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\enc\backward_references.c">
+      <Filter>sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\enc\config.c">
+      <Filter>sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\enc\cost.c">
+      <Filter>sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\enc\filter.c">
+      <Filter>sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\enc\frame.c">
+      <Filter>sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\enc\histogram.c">
+      <Filter>sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\enc\iterator.c">
+      <Filter>sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\enc\picture.c">
+      <Filter>sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\enc\picture_csp.c">
+      <Filter>sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\enc\picture_psnr.c">
+      <Filter>sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\enc\picture_rescale.c">
+      <Filter>sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\enc\picture_tools.c">
+      <Filter>sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\enc\quant.c">
+      <Filter>sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\enc\syntax.c">
+      <Filter>sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\enc\token.c">
+      <Filter>sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\enc\tree.c">
+      <Filter>sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\enc\vp8l.c">
+      <Filter>sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\enc\webpenc.c">
+      <Filter>sources</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="sources">
+      <UniqueIdentifier>{8bc8a2cc-181d-4e5c-9d5e-7caa08edca75}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
