@@ -473,10 +473,11 @@ void DConf::init() {
   tmp += "  in case of multiple regions, specify a template for output file creation with following variables, ex: -template {output_filename}_{x1}.{y1}.{x2}.{y2}.tif";
   appendArgumentDefinition( "-roi", 1, tmp );
 
-  tmp = "region of interest, should be followed by: x1,y1,x2,y2 that defines ROI rectangle, ex: -tile-roi 10,10,100,100\n";
+  tmp = "region of interest, should be followed by: x1,y1,x2,y2[,L] that defines ROI rectangle, ex: -tile-roi 10,10,100,100,0\n";
   tmp += "the difference from -roi is in how the image is loaded, in this case if operating on a tiled image\n";
   tmp += "only the required sub-region will be loaded, similar to tile interface but with arbitrary position\n";
   tmp += "this means that all enhancements will be local to the ROI and glogal histogram will be needed";
+  tmp += "L is the pyramid level, 0 is 100%, 1 is 50%, 2 is 25%, etc...";
   appendArgumentDefinition("-tile-roi", 1, tmp);
 
   tmp = "Define a template for file names, ex: -template {output_filename}_{n}.tif\n";
@@ -925,6 +926,9 @@ void DConf::processArguments() {
           tile_y1 = t[1];
           tile_x2 = t[2];
           tile_y2 = t[3];
+      }
+      if (t.size() > 4) {
+          res_level = t[4];
       }
   }
 
@@ -1618,7 +1622,7 @@ bool is_overlapping_previous( const Image &img, DConf *c ) {
 
 bool read_session_pixels(MetaFormatManager *fm, Image *img, unsigned int plane, DConf *c) {
     ImageInfo info = fm->sessionGetInfo();
-    if (c->tile_size == 0 && c->res_level>0 && info.number_levels>c->res_level) {  // read image level
+    if (c->res_level>0 && info.number_levels>c->res_level && c->tile_size == 0 && c->tile_x1==-1 ) {  // read image level
         ImageProxy ip(fm);
         return ip.readLevel(*img, plane, c->res_level);
     } else if (info.number_levels > c->res_level && info.tileWidth > 0 && c->tile_size > 0 && c->tile_xid >= 0) { // read image tile

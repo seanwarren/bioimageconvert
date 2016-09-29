@@ -141,9 +141,9 @@ bool ImageProxy::readRegion(Image &img, bim::uint page, bim::uint64 x1, bim::uin
     double yt2 = y2 / (double)im_tile_sz;
 
     int xid1 = floor(xt1);
-    int nx = bim::max<int>(bim::round<int>(xt2) -xid1, 1);
+    int nx = bim::max<int>(ceil(xt2) - xid1, 1);
     int yid1 = floor(yt1);
-    int ny = bim::max<int>(bim::round<int>(yt2) -yid1, 1);
+    int ny = bim::max<int>(ceil(yt2) - yid1, 1);
 
     // read all required tiles into the temp image
     Image temp;
