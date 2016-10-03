@@ -1,4 +1,10 @@
-imgcnv (2.0.9) unstable; urgency=low
+imgcnv (2.0.9-2) unstable; urgency=medium
+
+  *  minor updates from upstream
+
+ -- kristian kvilekval <kgk@loup.ece.ucsb.edu>  Mon, 03 Oct 2016 15:18:44 -0700
+
+imgcnv (2.0.9-1) unstable; urgency=low
 
   * upstream
 
