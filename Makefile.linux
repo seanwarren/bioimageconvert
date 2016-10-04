@@ -20,45 +20,49 @@ PKG_CONFIG_PATH=$LIBVPX:$LIBX264:$LIBX265/build/linux
 QMAKEOPTS=
 VERSION=2.0.9
 
-all : imgcnv
+all : binlibs imgcnv
 
+binlibs:
+	python download_build_libs.py
 
-install:
+install:  imgcnv
 	install -d $(DESTDIR)$(BINDIR)
 	install imgcnv $(DESTDIR)$(BINDIR)
 	install -d $(DESTDIR)$(LIBDIR)
 	install libimgcnv.so.2 $(DESTDIR)$(LIBDIR)
 
 
-imgcnv:
+
+qmake:
+	(cd $(LIBBIM) && qmake $(QMAKEOPTS) bioimage.pro)
+	(cd src && qmake $(QMAKEOPTS) imgcnv.pro)
+	(cd src_dylib && qmake $(QMAKEOPTS) libimgcnv.pro)
+
+imgcnv: binlibs qmake
 	-mkdir -p .generated/obj
 
 	@echo
 	@echo
 	@echo "Building libbioimage in $(LIBBIM)"
-	(cd $(LIBBIM) && qmake $(QMAKEOPTS) bioimage.pro)
 	(cd $(LIBBIM) && $(MAKE))
 
 	@echo
 	@echo
 	@echo "Building imgcnv"
-	(cd src && qmake $(QMAKEOPTS) imgcnv.pro)
 	(cd src && $(MAKE))
 
 	@echo
 	@echo
 	@echo "Building libimgcnv"
-	(cd src_dylib && qmake $(QMAKEOPTS) libimgcnv.pro)
 	(cd src_dylib && $(MAKE))
 
-full:
+full: binlibs qmake
 	-mkdir -p .generated/obj
 	-mkdir -p $(LIBS)
 
 	@echo
 	@echo
 	@echo "Building libbioimage in $(LIBBIM)"
-	(cd $(LIBBIM) && qmake $(QMAKEOPTS) bioimage.pro)
 	(cd $(LIBBIM) && $(MAKE))
 
 	@echo
@@ -189,32 +193,27 @@ full:
 	@echo
 	@echo
 	@echo "Building imgcnv"
-	(cd src && qmake $(QMAKEOPTS) imgcnv.pro)
 	(cd src && $(MAKE) $(MAKEFLAGS))
 
 	@echo
 	@echo
 	@echo "Building libimgcnv"
-	(cd src_dylib && qmake $(QMAKEOPTS) libimgcnv.pro)
 	(cd src_dylib && $(MAKE) $(MAKEFLAGS))
 
-clean:
+clean: qmake
 	(cd src && $(MAKE) clean)
 	rm -rf .generated *.o *~
 	rm -rf $(LIBBIM)/.generated $(LIBBIM)/*.o $(LIBBIM)/*~ $(LIBBIM)/.qmake.stash
 	(cd $(LIBBIM) && $(MAKE) clean)
-	(cd $(LIBBIM) && $(MAKE) clean)
+#	(cd $(LIBVPX) && $(MAKE) clean)
+	rm -rf $(LIBBIM)/Makefile src/Makefile src_dylib/Makefile
 
-cleanfull:
-	(cd src && $(MAKE) clean)
-	rm -rf .generated *.o *~
-	rm -rf $(LIBBIM)/.generated $(LIBBIM)/*.o $(LIBBIM)/*~ $(LIBBIM)/.qmake.stash
-	(cd $(LIBBIM) && $(MAKE) clean)
+cleanfull: clean
 	(cd $(LIBVPX) && $(MAKE) clean)
 	(cd $(LIBX264) && $(MAKE) clean)
 	rm -rf $(FFMPEG)/ffmpeg-obj
 	rm -rf $(FFMPEG)/ffmpeg-out
-	#(cd $(FFMPEG)/ffmpeg && $(MAKE) clean)
+#	(cd $(FFMPEG)/ffmpeg && $(MAKE) clean)
 
 realclean: clean
 	rm -f imgcnv

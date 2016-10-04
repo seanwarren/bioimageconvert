@@ -25,19 +25,20 @@ all : binlibs imgcnv
 binlibs:
 	python download_build_libs.py
 
-install: imgcnv
+install:  imgcnv
 	install -d $(DESTDIR)$(BINDIR)
 	install imgcnv $(DESTDIR)$(BINDIR)
 	install -d $(DESTDIR)$(LIBDIR)
 	install libimgcnv.so.2 $(DESTDIR)$(LIBDIR)
+
+
 
 qmake:
 	(cd $(LIBBIM) && qmake $(QMAKEOPTS) bioimage.pro)
 	(cd src && qmake $(QMAKEOPTS) imgcnv.pro)
 	(cd src_dylib && qmake $(QMAKEOPTS) libimgcnv.pro)
 
-
-imgcnv:  binlibs qmake
+imgcnv: binlibs qmake
 	-mkdir -p .generated/obj
 
 	@echo
@@ -204,14 +205,15 @@ clean: qmake
 	rm -rf .generated *.o *~
 	rm -rf $(LIBBIM)/.generated $(LIBBIM)/*.o $(LIBBIM)/*~ $(LIBBIM)/.qmake.stash
 	(cd $(LIBBIM) && $(MAKE) clean)
-	#(cd $(LIBVPX) && $(MAKE) clean)
+#	(cd $(LIBVPX) && $(MAKE) clean)
 	rm -rf $(LIBBIM)/Makefile src/Makefile src_dylib/Makefile
 
 cleanfull: clean
+	(cd $(LIBVPX) && $(MAKE) clean)
 	(cd $(LIBX264) && $(MAKE) clean)
 	rm -rf $(FFMPEG)/ffmpeg-obj
 	rm -rf $(FFMPEG)/ffmpeg-out
-	#(cd $(FFMPEG)/ffmpeg && $(MAKE) clean)
+#	(cd $(FFMPEG)/ffmpeg && $(MAKE) clean)
 
 realclean: clean
 	rm -f imgcnv
