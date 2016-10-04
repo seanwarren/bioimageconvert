@@ -16,6 +16,7 @@ LIBJPEGTURBO=libsrc/libjpeg-turbo
 LIBGDCM=libsrc/gdcm
 LIBGDCMBIN=libsrc/gdcmbin
 LIBS=libs/linux
+LIBS_PKG=lib/build_libs_2-0-9_linux.zip
 PKG_CONFIG_PATH=$LIBVPX:$LIBX264:$LIBX265/build/linux
 QMAKEOPTS=
 VERSION=2.0.9
@@ -208,6 +209,8 @@ clean: qmake
 #	(cd $(LIBVPX) && $(MAKE) clean)
 	rm -rf $(LIBBIM)/Makefile src/Makefile src_dylib/Makefile
 
+
+
 cleanfull: clean
 	(cd $(LIBVPX) && $(MAKE) clean)
 	(cd $(LIBX264) && $(MAKE) clean)
@@ -215,7 +218,8 @@ cleanfull: clean
 	rm -rf $(FFMPEG)/ffmpeg-out
 #	(cd $(FFMPEG)/ffmpeg && $(MAKE) clean)
 
-realclean: clean
+distclean: clean
+	rm -rf $(LIBS) $(LIBS_PKG)
 	rm -f imgcnv
 	rm -f libimgcnv.so*
 
