@@ -477,7 +477,7 @@ void DConf::init() {
   tmp += "the difference from -roi is in how the image is loaded, in this case if operating on a tiled image\n";
   tmp += "only the required sub-region will be loaded, similar to tile interface but with arbitrary position\n";
   tmp += "this means that all enhancements will be local to the ROI and glogal histogram will be needed";
-  tmp += "L is the pyramid level, 0 is 100%, 1 is 50%, 2 is 25%, etc...";
+  tmp += "L is the pyramid level, 0=100%, 1=50%, 2=25%, etc...";
   appendArgumentDefinition("-tile-roi", 1, tmp);
 
   tmp = "Define a template for file names, ex: -template {output_filename}_{n}.tif\n";
