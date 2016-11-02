@@ -2388,9 +2388,21 @@ void fuse_channels_weights ( Image *img, int sample, const Image &srci, const st
   } // y
 }
 
-Image Image::fuse( const std::vector< std::vector< std::pair<int,float> > > &map, Image::FuseMethod method, ImageHistogram *hin ) const {
+Image Image::fuse( const std::vector< std::vector< std::pair<int,float> > > &_map, Image::FuseMethod method, ImageHistogram *hin ) const {
     Image img;
     if (bmp==NULL) return img;
+
+    // check input map for invalid channels
+    std::vector< std::vector< std::pair<int, float> > > map = _map;
+    for (unsigned int i = 0; i<map.size(); ++i) {
+        for (std::vector< std::pair<int, float> >::iterator j = map[i].begin(); j != map[i].end(); ++j) {
+            if (j->first<0 || j->first >= bmp->i.samples) {
+                j->first = bmp->i.samples - 1;
+                j->second = 0;
+            }
+
+        }
+    }
 
     // compute the input image levels
     ImageHistogram hist;
@@ -2495,8 +2507,8 @@ Image Image::fuse( const std::vector< std::vector< std::pair<int,float> > > &map
 Image Image::fuseToGrayscale() const {
   std::vector< std::vector< std::pair<int,float> > > mapping;
   std::vector< std::pair<int,float> > gray;
-
-  if (this->samples()==3) {
+  bool is_rgb = this->samples() == 3 && this->imageMode() == IM_RGB || this->samples() == 4 && this->imageMode() == IM_RGBA;
+  if (is_rgb) {
     gray.push_back( std::make_pair( 0, 0.3f ) );
     gray.push_back( std::make_pair( 1, 0.59f ) );
     gray.push_back( std::make_pair( 2, 0.11f ) );
