@@ -11,6 +11,8 @@
         
 *******************************************************************************/
 
+#include <typeize_buffer.h>
+
 #include <string>
 #include <limits>
 #include <vector>
@@ -22,7 +24,7 @@
 // 1 Bit
 //------------------------------------------------------------------------------------
 
-void cnv_buffer_1to8bit( unsigned char *b8, unsigned char *b1, unsigned int width_pixels ) {
+void cnv_buffer_1to8bit( unsigned char *b8, const unsigned char *b1, const unsigned int width_pixels ) {
 
   int rest = width_pixels%8;
   unsigned int w = (unsigned int) floor( width_pixels/8.0 );
@@ -84,7 +86,7 @@ void cnv_buffer_1to8bit( unsigned char *b8, unsigned char *b1, unsigned int widt
 // 4 Bit
 //------------------------------------------------------------------------------------
 
-void cnv_buffer_4to8bit( unsigned char *b8, unsigned char *b4, unsigned int width_pixels ) {
+void cnv_buffer_4to8bit( unsigned char *b8, const unsigned char *b4, const unsigned int width_pixels ) {
   
   bool even = ( width_pixels%2 == 0 );
   unsigned int w = (unsigned int) floor( width_pixels/2.0 );
@@ -121,7 +123,7 @@ void cnv_buffer_4to8bit( unsigned char *b8, unsigned char *b4, unsigned int widt
 // 12 Bit
 //------------------------------------------------------------------------------------
 
-void cnv_buffer_12to16bit( unsigned char *b16, unsigned char *b12, unsigned int width_pixels ) {
+void cnv_buffer_12to16bit( unsigned char *b16, const unsigned char *b12, const unsigned int width_pixels ) {
   
   bool even = ( width_pixels%2 == 0 );
   unsigned int w = width_pixels;
