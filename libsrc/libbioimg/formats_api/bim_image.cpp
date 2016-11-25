@@ -61,7 +61,7 @@
 #include "resize.h"
 #include "rotate.h"
 
-#include "typeize_buffer.cpp"
+#include "typeize_buffer.h"
 
 using namespace bim;
 
@@ -884,42 +884,45 @@ bool Image::isUnTypedDepth() const {
 }
 
 Image Image::ensureTypedDepth( ) const {
-  Image img;
-  if (bmp==NULL) return img;
+    Image img;
+    if (bmp==NULL) return img;
+    
+    if (bmp->i.depth != 12 && bmp->i.depth != 4 && bmp->i.depth != 1) {
+        return *this;
+    }
+    
+    const bim::uint64 w = bmp->i.width;
+    const bim::uint64 h = bmp->i.height;
 
-  if (bmp->i.depth != 12 && bmp->i.depth != 4 && bmp->i.depth != 1) {
-    return *this;
-  }
-
-  bim::uint64 w = bmp->i.width;
-  bim::uint64 h = bmp->i.height;
+    const unsigned int out_depth = (bmp->i.depth == 12) ? 8 : 16;
+    
+    if ( img.alloc( w, h, bmp->i.samples, out_depth ) == 0 ) {
+        for (unsigned int sample=0; sample<bmp->i.samples; ++sample ) {
+            for (unsigned int y=0; y<h; ++y ) {
+                void *dest = img.scanLine( sample, y ); 
+                const void *src = this->scanLine( sample, y );
+                
+                if (bmp->i.depth == 1) {
+                    cnv_buffer_1to8bit((unsigned char *)dest, (const unsigned char *)src, w);
+                } else {
+                    if (bmp->i.depth == 4) {
+                        cnv_buffer_4to8bit((unsigned char *)dest, (const unsigned char *)src, w);
+                    } else {
+                        if (bmp->i.depth == 12) {
+                            cnv_buffer_12to16bit((unsigned char *)dest, (const unsigned char *)src, w);
+                        }
+                    }
+                }
+            } // for y
+        } // for sample
+    }
   
-  unsigned int out_depth = 8;
-  if (bmp->i.depth == 12) out_depth = 16;
+    img.bmp->i = this->bmp->i;
+    img.bmp->i.depth = out_depth;
+    img.metadata = this->metadata;
+    //img.histo = this->histo;
 
-  if ( img.alloc( w, h, bmp->i.samples, out_depth ) == 0 )
-  for (unsigned int sample=0; sample<bmp->i.samples; ++sample ) {
-    for (unsigned int y=0; y<h; ++y ) {
-      void *dest = img.scanLine( sample, y ); 
-      void *src = this->scanLine( sample, y );
-
-      if (bmp->i.depth == 1)
-        cnv_buffer_1to8bit( (unsigned char *)dest, (unsigned char *)src, w );
-      else
-      if (bmp->i.depth == 4)
-        cnv_buffer_4to8bit( (unsigned char *)dest, (unsigned char *)src, w );
-      else
-      if (bmp->i.depth == 12)
-        cnv_buffer_12to16bit( (unsigned char *)dest, (unsigned char *)src, w );
-
-    } // for y
-  } // sample
-  
-  img.bmp->i = this->bmp->i;
-  img.bmp->i.depth = out_depth;
-  img.metadata = this->metadata;
-  //img.histo = this->histo;
-  return img;
+    return img;
 }
 
 // return a pointer to the buffer of line y formed in iterleaved format xRGB

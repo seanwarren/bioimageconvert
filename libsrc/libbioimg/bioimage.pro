@@ -254,7 +254,8 @@ SOURCES += $$BIM_FMTS_API/bim_img_format_utils.cpp \
            $$BIM_FMTS_API/bim_image_opencv.cpp \
            $$BIM_FMTS_API/bim_image_pyramid.cpp \
            $$BIM_FMTS_API/bim_image_proxy.cpp \
-           $$BIM_FMTS_API/bim_image_stack.cpp
+           $$BIM_FMTS_API/bim_image_stack.cpp \
+           $$BIM_FMTS_API/typeize_buffer.cpp
 
 HEADERS += $$BIM_FMTS_API/bim_buffer.h \
            $$BIM_FMTS_API/bim_histogram.h \
@@ -269,7 +270,8 @@ HEADERS += $$BIM_FMTS_API/bim_buffer.h \
            $$BIM_FMTS_API/bim_qt_utils.h \
            $$BIM_FMTS_API/resize.h \
            $$BIM_FMTS_API/rotate.h \
-           $$BIM_FMTS_API/slic.h
+           $$BIM_FMTS_API/slic.h \
+           $$BIM_FMTS_API/typeize_buffer.h
 
 #Formats
 SOURCES += $$BIM_FMTS/bim_format_manager.cpp \
