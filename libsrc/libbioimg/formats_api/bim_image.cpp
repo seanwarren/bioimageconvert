@@ -176,8 +176,9 @@ void Image::connectToMemory( ImageBitmap *b ) {
   int ref_id = getRefId( b );
   if (ref_id == -1) return;
 
-  bmp = &refs.at(ref_id)->bmp;
+  #pragma omp atomic
   refs.at(ref_id)->refs++;
+  bmp = &refs.at(ref_id)->bmp;
 }
 
 void Image::connectToUnmanagedMemory(ImageBitmap *b) {
@@ -187,12 +188,16 @@ void Image::connectToUnmanagedMemory(ImageBitmap *b) {
     if (ref_id == -1) {
         ImgRefs *new_ref = new ImgRefs;
         new_ref->bmp = *b;
-        refs.push_back(new_ref);
-        ref_id = refs.size() - 1;
+        #pragma omp critical(MEMREF)
+        {
+            refs.push_back(new_ref);
+            ref_id = refs.size() - 1;
+        }
     }
 
+    #pragma omp atomic
+    refs.at(ref_id)->refs += 2;
     bmp = &refs.at(ref_id)->bmp;
-    refs.at(ref_id)->refs+=2;
 }
 
 void Image::connectToNewMemory() {
@@ -200,11 +205,13 @@ void Image::connectToNewMemory() {
   
   // create a new reference
   ImgRefs *new_ref = new ImgRefs;
-  refs.push_back( new_ref );
-  size_t ref_id = refs.size()-1;
-
-  refs.at(ref_id)->refs++;
-  bmp = &refs.at(ref_id)->bmp;
+  #pragma omp critical(MEMREF)
+  {
+      refs.push_back(new_ref);
+      size_t ref_id = refs.size() - 1;
+      refs.at(ref_id)->refs++;
+      bmp = &refs.at(ref_id)->bmp;
+  }
   initImagePlanes( bmp );
 }
 
@@ -214,14 +221,18 @@ void Image::disconnectFromMemory() {
 
   // decrease the reference to the image
   if (ref_id == -1) return;
+  #pragma omp atomic
   refs.at(ref_id)->refs--;
 
   // check if current reference will be zero, then delete image
   if (refs[ref_id]->refs < 1) {
-    ImgRefs *new_ref = refs[ref_id];
-    deleteImg( &refs.at(ref_id)->bmp );
-    refs.erase( refs.begin() + ref_id );
-    delete new_ref;
+      ImgRefs *new_ref = refs[ref_id];
+      #pragma omp critical(MEMREF)
+      {
+          deleteImg(&refs.at(ref_id)->bmp);
+          refs.erase(refs.begin() + ref_id);
+      }
+      delete new_ref;
   }
 }
 
