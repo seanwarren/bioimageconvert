@@ -39,7 +39,7 @@ win32 {
 #---------------------------------------------------------------------
 
 TEMPLATE = lib
-VERSION = 0.2.1
+VERSION = 2.1.0
 
 CONFIG += staticlib
 
@@ -544,8 +544,8 @@ stat_gdcm {
 dyn_gdcm {
   DEFINES += BIM_GDCM_FORMAT OPJ_STATIC
   SOURCES += $$BIM_FMT_DICOM/bim_dicom_format.cpp
-  
-  # 
+
+  #
   INCLUDEPATH += /usr/include/gdcm-2.6
 } # System GDCM
 

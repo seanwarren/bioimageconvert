@@ -97,16 +97,14 @@ Image Image::filter_edge() const {
 // Superpixels
 //------------------------------------------------------------------------------------
 
-// regionSize in pixels, regularization 0-1, with 0 shape is least regular
+// regionSize in pixels, regularization 0-1, with 1 the shape is most regular
 Image Image::superpixels( bim::uint64 regionSize, float regularization ) const {
     Image out(this->width(), this->height(), 32, 1, FMT_UNSIGNED);
 
     bim::uint32 *seg = (bim::uint32*) out.bits(0);
-    bim::uint64 minRegionSize = (regionSize * regionSize) / (6*6);
+    bim::uint64 minRegionSize = bim::round<double>(regionSize * 0.7);
     
-    ImageHistogram hist(*this);
-    regularization = (regularization * (hist.max_value()-hist.min_value()))+hist.min_value();
-
+    regularization = regularization * (regionSize * regionSize);
 
     if (this->depth()==8 && this->pixelType()==FMT_UNSIGNED)
         slic_segment<bim::uint8, float> (seg, this, this->width(), this->height(), this->samples(), regionSize, regularization, minRegionSize);
