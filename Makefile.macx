@@ -27,7 +27,7 @@ PKG_CONFIG_PATH=$LIBVPX:$LIBX264:$LIBX265/build/linux
 # standard clang up to 10.11 does not support OpenMP, use "brew insatll gcc49" and modify mkspec from qmake for g++-49
 QMAKEOPTS=-spec macx-g++49
 MACOSX_DEPLOYMENT_TARGET=10.11
-VERSION=2.0.9
+VERSION=2.1.0
 
 all : imgcnv
 
