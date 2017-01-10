@@ -98,11 +98,11 @@ Image Image::filter_edge() const {
 //------------------------------------------------------------------------------------
 
 // regionSize in pixels, regularization 0-1, with 1 the shape is most regular
-Image Image::superpixels( bim::uint64 regionSize, float regularization ) const {
+Image Image::superpixels( bim::uint64 regionSize, float regularization, float min_size_ratio = 0.7 ) const {
     Image out(this->width(), this->height(), 32, 1, FMT_UNSIGNED);
 
     bim::uint32 *seg = (bim::uint32*) out.bits(0);
-    bim::uint64 minRegionSize = bim::round<double>(regionSize * 0.7);
+    bim::uint64 minRegionSize = bim::round<double>(regionSize * min_size_ratio);
     
     regularization = regularization * (regionSize * regionSize);
 
@@ -147,9 +147,11 @@ Image operation_superpixels(Image &img, const bim::xstring &arguments, const xop
         superpixels = (int)vals[0];
     if (vals.size()>1)
         superpixels_regularization = vals[1];
-
+    float min_size_ratio = 0.7;
+    if (vals.size()>2)
+        min_size_ratio = vals[2];
     if (superpixels > 0)
-        return img.superpixels(superpixels, superpixels_regularization);
+        return img.superpixels(superpixels, superpixels_regularization, min_size_ratio);
     return img;
 };
 
