@@ -19,7 +19,7 @@ LIBS=libs/linux
 LIBS_PKG=libs/build_libs_2-0-9_linux.zip
 PKG_CONFIG_PATH=$LIBVPX:$LIBX264:$LIBX265/build/linux
 QMAKEOPTS=
-VERSION=2.0.9
+VERSION=2.1.0
 
 all : binlibs imgcnv
 

@@ -1,8 +1,12 @@
 = Version Change Log =
 
+== 2.1.0 ==
+
+ * Fix: Several important fixes for SLIC superpixels, ROIs, fuse...
+
 == 2.0.9 ==
  This is an intermediate release towards version 3, these will be the features of the final v3 release.
- 
+
  * New: Added support for new formats
         * JPEG-XR using jxrlib 1.1
         * WebP using libwebp 0.4
@@ -18,7 +22,7 @@
         * XMP
  * New: Added tile-based ROI interface
  * New: Added full support for color spaces, profiles and conversions using LCMS2
- * New: Added support for RGBA imagery: 
+ * New: Added support for RGBA imagery:
         * metadata based fusion will ignore alpha channel
         * default alpha mapping to false color image is set to transarent
         * image mode is reported in the metadata and properly indicates RGBA for most formats
@@ -29,11 +33,11 @@
  * Update: OME-TIFF added preferred color support
  * Update: Metaxpress improved metadata parsing
  * Update: optimizated openmp based parallelization, ignoring small images
- 
+
 == 2.0 ==
 
  * New: All command line operations are now ordered and thus may render different results to version 1.X
- * New: Added DICOM support using GDCM 2.4.4 
+ * New: Added DICOM support using GDCM 2.4.4
  * New: Added Hounsfield space enhancements for CT DICOM data
  * New: Added MPEG H265 encoding/decoding support
  * New: Added interleaved data support for RAW decoder/encoder
@@ -72,7 +76,7 @@
 == 1.65 ==
  * New: thresholding, gamma correction, brightness and contrast
  * New: Image transformations: color, space, etc
- * New: Most operations are parallelized 
+ * New: Most operations are parallelized
  * New: rotation, flip and mirror commands
  * New: slic superpixels
  * New: guessing rotation based on EXIF
@@ -137,15 +141,15 @@
 ==== Command line ====
 
  * Support for definition of 5D geometry from command line
- * All metadata is now transfered by default 
+ * All metadata is now transfered by default
  * Add tiling command (generates a tiled pyramid is specified format in desired location)
 
 ==== Formats ====
 
- * Full support for BigTIFF 
+ * Full support for BigTIFF
  * Added support for OIB version 2.0.0.0
  * Many OME-TIFF fixes
- 
+
 
 == 1.40 ==
 

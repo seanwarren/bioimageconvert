@@ -39,7 +39,7 @@ win32 {
 #---------------------------------------------------------------------
 
 TEMPLATE = lib
-VERSION = 0.2.1
+VERSION = 2.1.1
 
 CONFIG += staticlib
 
@@ -410,6 +410,8 @@ stat_pugixml {
 # NifTI
 #---------------------------------------------------------------------
 
+DEFINES += HAVE_ZLIB
+
 D_LIB_NIFTI_LIB = $$BIM_LSRC/nifti/niftilib
 D_LIB_NIFTI_ZNZ = $$BIM_LSRC/nifti/znzlib
 D_LIB_NIFTI_FSL = $$BIM_LSRC/nifti/fsliolib
@@ -544,8 +546,8 @@ stat_gdcm {
 dyn_gdcm {
   DEFINES += BIM_GDCM_FORMAT OPJ_STATIC
   SOURCES += $$BIM_FMT_DICOM/bim_dicom_format.cpp
-  
-  # 
+
+  #
   INCLUDEPATH += /usr/include/gdcm-2.6
 } # System GDCM
 
@@ -801,8 +803,11 @@ stat_libpng {
 stat_zlib {
   INCLUDEPATH += $$BIM_LIB_Z
 
+  win32:DEFINES += WINAPI_FAMILY=100 _CRT_SECURE_NO_WARNINGS
+
   SOURCES += $$BIM_LIB_Z/adler32.c $$BIM_LIB_Z/compress.c $$BIM_LIB_Z/crc32.c \
-             $$BIM_LIB_Z/deflate.c $$BIM_LIB_Z/infback.c \
+             $$BIM_LIB_Z/deflate.c $$BIM_LIB_Z/gzclose.c $$BIM_LIB_Z/gzlib.c \
+             $$BIM_LIB_Z/gzread.c $$BIM_LIB_Z/gzwrite.c $$BIM_LIB_Z/infback.c \
              $$BIM_LIB_Z/inffast.c $$BIM_LIB_Z/inflate.c $$BIM_LIB_Z/inftrees.c \
              $$BIM_LIB_Z/trees.c $$BIM_LIB_Z/uncompr.c $$BIM_LIB_Z/zutil.c
 } else {
