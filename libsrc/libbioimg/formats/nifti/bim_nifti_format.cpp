@@ -125,6 +125,11 @@ int niftiValidateFormatProc (BIM_MAGIC_STREAM *magic, bim::uint length, const bi
 
     if (memcmp(mag_num+344, "ni1", 3) == 0 ) return 0;
     if (memcmp(mag_num+344, "n+1", 3) == 0) return 0;
+    if (fileName) {
+        xstring filename(fileName);
+        filename = filename.toLowerCase();
+        if (filename.endsWith(".nii.gz")) return 0;
+    }
     return -1;
 }
 
@@ -597,7 +602,7 @@ FormatItem niftiItems[BIM_NIFTI_NUM_FORMATS] = {
     { //0
         "NIFTI",            // short name, no spaces
         "NIfTI-1", // Long format name
-        "nii|hdr|img",   // pipe "|" separated supported extension list
+        "nii|hdr|img|nii.gz",  // pipe "|" separated supported extension list
         1, //canRead;      // 0 - NO, 1 - YES
         0, //canWrite;     // 0 - NO, 1 - YES
         1, //canReadMeta;  // 0 - NO, 1 - YES
@@ -611,7 +616,7 @@ FormatItem niftiItems[BIM_NIFTI_NUM_FORMATS] = {
 
 FormatHeader niftiHeader = {
     sizeof(FormatHeader),
-    "2.0.0",
+    "2.0.1",
     "NIFTI",
     "Neuroimaging Informatics Technology Initiative (NIFTI)",
 
