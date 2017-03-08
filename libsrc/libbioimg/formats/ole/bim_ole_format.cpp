@@ -43,7 +43,7 @@ int read_oib_image(FormatHandle *fmtHndl);
 int oleValidateFormatProc (BIM_MAGIC_STREAM *magic, bim::uint length, const bim::Filename fileName) {
   if (length < BIM_OLE_MAGIC_SIZE) return -1;
   if (memcmp( magic, ole::magic, BIM_OLE_MAGIC_SIZE ) != 0) return -1;
-  // this is a very fast way of siply testing if the file is an OLE directory
+  // this is a very fast way of simply testing if the file is an OLE directory
   // better testing will happen in the read
   return 0;
 }

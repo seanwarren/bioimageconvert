@@ -109,7 +109,7 @@
                 
 *******************************************************************************/
 
-#define IMGCNV_VER "2.0.9"
+#define IMGCNV_VER "2.1.1"
 
 #include <cmath>
 #include <cstdio>
@@ -585,9 +585,10 @@ void DConf::init() {
   tmp += "    rgb2hsv - converts RGB -> HSV";
   appendArgumentDefinition( "-transform_color", 1, tmp );
 
-  tmp = "Segments image using SLIC superpixel method, takes region size and regularization, ex: -superpixels 16,0.2\n";
+  tmp = "Segments image using SLIC superpixel method, takes region size and regularization, ex: -superpixels 16,0.2[,0.7]\n";
   tmp += "    region size is in pixels\n";
   tmp += "    regularization - [0-1], where 0 means shape is least regular";
+  tmp += "    minimum size - [0-1], is optional and defines the minimum region size computed from region size, 1 will ensure minimum size at region size. Default value is 0.7";
   appendArgumentDefinition( "-superpixels", 1, tmp );
 
   tmp = "filters input image, ex: -filter edge\n";

@@ -445,7 +445,7 @@ class Image {
     Image filter_edge() const;
 
     // regionSize in pixels, regularization 0-1, with 0 shape is least regular
-    Image superpixels( bim::uint64 regionSize, float regularization ) const;
+    Image superpixels(bim::uint64 regionSize, float regularization, float min_size_ratio = 0.7) const;
     #endif //BIM_USE_FILTERS
 
     //--------------------------------------------------------------------------    

@@ -24,7 +24,7 @@ import posixpath
 
 IMGCNV = './imgcnv'
 IMGCNVVER = __version__
-url_image_store = 'http://flour.ece.ucsb.edu:8080/~bisque/test_data/images/'
+url_image_store = 'http://biodev.ece.ucsb.edu/~bisque/test_data/images/'
 local_store_images  = 'images'
 local_store_tests   = 'tests'
 
@@ -569,6 +569,7 @@ fetch_file('filtered_func_data.nii')
 fetch_file('newsirp_final_XML.nii')
 fetch_file('avg152T1_LR_nifti.hdr')
 fetch_file('avg152T1_LR_nifti.img')
+fetch_file('T1w.nii.gz')
 fetch_file('219j_q050.jxr')
 fetch_file('219j_q100.jxr')
 fetch_file('219j_q080.webp')
@@ -638,6 +639,7 @@ if 'all' in mode or 'reading' in mode:
     test_image_read( "NIFTI", "filtered_func_data.nii" )
     test_image_read( "NIFTI", "newsirp_final_XML.nii" )
     test_image_read( "NIFTI", "avg152T1_LR_nifti.hdr" )
+    test_image_read( "NIFTI", "T1w.nii.gz" )
 
     # video formats
     test_image_read( "QuickTime", "3Dstack.tif.3D.mov" )
@@ -1458,6 +1460,24 @@ if 'all' in mode or 'readmeta' in mode:
     meta_test['XCEDE/study/series/scanner/manufacturer'] = 'GE'
     meta_test['XCEDE/study/series/scanner/model'] = 'LX NVi 4T'
     test_metadata_read( "NIFTI XCEDE", "newsirp_final_XML.nii", meta_test )
+
+    meta_test = {}
+    meta_test['image_num_x'] = '260'
+    meta_test['image_num_y'] = '311'
+    meta_test['image_num_z'] = '260'
+    meta_test['image_num_t'] = '1'
+    meta_test['image_num_c'] = '1'
+    meta_test['format']      = 'NIFTI'
+    meta_test['image_pixel_depth'] = '32'
+    meta_test['image_pixel_format'] = 'floating point'
+    meta_test['pixel_resolution_x'] = '0.700000'
+    meta_test['pixel_resolution_y'] = '0.700000'
+    meta_test['pixel_resolution_z'] = '0.700000'
+    meta_test['pixel_resolution_unit_x'] = 'mm'
+    meta_test['pixel_resolution_unit_y'] = 'mm'
+    meta_test['pixel_resolution_unit_z'] = 'mm'
+    meta_test['NIFTI/affine_transform'] = '-0.700000,0.000000,0.000000,90.000000;0.000000,0.700000,0.000000,-126.000000;0.000000,0.000000,0.700000,-72.000000'
+    test_metadata_read( "NIFTI GZ", "T1w.nii.gz", meta_test )
 
     meta_test = {}
     meta_test['image_num_c'] = '3'
