@@ -109,7 +109,7 @@
                 
 *******************************************************************************/
 
-#define IMGCNV_VER "2.1.0"
+#define IMGCNV_VER "2.1.1"
 
 #include <cmath>
 #include <cstdio>
