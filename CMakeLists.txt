@@ -157,6 +157,7 @@ endif()
 set(BIC_LIBRAW_REQUIRED_VERSION 0.18)
 set(BIC_JXRLIB_REQUIRED_VERSION 1.1.6)
 set(BIC_LCMS2_REQUIRED_VERSION 2.6)
+set(BIC_LIBTIFF_REQUIRED_VERSION 4.0.4)
 set(BIC_PROJ4_REQUIRED_VERSION 4.8.0)
 
 
@@ -175,7 +176,8 @@ endif()
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -pedantic -Wextra")
 
-if(CMAKE_BUILD_TYPE MATCHES DEBUG)
+STRING(TOLOWER "${CMAKE_BUILD_TYPE}" CMAKE_BUILD_TYPE_LOWER)
+if(CMAKE_BUILD_TYPE_LOWER STREQUAL "debug")
     message("Building in DEBUG mode!")
     add_definitions(-DDEBUG -D_DEBUG -D_DEBUG_)
 endif()
@@ -941,6 +943,16 @@ endif()
 # libTiff
 #---------------------------------------------------------------------
 
+if(BIC_INTERNAL_LIBTIFF STREQUAL "AUTO")
+    find_package(TIFF ${BIC_LIBTIFF_REQUIRED_VERSION})
+    if (TIFF_FOUND)
+	set(BIC_INTERNAL_LIBTIFF OFF)
+	message("System libtiff found in suitable version, disabling internal libtiff.")
+    else()
+	set(BIC_INTERNAL_LIBTIFF ON)
+	message("System libtiff not found (or found unsuitable version), enabling internal libtiff.")
+    endif()
+endif()
 if(BIC_INTERNAL_LIBTIFF)
     include_directories(${BIM_LIB_TIF}/libtiff)
     include_directories(${BIM_LIB_TIF}/project/qt)
@@ -1021,20 +1033,23 @@ if(BIC_INTERNAL_LIBTIFF)
     #set(BIC_INTERNAL_LIBTIFF_LINK_LIBRARIES ${BIC_INTERNAL_LIBTIFF_LINK_LIBRARIES} jpeg lzma z)
     internal_add_library(tiff "${BIC_INTERNAL_LIBTIFF_SOURCES}" "${BIC_INTERNAL_LIBTIFF_HEADERS}" "${BIC_INTERNAL_LIBTIFF_INSTALLHEADERS}" "${BIC_INTERNAL_LIBTIFF_LINK_LIBRARIES}")
 
-    # TODO FIXME: merge this linker command with the automatic system library detection below:
-    set(LINK_LIBRARIES ${LINK_LIBRARIES} -ltiff)
-elseif(LIBBIOIMAGE)
+    if(BUILD_SHARED_LIBS)
+        set(TIFF_LIBRARIES "${LIBRARY_OUTPUT_PATH}/${CMAKE_SHARED_LIBRARY_PREFIX}tiff${CMAKE_SHARED_LIBRARY_SUFFIX}")
+    else()
+        set(TIFF_LIBRARIES "${LIBRARY_OUTPUT_PATH}/${CMAKE_STATIC_LIBRARY_PREFIX}tiff${CMAKE_STATIC_LIBRARY_SUFFIX}")
+    endif()
+elseif(LIBBIOIMAGE OR BIC_INTERNAL_LIBGEOTIFF)
     find_package(TIFF REQUIRED)
-    set(LINK_LIBRARIES ${LINK_LIBRARIES} ${TIFF_LIBRARIES})
     include_directories(${TIFF_INCLUDE_DIR})
 endif()
+set(LINK_LIBRARIES ${LINK_LIBRARIES} ${TIFF_LIBRARIES})
 
 
 #---------------------------------------------------------------------
 # Proj.4
 #---------------------------------------------------------------------
 
-if (BIC_INTERNAL_PROJ4 STREQUAL "AUTO")
+if(BIC_INTERNAL_PROJ4 STREQUAL "AUTO")
     find_package(PROJ4 ${BIC_PROJ4_REQUIRED_VERSION})
     if (PROJ4_FOUND)
         set(BIC_INTERNAL_PROJ4 OFF)
@@ -1212,15 +1227,16 @@ if(BIC_INTERNAL_PROJ4)
 
     internal_add_library(proj "${BIC_INTERNAL_PROJ4_SOURCES}" "${BIC_INTERNAL_PROJ4_HEADERS}" "${BIC_INTERNAL_PROJ4_INSTALLHEADERS}" "${BIC_INTERNAL_PROJ4_LINK_LIBRARIES}")
 
-    # TODO FIXME: merge this linker command with the automatic system library detection below:
-    set(LINK_LIBRARIES ${LINK_LIBRARIES} -lproj)
-elseif(LIBBIOIMAGE)
-    if(UNIX OR MINGW OR APPLE)
-        set(LINK_LIBRARIES ${LINK_LIBRARIES} -lproj)
-    elseif(WIN32)
-        set(LINK_LIBRARIES ${LINK_LIBRARIES} ${BIM_LIBS_PLTFM}/proj.lib)
+    if(BUILD_SHARED_LIBS)
+	set(PROJ4_LIBRARIES "${LIBRARY_OUTPUT_PATH}/${CMAKE_SHARED_LIBRARY_PREFIX}proj${CMAKE_SHARED_LIBRARY_SUFFIX}")
+    else()
+	set(PROJ4_LIBRARIES "${LIBRARY_OUTPUT_PATH}/${CMAKE_STATIC_LIBRARY_PREFIX}proj${CMAKE_STATIC_LIBRARY_SUFFIX}")
     endif()
+elseif(LIBBIOIMAGE OR BIC_INTERNAL_LIBGEOTIFF)
+    find_package(PROJ4 ${BIC_PROJ4_REQUIRED_VERSION} REQUIRED)
 endif()
+set(LINK_LIBRARIES ${LINK_LIBRARIES} ${PROJ4_LIBRARIES})
+message("Setting PROJ4_LIBRARIES=${PROJ4_LIBRARIES}")
 
 
 #---------------------------------------------------------------------
@@ -1273,7 +1289,12 @@ if(BIC_INTERNAL_LIBGEOTIFF)
         ${BIM_LIB_GEOTIF}/geovalues.h)
 
     # geotiff links proj4 and libtiff:
-    set(BIC_INTERNAL_LIBGEOTIFF_LINK_LIBRARIES ${BIC_INTERNAL_LIBGEOTIFF_LINK_LIBRARIES} proj tiff)
+    if(BIC_INTERNAL_PROJ4)
+        set(BIC_INTERNAL_LIBGEOTIFF_LINK_LIBRARIES ${BIC_INTERNAL_LIBGEOTIFF_LINK_LIBRARIES} ${TIFF_LIBRARIES})
+    endif()
+    if(BIC_INTERNAL_LIBTIFF)
+        set(BIC_INTERNAL_LIBGEOTIFF_LINK_LIBRARIES ${BIC_INTERNAL_LIBGEOTIFF_LINK_LIBRARIES} ${TIFF_LIBRARIES})
+    endif()
 
     internal_add_library(geotiff "${BIC_INTERNAL_LIBGEOTIFF_SOURCES}" "${BIC_INTERNAL_LIBGEOTIFF_HEADERS}" "${BIC_INTERNAL_LIBGEOTIFF_INSTALLHEADERS}" "${BIC_INTERNAL_LIBGEOTIFF_LINK_LIBRARIES}")
     if(BIC_INTERNAL_PROJ4)
