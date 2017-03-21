@@ -541,7 +541,7 @@ std::string FormatManager::getFilterExtensionFirst( const char *formatName ) {
 // simple read/write operations
 //--------------------------------------------------------------------------------------
 
-void FormatManager::loadImage ( BIM_STREAM_CLASS *stream,
+int FormatManager::loadImage ( BIM_STREAM_CLASS *stream,
                   ReadProc readProc, SeekProc seekProc, SizeProc sizeProc, 
                   TellProc  tellProc,  EofProc eofProc, CloseProc closeProc,   
                   const bim::Filename fileName, ImageBitmap *bmp, int page  )
@@ -550,19 +550,19 @@ void FormatManager::loadImage ( BIM_STREAM_CLASS *stream,
   FormatHeader *selectedFmt;
   
   if ( ( stream != NULL ) && (seekProc != NULL) && (readProc != NULL) ) { 
-    if (!loadMagic( stream, seekProc, readProc )) return;
+    if (!loadMagic( stream, seekProc, readProc )) return 1;
   } else {
-    if (!loadMagic(fileName)) return;
+    if (!loadMagic(fileName)) return 1;
   }
   
   getNeededFormatByMagic(fileName, format_index, format_sub);
-  if (format_index == -1) return;
+  if (format_index == -1) return 1;
   selectedFmt = formatList.at( format_index );
 
   FormatHandle fmtParams = selectedFmt->aquireFormatProc();
 
   format_sub = selectedFmt->validateFormatProc(magic_number, max_magic_size, fileName);
-  if (format_sub == -1) return;
+  if (format_sub == -1) return 1;
   sessionHandle.subFormat = format_sub; // initial guess
 
   fmtParams.showProgressProc = progress_proc;
@@ -585,7 +585,7 @@ void FormatManager::loadImage ( BIM_STREAM_CLASS *stream,
   fmtParams.io_mode = IO_READ;
   fmtParams.pageNumber = page;
 
-  if ( selectedFmt->openImageProc ( &fmtParams, IO_READ ) != 0) return;
+  if ( selectedFmt->openImageProc ( &fmtParams, IO_READ ) != 0) return 1;
 
   //bmpInfo = selectedFmt->getImageInfoProc ( &fmtParams, 0 );
   //selectedFmt->readMetaDataProc ( &fmtParams, 0, -1, -1, -1);
@@ -595,16 +595,17 @@ void FormatManager::loadImage ( BIM_STREAM_CLASS *stream,
 
   // RELEASE FORMAT
   selectedFmt->releaseFormatProc ( &fmtParams );
+  return 0;
 }
 
-void FormatManager::loadImage(const bim::Filename fileName, ImageBitmap *bmp, int page)
+int FormatManager::loadImage(const bim::Filename fileName, ImageBitmap *bmp, int page)
 {
-  loadImage ( NULL, NULL, NULL, NULL, NULL, NULL, NULL, fileName, bmp, page );
+  return loadImage ( NULL, NULL, NULL, NULL, NULL, NULL, NULL, fileName, bmp, page );
 }
 
-void FormatManager::loadImage(const bim::Filename fileName, ImageBitmap *bmp)
+int FormatManager::loadImage(const bim::Filename fileName, ImageBitmap *bmp)
 {
-  loadImage ( NULL, NULL, NULL, NULL, NULL, NULL, NULL, fileName, bmp, 0 );
+  return loadImage ( NULL, NULL, NULL, NULL, NULL, NULL, NULL, fileName, bmp, 0 );
 }
 
 /*
@@ -616,7 +617,7 @@ void FormatManager::loadBuffer (void *p, int buf_size, ImageBitmap *bmp) {
 }
 */
 
-void FormatManager::writeImage ( BIM_STREAM_CLASS *stream, ReadProc readProc,
+int FormatManager::writeImage ( BIM_STREAM_CLASS *stream, ReadProc readProc,
                   WriteProc writeProc, FlushProc flushProc, SeekProc seekProc,
                   SizeProc sizeProc, TellProc  tellProc,  EofProc eofProc, CloseProc closeProc,
                   const bim::Filename fileName, ImageBitmap *bmp, const char *formatName, 
@@ -653,7 +654,7 @@ void FormatManager::writeImage ( BIM_STREAM_CLASS *stream, ReadProc readProc,
 
   if (options != NULL && options[0] != 0) fmtParams.options = (char *) options;
 
-  if ( selectedFmt->openImageProc ( &fmtParams, IO_WRITE ) != 0) return;
+  if ( selectedFmt->openImageProc ( &fmtParams, IO_WRITE ) != 0) return 1;
 
   selectedFmt->writeImageProc ( &fmtParams );
 
@@ -661,22 +662,23 @@ void FormatManager::writeImage ( BIM_STREAM_CLASS *stream, ReadProc readProc,
 
   // RELEASE FORMAT
   selectedFmt->releaseFormatProc ( &fmtParams );
+  return 0;
 }
 
-void FormatManager::writeImage (const bim::Filename fileName, ImageBitmap *bmp, const char *formatName, 
+int FormatManager::writeImage (const bim::Filename fileName, ImageBitmap *bmp, const char *formatName, 
     int quality, TagMap *meta)
 {
-  writeImage ( NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, fileName, bmp, formatName, quality, meta );
+  return writeImage ( NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, fileName, bmp, formatName, quality, meta );
 }
 
-void FormatManager::writeImage (const bim::Filename fileName, ImageBitmap *bmp, const char *formatName, int quality) 
+int FormatManager::writeImage (const bim::Filename fileName, ImageBitmap *bmp, const char *formatName, int quality) 
 {
-  writeImage ( NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, fileName, bmp, formatName, quality, NULL );  
+  return writeImage ( NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, fileName, bmp, formatName, quality, NULL );  
 }
 
-void FormatManager::writeImage(const bim::Filename fileName, ImageBitmap *bmp, const char *formatName, const char *options)
+int FormatManager::writeImage(const bim::Filename fileName, ImageBitmap *bmp, const char *formatName, const char *options)
 {
-  writeImage ( NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, fileName, bmp, formatName, 100, NULL, options );  
+  return writeImage ( NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, fileName, bmp, formatName, 100, NULL, options );  
 }
 
 /*
