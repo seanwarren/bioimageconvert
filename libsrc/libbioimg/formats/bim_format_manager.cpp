@@ -15,6 +15,8 @@
 *******************************************************************************/
 
 #include <iostream>
+#include <cstring>
+#include <cerrno>
 
 #include "bim_format_manager.h"
 #include "xstring.h"
@@ -147,7 +149,12 @@ bool FormatManager::loadMagic(const bim::Filename fileName) {
     FILE *in_stream = fopen(fileName, "rb");
 #endif
 
-    if (in_stream == NULL) return false;
+    if (in_stream == NULL) {
+#ifdef DEBUG
+        std::cerr << "Error opening '" << fileName << "', error '" << std::strerror(errno) << "'." << std::endl;
+#endif
+        return false;
+    }
     fread(magic_number, sizeof(unsigned char), max_magic_size, in_stream);
     fclose(in_stream);
     return true;
@@ -851,10 +858,20 @@ int FormatManager::sessionStartRead ( BIM_STREAM_CLASS *stream, ReadProc readPro
   
   if (formatName == NULL) {
     if ( ( stream != NULL ) && (seekProc != NULL) && (readProc != NULL) ) { 
-      if (!loadMagic( stream, seekProc, readProc )) return 1;
+      if (!loadMagic( stream, seekProc, readProc )) {
+#ifdef DEBUG
+          std::cerr << "FormatManager::sessionStartRead(): Failed to access file magic from stream. Aborted." << std::endl;
+#endif
+          return 1;
+      }
     }
     else {
-      if (!loadMagic(fileName)) return 1;
+      if (!loadMagic(fileName)) {
+#ifdef DEBUG
+          std::cerr << "FormatManager::sessionStartRead(): Failed to access file magic from file. Aborted." << std::endl;
+#endif
+          return 1;
+      }
     }
     getNeededFormatByMagic(fileName, sessionFormatIndex, sessionSubIndex);
   } else {
@@ -862,7 +879,12 @@ int FormatManager::sessionStartRead ( BIM_STREAM_CLASS *stream, ReadProc readPro
     getNeededFormatByName(formatName, sessionFormatIndex, sessionSubIndex);  
   }
 
-  if (sessionFormatIndex < 0) return 1;
+  if (sessionFormatIndex < 0) {
+#ifdef DEBUG
+      std::cerr << "FormatManager::sessionStartRead(): sessionFormatIndex is not set. Aborted." << std::endl;
+#endif
+      return 1;
+  }
   FormatHeader *selectedFmt = formatList.at( sessionFormatIndex );
 
   sessionHandle = selectedFmt->aquireFormatProc();
@@ -888,11 +910,15 @@ int FormatManager::sessionStartRead ( BIM_STREAM_CLASS *stream, ReadProc readPro
   sessionHandle.fileName = &sessionFileName[0];
   sessionHandle.magic    = magic_number;
   sessionHandle.io_mode  = IO_READ;
-  int res = selectedFmt->openImageProc ( &sessionHandle, IO_READ );
+  const int res = selectedFmt->openImageProc ( &sessionHandle, IO_READ );
   sessionSubIndex = sessionHandle.subFormat;
   if (res == 0) {
       session_active = true;
       this->info = selectedFmt->getImageInfoProc ( &sessionHandle, 0 );  
+  } else {
+#ifdef DEBUG
+      std::cerr << "FormatManager::sessionStartRead(): Failed to open file with openImageProc(). Aborted." << std::endl;
+#endif
   }
   return res;
 }
