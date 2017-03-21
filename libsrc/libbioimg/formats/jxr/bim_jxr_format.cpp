@@ -111,7 +111,7 @@ bim::JXRParams::~JXRParams() {
 
 void bim::JXRParams::open(const char *filename, bim::ImageIOModes io_mode) {
     std::ios_base::openmode mode = io_mode == IO_READ ? std::fstream::in : std::fstream::out;
-#if (defined(BIM_WIN) && !defined(__MINGW32__))
+#ifdef BIM_WIN
     bim::xstring fn(filename);
     this->file = new std::fstream((const wchar_t *)fn.toUTF16().c_str(), mode | std::fstream::binary);
 #else

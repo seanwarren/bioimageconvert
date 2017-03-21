@@ -642,7 +642,7 @@ void tiffCloseImageProc (FormatHandle *fmtHndl) {
   }
 }
 
-bim::uint tiffOpenImageProc  (FormatHandle *fmtHndl, ImageIOModes io_mode) {
+bim::uint tiffOpenImageProc ( FormatHandle *fmtHndl, ImageIOModes io_mode ) {
   if (!fmtHndl) return 1;
   setLocalTiffFunctions( fmtHndl );
 

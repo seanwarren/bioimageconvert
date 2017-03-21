@@ -29,12 +29,12 @@ namespace bim {
 Datatype  LP64  ILP64 LLP64 ILP32 LP32
 char       8     8     8      8      8
 short     16    16    16     16     16
-_int32          32      
+_int32          32
 int       32    64    32     32     16
 long      64    64    32     32     32
-long long       64    
+long long       64
 pointer   64    64    64     32     32
-*/ 
+*/
 
 #ifndef _BIM_TYPEDEFS_
 #define _BIM_TYPEDEFS_
@@ -76,7 +76,7 @@ typedef	long double float80;
 #undef max
 #endif
 
-#if defined WIN32 || defined WIN64 || defined _WIN32 || defined _WIN64 || defined _MSVC
+#if (defined WIN32 || defined WIN64 || defined _WIN32 || defined _WIN64 || defined _MSVC) && !defined(__MINGW32__)
 #define BIM_WIN
 #endif
 
@@ -146,12 +146,12 @@ void swapArrayOfDouble(float64* dp, register uint64 n);
 // min/max
 //------------------------------------------------------------------------------
 
-template<typename T> 
+template<typename T>
 inline const T& min(const T& a, const T& b) {
   return (a < b) ? a : b;
 }
 
-template<typename T> 
+template<typename T>
 inline const T& max(const T& a, const T& b) {
   return (a > b) ? a : b;
 }
@@ -160,7 +160,7 @@ inline const T& max(const T& a, const T& b) {
 // min/max for arrays
 //------------------------------------------------------------------------------
 
-template<typename T> 
+template<typename T>
 const T max(const T *a, unsigned int size) {
   T val = a[0];
   for (unsigned int i=0; i<size; ++i)
@@ -168,7 +168,7 @@ const T max(const T *a, unsigned int size) {
   return val;
 }
 
-template<typename T> 
+template<typename T>
 const T max(const std::vector<T> &a) {
   T val = a[0];
   for (unsigned int i=0; i<a.size(); ++i)
@@ -176,7 +176,7 @@ const T max(const std::vector<T> &a) {
   return val;
 }
 
-template<typename T> 
+template<typename T>
 unsigned int maxix(const T *a, unsigned int size) {
   unsigned int i,ix;
   T val = a[0];
@@ -189,7 +189,7 @@ unsigned int maxix(const T *a, unsigned int size) {
   return ix;
 }
 
-template<typename T> 
+template<typename T>
 const T min(const T *a, unsigned int size) {
   T val = a[0];
   for (unsigned int i=0; i<size; ++i)
@@ -197,7 +197,7 @@ const T min(const T *a, unsigned int size) {
   return val;
 }
 
-template<typename T> 
+template<typename T>
 const T min(const std::vector<T> &a) {
   T val = a[0];
   for (unsigned int i=0; i<a.size(); ++i)
@@ -205,7 +205,7 @@ const T min(const std::vector<T> &a) {
   return val;
 }
 
-template<typename T> 
+template<typename T>
 unsigned int minix(const T *a, unsigned int size) {
   unsigned int i,ix;
   T val = a[0];
@@ -270,7 +270,7 @@ inline T round(double x, int d) {
 template <typename T>
 T power(T base, int index) {
 
-  if (index < 0) { 
+  if (index < 0) {
     return 1.0/pow( base, -index );
   }
   else
