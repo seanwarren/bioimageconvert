@@ -3,7 +3,7 @@
   Manager for Image Formats
 
   Uses DimFiSDK version: 1.2
-  
+
   Programmer: Dima Fedorov Levit <dimin@dimin.net> <http://www.dimin.net/>
 
   Notes:
@@ -13,15 +13,15 @@
     using = operator. It will copy all necessary initialization data
     to the new manager.
 
-    Non-session wide operation might be performed simultaneously with 
+    Non-session wide operation might be performed simultaneously with
     an open session.
 
   History:
     03/23/2004 18:03 - First creation
     08/04/2004 18:22 - custom stream managment compliant
-    
+
   ver: 2
-        
+
 *******************************************************************************/
 
 #ifndef BIM_FORMAT_MANAGER_H
@@ -47,10 +47,10 @@ public:
   //bool              canWriteMulti (const char *formatName);
   bool              isFormatSupported (const char *formatName);
   bool              isFormatSupportsR (const char *formatName);
-  bool              isFormatSupportsW (const char *formatName);  
+  bool              isFormatSupportsW (const char *formatName);
   bool              isFormatSupportsWMP (const char *formatName);
 
-  bool              isFormatSupportsBpcW (const char *formatName, int bpc); 
+  bool              isFormatSupportsBpcW (const char *formatName, int bpc);
 
   void              printAllFormats();
   void              printAllFormatsXML();
@@ -71,34 +71,34 @@ public:
   std::string       getQtWriteMPFilters();
 
   // Simple Read/Write
-  void loadImage  (const bim::Filename fileName, ImageBitmap *bmp);
-  void loadImage  (const bim::Filename fileName, Image &img) { loadImage(fileName, img.imageBitmap()); }
-  void loadImage  (const bim::Filename fileName, ImageBitmap *bmp, int page);
-  void loadImage  (const bim::Filename fileName, Image &img, int page) { loadImage(fileName, img.imageBitmap(), page); }
+  int loadImage  (const bim::Filename fileName, ImageBitmap *bmp);
+  int loadImage  (const bim::Filename fileName, Image &img) { return loadImage(fileName, img.imageBitmap()); }
+  int loadImage  (const bim::Filename fileName, ImageBitmap *bmp, int page);
+  int loadImage  (const bim::Filename fileName, Image &img, int page) { return loadImage(fileName, img.imageBitmap(), page); }
 
 
-  void loadImage  ( BIM_STREAM_CLASS *stream,
-                    ReadProc readProc, SeekProc seekProc, SizeProc sizeProc, 
-                    TellProc  tellProc,  EofProc eofProc, CloseProc closeProc,   
-                    const bim::Filename fileName, ImageBitmap *bmp, int page );
+  int loadImage  ( BIM_STREAM_CLASS *stream,
+                   ReadProc readProc, SeekProc seekProc, SizeProc sizeProc,
+                   TellProc  tellProc,  EofProc eofProc, CloseProc closeProc,
+                   const bim::Filename fileName, ImageBitmap *bmp, int page );
   //void loadBuffer (void *p, int buf_size, ImageBitmap *bmp);
-  
-  void readImagePreview (const bim::Filename fileName, ImageBitmap *bmp, 
-                         bim::uint roiX, bim::uint roiY, bim::uint roiW, bim::uint roiH, 
+
+  void readImagePreview (const bim::Filename fileName, ImageBitmap *bmp,
+                         bim::uint roiX, bim::uint roiY, bim::uint roiW, bim::uint roiH,
                          bim::uint w, bim::uint h);
   void readImageThumb   (const bim::Filename fileName, ImageBitmap *bmp, bim::uint w, bim::uint h);
 
 
-  void writeImage ( BIM_STREAM_CLASS *stream, ReadProc readProc, WriteProc writeProc, FlushProc flushProc, 
-                    SeekProc seekProc, SizeProc sizeProc, TellProc  tellProc,  
-                    EofProc eofProc, CloseProc closeProc, const bim::Filename fileName, 
-                    ImageBitmap *bmp, const char *formatName, int quality, TagMap *meta=NULL, const char *options = NULL);
-  void writeImage (const bim::Filename fileName, ImageBitmap *bmp, const char *formatName, 
-      int quality, TagMap *meta);
-  void writeImage (const bim::Filename fileName, ImageBitmap *bmp, const char *formatName, int quality);
-  void writeImage (const bim::Filename fileName, ImageBitmap *bmp, const char *formatName, const char *options = NULL);
-  void writeImage (const bim::Filename fileName, Image &img, const char *formatName, const char *options = NULL) {
-    writeImage (fileName, img.imageBitmap(), formatName, options);
+  int writeImage ( BIM_STREAM_CLASS *stream, ReadProc readProc, WriteProc writeProc, FlushProc flushProc,
+                   SeekProc seekProc, SizeProc sizeProc, TellProc  tellProc,
+                   EofProc eofProc, CloseProc closeProc, const bim::Filename fileName,
+                   ImageBitmap *bmp, const char *formatName, int quality, TagMap *meta=NULL, const char *options = NULL);
+  int writeImage ( const bim::Filename fileName, ImageBitmap *bmp, const char *formatName,
+                   int quality, TagMap *meta);
+  int writeImage (const bim::Filename fileName, ImageBitmap *bmp, const char *formatName, int quality);
+  int writeImage (const bim::Filename fileName, ImageBitmap *bmp, const char *formatName, const char *options = NULL);
+  int writeImage (const bim::Filename fileName, Image &img, const char *formatName, const char *options = NULL) {
+    return writeImage (fileName, img.imageBitmap(), formatName, options);
   }
 
   //unsigned char *writeBuffer ( ImageBitmap *bmp, const char *formatName, int quality, TagList *meta, int &buf_size );
@@ -112,8 +112,8 @@ public:
   ProgressProc progress_proc;
   ErrorProc error_proc;
   TestAbortProc test_abort_proc;
-  void setCallbacks( ProgressProc _progress_proc, 
-                     ErrorProc _error_proc, 
+  void setCallbacks( ProgressProc _progress_proc,
+                     ErrorProc _error_proc,
                      TestAbortProc _test_abort_proc ) {
     progress_proc = _progress_proc;
     error_proc = _error_proc;
@@ -129,11 +129,11 @@ public:
   bool  sessionIsReading  (const std::string &fileName="") const;
   bool  sessionIsWriting  (const std::string &fileName="") const;
 
-  int   sessionStartRead  ( BIM_STREAM_CLASS *stream, ReadProc readProc, SeekProc seekProc, 
-                            SizeProc sizeProc, TellProc tellProc, EofProc eofProc, 
+  int   sessionStartRead  ( BIM_STREAM_CLASS *stream, ReadProc readProc, SeekProc seekProc,
+                            SizeProc sizeProc, TellProc tellProc, EofProc eofProc,
                             CloseProc closeProc, const bim::Filename fileName, const char *formatName=NULL);
-  
-  int   sessionStartWrite ( BIM_STREAM_CLASS *stream, WriteProc writeProc, FlushProc flushProc, 
+
+  int   sessionStartWrite ( BIM_STREAM_CLASS *stream, WriteProc writeProc, FlushProc flushProc,
           SeekProc seekProc, SizeProc sizeProc, TellProc  tellProc, EofProc eofProc,
           CloseProc closeProc, const bim::Filename fileName, const char *formatName, const char *options = NULL );
 
@@ -155,8 +155,8 @@ public:
   int   sessionReadImage  ( ImageBitmap *bmp, bim::uint page );
   int   sessionReadImage  ( Image &img, bim::uint page ) { return sessionReadImage(img.imageBitmap(), page); }
 
-  void  sessionReadImagePreview ( ImageBitmap *bmp, 
-                                  bim::uint roiX, bim::uint roiY, bim::uint roiW, bim::uint roiH, 
+  void  sessionReadImagePreview ( ImageBitmap *bmp,
+                                  bim::uint roiX, bim::uint roiY, bim::uint roiW, bim::uint roiH,
                                   bim::uint w, bim::uint h);
   void  sessionReadImageThumb   ( ImageBitmap *bmp, bim::uint w, bim::uint h);
 
@@ -170,7 +170,7 @@ public:
 
   void  sessionSetQuality ( int quality );
   int   sessionWriteImage ( ImageBitmap *bmp, bim::uint page );
-  int   sessionWriteImage ( Image &img, bim::uint page ) 
+  int   sessionWriteImage ( Image &img, bim::uint page )
   { return sessionWriteImage(img.imageBitmap(), page); }
 
   void  sessionEnd();
@@ -199,7 +199,7 @@ protected:
   void getNeededFormatByMagic(const bim::Filename fileName, int &format_index, int &sub_index);
   void getNeededFormatByName    (const char *formatName, int &format_index, int &sub_index);
   void getNeededFormatByFileExt (const bim::Filename fileName, int &format_index, int &sub_index);
-  
+
   FormatItem *getFormatItem (const char *formatName);
 };
 
