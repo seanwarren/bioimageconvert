@@ -298,14 +298,14 @@ void dicomCloseImageProc (FormatHandle *fmtHndl) {
     delete par;
 }
 
-bim::uint dicomOpenImageProc  (FormatHandle *fmtHndl, ImageIOModes io_mode) {
+bim::uint dicomOpenImageProc (FormatHandle *fmtHndl, ImageIOModes io_mode) {
     if (fmtHndl == NULL) return 1;
     if (fmtHndl->internalParams != NULL) dicomCloseImageProc(fmtHndl);
     bim::DICOMParams *par = new bim::DICOMParams();
     fmtHndl->internalParams = (void *)par;
 
     if (io_mode == IO_READ) {
-#if (defined(BIM_WIN) && !defined(__MINGW32__))
+#ifdef BIM_WIN
         bim::xstring fn(fmtHndl->fileName);
         par->file = new std::fstream((const wchar_t *)fn.toUTF16().c_str(), std::fstream::in | std::fstream::binary);
         par->reader->SetStream(*par->file);

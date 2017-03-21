@@ -109,7 +109,7 @@ static Exiv2::Image::AutoPtr init_image(FormatHandle *fmtHndl) {
     Exiv2::Image::AutoPtr image;
     if (!fmtHndl->fileName) return image;
     try {
-#if (defined(BIM_WIN) && !defined(__MINGW32__))
+#ifdef BIM_WIN
         bim::xstring fn(fmtHndl->fileName);
         Exiv2::Image::AutoPtr image = Exiv2::ImageFactory::open(fn.toUTF16());
 #else
@@ -206,7 +206,7 @@ void exiv_write_metadata(TagMap *hash, FormatHandle *fmtHndl) {
             (const Exiv2::byte *) hash->get_value_bin(bim::RAW_TAGS_EXIF),
             hash->get_size(bim::RAW_TAGS_EXIF));
             
-#if (defined(BIM_WIN) && !defined(__MINGW32__))
+#ifdef BIM_WIN
         bim::xstring fn(fmtHndl->fileName);
         Exiv2::Image::AutoPtr image = Exiv2::ImageFactory::open(fn.toUTF16());
 #else

@@ -14,7 +14,6 @@
 #include <cstdarg>
 #include <cstdio>
 #include <cstring>
-#include <cstdarg>
 
 #include <sstream>
 #include <algorithm>
