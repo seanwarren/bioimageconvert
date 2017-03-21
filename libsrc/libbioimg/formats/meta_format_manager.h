@@ -3,7 +3,7 @@
   Manager for Image Formats with MetaData parsing
 
   Uses DimFiSDK version: 1
-  
+
   Programmer: Dima Fedorov Levit <dimin@dimin.net> <http://www.dimin.net/>
 
   Notes:
@@ -13,15 +13,15 @@
     using = operator. It will copy all necessary initialization data
     to the new manager.
 
-    Non-session wide operation might be performed simultaneously with 
+    Non-session wide operation might be performed simultaneously with
     an open session.
 
   History:
     03/23/2004 18:03 - First creation
     01/25/2007 21:00 - added QImaging TIFF
-      
+
   ver: 2
-        
+
 *******************************************************************************/
 
 #ifndef META_FORMAT_MANAGER_H
@@ -59,7 +59,7 @@ public:
       SeekProc seekProc, SizeProc sizeProc, TellProc  tellProc,
       EofProc eofProc, CloseProc closeProc, const bim::Filename fileName,
       ImageBitmap *bmp, const char *formatName, int quality, TagMap *meta = NULL, const char *options = NULL) {
-      return FormatManager::writeImage(stream, readProc,
+      FormatManager::writeImage(stream, readProc,
           writeProc, flushProc, seekProc,
           sizeProc, tellProc, eofProc, closeProc,
           fileName, bmp, formatName, quality, meta == NULL ? &this->metadata : meta, options);
@@ -97,7 +97,7 @@ public:
   inline double      get_metadata_tag_double( const std::string &key, const double &def ) const { return metadata.get_value_double( key, def ); }
 
   void               delete_metadata_tag(const std::string &key) { metadata.delete_tag(key); }
-  
+
   void               set_metadata_tag(const std::string &key, const int &v) { metadata.set_value(key, v); }
   void               set_metadata_tag(const std::string &key, const double &v) { metadata.set_value(key, v); }
   void               set_metadata_tag(const std::string &key, const std::string &v) { metadata.set_value(key, v); }
