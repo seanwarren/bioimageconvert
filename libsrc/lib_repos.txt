@@ -6,7 +6,7 @@ exiv2           - 0.25.0  (patched) - SVN+web      - http://www.exiv2.org/
 iconv           -             (org) - git-gnu      - http://git.savannah.gnu.org/cgit/libiconv.git
 ffmpeg          - 2.6.3       (org) - git + github - https://git.ffmpeg.org/ffmpeg.git ffmpeg - mirror: https://github.com/FFmpeg/FFmpeg
 gdcm            - 2.4.4   (patched) - sourceforge + github - mirror: https://github.com/malaterre/GDCM
-jxrlib          -             (org) - codeplex     - https://jxrlib.codeplex.com/
+jxrlib          - 1.1-6       (org) - codeplex     - https://jxrlib.codeplex.com/
 jzon            - 2.1         (org) - github       - https://github.com/Zguy/Jzon
 lcms2           - 2.7         (org) - sourceforge  - https://sourceforge.net/projects/lcms/files/lcms/
 libfftw         - 3.3.3       (org) - github       - https://github.com/FFTW/fftw3
