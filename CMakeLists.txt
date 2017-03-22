@@ -1854,45 +1854,46 @@ if(BIC_ENABLE_IMGCNV)
 endif()
 
 
-
-#---------------------------------------------------------------------
-# add unit tests
-#---------------------------------------------------------------------
-#find_package(PkgConfig)
-#pkg_check_modules(GTEST REQUIRED gtest>=1.7.0)
-#pkg_check_modules(GMOCK REQUIRED gmock>=1.7.0)
 #
-#include_directories(${GTEST_INCLUDE_DIRS} ${GMOCK_INCLUDE_DIRS})
-
-enable_testing()
-
-add_executable(win32paths test/win32paths.cc)
-#target_link_libraries(win32paths gtest gmock_main)
-#target_link_libraries(win32paths bioimage ${LINK_LIBRARIES})
-add_test(NAME win32paths COMMAND win32paths)
-
-# Set required compiler parameters:
-set_property(TARGET win32paths PROPERTY CXX_STANDARD 14)
-set_property(TARGET win32paths PROPERTY CXX_STANDARD_REQUIRED ON)
-
-
-#add_test(win32paths test/win32paths.cc arg1 arg2 ... )
-#
+##---------------------------------------------------------------------
+## add unit tests
+##---------------------------------------------------------------------
+##find_package(PkgConfig)
+##pkg_check_modules(GTEST REQUIRED gtest>=1.7.0)
+##pkg_check_modules(GMOCK REQUIRED gmock>=1.7.0)
 ##
-## add_gmock_test(<target> <sources>...)
+##include_directories(${GTEST_INCLUDE_DIRS} ${GMOCK_INCLUDE_DIRS})
+#
+#enable_testing()
+#
+#add_executable(win32paths test/win32paths.cc)
+##target_link_libraries(win32paths gtest gmock_main)
+##target_link_libraries(win32paths bioimage ${LINK_LIBRARIES})
+#add_test(NAME win32paths COMMAND win32paths)
+#
+## Set required compiler parameters:
+#set_property(TARGET win32paths PROPERTY CXX_STANDARD 14)
+#set_property(TARGET win32paths PROPERTY CXX_STANDARD_REQUIRED ON)
+#
+#
+##add_test(win32paths test/win32paths.cc arg1 arg2 ... )
 ##
-##  Adds a Google Mock based test executable, <target>, built from <sources> and
-##  adds the test so that CTest will run it. Both the executable and the test
-##  will be named <target>.
+###
+### add_gmock_test(<target> <sources>...)
+###
+###  Adds a Google Mock based test executable, <target>, built from <sources> and
+###  adds the test so that CTest will run it. Both the executable and the test
+###  will be named <target>.
+###
+##function(add_gmock_test target)
+##    add_executable(${target} ${ARGN})
+##    target_link_libraries(${target} gmock_main)
 ##
-#function(add_gmock_test target)
-#    add_executable(${target} ${ARGN})
-#    target_link_libraries(${target} gmock_main)
-#
-#    add_test(${target} ${target})
-#endfunction()
-#
-#
-#add_gmock_test(ToDoTest ToDoTest.cc)
-#target_link_libraries(ToDoTest toDoCore)
+##    add_test(${target} ${target})
+##endfunction()
+##
+##
+##add_gmock_test(ToDoTest ToDoTest.cc)
+##target_link_libraries(ToDoTest toDoCore)
+##
 #
