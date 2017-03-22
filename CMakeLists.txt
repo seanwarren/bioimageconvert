@@ -50,7 +50,7 @@ add_custom_target(uninstall COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_D
 
 
 # add extra modules:
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules/")
 
 # show the build messages:
 set(CMAKE_VERBOSE_MAKEFILE ON)
@@ -946,11 +946,11 @@ endif()
 if(BIC_INTERNAL_LIBTIFF STREQUAL "AUTO")
     find_package(TIFF ${BIC_LIBTIFF_REQUIRED_VERSION})
     if (TIFF_FOUND)
-	set(BIC_INTERNAL_LIBTIFF OFF)
-	message("System libtiff found in suitable version, disabling internal libtiff.")
+        set(BIC_INTERNAL_LIBTIFF OFF)
+        message("System libtiff found in suitable version, disabling internal libtiff.")
     else()
-	set(BIC_INTERNAL_LIBTIFF ON)
-	message("System libtiff not found (or found unsuitable version), enabling internal libtiff.")
+        set(BIC_INTERNAL_LIBTIFF ON)
+        message("System libtiff not found (or found unsuitable version), enabling internal libtiff.")
     endif()
 endif()
 if(BIC_INTERNAL_LIBTIFF)
@@ -1289,12 +1289,7 @@ if(BIC_INTERNAL_LIBGEOTIFF)
         ${BIM_LIB_GEOTIF}/geovalues.h)
 
     # geotiff links proj4 and libtiff:
-    if(BIC_INTERNAL_PROJ4)
-        set(BIC_INTERNAL_LIBGEOTIFF_LINK_LIBRARIES ${BIC_INTERNAL_LIBGEOTIFF_LINK_LIBRARIES} ${TIFF_LIBRARIES})
-    endif()
-    if(BIC_INTERNAL_LIBTIFF)
-        set(BIC_INTERNAL_LIBGEOTIFF_LINK_LIBRARIES ${BIC_INTERNAL_LIBGEOTIFF_LINK_LIBRARIES} ${TIFF_LIBRARIES})
-    endif()
+    set(BIC_INTERNAL_LIBGEOTIFF_LINK_LIBRARIES ${BIC_INTERNAL_LIBGEOTIFF_LINK_LIBRARIES} ${PROJ4_LIBRARIES} ${TIFF_LIBRARIES})
 
     internal_add_library(geotiff "${BIC_INTERNAL_LIBGEOTIFF_SOURCES}" "${BIC_INTERNAL_LIBGEOTIFF_HEADERS}" "${BIC_INTERNAL_LIBGEOTIFF_INSTALLHEADERS}" "${BIC_INTERNAL_LIBGEOTIFF_LINK_LIBRARIES}")
     if(BIC_INTERNAL_PROJ4)
@@ -1307,13 +1302,9 @@ if(BIC_INTERNAL_LIBGEOTIFF)
     # TODO FIXME: merge this linker command with the automatic system library detection below:
     set(LINK_LIBRARIES ${LINK_LIBRARIES} -lgeotiff)
 elseif(LIBBIOIMAGE)
-    if(UNIX OR MINGW OR APPLE)
-        find_package(GeoTIFF REQUIRED)
-        include_directories(${GEOTIFF_INCLUDE_DIR})
-        set(LINK_LIBRARIES ${LINK_LIBRARIES} ${GEOTIFF_LIBRARIES})
-    elseif(WIN32)
-        set(LINK_LIBRARIES ${LINK_LIBRARIES} ${BIM_LIBS_PLTFM}/libgeotiff.lib)
-    endif()
+    find_package(GeoTIFF REQUIRED)
+    include_directories(${GEOTIFF_INCLUDE_DIR})
+    set(LINK_LIBRARIES ${LINK_LIBRARIES} ${GEOTIFF_LIBRARIES})
 endif()
 
 
