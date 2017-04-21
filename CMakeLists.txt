@@ -169,6 +169,7 @@ set(BIC_PROJ4_REQUIRED_VERSION 4.8.0)
 # Find the QtWidgets library
 if(LIBBIOIMAGE)
     find_package(Qt5Core REQUIRED)
+    find_package(Qt5Gui REQUIRED)
 endif()
 
 
@@ -178,7 +179,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
 
 STRING(TOLOWER "${CMAKE_BUILD_TYPE}" CMAKE_BUILD_TYPE_LOWER)
 if(CMAKE_BUILD_TYPE_LOWER STREQUAL "debug")
-    message("Building in DEBUG mode!")
+    message("Building in debug mode, enabling debug flags")
     add_definitions(-DDEBUG -D_DEBUG -D_DEBUG_)
 endif()
 
@@ -340,7 +341,7 @@ if(LIBBIOIMAGE)
 
     # optional defines:
     add_definitions(-DBIM_USE_EIGEN)
-    #add_definitions(-DBIM_USE_QT)
+    add_definitions(-DBIM_USE_QT)
     #add_definitions(-DBIM_USE_ITK)
     #add_definitions(-DBIM_USE_OPENCV)
     #add_definitions(-DBIM_USE_NUMPY)
@@ -369,7 +370,9 @@ if(LIBBIOIMAGE)
         ${BIM_CORE}/xconf.cpp)
 
     set(HEADERS ${HEADERS}
-        ${BIM_CORE}/blob_manager.h
+        ${BIM_CORE}/blob_manager.h)
+
+    set(INSTALLHEADERS ${INSTALLHEADERS}
         ${BIM_CORE}/xpointer.h)
 
     # Formats API
@@ -379,6 +382,7 @@ if(LIBBIOIMAGE)
        ${BIM_FMTS_API}/bim_histogram.cpp
        ${BIM_FMTS_API}/bim_metatags.cpp
        ${BIM_FMTS_API}/bim_image.cpp
+       ${BIM_FMTS_API}/bim_image_qt.cpp
        ${BIM_FMTS_API}/bim_image_filters.cpp
        ${BIM_FMTS_API}/bim_image_transforms.cpp
        ${BIM_FMTS_API}/bim_image_opencv.cpp
@@ -395,23 +399,25 @@ if(LIBBIOIMAGE)
         ${BIM_FMTS_API}/bim_buffer.h
         ${BIM_FMTS_API}/bim_histogram.h
         ${BIM_FMTS_API}/bim_image.h
-        ${BIM_FMTS_API}/bim_img_format_interface.h
-        ${BIM_FMTS_API}/bim_img_format_utils.h)
-
-    set(HEADERS ${HEADERS}
         ${BIM_FMTS_API}/bim_image_5d.h
         ${BIM_FMTS_API}/bim_image_pyramid.h
         ${BIM_FMTS_API}/bim_image_stack.h
+        ${BIM_FMTS_API}/bim_img_format_interface.h
+        ${BIM_FMTS_API}/bim_img_format_utils.h
         ${BIM_FMTS_API}/bim_metatags.h
+        ${BIM_FMTS_API}/bim_metatags.def
+        ${BIM_FMTS_API}/resize.h)
+
+    set(HEADERS ${HEADERS}
         ${BIM_FMTS_API}/bim_primitives.h
         ${BIM_FMTS_API}/bim_qt_utils.h
-        ${BIM_FMTS_API}/resize.h
         ${BIM_FMTS_API}/rotate.h
         ${BIM_FMTS_API}/slic.h
         ${BIM_FMTS_API}/typeize_buffer.h)
 
     # Formats
     set(SOURCES ${SOURCES}
+        ${BIM_FMTS_API}/bim_image_5d.cpp
         ${BIM_FMTS}/bim_format_manager.cpp
         ${BIM_FMTS}/meta_format_manager.cpp
         ${BIM_FMTS}/bim_exiv_parse.cpp
@@ -582,7 +588,7 @@ if(LIBBIOIMAGE)
     # shared libraries need PIC:
     set_property(TARGET bioimage PROPERTY POSITION_INDEPENDENT_CODE ON)
 
-    qt5_use_modules(bioimage Core)
+    qt5_use_modules(bioimage Core Gui)
 
     # Install library and headers
     install(TARGETS bioimage DESTINATION lib)
