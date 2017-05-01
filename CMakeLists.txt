@@ -68,7 +68,7 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 # internal library config. If Qt5 is not available, disable LIBBIOIMAGE as a default:
 find_package(Qt5Core)
-if (Qt5Core_FOUND)
+if(Qt5Core_FOUND)
     option(LIBBIOIMAGE            "Enable BioImageConvert implementation (recommended)"                          ON)
     option(LIBBIOIMAGE_TRANSFORMS "Enable BioImageConvert transforms implementation (optional)"                  ON)
 else()
@@ -198,7 +198,7 @@ endif()
 # check if openMP is supported, enable it:
 if(BIC_ENABLE_OPENMP)
     find_package(OpenMP)
-    if (OPENMP_FOUND)
+    if(OPENMP_FOUND)
         set (CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} ${OpenMP_C_FLAGS}")
         set (CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} ${OpenMP_CXX_FLAGS}")
 
@@ -373,6 +373,11 @@ if(LIBBIOIMAGE)
         ${BIM_CORE}/blob_manager.h)
 
     set(INSTALLHEADERS ${INSTALLHEADERS}
+        ${BIM_LIB_BIO}/BioImageCore
+        ${BIM_LIB_BIO}/BioImage
+        ${BIM_LIB_BIO}/BioImageFormats)
+
+    set(INSTALLHEADERS ${INSTALLHEADERS}
         ${BIM_CORE}/xpointer.h)
 
     # Formats API
@@ -397,11 +402,13 @@ if(LIBBIOIMAGE)
         ${BIM_CORE}/xtypes.h
         ${BIM_CORE}/xstring.h
         ${BIM_FMTS_API}/bim_buffer.h
+        ${BIM_FMTS_API}/bim_primitives.h
         ${BIM_FMTS_API}/bim_histogram.h
         ${BIM_FMTS_API}/bim_image.h
         ${BIM_FMTS_API}/bim_image_5d.h
         ${BIM_FMTS_API}/bim_image_pyramid.h
         ${BIM_FMTS_API}/bim_image_stack.h
+        ${BIM_FMTS_API}/bim_image_proxy.h
         ${BIM_FMTS_API}/bim_img_format_interface.h
         ${BIM_FMTS_API}/bim_img_format_utils.h
         ${BIM_FMTS_API}/bim_metatags.h
@@ -409,7 +416,6 @@ if(LIBBIOIMAGE)
         ${BIM_FMTS_API}/resize.h)
 
     set(HEADERS ${HEADERS}
-        ${BIM_FMTS_API}/bim_primitives.h
         ${BIM_FMTS_API}/bim_qt_utils.h
         ${BIM_FMTS_API}/rotate.h
         ${BIM_FMTS_API}/slic.h
@@ -883,9 +889,9 @@ endif()
 # libraw
 #---------------------------------------------------------------------
 
-if (BIC_INTERNAL_LIBRAW STREQUAL "AUTO")
+if(BIC_INTERNAL_LIBRAW STREQUAL "AUTO")
     find_package(LibRaw ${BIC_LIBRAW_REQUIRED_VERSION})
-    if (LibRaw_FOUND)
+    if(LibRaw_FOUND)
         set(BIC_INTERNAL_LIBRAW OFF)
         message("System libraw found in suitable version, disabling internal libraw.")
     else()
@@ -951,7 +957,7 @@ endif()
 
 if(BIC_INTERNAL_LIBTIFF STREQUAL "AUTO")
     find_package(TIFF ${BIC_LIBTIFF_REQUIRED_VERSION})
-    if (TIFF_FOUND)
+    if(TIFF_FOUND)
         set(BIC_INTERNAL_LIBTIFF OFF)
         message("System libtiff found in suitable version, disabling internal libtiff.")
     else()
@@ -1057,7 +1063,7 @@ set(LINK_LIBRARIES ${LINK_LIBRARIES} ${TIFF_LIBRARIES})
 
 if(BIC_INTERNAL_PROJ4 STREQUAL "AUTO")
     find_package(PROJ4 ${BIC_PROJ4_REQUIRED_VERSION})
-    if (PROJ4_FOUND)
+    if(PROJ4_FOUND)
         set(BIC_INTERNAL_PROJ4 OFF)
         message("System proj4 found in suitable version, disabling internal proj4.")
     else()
@@ -1623,9 +1629,9 @@ endif()
 #---------------------------------------------------------------------
 
 if(BIC_ENABLE_JXRLIB)
-    if (BIC_INTERNAL_JXRLIB STREQUAL "AUTO")
+    if(BIC_INTERNAL_JXRLIB STREQUAL "AUTO")
         find_package(JXR ${BIC_JXRLIB_REQUIRED_VERSION})
-        if (JXR_FOUND)
+        if(JXR_FOUND)
             set(BIC_INTERNAL_JXRLIB OFF)
             message("System jxrlib found in suitable version, disabling internal jxrlib.")
         else()
@@ -1680,9 +1686,9 @@ endif()
 # lcms2
 #---------------------------------------------------------------------
 
-if (BIC_INTERNAL_LCMS2 STREQUAL "AUTO")
+if(BIC_INTERNAL_LCMS2 STREQUAL "AUTO")
     find_package(LCMS2 ${BIC_LCMS2_REQUIRED_VERSION})
-    if (LCMS2_FOUND)
+    if(LCMS2_FOUND)
         set(BIC_INTERNAL_LCMS2 OFF)
         message("System lcms2 found in suitable version, disabling internal lcms2.")
     else()
