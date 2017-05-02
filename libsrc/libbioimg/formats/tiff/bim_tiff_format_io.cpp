@@ -51,21 +51,20 @@ bim::uint append_metadata_omeTiff (bim::FormatHandle *fmtHndl, bim::TagMap *hash
 bim::uint omeTiffReadPlane( bim::FormatHandle *fmtHndl, bim::TiffParams *par, int plane );
 int omeTiffWritePlane(bim::FormatHandle *fmtHndl, bim::TiffParams *par, bim::ImageBitmap *img = NULL, bool subscale = false);
 
-using namespace bim;
 
 // must include these guys here if not no access to internal TIFF structs
 
-bim::uint stkReadMetaMeta (FormatHandle *fmtHndl, int group, int tag, int type);
-bim::uint append_metadata_stk (FormatHandle *fmtHndl, TagMap *hash );
-bim::uint  stkReadPlane(TiffParams *tiffParams, int plane, ImageBitmap *img, FormatHandle *fmtHndl);
+bim::uint stkReadMetaMeta (bim::FormatHandle *fmtHndl, int group, int tag, int type);
+bim::uint append_metadata_stk (bim::FormatHandle *fmtHndl, bim::TagMap *hash );
+bim::uint  stkReadPlane(bim::TiffParams *tiffParams, int plane, bim::ImageBitmap *img, bim::FormatHandle *fmtHndl);
 
-bim::uint append_metadata_psia (FormatHandle *fmtHndl, TagMap *hash );
-bim::uint psiaReadPlane(FormatHandle *fmtHndl, TiffParams *tiffParams, int plane, ImageBitmap *img);
+bim::uint append_metadata_psia (bim::FormatHandle *fmtHndl, bim::TagMap *hash );
+bim::uint psiaReadPlane(bim::FormatHandle *fmtHndl, bim::TiffParams *tiffParams, int plane, bim::ImageBitmap *img);
 
-bim::uint append_metadata_fluoview (FormatHandle *fmtHndl, TagMap *hash );
-bim::uint fluoviewReadPlane( FormatHandle *fmtHndl, TiffParams *tiffParams, int plane );
+bim::uint append_metadata_fluoview (bim::FormatHandle *fmtHndl, bim::TagMap *hash );
+bim::uint fluoviewReadPlane( bim::FormatHandle *fmtHndl, bim::TiffParams *tiffParams, int plane );
 
-bim::uint append_metadata_lsm (FormatHandle *fmtHndl, TagMap *hash );
+bim::uint append_metadata_lsm (bim::FormatHandle *fmtHndl, bim::TagMap *hash );
 
 
 //****************************************************************************
@@ -121,50 +120,50 @@ void invert_buffer_4bit(void *buf, const bim::uint64 &size) {
   }
 }
 
-void invertSample(ImageBitmap *img, const int &sample) {
+void invertSample(bim::ImageBitmap *img, const int &sample) {
   bim::uint64 size = img->i.width * img->i.height; 
 
   // all typed will fall here
-  if (img->i.depth==8 && img->i.pixelType==FMT_UNSIGNED)
+  if (img->i.depth==8 && img->i.pixelType==bim::FMT_UNSIGNED)
     invert_buffer<bim::uint8>(img->bits[sample], size);
   else
-  if (img->i.depth==8 && img->i.pixelType==FMT_SIGNED)
+  if (img->i.depth==8 && img->i.pixelType==bim::FMT_SIGNED)
     invert_buffer<bim::int8>(img->bits[sample], size);
   else
-  if (img->i.depth==16 && img->i.pixelType==FMT_UNSIGNED)
+  if (img->i.depth==16 && img->i.pixelType==bim::FMT_UNSIGNED)
     invert_buffer<bim::uint16>(img->bits[sample], size);
   else
-  if (img->i.depth==16 && img->i.pixelType==FMT_SIGNED)
+  if (img->i.depth==16 && img->i.pixelType==bim::FMT_SIGNED)
     invert_buffer<bim::int16>(img->bits[sample], size);
   else
-  if (img->i.depth==32 && img->i.pixelType==FMT_UNSIGNED)
+  if (img->i.depth==32 && img->i.pixelType==bim::FMT_UNSIGNED)
     invert_buffer<bim::uint32>(img->bits[sample], size);
   else
-  if (img->i.depth==32 && img->i.pixelType==FMT_SIGNED)
+  if (img->i.depth==32 && img->i.pixelType==bim::FMT_SIGNED)
     invert_buffer<bim::int32>(img->bits[sample], size);
   else
-  if (img->i.depth==32 && img->i.pixelType==FMT_FLOAT)
-    invert_buffer<float32>(img->bits[sample], size);
+  if (img->i.depth==32 && img->i.pixelType==bim::FMT_FLOAT)
+    invert_buffer<bim::float32>(img->bits[sample], size);
   else
-  if (img->i.depth==64 && img->i.pixelType==FMT_FLOAT)
-    invert_buffer<float64>(img->bits[sample], size);
+  if (img->i.depth==64 && img->i.pixelType==bim::FMT_FLOAT)
+    invert_buffer<bim::float64>(img->bits[sample], size);
   else
   // we still have 1 and 4 bits
-  if (img->i.depth==4 && img->i.pixelType==FMT_UNSIGNED)
+  if (img->i.depth==4 && img->i.pixelType==bim::FMT_UNSIGNED)
     invert_buffer_4bit(img->bits[sample], size);
   else
-  if (img->i.depth==1 && img->i.pixelType==FMT_UNSIGNED)
+  if (img->i.depth==1 && img->i.pixelType==bim::FMT_UNSIGNED)
     invert_buffer_1bit(img->bits[sample], size);
 }
 
-void invertImg(ImageBitmap *img) {
+void invertImg(bim::ImageBitmap *img) {
     if (!img) return;
     for (unsigned int sample=0; sample<img->i.samples; sample++)
         invertSample(img, sample);
 }
 
 template< typename T >
-void image_ycbcr_to_rgb(ImageBitmap *img, TiffParams *pars) {
+void image_ycbcr_to_rgb(bim::ImageBitmap *img, bim::TiffParams *pars) {
     #define uint32 bim::uint32
     TIFFYCbCrToRGB* ycbcr = (TIFFYCbCrToRGB*) _TIFFmalloc(
 		    TIFFroundup_32(sizeof (TIFFYCbCrToRGB), sizeof (long))  
@@ -196,29 +195,29 @@ void image_ycbcr_to_rgb(ImageBitmap *img, TiffParams *pars) {
 	_TIFFfree(ycbcr);
 }
 
-void imageYCbCr2RGB(ImageBitmap *img, TiffParams *pars) {
-    if (img->i.depth==8 && img->i.pixelType==FMT_UNSIGNED)
+void imageYCbCr2RGB(bim::ImageBitmap *img, bim::TiffParams *pars) {
+    if (img->i.depth==8 && img->i.pixelType==bim::FMT_UNSIGNED)
         image_ycbcr_to_rgb<bim::uint8>(img, pars);
     else
-    if (img->i.depth==8 && img->i.pixelType==FMT_SIGNED)
+    if (img->i.depth==8 && img->i.pixelType==bim::FMT_SIGNED)
         image_ycbcr_to_rgb<bim::int8>(img, pars);
     else
-    if (img->i.depth==16 && img->i.pixelType==FMT_UNSIGNED)
+    if (img->i.depth==16 && img->i.pixelType==bim::FMT_UNSIGNED)
         image_ycbcr_to_rgb<bim::uint16>(img, pars);
     else
-    if (img->i.depth==16 && img->i.pixelType==FMT_SIGNED)
+    if (img->i.depth==16 && img->i.pixelType==bim::FMT_SIGNED)
         image_ycbcr_to_rgb<bim::int16>(img, pars);
     else
-    if (img->i.depth==32 && img->i.pixelType==FMT_UNSIGNED)
+    if (img->i.depth==32 && img->i.pixelType==bim::FMT_UNSIGNED)
         image_ycbcr_to_rgb<bim::uint32>(img, pars);
     else
-    if (img->i.depth==32 && img->i.pixelType==FMT_SIGNED)
+    if (img->i.depth==32 && img->i.pixelType==bim::FMT_SIGNED)
         image_ycbcr_to_rgb<bim::int32>(img, pars);
 }
 
 
 template< typename T >
-void image_cielab_to_rgb(ImageBitmap *img, TiffParams *pars) {
+void image_cielab_to_rgb(bim::ImageBitmap *img, bim::TiffParams *pars) {
     TIFFCIELabToRGB *cielab = (TIFFCIELabToRGB*) _TIFFmalloc(sizeof(TIFFCIELabToRGB));
 	if (!cielab) return;
 	
@@ -260,27 +259,27 @@ void image_cielab_to_rgb(ImageBitmap *img, TiffParams *pars) {
 	_TIFFfree(cielab);
 }
 
-void imageCIELAB2RGB(ImageBitmap *img, TiffParams *pars) {
-    if (img->i.depth==8 && img->i.pixelType==FMT_UNSIGNED)
+void imageCIELAB2RGB(bim::ImageBitmap *img, bim::TiffParams *pars) {
+    if (img->i.depth==8 && img->i.pixelType==bim::FMT_UNSIGNED)
         image_cielab_to_rgb<bim::uint8>(img, pars);
     else
-    if (img->i.depth==8 && img->i.pixelType==FMT_SIGNED)
+    if (img->i.depth==8 && img->i.pixelType==bim::FMT_SIGNED)
         image_cielab_to_rgb<bim::int8>(img, pars);
     else
-    if (img->i.depth==16 && img->i.pixelType==FMT_UNSIGNED)
+    if (img->i.depth==16 && img->i.pixelType==bim::FMT_UNSIGNED)
         image_cielab_to_rgb<bim::uint16>(img, pars);
     else
-    if (img->i.depth==16 && img->i.pixelType==FMT_SIGNED)
+    if (img->i.depth==16 && img->i.pixelType==bim::FMT_SIGNED)
         image_cielab_to_rgb<bim::int16>(img, pars);
     else
-    if (img->i.depth==32 && img->i.pixelType==FMT_UNSIGNED)
+    if (img->i.depth==32 && img->i.pixelType==bim::FMT_UNSIGNED)
         image_cielab_to_rgb<bim::uint32>(img, pars);
     else
-    if (img->i.depth==32 && img->i.pixelType==FMT_SIGNED)
+    if (img->i.depth==32 && img->i.pixelType==bim::FMT_SIGNED)
         image_cielab_to_rgb<bim::int32>(img, pars);
 }
 
-void processPhotometric(ImageBitmap *img, TiffParams *pars, const bim::uint16 &photometric) {
+void processPhotometric(bim::ImageBitmap *img, bim::TiffParams *pars, const bim::uint16 &photometric) {
     TIFF *tif = pars->tiff;
     if (photometric == PHOTOMETRIC_MINISWHITE) {
         invertImg(img);
@@ -296,7 +295,7 @@ void processPhotometric(ImageBitmap *img, TiffParams *pars, const bim::uint16 &p
 // MISC
 //****************************************************************************
 
-bool areValidParams(FormatHandle *fmtHndl, TiffParams *tifParams)
+bool areValidParams(bim::FormatHandle *fmtHndl, bim::TiffParams *tifParams)
 {
   if (fmtHndl == NULL) return false;
   if (tifParams == NULL) return false;
@@ -306,7 +305,7 @@ bool areValidParams(FormatHandle *fmtHndl, TiffParams *tifParams)
   return true;
 }
 
-void init_image_palette( TIFF *tif, ImageInfo *info ) {
+void init_image_palette( TIFF *tif, bim::ImageInfo *info ) {
   if (tif == NULL) return;
   if (info == NULL) return;
   bim::uint16 photometric = PHOTOMETRIC_MINISWHITE;
@@ -316,7 +315,7 @@ void init_image_palette( TIFF *tif, ImageInfo *info ) {
 
   info->lut.count = 0;
   for (bim::uint i=0; i<256; i++) 
-    info->lut.rgba[i] = xRGB( i, i, i );
+    info->lut.rgba[i] = bim::xRGB( i, i, i );
   
   if (photometric == PHOTOMETRIC_PALETTE) { // palette
     bim::uint16 *red, *green, *blue;
@@ -325,7 +324,7 @@ void init_image_palette( TIFF *tif, ImageInfo *info ) {
 
     TIFFGetField(tif, TIFFTAG_COLORMAP, &red, &green, &blue);
     for (bim::uint i=0; i<num_colors; i++)
-      info->lut.rgba[i] = xRGB( red[i]/256, green[i]/256, blue[i]/256 );
+      info->lut.rgba[i] = bim::xRGB( red[i]/256, green[i]/256, blue[i]/256 );
 
     info->lut.count = num_colors;
   } // if paletted
@@ -335,25 +334,25 @@ void init_image_palette( TIFF *tif, ImageInfo *info ) {
 // METADATA
 //----------------------------------------------------------------------------
 
-void pyramid_append_metadata(FormatHandle *fmtHndl, TagMap *hash) {
+void pyramid_append_metadata(bim::FormatHandle *fmtHndl, bim::TagMap *hash) {
     if (fmtHndl == NULL) return;
     if (isCustomReading(fmtHndl)) return;
     if (!hash) return;
-    TiffParams *par = (TiffParams *)fmtHndl->internalParams;
-    PyramidInfo *pyramid = &par->pyramid;
+    bim::TiffParams *par = (bim::TiffParams *)fmtHndl->internalParams;
+    bim::PyramidInfo *pyramid = &par->pyramid;
     
     hash->set_value(bim::IMAGE_NUM_RES_L, pyramid->number_levels);
     if (pyramid->number_levels > 1)
     for (int i = 0; i < pyramid->number_levels; ++i) {
-        hash->set_value(bim::IMAGE_RES_L_SCALES, xstring::join(pyramid->scales, ","));
+        hash->set_value(bim::IMAGE_RES_L_SCALES, bim::xstring::join(pyramid->scales, ","));
     }
 }
 
-void generic_append_metadata(FormatHandle *fmtHndl, TagMap *hash) {
+void generic_append_metadata(bim::FormatHandle *fmtHndl, bim::TagMap *hash) {
     if (fmtHndl == NULL) return;
     if (isCustomReading(fmtHndl)) return;
     if (!hash) return;
-    TiffParams *par = (TiffParams *)fmtHndl->internalParams;
+    bim::TiffParams *par = (bim::TiffParams *)fmtHndl->internalParams;
     TIFF *tif = par->tiff;
 
     bim::uint32 sz=0;
@@ -406,11 +405,11 @@ void generic_append_metadata(FormatHandle *fmtHndl, TagMap *hash) {
     }
 }
 
-void generic_write_metadata(FormatHandle *fmtHndl, TagMap *hash) {
+void generic_write_metadata(bim::FormatHandle *fmtHndl, bim::TagMap *hash) {
     if (fmtHndl == NULL) return;
     if (isCustomReading(fmtHndl)) return;
     if (!hash) return;
-    TiffParams *par = (TiffParams *)fmtHndl->internalParams;
+    bim::TiffParams *par = (bim::TiffParams *)fmtHndl->internalParams;
     TIFF *tif = par->tiff;
 
     // ICC profile
@@ -447,12 +446,12 @@ void generic_write_metadata(FormatHandle *fmtHndl, TagMap *hash) {
     }
 }
 
-bim::uint append_metadata_generic_tiff (FormatHandle *fmtHndl, TagMap *hash ) {
+bim::uint append_metadata_generic_tiff (bim::FormatHandle *fmtHndl, bim::TagMap *hash ) {
   if (fmtHndl == NULL) return 1;
   if (fmtHndl->internalParams == NULL) return 1;
   if (!hash) return 1;
 
-  TiffParams *par = (TiffParams *) fmtHndl->internalParams;
+  bim::TiffParams *par = (bim::TiffParams *) fmtHndl->internalParams;
   TinyTiff::IFD *ifd = par->ifds.firstIfd();
   if (!ifd) return 1;
 
@@ -469,7 +468,7 @@ bim::uint append_metadata_generic_tiff (FormatHandle *fmtHndl, TagMap *hash ) {
 
   std::map< int, std::string >::const_iterator it = hash_tiff_tags.begin();
   while (it != hash_tiff_tags.end()) {
-    xstring tag_str = ifd->readTagString(it->first);
+    bim::xstring tag_str = ifd->readTagString(it->first);
     if (tag_str.size()>0) hash->append_tag(bim::CUSTOM_TAGS_PREFIX + it->second, tag_str);
     it++;
   }
@@ -482,12 +481,12 @@ bim::uint append_metadata_generic_tiff (FormatHandle *fmtHndl, TagMap *hash ) {
   return 0;
 }
 
-bim::uint append_metadata_qimaging_tiff (FormatHandle *fmtHndl, TagMap *hash ) {
+bim::uint append_metadata_qimaging_tiff (bim::FormatHandle *fmtHndl, bim::TagMap *hash ) {
   if (fmtHndl == NULL) return 1;
   if (fmtHndl->internalParams == NULL) return 1;
   if (!hash) return 1;
 
-  TiffParams *par = (TiffParams *) fmtHndl->internalParams;
+  bim::TiffParams *par = (bim::TiffParams *) fmtHndl->internalParams;
   TinyTiff::IFD *ifd = par->ifds.firstIfd();
   if (!ifd) return 1;
 
@@ -511,19 +510,19 @@ QCapture Pro
   if (!ifd->tagPresent(50296)) return 0;
 
   // tag 305 should be "QCapture Pro"
-  xstring tag_software = ifd->readTagString(305);
+  bim::xstring tag_software = ifd->readTagString(305);
   if ( tag_software != "QCapture Pro" ) return 0;
   
   // ok, we're sure it's QImaging
   hash->append_tag( bim::CUSTOM_TAGS_PREFIX+"Software", tag_software );
 
 
-  xstring tag_description = ifd->readTagString(TIFFTAG_IMAGEDESCRIPTION);
+  bim::xstring tag_description = ifd->readTagString(TIFFTAG_IMAGEDESCRIPTION);
   if (tag_description.size()>0)
     hash->parse_ini( tag_description, ":", bim::CUSTOM_TAGS_PREFIX );
 
   // read tag 306 - Date/Time
-  xstring tag_datetime = ifd->readTagString(306);
+  bim::xstring tag_datetime = ifd->readTagString(306);
   if (tag_datetime.size()>0) {
     int y=0, m=0, d=0, h=0, mi=0, s=0, ms=0;
     char ampm=0;
@@ -541,27 +540,27 @@ QCapture Pro
   return 0;
 }
 
-bim::uint tiff_append_metadata (FormatHandle *fmtHndl, TagMap *hash ) {
+bim::uint tiff_append_metadata (bim::FormatHandle *fmtHndl, bim::TagMap *hash ) {
   if (fmtHndl == NULL) return 1;
   if (fmtHndl->internalParams == NULL) return 1;
   if (!hash) return 1;
-  TiffParams *tifParams = (TiffParams *) fmtHndl->internalParams;
+  bim::TiffParams *tifParams = (bim::TiffParams *) fmtHndl->internalParams;
 
   append_metadata_qimaging_tiff (fmtHndl, hash );
 
-  if (tifParams->subType == tstStk) 
+  if (tifParams->subType == bim::tstStk) 
     append_metadata_stk(fmtHndl, hash);
   else
-  if (tifParams->subType == tstPsia) 
+  if (tifParams->subType == bim::tstPsia) 
     append_metadata_psia(fmtHndl, hash);
   else
-  if (tifParams->subType==tstFluoview || tifParams->subType==tstAndor)
+  if (tifParams->subType == bim::tstFluoview || tifParams->subType == bim::tstAndor)
     append_metadata_fluoview(fmtHndl, hash);
   else
-  if (tifParams->subType == tstCzLsm)
+  if (tifParams->subType == bim::tstCzLsm)
     append_metadata_lsm(fmtHndl, hash);
   else
-  if (tifParams->subType == tstOmeTiff || tifParams->subType == tstOmeBigTiff)
+  if (tifParams->subType == bim::tstOmeTiff || tifParams->subType == bim::tstOmeBigTiff)
     append_metadata_omeTiff (fmtHndl, hash);
   else
     append_metadata_generic_tiff(fmtHndl, hash);
@@ -574,7 +573,7 @@ bim::uint tiff_append_metadata (FormatHandle *fmtHndl, TagMap *hash ) {
 //----------------------------------------------------------------------------
 
 
-bim::uint write_tiff_metadata (FormatHandle *fmtHndl, TiffParams *tifParams) {
+bim::uint write_tiff_metadata (bim::FormatHandle *fmtHndl, bim::TiffParams *tifParams) {
   if (!areValidParams(fmtHndl, tifParams)) return 1;
   
   generic_write_metadata(fmtHndl, fmtHndl->metaData);
@@ -588,7 +587,7 @@ bim::uint write_tiff_metadata (FormatHandle *fmtHndl, TiffParams *tifParams) {
 //****************************************************************************
 
 template< typename T >
-void write_line_segment_t(void *po, void *bufo, ImageBitmap *img, bim::uint sample, bim::uint64 w) {
+void write_line_segment_t(void *po, void *bufo, bim::ImageBitmap *img, bim::uint sample, bim::uint64 w) {
     T *p   = (T *) po;
     T *buf = (T *) bufo;  
     bim::uint nsamples = img->i.samples;
@@ -597,7 +596,7 @@ void write_line_segment_t(void *po, void *bufo, ImageBitmap *img, bim::uint samp
     }
 }
 
-void write_line_segment(void *po, void *bufo, ImageBitmap *img, bim::uint sample, bim::uint64 w) {
+void write_line_segment(void *po, void *bufo, bim::ImageBitmap *img, bim::uint sample, bim::uint64 w) {
   if (img->i.depth==8)  
       write_line_segment_t<bim::uint8>  (po, bufo, img, sample, w);
   else
@@ -608,7 +607,7 @@ void write_line_segment(void *po, void *bufo, ImageBitmap *img, bim::uint sample
       write_line_segment_t<bim::uint32> (po, bufo, img, sample, w);
   else
   if (img->i.depth==64) 
-      write_line_segment_t<float64>(po, bufo, img, sample, w);
+      write_line_segment_t<bim::float64>(po, bufo, img, sample, w);
 }
 
 
@@ -616,7 +615,7 @@ void write_line_segment(void *po, void *bufo, ImageBitmap *img, bim::uint sample
 // SCANLINE METHOD TIFF
 //****************************************************************************
 
-int read_scanline_tiff(TIFF *tif, ImageBitmap *img, FormatHandle *fmtHndl) {
+int read_scanline_tiff(TIFF *tif, bim::ImageBitmap *img, bim::FormatHandle *fmtHndl) {
     if (!tif || !img) return -1;
   
     bim::uint lineSize = getLineSizeInBytes( img );
@@ -666,7 +665,7 @@ int read_scanline_tiff(TIFF *tif, ImageBitmap *img, FormatHandle *fmtHndl) {
 // TILED METHOD TIFF
 //****************************************************************************
 
-int read_tiled_tiff(TIFF *tif, ImageBitmap *img, FormatHandle *fmtHndl) {
+int read_tiled_tiff(TIFF *tif, bim::ImageBitmap *img, bim::FormatHandle *fmtHndl) {
     if (!tif || !img) return 1;
     if (!TIFFIsTiled(tif)) return 1;
 
@@ -742,12 +741,12 @@ void lsmFixStripByteCounts ( TIFF *tif, bim::uint32 row, tsample_t sample ) {
   }
 }
 
-void getCurrentPageInfo(TiffParams *tiffParams);
-int read_tiff_image(FormatHandle *fmtHndl, TiffParams *tifParams) {
+void getCurrentPageInfo(bim::TiffParams *tiffParams);
+int read_tiff_image(bim::FormatHandle *fmtHndl, bim::TiffParams *tifParams) {
   if (!areValidParams(fmtHndl, tifParams)) return 1;
 
   TIFF *tif = tifParams->tiff;
-  ImageBitmap *img = fmtHndl->image;
+  bim::ImageBitmap *img = fmtHndl->image;
 
   bim::uint32 height = 0; 
   bim::uint32 width = 0; 
@@ -761,12 +760,12 @@ int read_tiff_image(FormatHandle *fmtHndl, TiffParams *tifParams) {
 
   currentDir = TIFFCurrentDirectory(tif);
   int needed_page_num = fmtHndl->pageNumber;
-  if (tifParams->subType == tstCzLsm)
+  if (tifParams->subType == bim::tstCzLsm)
     needed_page_num = fmtHndl->pageNumber*2;
 
   // now must read correct page and set image parameters
   if (currentDir != needed_page_num)
-  if (tifParams->subType != tstStk) {
+  if (tifParams->subType != bim::tstStk) {
     TIFFSetDirectory(tif, needed_page_num);
 
     currentDir = TIFFCurrentDirectory(tif);
@@ -775,7 +774,7 @@ int read_tiff_image(FormatHandle *fmtHndl, TiffParams *tifParams) {
     getCurrentPageInfo( tifParams );
   }
   
-  if (tifParams->subType!=tstOmeTiff && tifParams->subType!=tstOmeBigTiff ) 
+  if (tifParams->subType!=bim::tstOmeTiff && tifParams->subType!=bim::tstOmeBigTiff ) 
       img->i = tifParams->info;
 
   TIFFGetField(tif, TIFFTAG_COMPRESSION, &compression);
@@ -788,22 +787,22 @@ int read_tiff_image(FormatHandle *fmtHndl, TiffParams *tifParams) {
   TIFFGetField(tif, TIFFTAG_PLANARCONFIG, &PlanarConfig);	// single image plane 
 
   // this is here due to some OME-TIFF do not conform with the standard and come with all channels in the same IFD
-  if (tifParams->subType==tstOmeTiff || tifParams->subType==tstOmeBigTiff) {
+  if (tifParams->subType==bim::tstOmeTiff || tifParams->subType==bim::tstOmeBigTiff) {
     int r = omeTiffReadPlane( fmtHndl, tifParams, fmtHndl->pageNumber );
     if (r != 2) return r;
     img->i = tifParams->info;
   }
 
   // if image is PSIA then read and init it here
-  if (tifParams->subType == tstPsia)
+  if (tifParams->subType == bim::tstPsia)
     return psiaReadPlane(fmtHndl, tifParams, fmtHndl->pageNumber, img);
 
   // if image is Fluoview and contains 1..4 channels
-  if ( (tifParams->subType==tstFluoview || tifParams->subType==tstAndor) && (tifParams->fluoviewInfo.ch > 1) )
+  if ( (tifParams->subType==bim::tstFluoview || tifParams->subType==bim::tstAndor) && (tifParams->fluoviewInfo.ch > 1) )
     return fluoviewReadPlane( fmtHndl, tifParams, fmtHndl->pageNumber );
 
   // if the file is LSM then the strip size given in the file is incorrect, fix that
-  if (tifParams->subType == tstCzLsm)
+  if (tifParams->subType == bim::tstCzLsm)
     for (unsigned int sample=0; sample < samplesperpixel; ++sample)
       for (unsigned int y=0; y < height; ++y)
         lsmFixStripByteCounts( tif, y, sample );
@@ -811,7 +810,7 @@ int read_tiff_image(FormatHandle *fmtHndl, TiffParams *tifParams) {
   if ( allocImg( fmtHndl, &img->i, img) != 0 ) return 1;
 
   // if image is STK
-  if (tifParams->subType == tstStk)
+  if (tifParams->subType == bim::tstStk)
     return stkReadPlane(tifParams, fmtHndl->pageNumber, img, fmtHndl);
 
 
@@ -829,7 +828,7 @@ int read_tiff_image(FormatHandle *fmtHndl, TiffParams *tifParams) {
 // TIFF WRITER
 //****************************************************************************
 
-int write_striped_tiff(TIFF *out, ImageBitmap *img, FormatHandle *fmtHndl) {
+int write_striped_tiff(TIFF *out, bim::ImageBitmap *img, bim::FormatHandle *fmtHndl) {
     bim::uint32 width = (bim::uint32) img->i.width;
     bim::uint32 height = (bim::uint32) img->i.height;
     bim::uint16 bitspersample = img->i.depth;
@@ -880,8 +879,8 @@ int write_striped_tiff(TIFF *out, ImageBitmap *img, FormatHandle *fmtHndl) {
     return 0;
 }
 
-int write_tiled_tiff(TIFF *tif, ImageBitmap *img, FormatHandle *fmtHndl) {
-    TiffParams *par = (TiffParams *)fmtHndl->internalParams;
+int write_tiled_tiff(TIFF *tif, bim::ImageBitmap *img, bim::FormatHandle *fmtHndl) {
+    bim::TiffParams *par = (bim::TiffParams *)fmtHndl->internalParams;
 
     bim::uint64 width = (bim::uint64) img->i.width;
     bim::uint64 height = (bim::uint64) img->i.height;
@@ -1021,10 +1020,10 @@ int tiff_update_subifd_next_pointer(TIFF* tif, bim::uint64 dir_offset, bim::uint
     return true;
 }
 
-int write_tiff_image(FormatHandle *fmtHndl, TiffParams *par, ImageBitmap *img = NULL, bool subscale = false) {
+int write_tiff_image(bim::FormatHandle *fmtHndl, bim::TiffParams *par, bim::ImageBitmap *img = NULL, bool subscale = false) {
   if (!areValidParams(fmtHndl, par)) return 1;
 
-  if (par->subType == tstOmeTiff || par->subType == tstOmeBigTiff)
+  if (par->subType == bim::tstOmeTiff || par->subType == bim::tstOmeBigTiff)
       return omeTiffWritePlane( fmtHndl, par);
 
   TIFF *out = par->tiff;
@@ -1039,14 +1038,14 @@ int write_tiff_image(FormatHandle *fmtHndl, TiffParams *par, ImageBitmap *img = 
   bim::uint16 compression;
   bim::uint16 planarConfig;
 
-  if (img->i.imageMode == IM_MULTI) photometric = PHOTOMETRIC_RGB;
+  if (img->i.imageMode == bim::IM_MULTI) photometric = PHOTOMETRIC_RGB;
   if (samplesperpixel >= 2)         photometric = PHOTOMETRIC_RGB;
 
-  if (img->i.imageMode == IM_RGB)   photometric = PHOTOMETRIC_RGB;
-  else if (img->i.imageMode == IM_LAB)   photometric = PHOTOMETRIC_ICCLAB;
+  if (img->i.imageMode == bim::IM_RGB)   photometric = PHOTOMETRIC_RGB;
+  else if (img->i.imageMode == bim::IM_LAB)   photometric = PHOTOMETRIC_ICCLAB;
 
 
-  if ( (img->i.imageMode == IM_INDEXED) && (img->i.lut.count > 0) && (samplesperpixel==1) && (bitspersample<=8) )
+  if ( (img->i.imageMode == bim::IM_INDEXED) && (img->i.lut.count > 0) && (samplesperpixel==1) && (bitspersample<=8) )
     photometric = PHOTOMETRIC_PALETTE;
 
   if ( (bitspersample == 1) && (samplesperpixel == 1) ) photometric = PHOTOMETRIC_MINISWHITE;
@@ -1064,8 +1063,8 @@ int write_tiff_image(FormatHandle *fmtHndl, TiffParams *par, ImageBitmap *img = 
  
   // set pixel format
   bim::uint16 sampleformat = SAMPLEFORMAT_UINT;
-  if (img->i.pixelType == FMT_SIGNED) sampleformat = SAMPLEFORMAT_INT;
-  if (img->i.pixelType == FMT_FLOAT)  sampleformat = SAMPLEFORMAT_IEEEFP;
+  if (img->i.pixelType == bim::FMT_SIGNED) sampleformat = SAMPLEFORMAT_INT;
+  if (img->i.pixelType == bim::FMT_FLOAT)  sampleformat = SAMPLEFORMAT_IEEEFP;
   TIFFSetField(out, TIFFTAG_SAMPLEFORMAT, sampleformat);
 
 
@@ -1086,17 +1085,17 @@ int write_tiff_image(FormatHandle *fmtHndl, TiffParams *par, ImageBitmap *img = 
   //------------------------------------------------------------------------------  
 
   bim::int64 sz = bim::max<bim::int64>(width, height);
-  if (!subscale && par->pyramid.format != PyramidInfo::pyrFmtNone && sz<PyramidInfo::min_level_size){
-      par->pyramid.format = PyramidInfo::pyrFmtNone;
+  if (!subscale && par->pyramid.format != bim::PyramidInfo::pyrFmtNone && sz<bim::PyramidInfo::min_level_size){
+      par->pyramid.format = bim::PyramidInfo::pyrFmtNone;
   }
 
-  if (par->info.tileWidth > 0 && par->pyramid.format != PyramidInfo::pyrFmtNone) {
+  if (par->info.tileWidth > 0 && par->pyramid.format != bim::PyramidInfo::pyrFmtNone) {
       TIFFSetField(out, TIFFTAG_SUBFILETYPE, subscale ? FILETYPE_REDUCEDIMAGE : 0);
 
       if (!subscale) {
           par->pyramid.directory_offsets.resize(0);
-          bim::int64 num_levels = ceil(bim::log2<double>(sz)) - ceil(bim::log2<double>(PyramidInfo::min_level_size)) + 1;
-          if (par->pyramid.format == PyramidInfo::pyrFmtSubDirs) {
+          bim::int64 num_levels = ceil(bim::log2<double>(sz)) - ceil(bim::log2<double>(bim::PyramidInfo::min_level_size)) + 1;
+          if (par->pyramid.format == bim::PyramidInfo::pyrFmtSubDirs) {
               // if pyramid levels are to be written into SUBIFDs, write the tag and indicate to libtiff how many subifds are coming
               bim::uint16 num_sub_ifds = num_levels - 1; // number of pyramidal levels - 1
               std::vector<bim::uint64> offsets_sub_ifds(num_levels - 1, 0UL);
@@ -1182,9 +1181,9 @@ int write_tiff_image(FormatHandle *fmtHndl, TiffParams *par, ImageBitmap *img = 
   if ( (photometric == PHOTOMETRIC_PALETTE) && (img->i.lut.count > 0) ) {
     bim::uint16 nColors = img->i.lut.count;
     for (int i=0; i<nColors; i++) {
-      palr[i] = (bim::uint16) xR( img->i.lut.rgba[i] ) * 256;
-      palg[i] = (bim::uint16) xG( img->i.lut.rgba[i] ) * 256;
-      palb[i] = (bim::uint16) xB( img->i.lut.rgba[i] ) * 256;
+      palr[i] = (bim::uint16) bim::xR( img->i.lut.rgba[i] ) * 256;
+      palg[i] = (bim::uint16) bim::xG( img->i.lut.rgba[i] ) * 256;
+      palb[i] = (bim::uint16) bim::xB( img->i.lut.rgba[i] ) * 256;
     }
     TIFFSetField(out, TIFFTAG_COLORMAP, palr, palg, palb);
   }
@@ -1200,14 +1199,14 @@ int write_tiff_image(FormatHandle *fmtHndl, TiffParams *par, ImageBitmap *img = 
   // writing image
   //------------------------------------------------------------------------------
   
-  if (par->info.tileWidth < 1 || par->pyramid.format == PyramidInfo::pyrFmtNone) {
+  if (par->info.tileWidth < 1 || par->pyramid.format == bim::PyramidInfo::pyrFmtNone) {
       write_striped_tiff(out, img, fmtHndl);
   } else {
       write_tiled_tiff(out, img, fmtHndl);
   }
 
   // correct libtiff writing of subifds by linking sibling ifds through nextifd offset
-  if (subscale && par->pyramid.format == PyramidInfo::pyrFmtSubDirs) {
+  if (subscale && par->pyramid.format == bim::PyramidInfo::pyrFmtSubDirs) {
       bim::uint64 dir_offset = (TIFFSeekFile(out, 0, SEEK_END) + 1) &~1;
       par->pyramid.directory_offsets.push_back(dir_offset);
   }
@@ -1222,17 +1221,17 @@ int write_tiff_image(FormatHandle *fmtHndl, TiffParams *par, ImageBitmap *img = 
   // writing pyramid levels
   //------------------------------------------------------------------------------
 
-  if (!subscale && par->info.tileWidth >0 && par->pyramid.format != PyramidInfo::pyrFmtNone) {
+  if (!subscale && par->info.tileWidth >0 && par->pyramid.format != bim::PyramidInfo::pyrFmtNone) {
       bim::Image image(img);
       int i = 0;
-      while (bim::max<unsigned int>(image.width(), image.height()) > PyramidInfo::min_level_size) {
+      while (bim::max<unsigned int>(image.width(), image.height()) > bim::PyramidInfo::min_level_size) {
           image = image.downSampleBy2x();
           if (write_tiff_image(fmtHndl, par, image.imageBitmap(), true) != 0) break;
           ++i;
       }
 
       // correct libtiff writing of subifds by linking sibling ifds through nextifd offset
-      if (par->pyramid.format == PyramidInfo::pyrFmtSubDirs)
+      if (par->pyramid.format == bim::PyramidInfo::pyrFmtSubDirs)
       for (int i = 0; i < par->pyramid.directory_offsets.size() - 1; ++i) {
           if (!tiff_update_subifd_next_pointer(out, par->pyramid.directory_offsets[i], par->pyramid.directory_offsets[i + 1])) break;
       }
@@ -1253,11 +1252,11 @@ int write_tiff_image(FormatHandle *fmtHndl, TiffParams *par, ImageBitmap *img = 
 // Levels and Tiles functions
 //--------------------------------------------------------------------------------------------
 
-int read_tiff_image_level(FormatHandle *fmtHndl, TiffParams *tifParams, bim::uint page, bim::uint level) {
+int read_tiff_image_level(bim::FormatHandle *fmtHndl, bim::TiffParams *tifParams, bim::uint page, bim::uint level) {
     if (!areValidParams(fmtHndl, tifParams)) return 1;
     TIFF *tif = tifParams->tiff;
-    PyramidInfo *pyramid = &tifParams->pyramid;
-    ImageBitmap *img = fmtHndl->image;
+    bim::PyramidInfo *pyramid = &tifParams->pyramid;
+    bim::ImageBitmap *img = fmtHndl->image;
 
     // set correct level
     if (pyramid->number_levels > 0 && pyramid->number_levels <= level) return 1;
@@ -1297,11 +1296,11 @@ int read_tiff_image_level(FormatHandle *fmtHndl, TiffParams *tifParams, bim::uin
     return 0;
 }
 
-int read_tiff_image_tile(FormatHandle *fmtHndl, TiffParams *tifParams, bim::uint page, bim::uint64 xid, bim::uint64 yid, bim::uint level) {
+int read_tiff_image_tile(bim::FormatHandle *fmtHndl, bim::TiffParams *tifParams, bim::uint page, bim::uint64 xid, bim::uint64 yid, bim::uint level) {
     if (!areValidParams(fmtHndl, tifParams)) return 1;
     TIFF *tif = tifParams->tiff;
-    PyramidInfo *pyramid = &tifParams->pyramid;
-    ImageBitmap *img = fmtHndl->image;
+    bim::PyramidInfo *pyramid = &tifParams->pyramid;
+    bim::ImageBitmap *img = fmtHndl->image;
 
     //if (!TIFFIsTiled(tif)) return read_tiff_image(fmtHndl, tifParams);
     if (!TIFFIsTiled(tif)) return 1;
