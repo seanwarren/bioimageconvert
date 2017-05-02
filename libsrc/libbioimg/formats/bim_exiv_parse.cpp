@@ -29,8 +29,6 @@
 #include <streambuf>
 #include <istream>
 
-using namespace bim;
-
 
 static double datum2coord(const Exiv2::Exifdatum &coord, const Exiv2::Exifdatum &ref) {
     double d = coord.toRational(0).first / (double)coord.toRational(0).second;
@@ -49,7 +47,7 @@ static double datum2alt(const Exiv2::Exifdatum &coord, const Exiv2::Exifdatum &r
     return h * l;
 }
 
-static void exif2hash(Exiv2::ExifData &exifData, TagMap *hash) {
+static void exif2hash(Exiv2::ExifData &exifData, bim::TagMap *hash) {
     if (exifData.empty()) return;
 
     Exiv2::ExifData::const_iterator end = exifData.end();
@@ -57,9 +55,9 @@ static void exif2hash(Exiv2::ExifData &exifData, TagMap *hash) {
         if (i->typeId() == Exiv2::undefined) continue;
         if (i->typeId() == Exiv2::unsignedByte && i->size() > 1024) continue;
         if (i->typeId() >= Exiv2::unsignedShort && i->typeId() <= Exiv2::tiffIfd && i->size() > 1024) continue;
-        xstring mykey = i->key();
+        bim::xstring mykey = i->key();
         mykey = mykey.replace(".", "/");
-        xstring myval = i->print();
+        bim::xstring myval = i->print();
         hash->set_value(mykey, myval);
     }
 
@@ -70,42 +68,42 @@ static void exif2hash(Exiv2::ExifData &exifData, TagMap *hash) {
         double c1 = datum2coord(lat, exifData["Exif.GPSInfo.GPSLatitudeRef"]);
         double c2 = datum2coord(lon, exifData["Exif.GPSInfo.GPSLongitudeRef"]);
         double c3 = datum2alt(exifData["Exif.GPSInfo.GPSAltitude"], exifData["Exif.GPSInfo.GPSAltitudeRef"]);
-        xstring v = xstring::xprintf("%f,%f,%f", c1, c2, c3);
+        bim::xstring v = bim::xstring::xprintf("%f,%f,%f", c1, c2, c3);
         hash->set_value("Geo/Coordinates/center", v);
     }
 }
 
-static void iptc2hash(const Exiv2::IptcData &iptcData, TagMap *hash) {
+static void iptc2hash(const Exiv2::IptcData &iptcData, bim::TagMap *hash) {
     if (!iptcData.empty()) {
         Exiv2::IptcData::const_iterator end = iptcData.end();
         for (Exiv2::IptcData::const_iterator i = iptcData.begin(); i != end; ++i) {
             if (i->typeId() == Exiv2::undefined) continue;
             if (i->typeId() == Exiv2::unsignedByte && i->size() > 1024) continue;
             if (i->typeId() >= Exiv2::unsignedShort && i->typeId() <= Exiv2::tiffIfd && i->size() > 1024) continue;
-            xstring mykey = i->key();
+            bim::xstring mykey = i->key();
             mykey = mykey.replace(".", "/");
-            xstring myval = i->print();
+            bim::xstring myval = i->print();
             hash->set_value(mykey, myval);
         }
     }
 }
 
-static void xmp2hash(const Exiv2::XmpData &xmpData, TagMap *hash) {
+static void xmp2hash(const Exiv2::XmpData &xmpData, bim::TagMap *hash) {
     if (!xmpData.empty()) {
         Exiv2::XmpData::const_iterator end = xmpData.end();
         for (Exiv2::XmpData::const_iterator i = xmpData.begin(); i != end; ++i) {
             if (i->typeId() == Exiv2::undefined) continue;
             if (i->typeId() == Exiv2::unsignedByte && i->size() > 1024) continue;
             if (i->typeId() >= Exiv2::unsignedShort && i->typeId() <= Exiv2::tiffIfd && i->size() > 1024) continue;
-            xstring mykey = i->key();
+            bim::xstring mykey = i->key();
             mykey = mykey.replace(".", "/");
-            xstring myval = i->print();
+            bim::xstring myval = i->print();
             hash->set_value(mykey, myval);
         }
     }
 }
 
-static Exiv2::Image::AutoPtr init_image(FormatHandle *fmtHndl) {
+static Exiv2::Image::AutoPtr init_image(bim::FormatHandle *fmtHndl) {
     Exiv2::Image::AutoPtr image;
     if (!fmtHndl->fileName) return image;
     try {
@@ -125,7 +123,7 @@ static Exiv2::Image::AutoPtr init_image(FormatHandle *fmtHndl) {
     }
 }
 
-void exiv_append_metadata(FormatHandle *fmtHndl, TagMap *hash) {
+void exiv_append_metadata(bim::FormatHandle *fmtHndl, bim::TagMap *hash) {
     if (fmtHndl == NULL) return;
     if (isCustomReading(fmtHndl)) return;
     if (!hash) return;
@@ -183,7 +181,7 @@ void exiv_append_metadata(FormatHandle *fmtHndl, TagMap *hash) {
 
     // fill in date time from exif
     if (hash->hasKey("Exif/Image/DateTime")) {
-        xstring v = hash->get_value("Exif/Image/DateTime");
+        bim::xstring v = hash->get_value("Exif/Image/DateTime");
         // Exif export date/time as: YYYY:MM:DD hh:mm:ss
         if (v[4] == ':') v.replace(4, 1, "-");
         if (v[7] == ':') v.replace(7, 1, "-");
@@ -192,7 +190,7 @@ void exiv_append_metadata(FormatHandle *fmtHndl, TagMap *hash) {
 
 }
 
-void exiv_write_metadata(TagMap *hash, FormatHandle *fmtHndl) {
+void exiv_write_metadata(bim::TagMap *hash, bim::FormatHandle *fmtHndl) {
     if (fmtHndl == NULL) return;
     if (isCustomReading(fmtHndl)) return;
     if (!hash) return;
@@ -271,7 +269,7 @@ const void tiff_parse_ifd_update_offsets(unsigned char *buf, unsigned int old_of
     }
 }
 
-void create_tiff_exif_block(const std::vector<char> &exif, unsigned int offset_exif, const std::vector<char> &gps, unsigned int offset_gps, TagMap *hash) {
+void create_tiff_exif_block(const std::vector<char> &exif, unsigned int offset_exif, const std::vector<char> &gps, unsigned int offset_gps, bim::TagMap *hash) {
     if (exif.size() == 0 && gps.size() == 0) return;
 
     unsigned int bufsz = sizeof(tiff_buffer);
@@ -330,7 +328,7 @@ void sub_ifd_to_buffer(toff_t offset, TIFF *tif, std::vector<char> &buffer) {
         if (tif->tif_flags & TIFF_BIGTIFF)
             TIFFSwabLong8((bim::uint64*)&count);
         else
-            TIFFSwabShort((bim::uint16*) &count);
+            TIFFSwabShort((bim::uint16*)&count);
     }
 
     unsigned int header_size = sizeof(Count)+sizeof(next)+sizeof(Entry)*count;
