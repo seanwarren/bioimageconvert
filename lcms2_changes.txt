@@ -1,0 +1,12 @@
+vc 2015 changes:
+
+libraw
+libwebp
+
+..\..\lcms2\include;
+
+libraw - USE_LCMS2;
+
+openjpeg - OPJ_HAVE_LIBLCMS2
+
+7/28/2015 3:44:44 PM

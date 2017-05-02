@@ -1,0 +1,312 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Gobjects Sources">
+      <UniqueIdentifier>{e8496bad-e6c1-46c9-9b66-f020299e5cf8}</UniqueIdentifier>
+      <Extensions>cpp;c;cxx;rc;def;r;odl;idl;hpj;bat</Extensions>
+    </Filter>
+    <Filter Include="Gobjects Headers">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="libbioimg">
+      <UniqueIdentifier>{617e7842-92c3-4386-bd66-b37811478ddc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="libbioimg\Formats Headers">
+      <UniqueIdentifier>{92f4d233-bb70-4d21-97f9-46ee0d1fcdf2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="libbioimg\CoreLib">
+      <UniqueIdentifier>{4b07cf55-19cf-4c30-b579-db4906d43aae}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="libbioimg\CoreLib Headers">
+      <UniqueIdentifier>{f247d86d-656b-4e3b-976d-91e56f84e4f7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="libbioimg\FmtAPI">
+      <UniqueIdentifier>{c3baf899-9704-4570-9891-addafc0c977f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="libbioimg\FmtAPI Headers">
+      <UniqueIdentifier>{1275669a-604a-4349-a607-a8ef6237d888}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="libbioimg\Formats">
+      <UniqueIdentifier>{f631c40a-a300-4b87-b77c-d4a873d4de94}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="libbioimg\Formats\ffMpeg">
+      <UniqueIdentifier>{a60f769a-5c75-4065-bf67-b13937ff4fed}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="libbioimg\Formats\Tiff">
+      <UniqueIdentifier>{23d6f551-e0f9-402a-8c6c-ca1f4dc79cde}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="libbioimg\Formats\OLE">
+      <UniqueIdentifier>{bfc71490-1be7-4e03-a6f7-ebd3f3b27cbd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="POLE">
+      <UniqueIdentifier>{9c999091-f1fc-4eb0-8926-8a71102485a6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Generated Files">
+      <UniqueIdentifier>{71ED8ED8-ACB9-4CE9-BBE1-E00B30144E11}</UniqueIdentifier>
+      <Extensions>cpp;c;cxx;moc;h;def;odl;idl;res;</Extensions>
+    </Filter>
+    <Filter Include="lib_win32">
+      <UniqueIdentifier>{a74c6497-476e-4623-85f2-8940f85456cd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="lib_win64">
+      <UniqueIdentifier>{82ff85e7-4256-4b0d-ad29-f6a3da067e82}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\src_gobjects\gobjects.cpp">
+      <Filter>Gobjects Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src_gobjects\gobjects_masks.cpp">
+      <Filter>Gobjects Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src_gobjects\gobjects_render_qt.cpp">
+      <Filter>Gobjects Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src_gobjects\main_gobjects.cpp">
+      <Filter>Gobjects Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libsrc\libbioimg\core_lib\tag_map.cpp">
+      <Filter>libbioimg\CoreLib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libsrc\libbioimg\core_lib\xconf.cpp">
+      <Filter>libbioimg\CoreLib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libsrc\libbioimg\core_lib\xpointer.cpp">
+      <Filter>libbioimg\CoreLib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libsrc\libbioimg\core_lib\xstring.cpp">
+      <Filter>libbioimg\CoreLib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libsrc\libbioimg\core_lib\xtypes.cpp">
+      <Filter>libbioimg\CoreLib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libsrc\libbioimg\formats_api\bim_metatags.cpp">
+      <Filter>libbioimg\FmtAPI</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libsrc\libbioimg\formats_api\dim_buffer.cpp">
+      <Filter>libbioimg\FmtAPI</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libsrc\libbioimg\formats_api\dim_histogram.cpp">
+      <Filter>libbioimg\FmtAPI</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libsrc\libbioimg\formats_api\dim_image.cpp">
+      <Filter>libbioimg\FmtAPI</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libsrc\libbioimg\formats_api\dim_image_pyramid.cpp">
+      <Filter>libbioimg\FmtAPI</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libsrc\libbioimg\formats_api\dim_image_stack.cpp">
+      <Filter>libbioimg\FmtAPI</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libsrc\libbioimg\formats_api\dim_img_format_utils.cpp">
+      <Filter>libbioimg\FmtAPI</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libsrc\libbioimg\formats\biorad_pic\dim_biorad_pic_format.cpp">
+      <Filter>libbioimg\Formats</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libsrc\libbioimg\formats\bmp\dim_bmp_format.cpp">
+      <Filter>libbioimg\Formats</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libsrc\libbioimg\formats\dim_format_manager.cpp">
+      <Filter>libbioimg\Formats</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libsrc\libbioimg\formats\ibw\dim_ibw_format.cpp">
+      <Filter>libbioimg\Formats</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libsrc\libbioimg\formats\jpeg\dim_jpeg_format.cpp">
+      <Filter>libbioimg\Formats</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libsrc\libbioimg\formats\nanoscope\dim_nanoscope_format.cpp">
+      <Filter>libbioimg\Formats</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libsrc\libbioimg\formats\ome\dim_ome_format.cpp">
+      <Filter>libbioimg\Formats</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libsrc\libbioimg\formats\png\dim_png_format.cpp">
+      <Filter>libbioimg\Formats</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libsrc\libbioimg\formats\raw\dim_raw_format.cpp">
+      <Filter>libbioimg\Formats</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libsrc\libbioimg\formats\meta_format_manager.cpp">
+      <Filter>libbioimg\Formats</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libsrc\libbioimg\formats\mpeg\debug.cpp">
+      <Filter>libbioimg\Formats\ffMpeg</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libsrc\libbioimg\formats\mpeg\dim_ffmpeg_format.cpp">
+      <Filter>libbioimg\Formats\ffMpeg</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libsrc\libbioimg\formats\mpeg\FfmpegCommon.cpp">
+      <Filter>libbioimg\Formats\ffMpeg</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libsrc\libbioimg\formats\mpeg\FfmpegIVideo.cpp">
+      <Filter>libbioimg\Formats\ffMpeg</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libsrc\libbioimg\formats\mpeg\FfmpegOVideo.cpp">
+      <Filter>libbioimg\Formats\ffMpeg</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libsrc\libbioimg\formats\mpeg\registry.cpp">
+      <Filter>libbioimg\Formats\ffMpeg</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libsrc\libbioimg\formats\tiff\dim_tiff_format.cpp">
+      <Filter>libbioimg\Formats\Tiff</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libsrc\libbioimg\formats\tiff\dim_xtiff.c">
+      <Filter>libbioimg\Formats\Tiff</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libsrc\libbioimg\formats\dmemio.cpp">
+      <Filter>libbioimg\Formats\Tiff</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libsrc\libbioimg\formats\tiff\memio.c">
+      <Filter>libbioimg\Formats\Tiff</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libsrc\libbioimg\formats\ole\dim_ole_format.cpp">
+      <Filter>libbioimg\Formats\OLE</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libsrc\libbioimg\formats\ole\zvi.cpp">
+      <Filter>libbioimg\Formats\OLE</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libsrc\pole\pole.cpp">
+      <Filter>POLE</Filter>
+    </ClCompile>
+    <ClCompile Include="$(Platform)\$(Configuration)\moc_gobjects.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(Platform)\$(Configuration)\moc_gobjects_render_qt.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="imgcnv_gobjects.rc">
+      <Filter>Gobjects Sources</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\src_gobjects\gobjects_masks.h">
+      <Filter>Gobjects Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libsrc\libbioimg\formats\dim_format_manager.h">
+      <Filter>libbioimg\Formats Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libsrc\libbioimg\formats\meta_format_manager.h">
+      <Filter>libbioimg\Formats Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libsrc\libbioimg\core_lib\tag_map.h">
+      <Filter>libbioimg\CoreLib Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libsrc\libbioimg\core_lib\xconf.h">
+      <Filter>libbioimg\CoreLib Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libsrc\libbioimg\core_lib\xpointer.h">
+      <Filter>libbioimg\CoreLib Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libsrc\libbioimg\core_lib\xstring.h">
+      <Filter>libbioimg\CoreLib Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libsrc\libbioimg\core_lib\xtypes.h">
+      <Filter>libbioimg\CoreLib Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libsrc\libbioimg\formats_api\bim_metatags.h">
+      <Filter>libbioimg\FmtAPI Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libsrc\libbioimg\formats_api\dim_buffer.h">
+      <Filter>libbioimg\FmtAPI Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libsrc\libbioimg\formats_api\dim_histogram.h">
+      <Filter>libbioimg\FmtAPI Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libsrc\libbioimg\formats_api\dim_image.h">
+      <Filter>libbioimg\FmtAPI Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libsrc\libbioimg\formats_api\dim_image_pyramid.h">
+      <Filter>libbioimg\FmtAPI Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libsrc\libbioimg\formats_api\dim_image_stack.h">
+      <Filter>libbioimg\FmtAPI Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libsrc\libbioimg\formats_api\dim_img_format_interface.h">
+      <Filter>libbioimg\FmtAPI Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libsrc\libbioimg\formats_api\dim_img_format_utils.h">
+      <Filter>libbioimg\FmtAPI Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libsrc\libbioimg\formats_api\resize.h">
+      <Filter>libbioimg\FmtAPI Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libsrc\libbioimg\formats_api\rotate.h">
+      <Filter>libbioimg\FmtAPI Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libsrc\pole\pole.h">
+      <Filter>POLE</Filter>
+    </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>Gobjects Headers</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="..\src_gobjects\gobjects.h">
+      <Filter>Gobjects Headers</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\src_gobjects\gobjects_render_qt.h">
+      <Filter>Gobjects Headers</Filter>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="..\libs\vc2010_x64\avcodec-52.lib">
+      <Filter>lib_win64</Filter>
+    </Library>
+    <Library Include="..\libs\vc2010_x64\avformat-52.lib">
+      <Filter>lib_win64</Filter>
+    </Library>
+    <Library Include="..\libs\vc2010_x64\avutil-50.lib">
+      <Filter>lib_win64</Filter>
+    </Library>
+    <Library Include="..\libs\vc2010_x64\libexiv2.lib">
+      <Filter>lib_win64</Filter>
+    </Library>
+    <Library Include="..\libs\vc2010_x64\libjpeg.lib">
+      <Filter>lib_win64</Filter>
+    </Library>
+    <Library Include="..\libs\vc2010_x64\libpng.lib">
+      <Filter>lib_win64</Filter>
+    </Library>
+    <Library Include="..\libs\vc2010_x64\libtiff.lib">
+      <Filter>lib_win64</Filter>
+    </Library>
+    <Library Include="..\libs\vc2010_x64\swscale-0.lib">
+      <Filter>lib_win64</Filter>
+    </Library>
+    <Library Include="..\libs\vc2010_x64\zlib.lib">
+      <Filter>lib_win64</Filter>
+    </Library>
+    <Library Include="..\libs\vc2010_x86\avcodec-52.lib">
+      <Filter>lib_win32</Filter>
+    </Library>
+    <Library Include="..\libs\vc2010_x86\avformat-52.lib">
+      <Filter>lib_win32</Filter>
+    </Library>
+    <Library Include="..\libs\vc2010_x86\avutil-50.lib">
+      <Filter>lib_win32</Filter>
+    </Library>
+    <Library Include="..\libs\vc2010_x86\libexiv2.lib">
+      <Filter>lib_win32</Filter>
+    </Library>
+    <Library Include="..\libs\vc2010_x86\libjpeg.lib">
+      <Filter>lib_win32</Filter>
+    </Library>
+    <Library Include="..\libs\vc2010_x86\libpng.lib">
+      <Filter>lib_win32</Filter>
+    </Library>
+    <Library Include="..\libs\vc2010_x86\libtiff.lib">
+      <Filter>lib_win32</Filter>
+    </Library>
+    <Library Include="..\libs\vc2010_x86\swscale-0.lib">
+      <Filter>lib_win32</Filter>
+    </Library>
+    <Library Include="..\libs\vc2010_x86\zlib.lib">
+      <Filter>lib_win32</Filter>
+    </Library>
+  </ItemGroup>
+</Project>

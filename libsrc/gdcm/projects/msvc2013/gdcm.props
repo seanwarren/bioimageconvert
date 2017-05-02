@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ImportGroup Label="PropertySheets" />
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup />
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <PreprocessorDefinitions>OPJ_STATIC;_CRT_SECURE_NO_DEPRECATE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\win64;..\win64\socketxx;..\win64\expat;..\win64\openjpeg;..\win64\zlib;..\..\Source\Common;..\..\Source\DataDictionary;..\..\Source\DataStructureAndEncodingDefinition;..\..\Source\InformationObjectDefinition;..\..\Source\MediaStorageAndFileFormat;..\..\Source\MessageExchangeDefinition;..\..\Utilities;..\..\Utilities\socketxx;..\..\Utilities\socketxx\socket++;..\..\Utilities\gdcmopenjpeg-v2\libopenjpeg;..\..\..\zlib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup />
+</Project>

@@ -1,0 +1,63 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{e60fcdff-0389-48f0-b1c0-fe8315bfdfef}</UniqueIdentifier>
+      <Extensions>cpp;c;cxx;rc;def;r;odl;idl;hpj;bat</Extensions>
+    </Filter>
+    <Filter Include="lib_win32">
+      <UniqueIdentifier>{ac164d5d-8ca4-4a69-b3e5-f568e3c8b281}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="lib_win64">
+      <UniqueIdentifier>{8c409835-067d-483f-9424-5f66b0cd34ad}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="bimread.rc">
+      <Filter>Source Files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\src_bimread\mex_bimread.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="resource.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="..\libs\vc2010_x86\avcodec.lib">
+      <Filter>lib_win32</Filter>
+    </Library>
+    <Library Include="..\libs\vc2010_x86\avformat.lib">
+      <Filter>lib_win32</Filter>
+    </Library>
+    <Library Include="..\libs\vc2010_x86\avutil.lib">
+      <Filter>lib_win32</Filter>
+    </Library>
+    <Library Include="..\libs\vc2010_x86\swscale.lib">
+      <Filter>lib_win32</Filter>
+    </Library>
+    <Library Include="..\libs\vc2013_x64\turbojpeg-static.lib">
+      <Filter>lib_win64</Filter>
+    </Library>
+    <Library Include="..\libs\vc2013_x64\swresample-1.lib">
+      <Filter>lib_win64</Filter>
+    </Library>
+    <Library Include="..\libs\vc2013_x64\swscale-3.lib">
+      <Filter>lib_win64</Filter>
+    </Library>
+    <Library Include="..\libs\vc2013_x64\avutil-54.lib">
+      <Filter>lib_win64</Filter>
+    </Library>
+    <Library Include="..\libs\vc2013_x64\avformat-56.lib">
+      <Filter>lib_win64</Filter>
+    </Library>
+    <Library Include="..\libs\vc2013_x64\avcodec-56.lib">
+      <Filter>lib_win64</Filter>
+    </Library>
+    <Library Include="..\libs\vc2013_x64\liblzma.lib">
+      <Filter>lib_win64</Filter>
+    </Library>
+  </ItemGroup>
+</Project>

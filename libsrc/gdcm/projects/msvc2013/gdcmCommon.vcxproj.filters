@@ -1,0 +1,36 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="..\..\Source\Common\gdcmASN1.cxx" />
+    <ClCompile Include="..\..\Source\Common\gdcmBase64.cxx" />
+    <ClCompile Include="..\..\Source\Common\gdcmBoxRegion.cxx" />
+    <ClCompile Include="..\..\Source\Common\gdcmByteSwap.cxx" />
+    <ClCompile Include="..\..\Source\Common\gdcmCAPICryptoFactory.cxx" />
+    <ClCompile Include="..\..\Source\Common\gdcmCAPICryptographicMessageSyntax.cxx" />
+    <ClCompile Include="..\..\Source\Common\gdcmCommand.cxx" />
+    <ClCompile Include="..\..\Source\Common\gdcmCryptoFactory.cxx" />
+    <ClCompile Include="..\..\Source\Common\gdcmCryptographicMessageSyntax.cxx" />
+    <ClCompile Include="..\..\Source\Common\gdcmDataEvent.cxx" />
+    <ClCompile Include="..\..\Source\Common\gdcmDeflateStream.cxx" />
+    <ClCompile Include="..\..\Source\Common\gdcmDirectory.cxx" />
+    <ClCompile Include="..\..\Source\Common\gdcmDummyValueGenerator.cxx" />
+    <ClCompile Include="..\..\Source\Common\gdcmEvent.cxx" />
+    <ClCompile Include="..\..\Source\Common\gdcmException.cxx" />
+    <ClCompile Include="..\..\Source\Common\gdcmFilename.cxx" />
+    <ClCompile Include="..\..\Source\Common\gdcmFileNameEvent.cxx" />
+    <ClCompile Include="..\..\Source\Common\gdcmFilenameGenerator.cxx" />
+    <ClCompile Include="..\..\Source\Common\gdcmMD5.cxx" />
+    <ClCompile Include="..\..\Source\Common\gdcmObject.cxx" />
+    <ClCompile Include="..\..\Source\Common\gdcmProgressEvent.cxx" />
+    <ClCompile Include="..\..\Source\Common\gdcmRegion.cxx" />
+    <ClCompile Include="..\..\Source\Common\gdcmSHA1.cxx" />
+    <ClCompile Include="..\..\Source\Common\gdcmString.cxx" />
+    <ClCompile Include="..\..\Source\Common\gdcmSubject.cxx" />
+    <ClCompile Include="..\..\Source\Common\gdcmSwapCode.cxx" />
+    <ClCompile Include="..\..\Source\Common\gdcmSystem.cxx" />
+    <ClCompile Include="..\..\Source\Common\gdcmTerminal.cxx" />
+    <ClCompile Include="..\..\Source\Common\gdcmTrace.cxx" />
+    <ClCompile Include="..\..\Source\Common\gdcmUnpacker12Bits.cxx" />
+    <ClCompile Include="..\..\Source\Common\gdcmVersion.cxx" />
+  </ItemGroup>
+</Project>

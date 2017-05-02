@@ -1,0 +1,419 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{9F06B8FC-1699-42BE-889A-13761112C365}</ProjectGuid>
+    <RootNamespace>imgcnv</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v120</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v120</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v120</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v120</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="libbioimage.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="libbioimage.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="libbioimage.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="libbioimage.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.30319.1</_ProjectFileVersion>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(Platform)\$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(Platform)\$(Configuration)\</IntDir>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</LinkIncremental>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(Platform)\$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(Platform)\$(Configuration)\</IntDir>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkIncremental>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(Platform)\$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(Platform)\$(Configuration)\</IntDir>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</LinkIncremental>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(Platform)\$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(Platform)\$(Configuration)\</IntDir>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <TargetName>$(ProjectName)</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <TargetName>$(ProjectName)</TargetName>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Midl>
+      <TypeLibraryName>$(Platform)\$(Configuration)/imgcnv.tlb</TypeLibraryName>
+      <HeaderFileName>
+      </HeaderFileName>
+    </Midl>
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>..\..\..\libbioimg;..\..\..\libbioimg\formats;..\..\..\libbioimg\formats_api;..\..\..\libbioimg\core_lib;..\..\..\libjpeg-turbo;..\..\..\libpng;..\..\..\libtiff;..\..\..\zlib;..\..\..\ffmpeg\include;..\..\..\ffmpeg\include-win;..\..\..\libraw;..\..\..\pole;..\..\..\exiv2;..\..\..\libgeotiff;..\..\..\openjpeg\src\lib\openjp2;..\..\..\openjpeg\src\bin\common;..\..\..\eigen;..\..\..\jzon;..\..\..\pugixml\src;..\..\..\libfftw\src\api;..\..\..\opencv\build\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_CONSOLE;__STDC_CONSTANT_MACROS;TIF_PLATFORM_CONSOLE;BIM_FFMPEG_FORMAT;FFMPEG_VIDEO_DISABLE_MATLAB;LIBRAW_BUILDLIB;LIBRAW_NODLL;USE_JPEG;BIM_USE_EIGEN;BIM_USE_OPENMP;BIM_USE_TRANSFORMS;BIM_USE_FILTERS;BIM_GDCM_FORMAT;HAVE_ZLIB;BIM_NIFTI_FORMAT;BIM_JXRLIB_FORMAT;BIM_LIBWEBP_FORMAT;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <PrecompiledHeaderOutputFile>$(Platform)\$(Configuration)/imgcnv.pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>$(Platform)\$(Configuration)/</AssemblerListingLocation>
+      <ObjectFileName>$(Platform)\$(Configuration)/</ObjectFileName>
+      <ProgramDataBaseFileName>$(Platform)\$(Configuration)/</ProgramDataBaseFileName>
+      <BrowseInformation>false</BrowseInformation>
+      <WarningLevel>Level3</WarningLevel>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <CompileAs>Default</CompileAs>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0409</Culture>
+    </ResourceCompile>
+    <Link>
+      <OutputFile>$(Platform)\$(Configuration)/imgcnv.exe</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <ProgramDatabaseFile>$(Platform)\$(Configuration)/imgcnv.pdb</ProgramDatabaseFile>
+      <SubSystem>Console</SubSystem>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <DataExecutionPrevention>
+      </DataExecutionPrevention>
+      <TargetMachine>MachineX86</TargetMachine>
+    </Link>
+    <Lib>
+      <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Midl>
+      <TargetEnvironment>X64</TargetEnvironment>
+      <TypeLibraryName>$(Platform)\$(Configuration)/imgcnv.tlb</TypeLibraryName>
+      <HeaderFileName>
+      </HeaderFileName>
+    </Midl>
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>..\..\..\libbioimg;..\..\..\libbioimg\formats;..\..\..\libbioimg\formats_api;..\..\..\libbioimg\core_lib;..\..\..\libjpeg-turbo;..\..\..\libpng;..\..\..\libtiff;..\..\..\zlib;..\..\..\ffmpeg\include;..\..\..\ffmpeg\include-win;..\..\..\libraw;..\..\..\pole;..\..\..\exiv2;..\..\..\libgeotiff;..\..\..\openjpeg\src\lib\openjp2;..\..\..\openjpeg\src\bin\common;..\..\..\eigen;..\..\..\jzon;..\..\..\pugixml\src;..\..\..\libfftw\src\api;..\..\..\gdcm\Source\Common;..\..\..\gdcm\Source\DataDictionary;..\..\..\gdcm\Source\DataStructureAndEncodingDefinition;..\..\..\gdcm\Source\InformationObjectDefinition;..\..\..\gdcm\Source\MediaStorageAndFileFormat;..\..\..\gdcm\projects\msvc2013\Source\Common;..\..\..\gdcm\projects\msvc2013\Source\InformationObjectDefinition;..\..\..\opencv\build\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_CONSOLE;__STDC_CONSTANT_MACROS;TIF_PLATFORM_CONSOLE;BIM_FFMPEG_FORMAT;FFMPEG_VIDEO_DISABLE_MATLAB;LIBRAW_BUILDLIB;LIBRAW_NODLL;USE_JPEG;BIM_USE_EIGEN;BIM_USE_OPENMP;BIM_USE_TRANSFORMS;BIM_USE_FILTERS;BIM_GDCM_FORMAT;HAVE_ZLIB;BIM_NIFTI_FORMAT;BIM_JXRLIB_FORMAT;BIM_LIBWEBP_FORMAT;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PrecompiledHeaderOutputFile>$(Platform)\$(Configuration)/imgcnv.pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>$(Platform)\$(Configuration)/</AssemblerListingLocation>
+      <ObjectFileName>$(Platform)\$(Configuration)/</ObjectFileName>
+      <ProgramDataBaseFileName>$(Platform)\$(Configuration)/</ProgramDataBaseFileName>
+      <BrowseInformation>false</BrowseInformation>
+      <WarningLevel>Level3</WarningLevel>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <CompileAs>Default</CompileAs>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <OpenMPSupport>true</OpenMPSupport>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0409</Culture>
+    </ResourceCompile>
+    <Link>
+      <OutputFile>$(Platform)\$(Configuration)/imgcnv.exe</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <ProgramDatabaseFile>$(Platform)\$(Configuration)/imgcnv.pdb</ProgramDatabaseFile>
+      <SubSystem>Console</SubSystem>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <DataExecutionPrevention>
+      </DataExecutionPrevention>
+      <TargetMachine>MachineX64</TargetMachine>
+    </Link>
+    <Lib>
+      <AdditionalDependencies>
+      </AdditionalDependencies>
+      <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Midl>
+      <TypeLibraryName>$(Platform)\$(Configuration)/imgcnv.tlb</TypeLibraryName>
+      <HeaderFileName>
+      </HeaderFileName>
+    </Midl>
+    <ClCompile>
+      <Optimization>Full</Optimization>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <OmitFramePointers>true</OmitFramePointers>
+      <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
+      <AdditionalIncludeDirectories>..\..\..\libbioimg;..\..\..\libbioimg\formats;..\..\..\libbioimg\formats_api;..\..\..\libbioimg\core_lib;..\..\..\libjpeg-turbo;..\..\..\libpng;..\..\..\libtiff;..\..\..\zlib;..\..\..\ffmpeg\include;..\..\..\ffmpeg\include-win;..\..\..\libraw;..\..\..\pole;..\..\..\exiv2;..\..\..\libgeotiff;..\..\..\openjpeg\src\lib\openjp2;..\..\..\openjpeg\src\bin\common;..\..\..\eigen;..\..\..\jzon;..\..\..\pugixml\src;..\..\..\libfftw\src\api;..\..\..\gdcm\Source\Common;..\..\..\gdcm\Source\DataDictionary;..\..\..\gdcm\Source\DataStructureAndEncodingDefinition;..\..\..\gdcm\Source\InformationObjectDefinition;..\..\..\gdcm\Source\MediaStorageAndFileFormat;..\..\..\gdcm\projects\msvc2013\Source\Common;..\..\..\gdcm\projects\msvc2013\Source\InformationObjectDefinition;..\..\..\opencv\build\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_CONSOLE;__STDC_CONSTANT_MACROS;TIF_PLATFORM_CONSOLE;BIM_FFMPEG_FORMAT;FFMPEG_VIDEO_DISABLE_MATLAB;LIBRAW_BUILDLIB;LIBRAW_NODLL;USE_JPEG;BIM_USE_EIGEN;BIM_USE_OPENMP;BIM_USE_TRANSFORMS;BIM_USE_FILTERS;BIM_GDCM_FORMAT;HAVE_ZLIB;BIM_NIFTI_FORMAT;BIM_JXRLIB_FORMAT;BIM_LIBWEBP_FORMAT;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <PrecompiledHeaderOutputFile>$(Platform)\$(Configuration)/imgcnv.pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>$(Platform)\$(Configuration)/</AssemblerListingLocation>
+      <ObjectFileName>$(Platform)\$(Configuration)/</ObjectFileName>
+      <ProgramDataBaseFileName>$(Platform)\$(Configuration)/</ProgramDataBaseFileName>
+      <BrowseInformation>false</BrowseInformation>
+      <WarningLevel>Level3</WarningLevel>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <CompileAs>Default</CompileAs>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0409</Culture>
+    </ResourceCompile>
+    <Link>
+      <AdditionalDependencies>imm32.lib;wsock32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>$(Platform)\$(Configuration)/imgcnv.exe</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <ProgramDatabaseFile>$(Platform)\$(Configuration)/imgcnv.pdb</ProgramDatabaseFile>
+      <SubSystem>Console</SubSystem>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <DataExecutionPrevention>
+      </DataExecutionPrevention>
+      <TargetMachine>MachineX86</TargetMachine>
+    </Link>
+    <Lib>
+      <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Midl>
+      <TargetEnvironment>X64</TargetEnvironment>
+      <TypeLibraryName>$(Platform)\$(Configuration)/imgcnv.tlb</TypeLibraryName>
+      <HeaderFileName>
+      </HeaderFileName>
+    </Midl>
+    <ClCompile>
+      <Optimization>Full</Optimization>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <OmitFramePointers>true</OmitFramePointers>
+      <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
+      <AdditionalIncludeDirectories>..\..\..\libbioimg;..\..\..\libbioimg\formats;..\..\..\libbioimg\formats_api;..\..\..\libbioimg\core_lib;..\..\..\libjpeg-turbo;..\..\..\libpng;..\..\..\libtiff;..\..\..\zlib;..\..\..\ffmpeg\include;..\..\..\ffmpeg\include-win;..\..\..\libraw;..\..\..\pole;..\..\..\exiv2;..\..\..\libgeotiff;..\..\..\openjpeg\src\lib\openjp2;..\..\..\openjpeg\src\bin\common;..\..\..\eigen;..\..\..\jzon;..\..\..\pugixml\src;..\..\..\libfftw\src\api;..\..\..\gdcm\Source\Common;..\..\..\gdcm\Source\DataDictionary;..\..\..\gdcm\Source\DataStructureAndEncodingDefinition;..\..\..\gdcm\Source\InformationObjectDefinition;..\..\..\gdcm\Source\MediaStorageAndFileFormat;..\..\..\gdcm\projects\msvc2013\Source\Common;..\..\..\gdcm\projects\msvc2013\Source\InformationObjectDefinition;..\..\..\opencv\build\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_CONSOLE;__STDC_CONSTANT_MACROS;TIF_PLATFORM_CONSOLE;BIM_FFMPEG_FORMAT;FFMPEG_VIDEO_DISABLE_MATLAB;LIBRAW_BUILDLIB;LIBRAW_NODLL;USE_JPEG;BIM_USE_EIGEN;BIM_USE_OPENMP;BIM_USE_TRANSFORMS;BIM_USE_FILTERS;BIM_GDCM_FORMAT;HAVE_ZLIB;BIM_NIFTI_FORMAT;BIM_JXRLIB_FORMAT;BIM_LIBWEBP_FORMAT;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <PrecompiledHeaderOutputFile>$(Platform)\$(Configuration)/imgcnv.pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>$(Platform)\$(Configuration)/</AssemblerListingLocation>
+      <ObjectFileName>$(Platform)\$(Configuration)/</ObjectFileName>
+      <ProgramDataBaseFileName>$(Platform)\$(Configuration)/</ProgramDataBaseFileName>
+      <BrowseInformation>false</BrowseInformation>
+      <WarningLevel>Level3</WarningLevel>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <CompileAs>Default</CompileAs>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <OpenMPSupport>true</OpenMPSupport>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0409</Culture>
+    </ResourceCompile>
+    <Link>
+      <AdditionalDependencies>imm32.lib;wsock32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>$(Platform)\$(Configuration)/imgcnv.exe</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <ProgramDatabaseFile>$(Platform)\$(Configuration)/imgcnv.pdb</ProgramDatabaseFile>
+      <SubSystem>Console</SubSystem>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <DataExecutionPrevention>
+      </DataExecutionPrevention>
+      <TargetMachine>MachineX64</TargetMachine>
+    </Link>
+    <ProjectReference>
+      <LinkLibraryDependencies>true</LinkLibraryDependencies>
+    </ProjectReference>
+    <Bscmake>
+      <PreserveSbr>true</PreserveSbr>
+    </Bscmake>
+    <Lib>
+      <AdditionalDependencies>
+      </AdditionalDependencies>
+      <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\..\jzon\Jzon.cpp" />
+    <ClCompile Include="..\..\..\libbioimg\formats\bim_exiv_parse.cpp" />
+    <ClCompile Include="..\..\..\libbioimg\formats\dcraw\bim_dcraw_format.cpp" />
+    <ClCompile Include="..\..\..\libbioimg\formats\tiff\bim_tiny_tiff.cpp" />
+    <ClCompile Include="..\..\..\libbioimg\core_lib\tag_map.cpp" />
+    <ClCompile Include="..\..\..\libbioimg\core_lib\xconf.cpp" />
+    <ClCompile Include="..\..\..\libbioimg\core_lib\xpointer.cpp" />
+    <ClCompile Include="..\..\..\libbioimg\core_lib\xstring.cpp" />
+    <ClCompile Include="..\..\..\libbioimg\core_lib\xtypes.cpp" />
+    <ClCompile Include="..\..\..\libbioimg\formats_api\bim_metatags.cpp" />
+    <ClCompile Include="..\..\..\libbioimg\formats_api\bim_buffer.cpp" />
+    <ClCompile Include="..\..\..\libbioimg\formats_api\bim_histogram.cpp" />
+    <ClCompile Include="..\..\..\libbioimg\formats_api\bim_image.cpp" />
+    <ClCompile Include="..\..\..\libbioimg\formats_api\bim_image_pyramid.cpp" />
+    <ClCompile Include="..\..\..\libbioimg\formats_api\bim_image_stack.cpp" />
+    <ClCompile Include="..\..\..\libbioimg\formats_api\bim_img_format_utils.cpp" />
+    <ClCompile Include="..\..\..\libbioimg\formats\biorad_pic\bim_biorad_pic_format.cpp" />
+    <ClCompile Include="..\..\..\libbioimg\formats\bmp\bim_bmp_format.cpp" />
+    <ClCompile Include="..\..\..\libbioimg\formats\bim_format_manager.cpp" />
+    <ClCompile Include="..\..\..\libbioimg\formats\ibw\bim_ibw_format.cpp" />
+    <ClCompile Include="..\..\..\libbioimg\formats\jpeg\bim_jpeg_format.cpp" />
+    <ClCompile Include="..\..\..\libbioimg\formats\nanoscope\bim_nanoscope_format.cpp" />
+    <ClCompile Include="..\..\..\libbioimg\formats\ome\bim_ome_format.cpp" />
+    <ClCompile Include="..\..\..\libbioimg\formats\png\bim_png_format.cpp" />
+    <ClCompile Include="..\..\..\libbioimg\formats\raw\bim_raw_format.cpp" />
+    <ClCompile Include="..\..\..\libbioimg\formats\meta_format_manager.cpp" />
+    <ClCompile Include="..\..\..\libbioimg\formats\mpeg\debug.cpp" />
+    <ClCompile Include="..\..\..\libbioimg\formats\mpeg\bim_ffmpeg_format.cpp" />
+    <ClCompile Include="..\..\..\libbioimg\formats\mpeg\FfmpegCommon.cpp" />
+    <ClCompile Include="..\..\..\libbioimg\formats\mpeg\FfmpegIVideo.cpp" />
+    <ClCompile Include="..\..\..\libbioimg\formats\mpeg\FfmpegOVideo.cpp" />
+    <ClCompile Include="..\..\..\libbioimg\formats\mpeg\registry.cpp" />
+    <ClCompile Include="..\..\..\libbioimg\formats\tiff\bim_tiff_format.cpp" />
+    <ClCompile Include="..\..\..\libbioimg\formats\tiff\xtiff.c" />
+    <ClCompile Include="..\..\..\libbioimg\formats\tiff\memio.c" />
+    <ClCompile Include="..\..\..\libbioimg\formats\tiff\bim_geotiff_parse.cpp" />
+    <ClCompile Include="..\..\..\libbioimg\formats\ole\bim_ole_format.cpp" />
+    <ClCompile Include="..\..\..\libbioimg\formats\ole\zvi.cpp" />
+    <ClCompile Include="..\..\..\nifti\fsliolib\fslio.c" />
+    <ClCompile Include="..\..\..\nifti\niftilib\nifti1_io.c" />
+    <ClCompile Include="..\..\..\nifti\znzlib\znzlib.c" />
+    <ClCompile Include="..\..\..\pole\pole.cpp" />
+    <ClCompile Include="..\..\formats\bim_lcms_parse.cpp" />
+    <ClCompile Include="..\..\formats\dicom\bim_dicom_format.cpp" />
+    <ClCompile Include="..\..\formats\jp2\bim_jp2_color.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\formats\jp2\bim_jp2_format.cpp" />
+    <ClCompile Include="..\..\formats\jxr\bim_jxr_format.cpp" />
+    <ClCompile Include="..\..\formats\mrc\bim_mrc_format.cpp" />
+    <ClCompile Include="..\..\formats\nifti\bim_nifti_format.cpp" />
+    <ClCompile Include="..\..\formats\ole\bim_oib_format_io.cpp" />
+    <ClCompile Include="..\..\formats\ole\bim_zvi_format_io.cpp" />
+    <ClCompile Include="..\..\formats\tiff\bim_cz_lsm_format_io.cpp" />
+    <ClCompile Include="..\..\formats\tiff\bim_fluoview_format_io.cpp" />
+    <ClCompile Include="..\..\formats\tiff\bim_ometiff_format_io.cpp" />
+    <ClCompile Include="..\..\formats\tiff\bim_psia_format_io.cpp" />
+    <ClCompile Include="..\..\formats\tiff\bim_stk_format_io.cpp" />
+    <ClCompile Include="..\..\formats\tiff\bim_tiff_format_io.cpp" />
+    <ClCompile Include="..\..\formats\webp\bim_webp_format.cpp" />
+    <ClCompile Include="..\..\formats_api\bim_image_5d.cpp" />
+    <ClCompile Include="..\..\formats_api\bim_image_eigen.cpp" />
+    <ClCompile Include="..\..\formats_api\bim_image_filters.cpp" />
+    <ClCompile Include="..\..\formats_api\bim_image_itk.cpp" />
+    <ClCompile Include="..\..\formats_api\bim_image_numpy.cpp" />
+    <ClCompile Include="..\..\formats_api\bim_image_opencv.cpp" />
+    <ClCompile Include="..\..\formats_api\bim_image_proxy.cpp" />
+    <ClCompile Include="..\..\formats_api\bim_image_qt.cpp" />
+    <ClCompile Include="..\..\formats_api\bim_image_transforms.cpp" />
+    <ClCompile Include="..\..\formats_api\bim_image_win.cpp" />
+    <ClCompile Include="..\..\formats_api\typeize_buffer.cpp" />
+    <ClCompile Include="..\..\transforms\chebyshev.cpp" />
+    <ClCompile Include="..\..\transforms\FuzzyCalc.cpp" />
+    <ClCompile Include="..\..\transforms\radon.cpp" />
+    <ClCompile Include="..\..\transforms\wavelet\Common.cpp" />
+    <ClCompile Include="..\..\transforms\wavelet\convolution.cpp" />
+    <ClCompile Include="..\..\transforms\wavelet\DataGrid2D.cpp" />
+    <ClCompile Include="..\..\transforms\wavelet\DataGrid3D.cpp" />
+    <ClCompile Include="..\..\transforms\wavelet\Filter.cpp" />
+    <ClCompile Include="..\..\transforms\wavelet\FilterSet.cpp" />
+    <ClCompile Include="..\..\transforms\wavelet\Symlet5.cpp" />
+    <ClCompile Include="..\..\transforms\wavelet\Wavelet.cpp" />
+    <ClCompile Include="..\..\transforms\wavelet\WaveletHigh.cpp" />
+    <ClCompile Include="..\..\transforms\wavelet\WaveletLow.cpp" />
+    <ClCompile Include="..\..\transforms\wavelet\WaveletMedium.cpp" />
+    <ClCompile Include="..\..\transforms\wavelet\wt.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\jzon\Jzon.h" />
+    <ClInclude Include="..\..\..\libbioimg\formats\bim_format_manager.h" />
+    <ClInclude Include="..\..\..\libbioimg\formats\meta_format_manager.h" />
+    <ClInclude Include="..\..\..\libbioimg\core_lib\tag_map.h" />
+    <ClInclude Include="..\..\..\libbioimg\core_lib\xconf.h" />
+    <ClInclude Include="..\..\..\libbioimg\core_lib\xpointer.h" />
+    <ClInclude Include="..\..\..\libbioimg\core_lib\xstring.h" />
+    <ClInclude Include="..\..\..\libbioimg\core_lib\xtypes.h" />
+    <ClInclude Include="..\..\..\libbioimg\formats_api\bim_metatags.h" />
+    <ClInclude Include="..\..\..\libbioimg\formats_api\bim_buffer.h" />
+    <ClInclude Include="..\..\..\libbioimg\formats_api\bim_histogram.h" />
+    <ClInclude Include="..\..\..\libbioimg\formats_api\bim_image.h" />
+    <ClInclude Include="..\..\..\libbioimg\formats_api\bim_image_pyramid.h" />
+    <ClInclude Include="..\..\..\libbioimg\formats_api\bim_image_stack.h" />
+    <ClInclude Include="..\..\..\libbioimg\formats_api\bim_img_format_interface.h" />
+    <ClInclude Include="..\..\..\libbioimg\formats_api\bim_img_format_utils.h" />
+    <ClInclude Include="..\..\..\libbioimg\formats_api\resize.h" />
+    <ClInclude Include="..\..\..\libbioimg\formats_api\rotate.h" />
+    <ClInclude Include="..\..\..\nifti\fsliolib\dbh.h" />
+    <ClInclude Include="..\..\..\nifti\fsliolib\fslio.h" />
+    <ClInclude Include="..\..\..\nifti\niftilib\nifti1.h" />
+    <ClInclude Include="..\..\..\nifti\niftilib\nifti1_io.h" />
+    <ClInclude Include="..\..\..\nifti\znzlib\znzlib.h" />
+    <ClInclude Include="..\..\..\pole\pole.h" />
+    <ClInclude Include="..\..\formats\jp2\bim_jp2_color.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="..\..\formats\jp2\bim_jp2_format.h" />
+    <ClInclude Include="..\..\formats_api\bim_image_5d.h" />
+    <ClInclude Include="..\..\formats_api\bim_image_proxy.h" />
+    <ClInclude Include="..\..\formats_api\bim_primitives.h" />
+    <ClInclude Include="..\..\formats_api\slic.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

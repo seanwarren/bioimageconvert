@@ -1,0 +1,12 @@
+--- ../../../_files/exiv/exiv2-0.25/src/tiffimage.cpp	2015-07-24 18:41:46.754492100 -0700
++++ tiffimage.cpp	2015-07-24 18:36:22.063815400 -0700
+@@ -2274,7 +2274,8 @@
+         else {
+             return false;
+         }
+-        if (tag_ != getUShort(pData + 2, byteOrder_)) return false;
++        uint16_t t = getUShort(pData + 2, byteOrder_);
++        if (t != 444 && tag_ != t) return false; // dima: 444 is for the JPEG-XR
+         offset_ = getULong(pData + 4, byteOrder_);
+ 
+         return true;
