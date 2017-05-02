@@ -172,6 +172,10 @@ if(LIBBIOIMAGE)
     find_package(Qt5Gui REQUIRED)
 endif()
 
+# Find thread support (via pthread if possible):
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+find_package(Threads REQUIRED)
+
 
 # set default CXX flags:
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
@@ -185,9 +189,9 @@ endif()
 
 if(UNIX OR MINGW OR APPLE)
     if(NOT APPLE)
-        set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -pg -ggdb")
-        set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -pg -ggdb")
-        set(CMAKE_SHARED_LINKER_FLAGS_DEBUG "${CMAKE_SHARED_LINKER_FLAGS_DEBUG} -pg -ggdb")
+        set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -ggdb")
+        set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -ggdb")
+        set(CMAKE_SHARED_LINKER_FLAGS_DEBUG "${CMAKE_SHARED_LINKER_FLAGS_DEBUG} -ggdb")
     endif()
 
     set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -O3 -ftree-vectorize -msse2 -ffast-math -ftree-vectorizer-verbose=0")
@@ -207,6 +211,13 @@ if(BIC_ENABLE_OPENMP)
 endif()
 
 
+if(BUILD_SHARED_LIBS)
+    set(CMAKE_LIBRARY_PREFIX ${CMAKE_SHARED_LIBRARY_PREFIX})
+    set(CMAKE_LIBRARY_SUFFIX ${CMAKE_SHARED_LIBRARY_SUFFIX})
+else()
+    set(CMAKE_LIBRARY_PREFIX ${CMAKE_STATIC_LIBRARY_PREFIX})
+    set(CMAKE_LIBRARY_SUFFIX ${CMAKE_STATIC_LIBRARY_SUFFIX})
+endif()
 
 
 
@@ -216,7 +227,7 @@ endif()
 set(BIM_LSRC          ${CMAKE_CURRENT_SOURCE_DIR}/libsrc)
 set(BIM_LIBS          ${CMAKE_CURRENT_SOURCE_DIR}/libs)
 
-set(BIM_LIB_TIF       ${BIM_LSRC})
+set(BIM_LIB_TIF       ${BIM_LSRC}/libtiff)
 set(BIM_LIB_JPG       ${BIM_LSRC}/libjpeg)
 set(BIM_LIB_JPG_TURBO ${BIM_LSRC}/libjpeg-turbo)
 set(BIM_LIB_PNG       ${BIM_LSRC}/libpng)
@@ -357,9 +368,7 @@ if(LIBBIOIMAGE)
     include_directories(${BIM_LIB_BIO})
     include_directories(${BIM_FMTS_API})
     include_directories(${BIM_FMTS})
-    include_directories(${BIM_FMTS}/tiff)
     include_directories(${BIM_CORE})
-    include_directories(${BIM_LIB_TIF}/libtiff)
 
     # core
     set(SOURCES ${SOURCES}
@@ -552,30 +561,30 @@ if(LIBBIOIMAGE)
     # optional sources depending on certain libraries:
     if(BIC_ENABLE_NIFTI)
         set(SOURCES ${SOURCES}
-        ${BIM_FMTS}/nifti/bim_nifti_format.cpp)
+            ${BIM_FMTS}/nifti/bim_nifti_format.cpp)
     endif()
     if(BIC_ENABLE_FFMPEG)
         add_definitions(-DBIM_FFMPEG_FORMAT)
         set(SOURCES ${SOURCES}
-        ${BIM_FMT_FFMPEG}/debug.cpp
-        ${BIM_FMT_FFMPEG}/bim_ffmpeg_format.cpp
-        ${BIM_FMT_FFMPEG}/FfmpegCommon.cpp
-        ${BIM_FMT_FFMPEG}/FfmpegIVideo.cpp
-        ${BIM_FMT_FFMPEG}/FfmpegOVideo.cpp
-        ${BIM_FMT_FFMPEG}/registry.cpp)
+            ${BIM_FMT_FFMPEG}/debug.cpp
+            ${BIM_FMT_FFMPEG}/bim_ffmpeg_format.cpp
+            ${BIM_FMT_FFMPEG}/FfmpegCommon.cpp
+            ${BIM_FMT_FFMPEG}/FfmpegIVideo.cpp
+            ${BIM_FMT_FFMPEG}/FfmpegOVideo.cpp
+            ${BIM_FMT_FFMPEG}/registry.cpp)
     endif()
     if(BIC_ENABLE_GDCM)
         add_definitions(-DBIM_GDCM_FORMAT)
         set(SOURCES ${SOURCES}
-        ${BIM_FMT_DICOM}/bim_dicom_format.cpp)
+            ${BIM_FMT_DICOM}/bim_dicom_format.cpp)
     endif()
     if(BIC_ENABLE_JXRLIB)
         set(SOURCES ${SOURCES}
-        ${BIM_FMTS}/jxr/bim_jxr_format.cpp)
+            ${BIM_FMTS}/jxr/bim_jxr_format.cpp)
     endif()
     if(BIC_ENABLE_LIBWEBP)
         set(SOURCES ${SOURCES}
-        ${BIM_FMTS}/webp/bim_webp_format.cpp)
+            ${BIM_FMTS}/webp/bim_webp_format.cpp)
     endif()
 
 
@@ -626,7 +635,7 @@ if(BIC_INTERNAL_POLE)
     internal_add_library(pole "${BIC_INTERNAL_POLE_SOURCES}" "${BIC_INTERNAL_POLE_HEADERS}" "${BIC_INTERNAL_POLE_INSTALLHEADERS}" "${BIC_INTERNAL_POLE_LINK_LIBRARIES}")
 
     # TODO FIXME: merge this linker command with the automatic system library detection below:
-    set(LINK_LIBRARIES ${LINK_LIBRARIES} -lpole)
+    set(LINK_LIBRARIES ${LINK_LIBRARIES} "${LIBRARY_OUTPUT_PATH}/${CMAKE_LIBRARY_PREFIX}pole${CMAKE_LIBRARY_SUFFIX}")
 elseif(LIBBIOIMAGE)
     message(FATAL_ERROR "Automatic detection of system pole library not implemented")
 endif()
@@ -644,7 +653,7 @@ if(BIC_INTERNAL_JZON)
     internal_add_library(jzon "${BIC_INTERNAL_JZON_SOURCES}" "${BIC_INTERNAL_JZON_HEADERS}" "${BIC_INTERNAL_JZON_INSTALLHEADERS}" "${BIC_INTERNAL_JZON_LINK_LIBRARIES}")
 
     # TODO FIXME: merge this linker command with the automatic system library detection below:
-    set(LINK_LIBRARIES ${LINK_LIBRARIES} -ljzon)
+    set(LINK_LIBRARIES ${LINK_LIBRARIES} "${LIBRARY_OUTPUT_PATH}/${CMAKE_LIBRARY_PREFIX}jzon${CMAKE_LIBRARY_SUFFIX}")
 elseif(LIBBIOIMAGE)
     message(FATAL_ERROR "Automatic detection of system jzon library not implemented")
 endif()
@@ -662,7 +671,7 @@ if(BIC_INTERNAL_PUGIXML)
     internal_add_library(pugixml "${BIC_INTERNAL_PUGIXML_SOURCES}" "${BIC_INTERNAL_PUGIXML_HEADERS}" "${BIC_INTERNAL_PUGIXML_INSTALLHEADERS}" "${BIC_INTERNAL_PUGIXML_LINK_LIBRARIES}")
 
     # TODO FIXME: merge this linker command with the automatic system library detection below:
-    set(LINK_LIBRARIES ${LINK_LIBRARIES} -lpugixml)
+    set(LINK_LIBRARIES ${LINK_LIBRARIES} "${LIBRARY_OUTPUT_PATH}/${CMAKE_LIBRARY_PREFIX}pugixml${CMAKE_LIBRARY_SUFFIX}")
 elseif(LIBBIOIMAGE)
     message(FATAL_ERROR "Automatic detection of system pugixml library not implemented")
 endif()
@@ -701,7 +710,7 @@ if(BIC_ENABLE_NIFTI)
         internal_add_library(nifti "${BIC_INTERNAL_NIFTI_SOURCES}" "${BIC_INTERNAL_NIFTI_HEADERS}" "${BIC_INTERNAL_NIFTI_INSTALLHEADERS}" "${BIC_INTERNAL_NIFTI_LINK_LIBRARIES}")
 
         # TODO FIXME: merge this linker command with the automatic system library detection below:
-        set(LINK_LIBRARIES ${LINK_LIBRARIES} -lnifti)
+        set(LINK_LIBRARIES ${LINK_LIBRARIES} "${LIBRARY_OUTPUT_PATH}/${CMAKE_LIBRARY_PREFIX}nifti${CMAKE_LIBRARY_SUFFIX}")
     elseif(LIBBIOIMAGE)
         find_package(NIFTI REQUIRED)
         include_directories(${NIFTI_INCLUDE_DIR})
@@ -879,7 +888,7 @@ if(BIC_INTERNAL_OPENJPEG)
     internal_add_library(openjpeg "${BIC_INTERNAL_OPENJPEG_SOURCES}" "${BIC_INTERNAL_OPENJPEG_HEADERS}" "${BIC_INTERNAL_OPENJPEG_INSTALLHEADERS}" "${BIC_INTERNAL_OPENJPEG_LINK_LIBRARIES}")
 
     # TODO FIXME: merge this linker command with the automatic system library detection below:
-    set(LINK_LIBRARIES ${LINK_LIBRARIES} -lopenjpeg)
+    set(LINK_LIBRARIES ${LINK_LIBRARIES} "${LIBRARY_OUTPUT_PATH}/${CMAKE_LIBRARY_PREFIX}openjpeg${CMAKE_LIBRARY_SUFFIX}")
 elseif(LIBBIOIMAGE)
     message(FATAL_ERROR "Automatic detection of system openjpeg library not implemented")
 endif()
@@ -923,7 +932,7 @@ if(BIC_INTERNAL_LIBRAW)
     internal_add_library(raw "${BIC_INTERNAL_LIBRAW_SOURCES}" "${BIC_INTERNAL_LIBRAW_HEADERS}" "${BIC_INTERNAL_LIBRAW_INSTALLHEADERS}" "${BIC_INTERNAL_LIBRAW_LINK_LIBRARIES}")
 
     # TODO FIXME: merge this linker command with the automatic system library detection below:
-    set(LINK_LIBRARIES ${LINK_LIBRARIES} -lraw)
+    set(LINK_LIBRARIES ${LINK_LIBRARIES} "${LIBRARY_OUTPUT_PATH}/${CMAKE_LIBRARY_PREFIX}raw${CMAKE_LIBRARY_SUFFIX}")
 elseif(LIBBIOIMAGE)
     find_package(LibRaw ${BIC_LIBRAW_REQUIRED_VERSION} REQUIRED)
     include_directories(${LibRaw_INCLUDE_DIR})
@@ -966,95 +975,160 @@ if(BIC_INTERNAL_LIBTIFF STREQUAL "AUTO")
     endif()
 endif()
 if(BIC_INTERNAL_LIBTIFF)
-    include_directories(${BIM_LIB_TIF}/libtiff)
+    include_directories(${BIM_LIB_TIF})
     include_directories(${BIM_LIB_TIF}/project/qt)
 
     set(BIC_INTERNAL_LIBTIFF_SOURCES ${BIC_INTERNAL_LIBTIFF_SOURCES}
-        ${BIM_LIB_TIF}/libtiff/tif_fax3sm.c
-        ${BIM_LIB_TIF}/libtiff/tif_aux.c
-        ${BIM_LIB_TIF}/libtiff/tif_close.c
-        ${BIM_LIB_TIF}/libtiff/tif_codec.c
-        ${BIM_LIB_TIF}/libtiff/tif_color.c
-        ${BIM_LIB_TIF}/libtiff/tif_compress.c
-        ${BIM_LIB_TIF}/libtiff/tif_dir.c
-        ${BIM_LIB_TIF}/libtiff/tif_dirinfo.c
-        ${BIM_LIB_TIF}/libtiff/tif_dirread.c
-        ${BIM_LIB_TIF}/libtiff/tif_dirwrite.c
-        ${BIM_LIB_TIF}/libtiff/tif_dumpmode.c
-        ${BIM_LIB_TIF}/libtiff/tif_error.c
-        ${BIM_LIB_TIF}/libtiff/tif_extension.c
-        ${BIM_LIB_TIF}/libtiff/tif_fax3.c
-        ${BIM_LIB_TIF}/libtiff/tif_flush.c
-        ${BIM_LIB_TIF}/libtiff/tif_getimage.c
-        ${BIM_LIB_TIF}/libtiff/tif_jpeg.c
-        ${BIM_LIB_TIF}/libtiff/tif_luv.c
-        ${BIM_LIB_TIF}/libtiff/tif_lzw.c
-        ${BIM_LIB_TIF}/libtiff/tif_next.c
-        ${BIM_LIB_TIF}/libtiff/tif_open.c
-        ${BIM_LIB_TIF}/libtiff/tif_packbits.c
-        ${BIM_LIB_TIF}/libtiff/tif_pixarlog.c
-        ${BIM_LIB_TIF}/libtiff/tif_predict.c
-        ${BIM_LIB_TIF}/libtiff/tif_print.c
-        ${BIM_LIB_TIF}/libtiff/tif_read.c
-        ${BIM_LIB_TIF}/libtiff/tif_strip.c
-        ${BIM_LIB_TIF}/libtiff/tif_swab.c
-        ${BIM_LIB_TIF}/libtiff/tif_thunder.c
-        ${BIM_LIB_TIF}/libtiff/tif_tile.c
-        ${BIM_LIB_TIF}/libtiff/tif_version.c
-        ${BIM_LIB_TIF}/libtiff/tif_warning.c
-        ${BIM_LIB_TIF}/libtiff/tif_write.c
-        ${BIM_LIB_TIF}/libtiff/tif_zip.c
-        ${BIM_LIB_TIF}/libtiff/tif_stream.cxx
-        ${BIM_LIB_TIF}/libtiff/tif_lzma.c)
+        ${BIM_LIB_TIF}/tif_fax3sm.c
+        ${BIM_LIB_TIF}/tif_aux.c
+        ${BIM_LIB_TIF}/tif_close.c
+        ${BIM_LIB_TIF}/tif_codec.c
+        ${BIM_LIB_TIF}/tif_color.c
+        ${BIM_LIB_TIF}/tif_compress.c
+        ${BIM_LIB_TIF}/tif_dir.c
+        ${BIM_LIB_TIF}/tif_dirinfo.c
+        ${BIM_LIB_TIF}/tif_dirread.c
+        ${BIM_LIB_TIF}/tif_dirwrite.c
+        ${BIM_LIB_TIF}/tif_dumpmode.c
+        ${BIM_LIB_TIF}/tif_error.c
+        ${BIM_LIB_TIF}/tif_extension.c
+        ${BIM_LIB_TIF}/tif_fax3.c
+        ${BIM_LIB_TIF}/tif_flush.c
+        ${BIM_LIB_TIF}/tif_getimage.c
+        ${BIM_LIB_TIF}/tif_jpeg.c
+        ${BIM_LIB_TIF}/tif_luv.c
+        ${BIM_LIB_TIF}/tif_lzw.c
+        ${BIM_LIB_TIF}/tif_next.c
+        ${BIM_LIB_TIF}/tif_open.c
+        ${BIM_LIB_TIF}/tif_packbits.c
+        ${BIM_LIB_TIF}/tif_pixarlog.c
+        ${BIM_LIB_TIF}/tif_predict.c
+        ${BIM_LIB_TIF}/tif_print.c
+        ${BIM_LIB_TIF}/tif_read.c
+        ${BIM_LIB_TIF}/tif_strip.c
+        ${BIM_LIB_TIF}/tif_swab.c
+        ${BIM_LIB_TIF}/tif_thunder.c
+        ${BIM_LIB_TIF}/tif_tile.c
+        ${BIM_LIB_TIF}/tif_version.c
+        ${BIM_LIB_TIF}/tif_warning.c
+        ${BIM_LIB_TIF}/tif_write.c
+        ${BIM_LIB_TIF}/tif_zip.c
+        ${BIM_LIB_TIF}/tif_stream.cxx
+        ${BIM_LIB_TIF}/tif_lzma.c)
 
     if(BIC_INTERNAL_LZMA)
         set(BIC_INTERNAL_LIBTIFF_SOURCES ${BIC_INTERNAL_LIBTIFF_SOURCES}
-            ${BIM_LIB_TIF}/libtiff/tif_fax3sm.c
-            ${BIM_LIB_TIF}/libtiff/tif_aux.c
-            ${BIM_LIB_TIF}/libtiff/tif_close.c
-            ${BIM_LIB_TIF}/libtiff/tif_codec.c)
+            ${BIM_LIB_TIF}/tif_fax3sm.c
+            ${BIM_LIB_TIF}/tif_aux.c
+            ${BIM_LIB_TIF}/tif_close.c
+            ${BIM_LIB_TIF}/tif_codec.c)
     endif()
     if(UNIX)
         set(BIC_INTERNAL_LIBTIFF_SOURCES ${BIC_INTERNAL_LIBTIFF_SOURCES}
-            ${BIM_LIB_TIF}/libtiff/tif_unix.c)
+            ${BIM_LIB_TIF}/tif_unix.c)
     elseif(WIN32)
         set(BIC_INTERNAL_LIBTIFF_SOURCES ${BIC_INTERNAL_LIBTIFF_SOURCES}
-            ${BIM_LIB_TIF}/libtiff/tif_win32.c)
+            ${BIM_LIB_TIF}/tif_win32.c)
     endif()
 
     set(BIC_INTERNAL_LIBTIFF_INSTALLHEADERS ${BIC_INTERNAL_LIBTIFF_INSTALLHEADERS}
-        ${BIM_LIB_TIF}/libtiff/tiff.h
-        ${BIM_LIB_TIF}/libtiff/tiffconf.h
-        ${BIM_LIB_TIF}/libtiff/tiffio.h
-        ${BIM_LIB_TIF}/libtiff/tiffio.hxx
-        ${BIM_LIB_TIF}/libtiff/tiffvers.h)
+        ${BIM_LIB_TIF}/tiff.h
+        ${BIM_LIB_TIF}/tiffconf.h
+        ${BIM_LIB_TIF}/tiffio.h
+        ${BIM_LIB_TIF}/tiffio.hxx
+        ${BIM_LIB_TIF}/tiffvers.h)
 
     set(BIC_INTERNAL_LIBTIFF_HEADERS ${BIC_INTERNAL_LIBTIFF_HEADERS}
-        ${BIM_LIB_TIF}/libtiff/t4.h
-        ${BIM_LIB_TIF}/libtiff/tif_config.h
-        ${BIM_LIB_TIF}/libtiff/tif_config.vc.h
-        ${BIM_LIB_TIF}/libtiff/tif_config.wince.h
-        ${BIM_LIB_TIF}/libtiff/tif_dir.h
-        ${BIM_LIB_TIF}/libtiff/tif_fax3.h
-        ${BIM_LIB_TIF}/libtiff/tiffconf.vc.h
-        ${BIM_LIB_TIF}/libtiff/tiffconf.wince.h
-        ${BIM_LIB_TIF}/libtiff/tiffiop.h
-        ${BIM_LIB_TIF}/libtiff/tif_predict.h
-        ${BIM_LIB_TIF}/libtiff/uvcode.h)
+        ${BIM_LIB_TIF}/t4.h
+        ${BIM_LIB_TIF}/tif_config.h
+        ${BIM_LIB_TIF}/tif_config.vc.h
+        ${BIM_LIB_TIF}/tif_config.wince.h
+        ${BIM_LIB_TIF}/tif_dir.h
+        ${BIM_LIB_TIF}/tif_fax3.h
+        ${BIM_LIB_TIF}/tiffconf.vc.h
+        ${BIM_LIB_TIF}/tiffconf.wince.h
+        ${BIM_LIB_TIF}/tiffiop.h
+        ${BIM_LIB_TIF}/tif_predict.h
+        ${BIM_LIB_TIF}/uvcode.h)
 
     #set(BIC_INTERNAL_LIBTIFF_LINK_LIBRARIES ${BIC_INTERNAL_LIBTIFF_LINK_LIBRARIES} jpeg lzma z)
     internal_add_library(tiff "${BIC_INTERNAL_LIBTIFF_SOURCES}" "${BIC_INTERNAL_LIBTIFF_HEADERS}" "${BIC_INTERNAL_LIBTIFF_INSTALLHEADERS}" "${BIC_INTERNAL_LIBTIFF_LINK_LIBRARIES}")
 
-    if(BUILD_SHARED_LIBS)
-        set(TIFF_LIBRARIES "${LIBRARY_OUTPUT_PATH}/${CMAKE_SHARED_LIBRARY_PREFIX}tiff${CMAKE_SHARED_LIBRARY_SUFFIX}")
-    else()
-        set(TIFF_LIBRARIES "${LIBRARY_OUTPUT_PATH}/${CMAKE_STATIC_LIBRARY_PREFIX}tiff${CMAKE_STATIC_LIBRARY_SUFFIX}")
-    endif()
+    set(TIFF_LIBRARIES "${LIBRARY_OUTPUT_PATH}/${CMAKE_LIBRARY_PREFIX}tiff${CMAKE_LIBRARY_SUFFIX}")
 elseif(LIBBIOIMAGE OR BIC_INTERNAL_LIBGEOTIFF)
     find_package(TIFF REQUIRED)
     include_directories(${TIFF_INCLUDE_DIR})
 endif()
 set(LINK_LIBRARIES ${LINK_LIBRARIES} ${TIFF_LIBRARIES})
+
+
+#---------------------------------------------------------------------
+# libGeoTiff
+#---------------------------------------------------------------------
+
+if(BIC_INTERNAL_LIBGEOTIFF)
+    include_directories(${BIM_LIB_GEOTIF})
+    include_directories(${BIM_FMTS}/tiff)
+    set(BIC_INTERNAL_LIBGEOTIFF_SOURCES ${BIC_INTERNAL_LIBGEOTIFF_SOURCES}
+        ${BIM_LIB_GEOTIF}/cpl_csv.c
+        ${BIM_LIB_GEOTIF}/cpl_serv.c
+        ${BIM_LIB_GEOTIF}/geotiff_proj4.c
+        ${BIM_LIB_GEOTIF}/geo_extra.c
+        ${BIM_LIB_GEOTIF}/geo_free.c
+        ${BIM_LIB_GEOTIF}/geo_get.c
+        ${BIM_LIB_GEOTIF}/geo_names.c
+        ${BIM_LIB_GEOTIF}/geo_new.c
+        ${BIM_LIB_GEOTIF}/geo_normalize.c
+        ${BIM_LIB_GEOTIF}/geo_print.c
+        ${BIM_LIB_GEOTIF}/geo_set.c
+        ${BIM_LIB_GEOTIF}/geo_simpletags.c
+        ${BIM_LIB_GEOTIF}/geo_strtod.c
+        ${BIM_LIB_GEOTIF}/geo_tiffp.c
+        ${BIM_LIB_GEOTIF}/geo_trans.c
+        ${BIM_LIB_GEOTIF}/geo_write.c)
+
+    set(BIC_INTERNAL_LIBGEOTIFF_INSTALLHEADERS ${BIC_INTERNAL_LIBGEOTIFF_INSTALLHEADERS}
+        ${BIM_LIB_GEOTIF}/cpl_serv.h
+        ${BIM_LIB_GEOTIF}/epsg_datum.inc
+        ${BIM_LIB_GEOTIF}/epsg_ellipse.inc
+        ${BIM_LIB_GEOTIF}/epsg_gcs.inc
+        ${BIM_LIB_GEOTIF}/epsg_pcs.inc
+        ${BIM_LIB_GEOTIF}/epsg_pm.inc
+        ${BIM_LIB_GEOTIF}/epsg_proj.inc
+        ${BIM_LIB_GEOTIF}/epsg_units.inc
+        ${BIM_LIB_GEOTIF}/epsg_vertcs.inc
+        ${BIM_LIB_GEOTIF}/geo_config.h
+        ${BIM_LIB_GEOTIF}/geo_ctrans.inc
+        ${BIM_LIB_GEOTIF}/geo_incode_defs.h
+        ${BIM_LIB_GEOTIF}/geo_keyp.h
+        ${BIM_LIB_GEOTIF}/geo_normalize.h
+        ${BIM_LIB_GEOTIF}/geo_simpletags.h
+        ${BIM_LIB_GEOTIF}/geo_tiffp.h
+        ${BIM_LIB_GEOTIF}/geokeys.h
+        ${BIM_LIB_GEOTIF}/geokeys.inc
+        ${BIM_LIB_GEOTIF}/geonames.h
+        ${BIM_LIB_GEOTIF}/geotiff.h
+        ${BIM_LIB_GEOTIF}/geotiffio.h
+        ${BIM_LIB_GEOTIF}/geovalues.h)
+
+    # geotiff links proj4 and libtiff:
+    set(BIC_INTERNAL_LIBGEOTIFF_LINK_LIBRARIES ${BIC_INTERNAL_LIBGEOTIFF_LINK_LIBRARIES} ${PROJ4_LIBRARIES} ${TIFF_LIBRARIES})
+
+    internal_add_library(geotiff "${BIC_INTERNAL_LIBGEOTIFF_SOURCES}" "${BIC_INTERNAL_LIBGEOTIFF_HEADERS}" "${BIC_INTERNAL_LIBGEOTIFF_INSTALLHEADERS}" "${BIC_INTERNAL_LIBGEOTIFF_LINK_LIBRARIES}")
+    if(BIC_INTERNAL_PROJ4)
+        add_dependencies(geotiff proj)
+    endif()
+    if(BIC_INTERNAL_LIBTIFF)
+        add_dependencies(geotiff tiff)
+    endif()
+
+    # TODO FIXME: merge this linker command with the automatic system library detection below:
+    set(LINK_LIBRARIES ${LINK_LIBRARIES} "${LIBRARY_OUTPUT_PATH}/${CMAKE_LIBRARY_PREFIX}geotiff${CMAKE_LIBRARY_SUFFIX}")
+elseif(LIBBIOIMAGE)
+    find_package(GeoTIFF REQUIRED)
+    include_directories(${GEOTIFF_INCLUDE_DIR})
+    set(LINK_LIBRARIES ${LINK_LIBRARIES} ${GEOTIFF_LIBRARIES})
+endif()
 
 
 #---------------------------------------------------------------------
@@ -1239,85 +1313,12 @@ if(BIC_INTERNAL_PROJ4)
 
     internal_add_library(proj "${BIC_INTERNAL_PROJ4_SOURCES}" "${BIC_INTERNAL_PROJ4_HEADERS}" "${BIC_INTERNAL_PROJ4_INSTALLHEADERS}" "${BIC_INTERNAL_PROJ4_LINK_LIBRARIES}")
 
-    if(BUILD_SHARED_LIBS)
-	set(PROJ4_LIBRARIES "${LIBRARY_OUTPUT_PATH}/${CMAKE_SHARED_LIBRARY_PREFIX}proj${CMAKE_SHARED_LIBRARY_SUFFIX}")
-    else()
-	set(PROJ4_LIBRARIES "${LIBRARY_OUTPUT_PATH}/${CMAKE_STATIC_LIBRARY_PREFIX}proj${CMAKE_STATIC_LIBRARY_SUFFIX}")
-    endif()
+    set(PROJ4_LIBRARIES "${LIBRARY_OUTPUT_PATH}/${CMAKE_LIBRARY_PREFIX}proj${CMAKE_LIBRARY_SUFFIX}")
 elseif(LIBBIOIMAGE OR BIC_INTERNAL_LIBGEOTIFF)
     find_package(PROJ4 ${BIC_PROJ4_REQUIRED_VERSION} REQUIRED)
 endif()
 set(LINK_LIBRARIES ${LINK_LIBRARIES} ${PROJ4_LIBRARIES})
 message("Setting PROJ4_LIBRARIES=${PROJ4_LIBRARIES}")
-
-
-#---------------------------------------------------------------------
-# libGeoTiff
-#---------------------------------------------------------------------
-
-if(BIC_INTERNAL_LIBGEOTIFF)
-    include_directories(${BIM_LIB_GEOTIF})
-    include_directories(${BIM_FMTS}/tiff)
-    set(BIC_INTERNAL_LIBGEOTIFF_SOURCES ${BIC_INTERNAL_LIBGEOTIFF_SOURCES}
-        ${BIM_LIB_GEOTIF}/cpl_csv.c
-        ${BIM_LIB_GEOTIF}/cpl_serv.c
-        ${BIM_LIB_GEOTIF}/geotiff_proj4.c
-        ${BIM_LIB_GEOTIF}/geo_extra.c
-        ${BIM_LIB_GEOTIF}/geo_free.c
-        ${BIM_LIB_GEOTIF}/geo_get.c
-        ${BIM_LIB_GEOTIF}/geo_names.c
-        ${BIM_LIB_GEOTIF}/geo_new.c
-        ${BIM_LIB_GEOTIF}/geo_normalize.c
-        ${BIM_LIB_GEOTIF}/geo_print.c
-        ${BIM_LIB_GEOTIF}/geo_set.c
-        ${BIM_LIB_GEOTIF}/geo_simpletags.c
-        ${BIM_LIB_GEOTIF}/geo_strtod.c
-        ${BIM_LIB_GEOTIF}/geo_tiffp.c
-        ${BIM_LIB_GEOTIF}/geo_trans.c
-        ${BIM_LIB_GEOTIF}/geo_write.c)
-
-    set(BIC_INTERNAL_LIBGEOTIFF_INSTALLHEADERS ${BIC_INTERNAL_LIBGEOTIFF_INSTALLHEADERS}
-        ${BIM_LIB_GEOTIF}/cpl_serv.h
-        ${BIM_LIB_GEOTIF}/epsg_datum.inc
-        ${BIM_LIB_GEOTIF}/epsg_ellipse.inc
-        ${BIM_LIB_GEOTIF}/epsg_gcs.inc
-        ${BIM_LIB_GEOTIF}/epsg_pcs.inc
-        ${BIM_LIB_GEOTIF}/epsg_pm.inc
-        ${BIM_LIB_GEOTIF}/epsg_proj.inc
-        ${BIM_LIB_GEOTIF}/epsg_units.inc
-        ${BIM_LIB_GEOTIF}/epsg_vertcs.inc
-        ${BIM_LIB_GEOTIF}/geo_config.h
-        ${BIM_LIB_GEOTIF}/geo_ctrans.inc
-        ${BIM_LIB_GEOTIF}/geo_incode_defs.h
-        ${BIM_LIB_GEOTIF}/geo_keyp.h
-        ${BIM_LIB_GEOTIF}/geo_normalize.h
-        ${BIM_LIB_GEOTIF}/geo_simpletags.h
-        ${BIM_LIB_GEOTIF}/geo_tiffp.h
-        ${BIM_LIB_GEOTIF}/geokeys.h
-        ${BIM_LIB_GEOTIF}/geokeys.inc
-        ${BIM_LIB_GEOTIF}/geonames.h
-        ${BIM_LIB_GEOTIF}/geotiff.h
-        ${BIM_LIB_GEOTIF}/geotiffio.h
-        ${BIM_LIB_GEOTIF}/geovalues.h)
-
-    # geotiff links proj4 and libtiff:
-    set(BIC_INTERNAL_LIBGEOTIFF_LINK_LIBRARIES ${BIC_INTERNAL_LIBGEOTIFF_LINK_LIBRARIES} ${PROJ4_LIBRARIES} ${TIFF_LIBRARIES})
-
-    internal_add_library(geotiff "${BIC_INTERNAL_LIBGEOTIFF_SOURCES}" "${BIC_INTERNAL_LIBGEOTIFF_HEADERS}" "${BIC_INTERNAL_LIBGEOTIFF_INSTALLHEADERS}" "${BIC_INTERNAL_LIBGEOTIFF_LINK_LIBRARIES}")
-    if(BIC_INTERNAL_PROJ4)
-        add_dependencies(geotiff proj)
-    endif()
-    if(BIC_INTERNAL_LIBTIFF)
-        add_dependencies(geotiff tiff)
-    endif()
-
-    # TODO FIXME: merge this linker command with the automatic system library detection below:
-    set(LINK_LIBRARIES ${LINK_LIBRARIES} -lgeotiff)
-elseif(LIBBIOIMAGE)
-    find_package(GeoTIFF REQUIRED)
-    include_directories(${GEOTIFF_INCLUDE_DIR})
-    set(LINK_LIBRARIES ${LINK_LIBRARIES} ${GEOTIFF_LIBRARIES})
-endif()
 
 
 #---------------------------------------------------------------------
@@ -1360,7 +1361,7 @@ if(BIC_INTERNAL_LIBPNG)
     internal_add_library(png "${BIC_INTERNAL_PNG_SOURCES}" "${BIC_INTERNAL_PNG_HEADERS}" "${BIC_INTERNAL_PNG_INSTALLHEADERS}" "${BIC_INTERNAL_PNG_LINK_LIBRARIES}")
 
     # TODO FIXME: merge this linker command with the automatic system library detection below:
-    set(LINK_LIBRARIES ${LINK_LIBRARIES} -lpng)
+    set(LINK_LIBRARIES ${LINK_LIBRARIES} "${LIBRARY_OUTPUT_PATH}/${CMAKE_LIBRARY_PREFIX}png${CMAKE_LIBRARY_SUFFIX}")
 elseif(LIBBIOIMAGE)
     find_package(PNG REQUIRED)
     include_directories(${PNG_INCLUDE_DIR})
@@ -1386,7 +1387,7 @@ if(BIC_ENABLE_LIBJPEG_TURBO)
         internal_add_library(turbojpeg "${BIC_INTERNAL_LIBJPEG_TURBO_SOURCES}" "${BIC_INTERNAL_LIBJPEG_TURBO_HEADERS}" "${BIC_INTERNAL_LIBJPEG_TURBO_INSTALLHEADERS}" "${BIC_INTERNAL_LIBJPEG_TURBO_LINK_LIBRARIES}")
 
         # TODO FIXME: merge this linker command with the automatic system library detection below:
-        set(LINK_LIBRARIES ${LINK_LIBRARIES} -lturbojpeg)
+        set(LINK_LIBRARIES ${LINK_LIBRARIES} "${LIBRARY_OUTPUT_PATH}/${CMAKE_LIBRARY_PREFIX}turbojpeg${CMAKE_LIBRARY_SUFFIX}")
     elseif(LIBBIOIMAGE)
         find_package(LibJpegTurbo REQUIRED)
         set(LINK_LIBRARIES ${LINK_LIBRARIES} ${LibJpegTurbo_LIBRARIES})
@@ -1453,7 +1454,7 @@ if(NOT BIC_ENABLE_LIBJPEG_TURBO)
         internal_add_library(jpeg "${BIC_INTERNAL_LIBJPEG_SOURCES}" "${BIC_INTERNAL_LIBJPEG_HEADERS}" "${BIC_INTERNAL_LIBJPEG_INSTALLHEADERS}" "${BIC_INTERNAL_LIBJPEG_LINK_LIBRARIES}")
 
         # TODO FIXME: merge this linker command with the automatic system library detection below:
-        set(LINK_LIBRARIES ${LINK_LIBRARIES} -ljpeg)
+        set(LINK_LIBRARIES ${LINK_LIBRARIES} "${LIBRARY_OUTPUT_PATH}/${CMAKE_LIBRARY_PREFIX}jpeg${CMAKE_LIBRARY_SUFFIX}")
     elseif(LIBBIOIMAGE)
         if(UNIX OR MINGW OR APPLE)
             set(LINK_LIBRARIES ${LINK_LIBRARIES} -ljpeg)
@@ -1614,7 +1615,7 @@ if(BIC_INTERNAL_EXIV2)
     target_compile_definitions(exiv2 PUBLIC SUPPRESS_WARNINGS _FILE_OFFSET_BITS=64 EXV_BUILDING_LIB=1 DLL_EXPORT)
 
     # TODO FIXME: merge this linker command with the automatic system library detection below:
-    set(LINK_LIBRARIES ${LINK_LIBRARIES} -lexiv2)
+    set(LINK_LIBRARIES ${LINK_LIBRARIES} "${LIBRARY_OUTPUT_PATH}/${CMAKE_LIBRARY_PREFIX}exiv2${CMAKE_LIBRARY_SUFFIX}")
 elseif(LIBBIOIMAGE)
     if(UNIX OR MINGW OR APPLE)
         set(LINK_LIBRARIES ${LINK_LIBRARIES} -lexiv2)
@@ -1647,6 +1648,9 @@ if(BIC_ENABLE_JXRLIB)
         endif()
         include_directories(${BIM_LIB_JXRLIB}/jxrgluelib)
 
+        set(LINK_LIBRARIES ${LINK_LIBRARIES} ${BIM_LIBS_PLTFM}/libjxrglue.a)
+        set(LINK_LIBRARIES ${LINK_LIBRARIES} ${BIM_LIBS_PLTFM}/libjpegxr.a)
+
         #set(BIC_INTERNAL_JXRLIB_SOURCES ${BIC_INTERNAL_JXRLIB_SOURCES}
         #    ${BIM_LIB_JXRLIB}/)
 
@@ -1674,6 +1678,9 @@ endif()
 if(BIC_ENABLE_LIBWEBP)
     if(BIC_INTERNAL_LIBWEBP)
         include_directories(${BIM_LIB_LIBWEBP}/src)
+        set(LINK_LIBRARIES ${LINK_LIBRARIES} ${BIM_LIBS_PLTFM}/libwebp.a)
+        set(LINK_LIBRARIES ${LINK_LIBRARIES} ${BIM_LIBS_PLTFM}/libwebpmux.a)
+        set(LINK_LIBRARIES ${LINK_LIBRARIES} ${BIM_LIBS_PLTFM}/libwebpdemux.a)
     elseif(LIBBIOIMAGE)
         if(UNIX OR MINGW)
             set(LINK_LIBRARIES ${LINK_LIBRARIES} -lwebp -lwebpmux)
@@ -1732,7 +1739,7 @@ if(BIC_INTERNAL_LCMS2)
     internal_add_library(lcms2 "${BIC_INTERNAL_LCMS2_SOURCES}" "${BIC_INTERNAL_LCMS2_HEADERS}" "${BIC_INTERNAL_LCMS2_INSTALLHEADERS}" "${BIC_INTERNAL_LCMS2_LINK_LIBRARIES}")
 
     # TODO FIXME: merge this linker command with the automatic system library detection below:
-    set(LINK_LIBRARIES ${LINK_LIBRARIES} -llcms2)
+    set(LINK_LIBRARIES ${LINK_LIBRARIES} "${LIBRARY_OUTPUT_PATH}/${CMAKE_LIBRARY_PREFIX}lcms2${CMAKE_LIBRARY_SUFFIX}")
 elseif(LIBBIOIMAGE)
     find_package(LCMS2 ${BIC_LCMS2_REQUIRED_VERSION} REQUIRED)
     include_directories(${LCMS2_INCLUDE_DIR})
@@ -1749,6 +1756,7 @@ endif()
 
 if(BIC_INTERNAL_LZMA)
     include_directories(${BIM_LIB_LZMA}/liblzma/api)
+    message(FATAL_ERROR "Internal lzma currently not implemented.")
 elseif(LIBBIOIMAGE)
     find_package(LibLZMA REQUIRED)
     include_directories(${LIBLZMA_INCLUDE_DIRS})
@@ -1779,7 +1787,7 @@ if(BIC_INTERNAL_ZLIB)
     internal_add_library(z "${BIC_INTERNAL_ZLIB_SOURCES}" "${BIC_INTERNAL_ZLIB_HEADERS}" "${BIC_INTERNAL_ZLIB_INSTALLHEADERS}" "${BIC_INTERNAL_ZLIB_LINK_LIBRARIES}")
 
     # TODO FIXME: merge this linker command with the automatic system library detection below:
-    set(LINK_LIBRARIES ${LINK_LIBRARIES} -lz)
+    set(LINK_LIBRARIES ${LINK_LIBRARIES} "${LIBRARY_OUTPUT_PATH}/${CMAKE_LIBRARY_PREFIX}z${CMAKE_LIBRARY_SUFFIX}")
 elseif(LIBBIOIMAGE)
     if(UNIX OR MINGW OR APPLE)
         set(LINK_LIBRARIES ${LINK_LIBRARIES} -lz)
@@ -1807,7 +1815,7 @@ if(BIC_INTERNAL_BZLIB)
     internal_add_library(bz2 "${BIC_INTERNAL_BZLIB_SOURCES}" "${BIC_INTERNAL_BZLIB_HEADERS}" "${BIC_INTERNAL_BZLIB_INSTALLHEADERS}" "${BIC_INTERNAL_BZLIB_LINK_LIBRARIES}")
 
     # TODO FIXME: merge this linker command with the automatic system library detection below:
-    set(LINK_LIBRARIES ${LINK_LIBRARIES} -lbz2)
+    set(LINK_LIBRARIES ${LINK_LIBRARIES} "${LIBRARY_OUTPUT_PATH}/${CMAKE_LIBRARY_PREFIX}bz2${CMAKE_LIBRARY_SUFFIX}")
 elseif(LIBBIOIMAGE)
     if(UNIX OR MINGW OR APPLE)
         set(LINK_LIBRARIES ${LINK_LIBRARIES} -lbz2)
@@ -1856,7 +1864,7 @@ if(BIC_ENABLE_IMGCNV)
 
     target_link_libraries(imgcnv bioimage ${LINK_LIBRARIES})
     if(UNIX)
-        target_link_libraries(imgcnv dl)
+        target_link_libraries(imgcnv dl Threads::Threads)
     elseif(MINGW)
         target_link_libraries(imgcnv ws2_32)
     endif()
