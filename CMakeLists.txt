@@ -187,17 +187,21 @@ if(CMAKE_BUILD_TYPE_LOWER STREQUAL "debug")
     add_definitions(-DDEBUG -D_DEBUG -D_DEBUG_)
 endif()
 
-if(UNIX OR MINGW OR APPLE)
-    if(NOT APPLE)
-        set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -ggdb")
-        set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -ggdb")
-        set(CMAKE_SHARED_LINKER_FLAGS_DEBUG "${CMAKE_SHARED_LINKER_FLAGS_DEBUG} -ggdb")
-    endif()
-
-    set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -O3 -ftree-vectorize -msse2 -ffast-math -ftree-vectorizer-verbose=0")
-    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -ftree-vectorize -msse2 -ffast-math -ftree-vectorizer-verbose=0")
-    set(CMAKE_SHARED_LINKER_FLAGS_RELEASE "${CMAKE_SHARED_LINKER_FLAGS_RELEASE} -O3 -ftree-vectorize -msse2 -ffast-math -ftree-vectorizer-verbose=0")
+if(APPLE OR UNIX OR MINGW)
+    set(RELEASE_FLAGS ${RELEASE_FLAGS} -O3 -march=corei7-avx)
+    set(DEBUG_FLAGS ${DEBUG_FLAGS} -O1 -march=corei7-avx -ggdb)
 endif()
+#if(UNIX OR MINGW OR APPLE)
+#    if(NOT APPLE)
+#        set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -ggdb")
+#        set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -ggdb")
+#        set(CMAKE_SHARED_LINKER_FLAGS_DEBUG "${CMAKE_SHARED_LINKER_FLAGS_DEBUG} -ggdb")
+#    endif()
+#
+#    set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -O3 -ftree-vectorize -msse2 -ffast-math -ftree-vectorizer-verbose=0")
+#    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -ftree-vectorize -msse2 -ffast-math -ftree-vectorizer-verbose=0")
+#    set(CMAKE_SHARED_LINKER_FLAGS_RELEASE "${CMAKE_SHARED_LINKER_FLAGS_RELEASE} -O3 -ftree-vectorize -msse2 -ffast-math -ftree-vectorizer-verbose=0")
+#endif()
 
 # check if openMP is supported, enable it:
 if(BIC_ENABLE_OPENMP)
@@ -321,6 +325,9 @@ macro(internal_add_library NAME SOURCES HEADERS INSTALLHEADERS LINK_LIBRARIES)
     if(LIBBIOIMAGE)
         add_dependencies(bioimage ${NAME})
     endif()
+
+    target_compile_options(${NAME} PRIVATE "$<$<CONFIG:RELEASE>:${RELEASE_FLAGS}>")
+    target_compile_options(${NAME} PRIVATE "$<$<CONFIG:DEBUG>:${DEBUG_FLAGS}>")
 
     # Set required compiler parameters:
     set_property(TARGET ${NAME} PROPERTY CXX_STANDARD 14)
@@ -595,6 +602,9 @@ if(LIBBIOIMAGE)
     add_library(bioimage ${SOURCES} ${HEADERS})
 
     set_target_properties(bioimage PROPERTIES VERSION ${LIBBIOIMAGE_VERSION} SOVERSION ${LIBBIOIMAGE_VERSION_MAJOR})
+
+    target_compile_options(bioimage PRIVATE "$<$<CONFIG:RELEASE>:${RELEASE_FLAGS}>")
+    target_compile_options(bioimage PRIVATE "$<$<CONFIG:DEBUG>:${DEBUG_FLAGS}>")
 
     # Set required compiler parameters:
     set_property(TARGET bioimage PROPERTY CXX_STANDARD 14)
@@ -1861,6 +1871,9 @@ if(BIC_ENABLE_IMGCNV)
     # ${OS_BUNDLE} Expands to WIN32 or MACOS_BUNDLE depending on OS
     add_executable(imgcnv ${OS_BUNDLE} ${IMGCNV_SOURCES} ${HEADERS})
     add_dependencies(imgcnv bioimage)
+
+    target_compile_options(imgcnv PRIVATE "$<$<CONFIG:RELEASE>:${RELEASE_FLAGS}>")
+    target_compile_options(imgcnv PRIVATE "$<$<CONFIG:DEBUG>:${DEBUG_FLAGS}>")
 
     target_link_libraries(imgcnv bioimage ${LINK_LIBRARIES})
     if(UNIX)
