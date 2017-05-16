@@ -730,14 +730,19 @@ bim::uint jp2_append_metadata(FormatHandle *fmtHndl, TagMap *hash) {
     hash->set_value(bim::IMAGE_RES_STRUCTURE, bim::IMAGE_RES_STRUCTURE_FLAT);
 
     for (size_t comidx = 0; comidx < par->comments.size(); ++comidx) {
+        const xstring& currcomment = par->comments[comidx];
         // NOTE: if comments contain an '=' sign, they are 'key=value' strings and
         // should be split on the '=' sign:
-        const size_t pos = par->comments[comidx].find('=');
+        const size_t pos = currcomment.find('=');
         if (pos != std::string::npos) {
-            std::vector<xstring> v = par->comments[comidx].split("=");
-            hash->append_tag(bim::CUSTOM_TAGS_PREFIX + v[0], v[1]);
+            const xstring currcomment_key = currcomment.substr(0, pos);
+            const xstring currcomment_value = currcomment.substr(pos+1, std::string::npos);
+#ifdef DEBUG
+            std::cerr << "jp2_append_metadata(): Will split comment into '" << currcomment_key << "' and '" << currcomment_value << "'." << std::endl;
+#endif
+            hash->append_tag(bim::CUSTOM_TAGS_PREFIX + currcomment_key, currcomment_value);
         } else {
-            hash->append_tag(bim::CUSTOM_TAGS_PREFIX+"Comment", par->comments[comidx]);
+            hash->append_tag(bim::CUSTOM_TAGS_PREFIX + "Comment", currcomment);
         }
     }
 
