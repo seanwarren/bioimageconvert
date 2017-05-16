@@ -67,16 +67,11 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 #---------------------------------------------------------------------
 
 # internal library config. If Qt5 is not available, disable LIBBIOIMAGE as a default:
-find_package(Qt5Core)
-if(Qt5Core_FOUND)
-    option(LIBBIOIMAGE            "Enable BioImageConvert implementation (recommended)"                          ON)
-    option(LIBBIOIMAGE_TRANSFORMS "Enable BioImageConvert transforms implementation (optional)"                  ON)
-else()
-    option(LIBBIOIMAGE            "Enable BioImageConvert implementation (recommended)"                          OFF)
-    option(LIBBIOIMAGE_TRANSFORMS "Enable BioImageConvert transforms implementation (optional)"                  OFF)
-endif()
+option(LIBBIOIMAGE            "Enable BioImageConvert implementation (recommended)"                              ON)
+option(LIBBIOIMAGE_TRANSFORMS "Enable BioImageConvert transforms implementation (optional)"                      ON)
 
 # enable or disable optional thirdparty libraries
+option(BIC_ENABLE_QT              "Enable BioImageConvert QT support (optional)"                                 ON)
 option(BIC_ENABLE_JXRLIB          "Enable BioImageConvert jxr support (optional)"                                ON)
 option(BIC_ENABLE_LIBWEBP         "Enable BioImageConvert webp support (optional)"                               ON)
 option(BIC_ENABLE_GDCM            "Enable BioImageConvert gdcm support (optional)"                               ON)
@@ -167,7 +162,7 @@ set(BIC_PROJ4_REQUIRED_VERSION 4.8.0)
 #---------------------------------------------------------------------
 
 # Find the QtWidgets library
-if(LIBBIOIMAGE)
+if(LIBBIOIMAGE AND BIC_ENABLE_QT)
     find_package(Qt5Core REQUIRED)
     find_package(Qt5Gui REQUIRED)
 endif()
@@ -359,7 +354,9 @@ if(LIBBIOIMAGE)
 
     # optional defines:
     add_definitions(-DBIM_USE_EIGEN)
-    add_definitions(-DBIM_USE_QT)
+    if(BIC_ENABLE_QT)
+        add_definitions(-DBIM_USE_QT)
+    endif()
     #add_definitions(-DBIM_USE_ITK)
     #add_definitions(-DBIM_USE_OPENCV)
     #add_definitions(-DBIM_USE_NUMPY)
@@ -398,19 +395,23 @@ if(LIBBIOIMAGE)
 
     # Formats API
     set(SOURCES ${SOURCES}
-       ${BIM_FMTS_API}/bim_img_format_utils.cpp
-       ${BIM_FMTS_API}/bim_buffer.cpp
-       ${BIM_FMTS_API}/bim_histogram.cpp
-       ${BIM_FMTS_API}/bim_metatags.cpp
-       ${BIM_FMTS_API}/bim_image.cpp
-       ${BIM_FMTS_API}/bim_image_qt.cpp
-       ${BIM_FMTS_API}/bim_image_filters.cpp
-       ${BIM_FMTS_API}/bim_image_transforms.cpp
-       ${BIM_FMTS_API}/bim_image_opencv.cpp
-       ${BIM_FMTS_API}/bim_image_pyramid.cpp
-       ${BIM_FMTS_API}/bim_image_proxy.cpp
-       ${BIM_FMTS_API}/bim_image_stack.cpp
-       ${BIM_FMTS_API}/typeize_buffer.cpp)
+        ${BIM_FMTS_API}/bim_img_format_utils.cpp
+        ${BIM_FMTS_API}/bim_buffer.cpp
+        ${BIM_FMTS_API}/bim_histogram.cpp
+        ${BIM_FMTS_API}/bim_metatags.cpp
+        ${BIM_FMTS_API}/bim_image.cpp
+        ${BIM_FMTS_API}/bim_image_qt.cpp
+        ${BIM_FMTS_API}/bim_image_filters.cpp
+        ${BIM_FMTS_API}/bim_image_transforms.cpp
+        ${BIM_FMTS_API}/bim_image_opencv.cpp
+        ${BIM_FMTS_API}/bim_image_pyramid.cpp
+        ${BIM_FMTS_API}/bim_image_proxy.cpp
+        ${BIM_FMTS_API}/bim_image_stack.cpp
+        ${BIM_FMTS_API}/typeize_buffer.cpp)
+    if(BIC_ENABLE_QT)
+        set(SOURCES ${SOURCES}
+            ${BIM_FMTS_API}/bim_image_qt.cpp)
+    endif()
 
     set(INSTALLHEADERS ${INSTALLHEADERS}
         ${BIM_CORE}/tag_map.h
@@ -432,10 +433,13 @@ if(LIBBIOIMAGE)
         ${BIM_FMTS_API}/resize.h)
 
     set(HEADERS ${HEADERS}
-        ${BIM_FMTS_API}/bim_qt_utils.h
         ${BIM_FMTS_API}/rotate.h
         ${BIM_FMTS_API}/slic.h
         ${BIM_FMTS_API}/typeize_buffer.h)
+    if(BIC_ENABLE_QT)
+        set(HEADERS ${HEADERS}
+            ${BIM_FMTS_API}/bim_qt_utils.h)
+    endif()
 
     # Formats
     set(SOURCES ${SOURCES}
@@ -613,7 +617,9 @@ if(LIBBIOIMAGE)
     # shared libraries need PIC:
     set_property(TARGET bioimage PROPERTY POSITION_INDEPENDENT_CODE ON)
 
-    qt5_use_modules(bioimage Core Gui)
+    if(BIC_ENABLE_QT)
+        qt5_use_modules(bioimage Core Gui)
+    endif()
 
     # Install library and headers
     install(TARGETS bioimage DESTINATION lib)
