@@ -7,41 +7,17 @@
 #ifndef _TIFFCONF_
 #define _TIFFCONF_
 
-/* Define to 1 if the system has the type `int16'. */
-/* #undef HAVE_INT16 */
-
-/* Define to 1 if the system has the type `int32'. */
-/* #undef HAVE_INT32 */
-
-/* Define to 1 if the system has the type `int8'. */
-/* #undef HAVE_INT8 */
-
 /* The size of a `int', as computed by sizeof. */
 #define SIZEOF_INT 4
 
-/* Signed 8-bit type */
-#define TIFF_INT8_T signed char
-
-/* Unsigned 8-bit type */
-#define TIFF_UINT8_T unsigned char
-
 /* Signed 16-bit type */
 #define TIFF_INT16_T signed short
-
-/* Unsigned 16-bit type */
-#define TIFF_UINT16_T unsigned short
 
 /* Signed 32-bit type formatter */
 #define TIFF_INT32_FORMAT "%d"
 
 /* Signed 32-bit type */
 #define TIFF_INT32_T signed int
-
-/* Unsigned 32-bit type formatter */
-#define TIFF_UINT32_FORMAT "%u"
-
-/* Unsigned 32-bit type */
-#define TIFF_UINT32_T unsigned int
 
 /* Signed 64-bit type formatter */
 #define TIFF_INT64_FORMAT "%I64d"
@@ -50,8 +26,20 @@
 #if ((defined(_WIN64) || defined(WIN64) || defined(_WIN32) || defined(WIN32)) && !defined(__MINGW32__))
 #define TIFF_INT64_T signed __int64
 #else
-#define TIFF_INT64_T long long
+#define TIFF_INT64_T signed long
 #endif
+
+/* Signed 8-bit type */
+#define TIFF_INT8_T signed char
+
+/* Unsigned 16-bit type */
+#define TIFF_UINT16_T unsigned short
+
+/* Unsigned 32-bit type formatter */
+#define TIFF_UINT32_FORMAT "%u"
+
+/* Unsigned 32-bit type */
+#define TIFF_UINT32_T unsigned int
 
 /* Unsigned 64-bit type formatter */
 #define TIFF_UINT64_FORMAT "%I64u"
@@ -60,27 +48,37 @@
 #if ((defined(_WIN64) || defined(WIN64) || defined(_WIN32) || defined(WIN32)) && !defined(__MINGW32__))
 #define TIFF_UINT64_T unsigned __int64
 #else
-#define TIFF_UINT64_T unsigned long long
+#define TIFF_UINT64_T unsigned long
 #endif
+
+/* Unsigned 8-bit type */
+#define TIFF_UINT8_T unsigned char
 
 /* Signed size type */
 #if (defined(_WIN64) && !defined(__MINGW32__))
 #define TIFF_SSIZE_T signed __int64
 #else
-#define TIFF_SSIZE_T signed int
+#define TIFF_SSIZE_T signed long
 #endif
 
 /* Signed size type formatter */
 #if (defined(_WIN64) && !defined(__MINGW32__))
 #define TIFF_SSIZE_FORMAT "%I64d"
 #else
-#define TIFF_SSIZE_FORMAT "%ld"
+#define TIFF_SSIZE_FORMAT "%l64d"
 #endif
 
 /* Pointer difference type */
-#define TIFF_PTRDIFF_T long
+#define TIFF_PTRDIFF_T ptrdiff_t
 
+/* Define to 1 if the system has the type `int16'. */
+/* #undef HAVE_INT16 */
 
+/* Define to 1 if the system has the type `int32'. */
+/* #undef HAVE_INT32 */
+
+/* Define to 1 if the system has the type `int8'. */
+/* #undef HAVE_INT8 */
 
 /* Compatibility stuff. */
 
