@@ -346,7 +346,7 @@ void sub_ifd_to_buffer(toff_t offset, TIFF *tif, std::vector<char> &buffer) {
             if (tif->tif_flags & TIFF_BIGTIFF) {
                 TIFFSwabShort((bim::uint16*)&e->tag);
                 TIFFSwabShort((bim::uint16*)&e->type);
-                TIFFSwabLong8((bim::uint64*) &e->count);
+                TIFFSwabLong8((bim::uint64*)&e->count);
                 TIFFSwabLong8((bim::uint64*)&e->offset);
             } else {
                 TIFFSwabShort((bim::uint16*)&e->tag);
