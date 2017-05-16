@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ImportGroup Label="PropertySheets" />
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup />
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <PreprocessorDefinitions>OPJ_STATIC;__STDC_CONSTANT_MACROS;TIF_PLATFORM_CONSOLE;BIM_FFMPEG_FORMAT;FFMPEG_VIDEO_DISABLE_MATLAB;LIBRAW_BUILDLIB;LIBRAW_NODLL;USE_JPEG;BIM_USE_EIGEN;BIM_USE_OPENMP;NO_BIM_USE_OPENCV;BIM_USE_TRANSFORMS;BIM_USE_FILTERS;HAVE_ZLIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\..\..\libbioimg;..\..\..\libbioimg\formats;..\..\..\libbioimg\formats_api;..\..\..\libbioimg\core_lib;..\..\..\libjpeg-turbo;..\..\..\libpng;..\..\..\libtiff;..\..\..\zlib;..\..\..\ffmpeg\include;..\..\..\ffmpeg\include-win;..\..\..\libraw;..\..\..\pole;..\..\..\nifti\niftilib;..\..\..\nifti\znzlib;..\..\..\nifti\fsliolib;..\..\..\exiv2;..\..\..\libgeotiff;..\..\..\openjpeg\src\lib\openjp2;..\..\..\openjpeg\src\bin\common;..\..\..\jxrlib\jxrgluelib;..\..\..\jxrlib\image\sys;..\..\..\libwebp\src;..\..\..\lcms2\include;..\..\..\eigen;..\..\..\jzon;..\..\..\libfftw\src\api;..\..\..\opencv\build\include;..\..\..\gdcm\projects\win64;..\..\..\gdcm\Source\Common;..\..\..\gdcm\Source\DataDictionary;..\..\..\gdcm\Source\DataStructureAndEncodingDefinition;..\..\..\gdcm\Source\InformationObjectDefinition;..\..\..\gdcm\Source\MediaStorageAndFileFormat;..\..\..\gdcm\projects\msvc2013\Source\Common;..\..\..\gdcm\projects\msvc2013\Source\InformationObjectDefinition;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup />
+</Project>
