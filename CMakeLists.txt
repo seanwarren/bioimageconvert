@@ -67,8 +67,8 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 #---------------------------------------------------------------------
 
 # internal library config. If Qt5 is not available, disable LIBBIOIMAGE as a default:
-option(LIBBIOIMAGE            "Enable BioImageConvert implementation (recommended)"                              ON)
-option(LIBBIOIMAGE_TRANSFORMS "Enable BioImageConvert transforms implementation (optional)"                      ON)
+option(LIBBIOIMAGE                "Enable BioImageConvert implementation (recommended)"                          ON)
+option(LIBBIOIMAGE_TRANSFORMS     "Enable BioImageConvert transforms implementation (optional)"                  ON)
 
 # enable or disable optional thirdparty libraries
 option(BIC_ENABLE_QT              "Enable BioImageConvert QT support (optional)"                                 ON)
@@ -1678,7 +1678,6 @@ if(BIC_ENABLE_JXRLIB)
 
         #internal_add_library(jxrglue "${BIC_INTERNAL_JXRLIB_SOURCES}" "${BIC_INTERNAL_JXRLIB_HEADERS}" "${BIC_INTERNAL_JXRLIB_INSTALLHEADERS}" "${BIC_INTERNAL_JXRLIB_LINK_LIBRARIES}")
         #target_compile_definitions(jxrglue PUBLIC SUPPRESS_WARNINGS _FILE_OFFSET_BITS=64 EXV_BUILDING_LIB=1 DLL_EXPORT)
-
     elseif(LIBBIOIMAGE)
         find_package(JXR ${BIC_JXRLIB_REQUIRED_VERSION} REQUIRED)
         include_directories(${JXR_INCLUDE_DIR})
