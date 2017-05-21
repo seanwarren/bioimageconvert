@@ -488,26 +488,26 @@ typedef struct
 
 typedef struct
 {
-    /* really allocated bitmap */
-  void          *raw_alloc;
+  /* really allocated bitmap */
+  void *raw_alloc;
   /* alias to single_channel variant */
-  ushort        *raw_image;
+  ushort *raw_image;
   /* alias to 4-channel variant */
-  ushort        (*color4_image)[4] ;
+  ushort (*color4_image)[4];
   /* alias to 3-color variand decoded by RawSpeed */
-  ushort        (*color3_image)[3];
+  ushort (*color3_image)[3];
   /* float bayer */
-  float			*float_image;
+  float *float_image;
   /* float 3-component */
-  float			(*float3_image)[3];
+  float (*float3_image)[3];
   /* float 4-component */
-  float			(*float4_image)[4];
+  float (*float4_image)[4];
 
   /* Phase One black level data; */
-  short  (*ph1_cblack)[2];
-  short  (*ph1_rblack)[2];
+  short (*ph1_cblack)[2];
+  short (*ph1_rblack)[2];
   /* save color and sizes here, too.... */
-  libraw_iparams_t  iparams;
+  libraw_iparams_t iparams;
   libraw_image_sizes_t sizes;
   libraw_internal_output_params_t ioparams;
   libraw_colordata_t color;
@@ -516,42 +516,42 @@ typedef struct
 typedef struct
 {
   unsigned long long LensID;
-  char         Lens[128];
-  ushort       LensFormat;    /* to characterize the image circle the lens covers */
-  ushort       LensMount;     /* 'male', lens itself */
-  unsigned long long  CamID;
-  ushort       CameraFormat;  /* some of the sensor formats */
-  ushort       CameraMount;   /* 'female', body throat */
-  char         body[64];
-  short        FocalType;       /* -1/0 is unknown; 1 is fixed focal; 2 is zoom */
-  char         LensFeatures_pre[16], LensFeatures_suf[16];
-  float        MinFocal, MaxFocal;
-  float        MaxAp4MinFocal, MaxAp4MaxFocal, MinAp4MinFocal, MinAp4MaxFocal;
-  float        MaxAp, MinAp;
-  float        CurFocal, CurAp;
-  float        MaxAp4CurFocal, MinAp4CurFocal;
-  float        MinFocusDistance;
-  float        FocusRangeIndex;
-  float        LensFStops;
+  char Lens[128];
+  ushort LensFormat; /* to characterize the image circle the lens covers */
+  ushort LensMount;  /* 'male', lens itself */
+  unsigned long long CamID;
+  ushort CameraFormat; /* some of the sensor formats */
+  ushort CameraMount;  /* 'female', body throat */
+  char body[64];
+  short FocalType; /* -1/0 is unknown; 1 is fixed focal; 2 is zoom */
+  char LensFeatures_pre[16], LensFeatures_suf[16];
+  float MinFocal, MaxFocal;
+  float MaxAp4MinFocal, MaxAp4MaxFocal, MinAp4MinFocal, MinAp4MaxFocal;
+  float MaxAp, MinAp;
+  float CurFocal, CurAp;
+  float MaxAp4CurFocal, MinAp4CurFocal;
+  float MinFocusDistance;
+  float FocusRangeIndex;
+  float LensFStops;
   unsigned long long TeleconverterID;
-  char         Teleconverter[128];
+  char Teleconverter[128];
   unsigned long long AdapterID;
-  char         Adapter[128];
+  char Adapter[128];
   unsigned long long AttachmentID;
-  char         Attachment[128];
-  ushort        CanonFocalUnits;
-  float        FocalLengthIn35mmFormat;
+  char Attachment[128];
+  ushort CanonFocalUnits;
+  float FocalLengthIn35mmFormat;
 } libraw_makernotes_lens_t;
 
 typedef struct
 {
-  float        NikonEffectiveMaxAp;
-  uchar        NikonLensIDNumber, NikonLensFStops, NikonMCUVersion, NikonLensType;
+  float NikonEffectiveMaxAp;
+  uchar NikonLensIDNumber, NikonLensFStops, NikonMCUVersion, NikonLensType;
 } libraw_nikonlens_t;
 
 typedef struct
 {
-  float        MinFocal, MaxFocal, MaxAp4MinFocal, MaxAp4MaxFocal;
+  float MinFocal, MaxFocal, MaxAp4MinFocal, MaxAp4MaxFocal;
 } libraw_dnglens_t;
 
 typedef struct
@@ -612,10 +612,10 @@ typedef struct
 #elif defined(__INTEL__)
 #define LibRawBigEndian 0
 
-#elif defined(_M_IX86)
+#elif defined(_M_IX86) || defined(__i386__)
 #define LibRawBigEndian 0
 
-#elif defined(_M_X64) || defined(__amd64__)
+#elif defined(_M_X64) || defined(__amd64__) || defined(__x86_64__)
 #define LibRawBigEndian 0
 
 #elif defined(__LITTLE_ENDIAN__)
@@ -625,12 +625,16 @@ typedef struct
 #define LibRawBigEndian 1
 #elif defined(_ARM_)
 #define LibRawBigEndian 0
+
+#elif __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+#define LibRawBigEndian 0
+
+#elif __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+#define LibRawBigEndian 1
 #else
 #ifndef qXCodeRez
 #error Unable to figure out byte order.
 #endif
 #endif
-
-
 
 #endif
