@@ -83,10 +83,16 @@ FormatManager::FormatManager() {
   #endif
   #ifdef BIM_GDCM_FORMAT
   addNewFormatHeader ( dicomGetFormatHeader() );
-  #endif  
+  #endif
+  #ifdef BIM_NIFTI_FORMAT
   addNewFormatHeader(niftiGetFormatHeader());
+  #endif
+  #ifdef BIM_JXRLIB_FORMAT
   addNewFormatHeader(jxrGetFormatHeader());
+  #endif
+  #ifdef BIM_LIBWEBP_FORMAT
   addNewFormatHeader(webpGetFormatHeader());
+  #endif
 }
 
 

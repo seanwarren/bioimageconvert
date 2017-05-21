@@ -425,6 +425,7 @@ stat_pugixml {
 # NifTI
 #---------------------------------------------------------------------
 
+DEFINES += BIM_NIFTI_FORMAT
 DEFINES += HAVE_ZLIB
 
 D_LIB_NIFTI_LIB = $$BIM_LSRC/nifti/niftilib
@@ -950,6 +951,7 @@ stat_eigen {
 # jxrlib
 #---------------------------------------------------------------------
 
+DEFINES += BIM_JXRLIB_FORMAT
 stat_jxrlib {
   DEFINES += __ANSI__ DISABLE_PERF_MEASUREMENT
   !mingw:INCLUDEPATH += $$BIM_LIB_JXRLIB/common/include
@@ -964,6 +966,7 @@ stat_jxrlib {
 # libwebp
 #---------------------------------------------------------------------
 
+DEFINES += BIM_LIBWEBP_FORMAT
 stat_libwebp {
   INCLUDEPATH += $$BIM_LIB_LIBWEBP/src
   SOURCES += $$BIM_FMTS/webp/bim_webp_format.cpp
