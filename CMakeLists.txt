@@ -576,6 +576,7 @@ if(LIBBIOIMAGE)
 
     # optional sources depending on certain libraries:
     if(BIC_ENABLE_NIFTI)
+        add_definitions(-DBIM_NIFTI_FORMAT)
         set(SOURCES ${SOURCES}
             ${BIM_FMTS}/nifti/bim_nifti_format.cpp)
     endif()
@@ -595,10 +596,12 @@ if(LIBBIOIMAGE)
             ${BIM_FMT_DICOM}/bim_dicom_format.cpp)
     endif()
     if(BIC_ENABLE_JXRLIB)
+        add_definitions(-DBIM_JXRLIB_FORMAT)
         set(SOURCES ${SOURCES}
             ${BIM_FMTS}/jxr/bim_jxr_format.cpp)
     endif()
     if(BIC_ENABLE_LIBWEBP)
+        add_definitions(-DBIM_LIBWEBP_FORMAT)
         set(SOURCES ${SOURCES}
             ${BIM_FMTS}/webp/bim_webp_format.cpp)
     endif()
