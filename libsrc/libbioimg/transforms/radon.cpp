@@ -1,10 +1,10 @@
 //---------------------------------------------------------------------------
 
+#define _USE_MATH_DEFINES //to get the constant to work
+
+#include <cmath>
 #include <math.h>
 #include "radon.h"
-
-#define _USE_MATH_DEFINES //to get the constant to work
-#include <cmath>
 
 #include "xtypes.h"
 
