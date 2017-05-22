@@ -30,7 +30,7 @@
   #pragma message(">>>>> bim_dcraw_format.cpp: ignoring secure libraries")
 #endif 
 
-#if (defined(WIN32) || defined(WIN64))
+#if (defined(_WIN32) || defined(_WIN64))
 #include <winsock2.h>
 #else
 #include <netinet/in.h>
