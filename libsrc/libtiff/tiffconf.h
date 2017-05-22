@@ -26,7 +26,11 @@
 #if ((defined(_WIN64) || defined(WIN64) || defined(_WIN32) || defined(WIN32)) && !defined(__MINGW32__))
 #define TIFF_INT64_T signed __int64
 #else
+#if defined(__x86_64__)
 #define TIFF_INT64_T signed long
+#else
+#define TIFF_INT64_T signed long long
+#endif
 #endif
 
 /* Signed 8-bit type */
@@ -48,7 +52,11 @@
 #if ((defined(_WIN64) || defined(WIN64) || defined(_WIN32) || defined(WIN32)) && !defined(__MINGW32__))
 #define TIFF_UINT64_T unsigned __int64
 #else
+#if defined(__x86_64__)
 #define TIFF_UINT64_T unsigned long
+#else
+#define TIFF_UINT64_T unsigned long long
+#endif
 #endif
 
 /* Unsigned 8-bit type */
@@ -58,7 +66,11 @@
 #if (defined(_WIN64) && !defined(__MINGW32__))
 #define TIFF_SSIZE_T signed __int64
 #else
+#if defined(__x86_64__)
 #define TIFF_SSIZE_T signed long
+#else
+#define TIFF_SSIZE_T signed int
+#endif
 #endif
 
 /* Signed size type formatter */
