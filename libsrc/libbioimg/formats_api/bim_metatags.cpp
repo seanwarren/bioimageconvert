@@ -16,5 +16,5 @@
 #undef DECLARE_STR
 #define DECLARE_STR(S,V) const std::string bim::S = V;
 
-#include "bim_metatags.def" // include actual string data
+#include "bim_metatags.def.h" // include actual string data
 

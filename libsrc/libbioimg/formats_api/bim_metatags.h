@@ -22,7 +22,7 @@
 
 namespace bim {
 
-#include "bim_metatags.def" // include actual string data
+#include "bim_metatags.def.h" // include actual string data
 
 } // namespace bim
 
