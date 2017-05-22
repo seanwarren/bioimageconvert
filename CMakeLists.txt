@@ -154,6 +154,8 @@ set(BIC_JXRLIB_REQUIRED_VERSION 1.1.6)
 set(BIC_LCMS2_REQUIRED_VERSION 2.6)
 set(BIC_LIBTIFF_REQUIRED_VERSION 4.0.4)
 set(BIC_PROJ4_REQUIRED_VERSION 4.8.0)
+set(BIC_LIBWEBP_REQUIRED_VERSION 0.4.3)
+set(BIC_EXIV2_REQUIRED_VERSION 0.25)
 
 
 
@@ -175,6 +177,19 @@ find_package(Threads REQUIRED)
 # set default CXX flags:
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -pedantic -Wextra")
+
+# Set required compiler parameters:
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    if(CMAKE_VERSION VERSION_LESS "3.1")
+        set(CMAKE_CXX_FLAGS "--std=c++11 ${CMAKE_CXX_FLAGS}")
+    else()
+        set(CMAKE_CXX_STANDARD 11)
+        set(CMAKE_CXX_STANDARD_REQUIRED ON)
+        set(CMAKE_CXX_EXTENSIONS OFF)
+    endif()
+else()
+    message(FATAL_ERROR "Setting C++11 standard on platforms other than GNU GCC is currently not supported.")
+endif()
 
 STRING(TOLOWER "${CMAKE_BUILD_TYPE}" CMAKE_BUILD_TYPE_LOWER)
 if(CMAKE_BUILD_TYPE_LOWER STREQUAL "debug")
@@ -329,10 +344,6 @@ macro(internal_add_library NAME SOURCES HEADERS INSTALLHEADERS LINK_LIBRARIES)
     target_compile_options(${NAME} PRIVATE "$<$<CONFIG:RELEASE>:${RELEASE_FLAGS}>")
     target_compile_options(${NAME} PRIVATE "$<$<CONFIG:DEBUG>:${DEBUG_FLAGS}>")
 
-    # Set required compiler parameters:
-    set_property(TARGET ${NAME} PROPERTY CXX_STANDARD 14)
-    set_property(TARGET ${NAME} PROPERTY CXX_STANDARD_REQUIRED ON)
-
     # shared libraries need PIC
     set_property(TARGET ${NAME} PROPERTY POSITION_INDEPENDENT_CODE ON)
 
@@ -357,8 +368,18 @@ if(LIBBIOIMAGE)
         add_definitions(-DBIM_WIN)
     endif()
 
-    # optional defines:
+    #---------------------------------------------------------------------
+    # Eigen (only for libbioimage internally)
+    #---------------------------------------------------------------------
     add_definitions(-DBIM_USE_EIGEN)
+    if(BIC_INTERNAL_EIGEN)
+        include_directories(${BIM_LIB_EIGEN})
+    elseif(LIBBIOIMAGE)
+        find_package(Eigen3 REQUIRED)
+        include_directories(${EIGEN3_INCLUDE_DIR})
+    endif()
+
+    # optional defines:
     if(BIC_ENABLE_QT)
         add_definitions(-DBIM_USE_QT)
     endif()
@@ -618,10 +639,6 @@ if(LIBBIOIMAGE)
     target_compile_options(bioimage PRIVATE "$<$<CONFIG:RELEASE>:${RELEASE_FLAGS}>")
     target_compile_options(bioimage PRIVATE "$<$<CONFIG:DEBUG>:${DEBUG_FLAGS}>")
 
-    # Set required compiler parameters:
-    set_property(TARGET bioimage PROPERTY CXX_STANDARD 14)
-    set_property(TARGET bioimage PROPERTY CXX_STANDARD_REQUIRED ON)
-
     # shared libraries need PIC:
     set_property(TARGET bioimage PROPERTY POSITION_INDEPENDENT_CODE ON)
 
@@ -632,18 +649,6 @@ if(LIBBIOIMAGE)
     # Install library and headers
     install(TARGETS bioimage DESTINATION lib)
     install(FILES ${INSTALLHEADERS} DESTINATION include)
-
-
-    #---------------------------------------------------------------------
-    # Eigen (only for libbioimage internally)
-    #---------------------------------------------------------------------
-
-    if(BIC_INTERNAL_EIGEN)
-        include_directories(${BIM_LIB_EIGEN})
-    elseif(LIBBIOIMAGE)
-        find_package(Eigen3 REQUIRED)
-        include_directories(${EIGEN3_INCLUDE_DIR})
-    endif()
 endif()
 
 
@@ -1087,75 +1092,6 @@ set(LINK_LIBRARIES ${LINK_LIBRARIES} ${TIFF_LIBRARIES})
 
 
 #---------------------------------------------------------------------
-# libGeoTiff
-#---------------------------------------------------------------------
-
-if(BIC_INTERNAL_LIBGEOTIFF)
-    include_directories(${BIM_LIB_GEOTIF})
-    include_directories(${BIM_FMTS}/tiff)
-    set(BIC_INTERNAL_LIBGEOTIFF_SOURCES ${BIC_INTERNAL_LIBGEOTIFF_SOURCES}
-        ${BIM_LIB_GEOTIF}/cpl_csv.c
-        ${BIM_LIB_GEOTIF}/cpl_serv.c
-        ${BIM_LIB_GEOTIF}/geotiff_proj4.c
-        ${BIM_LIB_GEOTIF}/geo_extra.c
-        ${BIM_LIB_GEOTIF}/geo_free.c
-        ${BIM_LIB_GEOTIF}/geo_get.c
-        ${BIM_LIB_GEOTIF}/geo_names.c
-        ${BIM_LIB_GEOTIF}/geo_new.c
-        ${BIM_LIB_GEOTIF}/geo_normalize.c
-        ${BIM_LIB_GEOTIF}/geo_print.c
-        ${BIM_LIB_GEOTIF}/geo_set.c
-        ${BIM_LIB_GEOTIF}/geo_simpletags.c
-        ${BIM_LIB_GEOTIF}/geo_strtod.c
-        ${BIM_LIB_GEOTIF}/geo_tiffp.c
-        ${BIM_LIB_GEOTIF}/geo_trans.c
-        ${BIM_LIB_GEOTIF}/geo_write.c)
-
-    set(BIC_INTERNAL_LIBGEOTIFF_INSTALLHEADERS ${BIC_INTERNAL_LIBGEOTIFF_INSTALLHEADERS}
-        ${BIM_LIB_GEOTIF}/cpl_serv.h
-        ${BIM_LIB_GEOTIF}/epsg_datum.inc
-        ${BIM_LIB_GEOTIF}/epsg_ellipse.inc
-        ${BIM_LIB_GEOTIF}/epsg_gcs.inc
-        ${BIM_LIB_GEOTIF}/epsg_pcs.inc
-        ${BIM_LIB_GEOTIF}/epsg_pm.inc
-        ${BIM_LIB_GEOTIF}/epsg_proj.inc
-        ${BIM_LIB_GEOTIF}/epsg_units.inc
-        ${BIM_LIB_GEOTIF}/epsg_vertcs.inc
-        ${BIM_LIB_GEOTIF}/geo_config.h
-        ${BIM_LIB_GEOTIF}/geo_ctrans.inc
-        ${BIM_LIB_GEOTIF}/geo_incode_defs.h
-        ${BIM_LIB_GEOTIF}/geo_keyp.h
-        ${BIM_LIB_GEOTIF}/geo_normalize.h
-        ${BIM_LIB_GEOTIF}/geo_simpletags.h
-        ${BIM_LIB_GEOTIF}/geo_tiffp.h
-        ${BIM_LIB_GEOTIF}/geokeys.h
-        ${BIM_LIB_GEOTIF}/geokeys.inc
-        ${BIM_LIB_GEOTIF}/geonames.h
-        ${BIM_LIB_GEOTIF}/geotiff.h
-        ${BIM_LIB_GEOTIF}/geotiffio.h
-        ${BIM_LIB_GEOTIF}/geovalues.h)
-
-    # geotiff links proj4 and libtiff:
-    set(BIC_INTERNAL_LIBGEOTIFF_LINK_LIBRARIES ${BIC_INTERNAL_LIBGEOTIFF_LINK_LIBRARIES} ${PROJ4_LIBRARIES} ${TIFF_LIBRARIES})
-
-    internal_add_library(geotiff "${BIC_INTERNAL_LIBGEOTIFF_SOURCES}" "${BIC_INTERNAL_LIBGEOTIFF_HEADERS}" "${BIC_INTERNAL_LIBGEOTIFF_INSTALLHEADERS}" "${BIC_INTERNAL_LIBGEOTIFF_LINK_LIBRARIES}")
-    if(BIC_INTERNAL_PROJ4)
-        add_dependencies(geotiff proj)
-    endif()
-    if(BIC_INTERNAL_LIBTIFF)
-        add_dependencies(geotiff tiff)
-    endif()
-
-    # TODO FIXME: merge this linker command with the automatic system library detection below:
-    set(LINK_LIBRARIES ${LINK_LIBRARIES} "${LIBRARY_OUTPUT_PATH}/${CMAKE_LIBRARY_PREFIX}geotiff${CMAKE_LIBRARY_SUFFIX}")
-elseif(LIBBIOIMAGE)
-    find_package(GeoTIFF REQUIRED)
-    include_directories(${GEOTIFF_INCLUDE_DIR})
-    set(LINK_LIBRARIES ${LINK_LIBRARIES} ${GEOTIFF_LIBRARIES})
-endif()
-
-
-#---------------------------------------------------------------------
 # Proj.4
 #---------------------------------------------------------------------
 
@@ -1342,7 +1278,75 @@ elseif(LIBBIOIMAGE OR BIC_INTERNAL_LIBGEOTIFF)
     find_package(PROJ4 ${BIC_PROJ4_REQUIRED_VERSION} REQUIRED)
 endif()
 set(LINK_LIBRARIES ${LINK_LIBRARIES} ${PROJ4_LIBRARIES})
-message("Setting PROJ4_LIBRARIES=${PROJ4_LIBRARIES}")
+
+
+#---------------------------------------------------------------------
+# libGeoTiff
+#---------------------------------------------------------------------
+
+if(BIC_INTERNAL_LIBGEOTIFF)
+    include_directories(${BIM_LIB_GEOTIF})
+    include_directories(${BIM_FMTS}/tiff)
+    set(BIC_INTERNAL_LIBGEOTIFF_SOURCES ${BIC_INTERNAL_LIBGEOTIFF_SOURCES}
+        ${BIM_LIB_GEOTIF}/cpl_csv.c
+        ${BIM_LIB_GEOTIF}/cpl_serv.c
+        ${BIM_LIB_GEOTIF}/geotiff_proj4.c
+        ${BIM_LIB_GEOTIF}/geo_extra.c
+        ${BIM_LIB_GEOTIF}/geo_free.c
+        ${BIM_LIB_GEOTIF}/geo_get.c
+        ${BIM_LIB_GEOTIF}/geo_names.c
+        ${BIM_LIB_GEOTIF}/geo_new.c
+        ${BIM_LIB_GEOTIF}/geo_normalize.c
+        ${BIM_LIB_GEOTIF}/geo_print.c
+        ${BIM_LIB_GEOTIF}/geo_set.c
+        ${BIM_LIB_GEOTIF}/geo_simpletags.c
+        ${BIM_LIB_GEOTIF}/geo_strtod.c
+        ${BIM_LIB_GEOTIF}/geo_tiffp.c
+        ${BIM_LIB_GEOTIF}/geo_trans.c
+        ${BIM_LIB_GEOTIF}/geo_write.c)
+
+    set(BIC_INTERNAL_LIBGEOTIFF_INSTALLHEADERS ${BIC_INTERNAL_LIBGEOTIFF_INSTALLHEADERS}
+        ${BIM_LIB_GEOTIF}/cpl_serv.h
+        ${BIM_LIB_GEOTIF}/epsg_datum.inc
+        ${BIM_LIB_GEOTIF}/epsg_ellipse.inc
+        ${BIM_LIB_GEOTIF}/epsg_gcs.inc
+        ${BIM_LIB_GEOTIF}/epsg_pcs.inc
+        ${BIM_LIB_GEOTIF}/epsg_pm.inc
+        ${BIM_LIB_GEOTIF}/epsg_proj.inc
+        ${BIM_LIB_GEOTIF}/epsg_units.inc
+        ${BIM_LIB_GEOTIF}/epsg_vertcs.inc
+        ${BIM_LIB_GEOTIF}/geo_config.h
+        ${BIM_LIB_GEOTIF}/geo_ctrans.inc
+        ${BIM_LIB_GEOTIF}/geo_incode_defs.h
+        ${BIM_LIB_GEOTIF}/geo_keyp.h
+        ${BIM_LIB_GEOTIF}/geo_normalize.h
+        ${BIM_LIB_GEOTIF}/geo_simpletags.h
+        ${BIM_LIB_GEOTIF}/geo_tiffp.h
+        ${BIM_LIB_GEOTIF}/geokeys.h
+        ${BIM_LIB_GEOTIF}/geokeys.inc
+        ${BIM_LIB_GEOTIF}/geonames.h
+        ${BIM_LIB_GEOTIF}/geotiff.h
+        ${BIM_LIB_GEOTIF}/geotiffio.h
+        ${BIM_LIB_GEOTIF}/geovalues.h)
+
+    # geotiff links proj4 and libtiff:
+    set(BIC_INTERNAL_LIBGEOTIFF_LINK_LIBRARIES ${BIC_INTERNAL_LIBGEOTIFF_LINK_LIBRARIES} ${PROJ4_LIBRARIES} ${TIFF_LIBRARIES})
+
+    internal_add_library(geotiff "${BIC_INTERNAL_LIBGEOTIFF_SOURCES}" "${BIC_INTERNAL_LIBGEOTIFF_HEADERS}" "${BIC_INTERNAL_LIBGEOTIFF_INSTALLHEADERS}" "${BIC_INTERNAL_LIBGEOTIFF_LINK_LIBRARIES}")
+    if(BIC_INTERNAL_PROJ4)
+        add_dependencies(geotiff proj)
+    endif()
+    if(BIC_INTERNAL_PROJ4)
+        add_dependencies(geotiff tiff)
+    endif()
+
+    # TODO FIXME: merge this linker command with the automatic system library detection below:
+    set(LINK_LIBRARIES ${LINK_LIBRARIES} "${LIBRARY_OUTPUT_PATH}/${CMAKE_LIBRARY_PREFIX}geotiff${CMAKE_LIBRARY_SUFFIX}")
+elseif(LIBBIOIMAGE)
+    find_package(GeoTIFF REQUIRED)
+    include_directories(${GEOTIFF_INCLUDE_DIR})
+    set(LINK_LIBRARIES ${LINK_LIBRARIES} ${GEOTIFF_LIBRARIES})
+endif()
 
 
 #---------------------------------------------------------------------
@@ -1493,6 +1497,16 @@ endif()
 # exiv2
 #---------------------------------------------------------------------
 
+if(BIC_INTERNAL_EXIV2 STREQUAL "AUTO")
+    find_package(Exiv2 ${BIC_EXIV2_REQUIRED_VERSION})
+    if(EXIV2_FOUND)
+        set(BIC_INTERNAL_EXIV2 OFF)
+        message("System Exiv2 found in suitable version, disabling internal Exiv2.")
+    else()
+        set(BIC_INTERNAL_EXIV2 ON)
+        message("System Exiv2 not found (or found unsuitable version), enabling internal Exiv2.")
+    endif()
+endif()
 if(BIC_INTERNAL_EXIV2)
     include_directories(${BIM_LIB_EXIV2})
     include_directories(${BIM_LIB_EXIV2}/exiv2)
@@ -1641,11 +1655,9 @@ if(BIC_INTERNAL_EXIV2)
     # TODO FIXME: merge this linker command with the automatic system library detection below:
     set(LINK_LIBRARIES ${LINK_LIBRARIES} "${LIBRARY_OUTPUT_PATH}/${CMAKE_LIBRARY_PREFIX}exiv2${CMAKE_LIBRARY_SUFFIX}")
 elseif(LIBBIOIMAGE)
-    if(UNIX OR MINGW OR APPLE)
-        set(LINK_LIBRARIES ${LINK_LIBRARIES} -lexiv2)
-    elseif(WIN32)
-        set(LINK_LIBRARIES ${LINK_LIBRARIES} ${BIM_LIBS_PLTFM}/libexiv2.lib)
-    endif()
+    find_package(Exiv2 ${BIC_EXIV2_REQUIRED_VERSION} REQUIRED)
+    include_directories(${EXIV2_INCLUDE_DIR})
+    set(LINK_LIBRARIES ${LINK_LIBRARIES} ${EXIV2_LIBRARIES})
 endif()
 
 
@@ -1705,9 +1717,7 @@ if(BIC_ENABLE_LIBWEBP)
         set(LINK_LIBRARIES ${LINK_LIBRARIES} ${BIM_LIBS_PLTFM}/libwebpmux.a)
         set(LINK_LIBRARIES ${LINK_LIBRARIES} ${BIM_LIBS_PLTFM}/libwebpdemux.a)
     elseif(LIBBIOIMAGE)
-        if(UNIX OR MINGW)
-            set(LINK_LIBRARIES ${LINK_LIBRARIES} -lwebp -lwebpmux)
-        endif()
+        find_package(WebP ${BIC_LIBWEBP_REQUIRED_VERSION} REQUIRED)
     endif()
 endif()
 
@@ -1767,9 +1777,6 @@ elseif(LIBBIOIMAGE)
     find_package(LCMS2 ${BIC_LCMS2_REQUIRED_VERSION} REQUIRED)
     include_directories(${LCMS2_INCLUDE_DIR})
     set(LINK_LIBRARIES ${LINK_LIBRARIES} ${LCMS2_LIBRARIES})
-    #if(UNIX OR MINGW)
-    #    set(LINK_LIBRARIES ${LINK_LIBRARIES} -llcms2)
-    #endif()
 endif()
 
 
@@ -1916,10 +1923,6 @@ endif()
 ##target_link_libraries(win32paths gtest gmock_main)
 ##target_link_libraries(win32paths bioimage ${LINK_LIBRARIES})
 #add_test(NAME win32paths COMMAND win32paths)
-#
-## Set required compiler parameters:
-#set_property(TARGET win32paths PROPERTY CXX_STANDARD 14)
-#set_property(TARGET win32paths PROPERTY CXX_STANDARD_REQUIRED ON)
 #
 #
 ##add_test(win32paths test/win32paths.cc arg1 arg2 ... )
