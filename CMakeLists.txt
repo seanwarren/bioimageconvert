@@ -455,7 +455,7 @@ if(LIBBIOIMAGE)
         ${BIM_FMTS_API}/bim_img_format_interface.h
         ${BIM_FMTS_API}/bim_img_format_utils.h
         ${BIM_FMTS_API}/bim_metatags.h
-        ${BIM_FMTS_API}/bim_metatags.def
+        ${BIM_FMTS_API}/bim_metatags.def.h
         ${BIM_FMTS_API}/resize.h)
 
     set(HEADERS ${HEADERS}
