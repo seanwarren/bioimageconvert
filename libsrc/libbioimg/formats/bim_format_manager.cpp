@@ -49,6 +49,7 @@
 #include "nifti/bim_nifti_format.h"
 #include "jxr/bim_jxr_format.h"
 #include "webp/bim_webp_format.h"
+#include "mrc/bim_mrc_format.h"
 
 using namespace bim;
 
@@ -87,6 +88,7 @@ FormatManager::FormatManager() {
   addNewFormatHeader(niftiGetFormatHeader());
   addNewFormatHeader(jxrGetFormatHeader());
   addNewFormatHeader(webpGetFormatHeader());
+  addNewFormatHeader(mrcGetFormatHeader());
 }
 
 
