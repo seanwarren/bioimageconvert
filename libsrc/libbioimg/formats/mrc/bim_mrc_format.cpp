@@ -20,9 +20,11 @@
 
 #include "bim_mrc_format.h"
 
+#include <xtypes.h>
 #include <xstring.h>
 #include <tag_map.h>
 #include <bim_metatags.h>
+#include <bim_format_misc.h>
 
 // windows: use secure C libraries with VS2005 or higher
 #if ( defined(_MSC_VER) && (_MSC_VER >= 1400) )
@@ -39,7 +41,10 @@ using namespace bim;
 
 void swapHeader(MrcHeader *h) {
     bim::uint32 *v = (bim::uint32 *) h;
-    for (int i=0; i<56; ++i) {
+    for (int i=0; i<25; ++i) {
+        swapLong((bim::uint32*) &v[i]);
+    }
+    for (int i = 33; i<56; ++i) {
         swapLong((bim::uint32*) &v[i]);
     }
 }
@@ -48,73 +53,76 @@ void mrcGetImageInfo(FormatHandle *fmtHndl) {
     if (fmtHndl == NULL) return;
     if (fmtHndl->internalParams == NULL) return;
     MrcParams *par = (MrcParams *)fmtHndl->internalParams;
+    MrcHeader *h = &par->header;
     ImageInfo *info = &par->i;
     *info = initImageInfo();
 
     if (fmtHndl->stream == NULL) return;
     if (xseek(fmtHndl, 0, SEEK_SET) != 0) return;
-    if (xread(fmtHndl, &par->header, 1, sizeof(MrcHeader)) != sizeof(MrcHeader)) return;
+    if (xread(fmtHndl, h, 1, sizeof(MrcHeader)) != sizeof(MrcHeader)) return;
 
-    // swap structure elements if running on Big endian machine...
-    if (bim::bigendian) {
-        swapHeader(&par->header);
+    // swap structure elements if running on Big endian machine
+    // or handle incorrect cases of files written in big-endian format
+    if (bim::bigendian || h->nlabl > 10 && h->mapc > 3 && h->mapr > 3 && h->maps > 3) {
+        swapHeader(h);
     }
-    
+
+    // set image parameters
+    info->width = h->nx;
+    info->height = h->ny;
+    info->imageMode = IM_GRAYSCALE;
+    info->samples = 1;
+    info->pixelType = bim::FMT_UNSIGNED;
+    info->number_pages = h->nz;
+    info->number_z = info->number_pages;
+
     // get correct type size
-    switch (par->header.mode) {
+    switch (h->mode) {
     case MRC_MODE_INT8:
-        par->pixel_size = 1;
-        par->data_type = bim::TAG_SBYTE;
-        par->data_format = bim::FMT_SIGNED;
+        info->depth = 8;
+        info->pixelType = bim::FMT_SIGNED;
         break;
     case MRC_MODE_INT16:
-        par->pixel_size = 2;
-        par->data_type = bim::TAG_SSHORT;
-        par->data_format = bim::FMT_SIGNED;
+        info->depth = 16;
+        info->pixelType = bim::FMT_SIGNED;
         break;
     case MRC_MODE_UINT16:
-        par->pixel_size = 2;
-        par->data_type = bim::TAG_SHORT;
-        par->data_format = bim::FMT_UNSIGNED;
+        info->depth = 16;
+        info->pixelType = bim::FMT_UNSIGNED;
         break;
     case MRC_MODE_FLOAT32:
-        par->pixel_size = 4;
-        par->data_type = bim::TAG_FLOAT;
-        par->data_format = bim::FMT_FLOAT;
+        info->depth = 32;
+        info->pixelType = bim::FMT_FLOAT;
         break;
     case MRC_MODE_CINT16:
-        par->pixel_size = 4;
-        par->data_type = bim::TAG_FLOAT;
-        par->data_format = bim::FMT_COMPLEX;
+        info->depth = 16;
+        info->pixelType = bim::FMT_COMPLEX;
         break;
     case MRC_MODE_CFLOAT32:
-        par->pixel_size = 8;
-        par->data_type = bim::TAG_SRATIONAL;
-        par->data_format = bim::FMT_COMPLEX;
+        info->depth = 64;
+        info->pixelType = bim::FMT_COMPLEX;
+        break;
+    case MRC_MODE_UINT4:
+        info->depth = 4;
+        info->pixelType = bim::FMT_UNSIGNED;
+        break;
+    case MRC_MODE_RGB8:
+        info->depth = 8;
+        info->pixelType = bim::FMT_UNSIGNED;
+        info->samples = 3;
         break;
     }
 
-    par->data_offset = BIM_MRC_HEADER_SIZE + par->header.next; // unless extended header is used
-    par->plane_size = par->header.nx*par->header.ny*par->pixel_size;
+    par->data_offset = BIM_MRC_HEADER_SIZE + h->next; // unless extended header is used
 
     // read extended header 
-    if (par->header.next > 0) {
+    if (h->next > 0) {
         int sz = sizeof(MrcHeaderExt);
         int nimg = 1024;
         par->exts.resize(nimg);
         if (xseek(fmtHndl, BIM_MRC_HEADER_SIZE, SEEK_SET) != 0) return;
         if (xread(fmtHndl, &par->exts[0], 1, sz*nimg) != sz*nimg) return;
     }
-
-    // set image parameters
-    info->width = par->header.nx;
-    info->height = par->header.ny;
-    info->samples = 1;
-    info->number_pages = par->header.nz;
-    info->imageMode = IM_GRAYSCALE;
-    info->number_z = info->number_pages;
-    info->depth = par->pixel_size*8;
-    info->pixelType = par->data_format;
 }
 
 //----------------------------------------------------------------------------
@@ -126,23 +134,27 @@ int mrcValidateFormatProc(BIM_MAGIC_STREAM *magic, bim::uint length, const bim::
     MrcHeader *h = (MrcHeader *)magic; // header will be only guaranteed up to BIM_MRC_MAGIC_SIZE, disregard more advanced elements
     
     bim::uint32 mode = h->mode;
-    //bim::uint32 ver = h->NVERSION;
-    //char *ext = h->EXTTYP;
+    bim::uint32 ver = h->nversion;
+    char *ext = h->extType;
 
     if (bim::bigendian) {
         swapLong(&mode);
-        //swapLong(&ver);
+        swapLong(&ver);
     }
 
-    if (mode == 6 || (mode>=0 && mode<=4)) return 0;
-    
-    /*if (memcmp(ext, "CCP4", 4) == 0) return 0; // Format from CCP4 suite
+    if (mode == 6 || mode == 16 || mode == 101 || (mode >= 0 && mode <= 4)) return 0;
+
+    if (memcmp(ext, "CCP4", 4) == 0) return 0; // Format from CCP4 suite
     if (memcmp(ext, "MRCO", 4) == 0) return 0; // MRC format
     if (memcmp(ext, "SERI", 4) == 0) return 0; // SerialEM
     if (memcmp(ext, "AGAR", 4) == 0) return 0; // Agard
     if (memcmp(ext, "FEI1", 4) == 0) return 0; // FEI software, e.g.EPU and Xplore3D, Amira, Avizo
 
-    if (ver == 20140) return 0; // Year * 10 + version within the year(base 0)*/
+    if (ver == 20140) return 0; // Year * 10 + version within the year(base 0)
+
+    // handle bad cases of files written in big-endian format
+    swapLong(&mode);
+    if (mode == 6 || mode == 16 || mode == 101 || (mode >= 0 && mode <= 4)) return 0;
 
     return -1;
 }
@@ -231,9 +243,25 @@ bim::uint mrcReadImageProc(FormatHandle *fmtHndl, bim::uint page) {
 
     xprogress(fmtHndl, 0, 10, "Reading MRC");
 
-    bim::uint64 offset_page = par->plane_size * page;
-    if (xseek(fmtHndl, par->data_offset + offset_page, SEEK_SET) != 0) return 1;
-    if (xread(fmtHndl, img->bits[0], par->plane_size, 1) != 1) return 1;
+    bim::uint64 plane_size = ceil(info->width*info->height*info->samples*(info->depth/8.0));
+    bim::uint64 page_offset = plane_size * page;
+
+    if (xseek(fmtHndl, par->data_offset + page_offset, SEEK_SET) != 0) return 1;
+    if (info->samples == 1) {
+        if (xread(fmtHndl, img->bits[0], plane_size, 1) != 1) return 1;
+    } else {
+        std::vector<bim::uint8> buf(plane_size);
+        if (xread(fmtHndl, &buf[0], plane_size, 1) != 1) return 1;
+
+        for (int s = 0; s < info->samples; ++s) {
+            if (info->depth == 8)
+                copy_sample_interleaved_to_planar<bim::uint8>(info->width, info->height, info->samples, s, &buf[0], img->bits[s]);
+            else if (info->depth == 16)
+                copy_sample_interleaved_to_planar<bim::uint16>(info->width, info->height, info->samples, s, &buf[0], img->bits[s]);
+            else if (info->depth == 32)
+                copy_sample_interleaved_to_planar<bim::uint32>(info->width, info->height, info->samples, s, &buf[0], img->bits[s]);
+        } // for sample
+    }
 
     return 0;
 }
@@ -251,7 +279,54 @@ bim::uint mrc_append_metadata(FormatHandle *fmtHndl, TagMap *hash) {
     if (fmtHndl->internalParams == NULL) return 1;
     if (!hash) return 1;
     MrcParams *par = (MrcParams *)fmtHndl->internalParams;
+    MrcHeader *h = &par->header;
 
+    // resolution
+    try {
+        hash->append_tag("pixel_resolution_x", h->xlen/h->mx);
+        hash->append_tag("pixel_resolution_y", h->ylen / h->my);
+        hash->append_tag("pixel_resolution_z", h->zlen / h->mz);
+
+        hash->append_tag("pixel_resolution_unit_x", "meters");
+        hash->append_tag("pixel_resolution_unit_y", "meters");
+        hash->append_tag("pixel_resolution_unit_z", "meters");
+    } catch (...) {
+        //std::cerr << "unknown excepition\n";
+    }
+
+    // all other metadata
+    hash->append_tag("MRC/nxstart", h->nxstart);
+    hash->append_tag("MRC/nystart", h->nystart);
+    hash->append_tag("MRC/nzstart", h->nzstart);
+    hash->append_tag("MRC/mx", h->mx);
+    hash->append_tag("MRC/my", h->my);
+    hash->append_tag("MRC/mz", h->mz);
+    hash->append_tag("MRC/xlen", h->xlen);
+    hash->append_tag("MRC/ylen", h->ylen);
+    hash->append_tag("MRC/zlen", h->zlen);
+    hash->append_tag("MRC/alpha", h->alpha);
+    hash->append_tag("MRC/beta", h->beta);
+    hash->append_tag("MRC/gamma", h->gamma);
+    hash->append_tag("MRC/amin", h->amin);
+    hash->append_tag("MRC/amax", h->amax);
+    hash->append_tag("MRC/amean", h->amean);
+    hash->append_tag("MRC/lens", h->lens);
+    hash->append_tag("MRC/nd1", h->nd1);
+    hash->append_tag("MRC/nd2", h->nd2);
+    hash->append_tag("MRC/vd1", h->vd1);
+    hash->append_tag("MRC/vd2", h->vd2);
+    hash->append_tag("MRC/amin", h->amin);
+    hash->append_tag("MRC/amin", h->amin);
+
+    // add labels
+    for (int i = 0; i < h->nlabl; ++i) {
+        xstring s = h->label[i];
+        if (s.size() > 0) {
+            hash->append_tag(xstring::xprintf("MRC/label_%.2d", i), s.c_str());
+        }
+    }
+    
+    // extended header
     if (par->exts.size() > 0) {
         MrcHeaderExt *h = &par->exts[fmtHndl->pageNumber];
 
