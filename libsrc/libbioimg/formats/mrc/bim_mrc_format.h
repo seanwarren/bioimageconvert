@@ -27,7 +27,7 @@ bim::FormatHeader* mrcGetFormatHeader(void);
 
 namespace bim {
 
-#define BIM_MRC_MAGIC_SIZE 112
+#define BIM_MRC_MAGIC_SIZE 128
 #define BIM_MRC_HEADER_SIZE 1024
 
 #define MRC_MODE_INT8     0    // 8 - bit signed integer(range - 128 to 127)
@@ -36,6 +36,8 @@ namespace bim {
 #define MRC_MODE_CINT16   3    // transform : complex 16 - bit integers
 #define MRC_MODE_CFLOAT32 4    // transform : complex 32 - bit reals
 #define MRC_MODE_UINT16   6    // 16 - bit unsigned integer
+#define MRC_MODE_RGB8     16   // RGB uint8 per channel
+#define MRC_MODE_UINT4    101  // 4 - bit unsigned integer
 
 #pragma pack(push, 2)
 typedef struct MrcHeader {
@@ -61,14 +63,32 @@ typedef struct MrcHeader {
     bim::float32 amin;       // minimum pixel value of all images in file
     bim::float32 amax;       // maximum pixel value of all images in file
     bim::uint32 amean;       // mean pixel value of all images in file
-    bim::uint16 ispg;        // space group number, set to 0 : not used;
+    bim::uint16 ispg;        // space group number, should be 0 for an image stack, 1 for a volume
     bim::uint16 nsymbt;      // size of extended header(which follows main header) in bytes
     bim::uint32 next;        // This value gives the offset (in bytes) from the end of the file header to the first dataset (image). 
                              // Thus you will find the first image at 1024 + next bytes
-    bim::uint16 dvid;        // set to 0 : not used; creator id
-    char extra[30];          // set to 0 : not used; extra 30 bytes data
-    bim::uint16 numintegers; // set to 0; not used
+    bim::uint16 creatid;     // set to 0 : not used; creator id
+    
+    char extra[6];           // not used, first two bytes should be 0
+    char extType[4];         // Type of extended header, includes 'SERI' for SerialEM, 'FEI1' for FEI, 'AGAR' for Agard, not used by FEI
+    bim::uint32 nversion;    // MRC version that file conforms to, otherwise 0, not used by FEI
+    char extra2[16];         // 
+
+    bim::uint16 numintegers; // Number of integers per section (FEI/Agard format) or number of bytes per section(SerialEM format), not used by FEI
     bim::uint16 numfloats;   // set to 32; we always expect a extended header of 32 floats
+                             //  Number of reals per section(FEI / Agard format) or bit
+                             //  flags for which types of short data(SerialEM format) :
+                             //  1 = tilt angle * 100  (2 bytes)
+                             //  2 = piece coordinates for montage(6 bytes)
+                             //  4 = Stage position * 25    (4 bytes)
+                             //  8 = Magnification / 100 (2 bytes)
+                             //  16 = Intensity * 25000  (2 bytes)
+                             //  32 = Exposure dose in e - / A2, a float in 4 bytes
+                             //  128, 512: Reserved for 4 - byte items
+                             //  64, 256, 1024 : Reserved for 2 - byte items
+                             //  If the number of bytes implied by these flags does
+                             //  not add up to the value in nint, then nint and nreal
+                             //  are interpreted as ints and reals per section
     bim::uint16 sub;         // 
     bim::uint16 zfac;        // 
     bim::uint32 min2;        // 
@@ -88,7 +108,7 @@ typedef struct MrcHeader {
     bim::float32 xorg;      //     
     bim::float32 yorg;      // 
     bim::uint32 nlabl;      // number of labels being used
-    char label[10 * 80];    // character text labels, Label 0 is used for copyright information (FEI)
+    char label[10][80];    // character text labels, Label 0 is used for copyright information (FEI)
 } MrcHeader;
 #pragma pack(pop) 
 
@@ -130,10 +150,6 @@ public:
     MrcHeader header;
     std::vector<MrcHeaderExt> exts;
     bim::uint64 data_offset;
-    bim::uint64 plane_size;
-    bim::uint64 pixel_size;
-    bim::DataType data_type;
-    bim::DataFormat data_format;
 };
 
 
