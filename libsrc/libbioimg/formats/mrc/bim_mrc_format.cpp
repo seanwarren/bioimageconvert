@@ -18,6 +18,8 @@
 #include <cfloat>
 #include <string>
 
+#include <pugixml.hpp>
+
 #include "bim_mrc_format.h"
 
 #include <xtypes.h>
@@ -283,46 +285,46 @@ bim::uint mrc_append_metadata(FormatHandle *fmtHndl, TagMap *hash) {
 
     // resolution
     try {
-        hash->append_tag("pixel_resolution_x", h->xlen/h->mx);
-        hash->append_tag("pixel_resolution_y", h->ylen / h->my);
-        hash->append_tag("pixel_resolution_z", h->zlen / h->mz);
+        hash->set_value("pixel_resolution_x", h->xlen/h->mx);
+        hash->set_value("pixel_resolution_y", h->ylen / h->my);
+        hash->set_value("pixel_resolution_z", h->zlen / h->mz);
 
-        hash->append_tag("pixel_resolution_unit_x", "meters");
-        hash->append_tag("pixel_resolution_unit_y", "meters");
-        hash->append_tag("pixel_resolution_unit_z", "meters");
+        hash->set_value("pixel_resolution_unit_x", "meters");
+        hash->set_value("pixel_resolution_unit_y", "meters");
+        hash->set_value("pixel_resolution_unit_z", "meters");
     } catch (...) {
         //std::cerr << "unknown excepition\n";
     }
 
     // all other metadata
-    hash->append_tag("MRC/nxstart", h->nxstart);
-    hash->append_tag("MRC/nystart", h->nystart);
-    hash->append_tag("MRC/nzstart", h->nzstart);
-    hash->append_tag("MRC/mx", h->mx);
-    hash->append_tag("MRC/my", h->my);
-    hash->append_tag("MRC/mz", h->mz);
-    hash->append_tag("MRC/xlen", h->xlen);
-    hash->append_tag("MRC/ylen", h->ylen);
-    hash->append_tag("MRC/zlen", h->zlen);
-    hash->append_tag("MRC/alpha", h->alpha);
-    hash->append_tag("MRC/beta", h->beta);
-    hash->append_tag("MRC/gamma", h->gamma);
-    hash->append_tag("MRC/amin", h->amin);
-    hash->append_tag("MRC/amax", h->amax);
-    hash->append_tag("MRC/amean", h->amean);
-    hash->append_tag("MRC/lens", h->lens);
-    hash->append_tag("MRC/nd1", h->nd1);
-    hash->append_tag("MRC/nd2", h->nd2);
-    hash->append_tag("MRC/vd1", h->vd1);
-    hash->append_tag("MRC/vd2", h->vd2);
-    hash->append_tag("MRC/amin", h->amin);
-    hash->append_tag("MRC/amin", h->amin);
+    hash->set_value("MRC/nxstart", h->nxstart);
+    hash->set_value("MRC/nystart", h->nystart);
+    hash->set_value("MRC/nzstart", h->nzstart);
+    hash->set_value("MRC/mx", h->mx);
+    hash->set_value("MRC/my", h->my);
+    hash->set_value("MRC/mz", h->mz);
+    hash->set_value("MRC/xlen", h->xlen);
+    hash->set_value("MRC/ylen", h->ylen);
+    hash->set_value("MRC/zlen", h->zlen);
+    hash->set_value("MRC/alpha", h->alpha);
+    hash->set_value("MRC/beta", h->beta);
+    hash->set_value("MRC/gamma", h->gamma);
+    hash->set_value("MRC/amin", h->amin);
+    hash->set_value("MRC/amax", h->amax);
+    hash->set_value("MRC/amean", h->amean);
+    hash->set_value("MRC/lens", h->lens);
+    hash->set_value("MRC/nd1", h->nd1);
+    hash->set_value("MRC/nd2", h->nd2);
+    hash->set_value("MRC/vd1", h->vd1);
+    hash->set_value("MRC/vd2", h->vd2);
+    hash->set_value("MRC/amin", h->amin);
+    hash->set_value("MRC/amin", h->amin);
 
     // add labels
     for (int i = 0; i < h->nlabl; ++i) {
         xstring s = h->label[i];
         if (s.size() > 0) {
-            hash->append_tag(xstring::xprintf("MRC/label_%.2d", i), s.c_str());
+            hash->set_value(xstring::xprintf("MRC/label_%.2d", i), s.c_str());
         }
     }
     
@@ -330,30 +332,55 @@ bim::uint mrc_append_metadata(FormatHandle *fmtHndl, TagMap *hash) {
     if (par->exts.size() > 0) {
         MrcHeaderExt *h = &par->exts[fmtHndl->pageNumber];
 
-        hash->append_tag("pixel_resolution_x", h->pixel_size);
-        hash->append_tag("pixel_resolution_y", h->pixel_size);
-        hash->append_tag("pixel_resolution_z", h->pixel_size);
+        hash->set_value("pixel_resolution_x", h->pixel_size);
+        hash->set_value("pixel_resolution_y", h->pixel_size);
+        hash->set_value("pixel_resolution_z", h->pixel_size);
 
-        hash->append_tag("pixel_resolution_unit_x", "meters");
-        hash->append_tag("pixel_resolution_unit_y", "meters");
-        hash->append_tag("pixel_resolution_unit_z", "meters");
+        hash->set_value("pixel_resolution_unit_x", "meters");
+        hash->set_value("pixel_resolution_unit_y", "meters");
+        hash->set_value("pixel_resolution_unit_z", "meters");
 
 
-        hash->append_tag("FEI/a_tilt", h->a_tilt);
-        hash->append_tag("FEI/b_tilt", h->b_tilt);
-        hash->append_tag("FEI/x_stage", h->x_stage);
-        hash->append_tag("FEI/y_stage", h->y_stage);
-        hash->append_tag("FEI/z_stage", h->z_stage);
-        hash->append_tag("FEI/x_shift", h->x_shift);
-        hash->append_tag("FEI/y_shift", h->y_shift);
-        hash->append_tag("FEI/defocus", h->defocus);
-        hash->append_tag("FEI/exp_time", h->exp_time);
-        hash->append_tag("FEI/mean_int", h->mean_int);
-        hash->append_tag("FEI/tilt_axis", h->tilt_axis);
-        hash->append_tag("FEI/magnification", h->magnification);
-        hash->append_tag("FEI/ht", h->ht);
-        hash->append_tag("FEI/binning", h->binning);
-        hash->append_tag("FEI/appliedDefocus", h->appliedDefocus);
+        hash->set_value("FEI/a_tilt", h->a_tilt);
+        hash->set_value("FEI/b_tilt", h->b_tilt);
+        hash->set_value("FEI/x_stage", h->x_stage);
+        hash->set_value("FEI/y_stage", h->y_stage);
+        hash->set_value("FEI/z_stage", h->z_stage);
+        hash->set_value("FEI/x_shift", h->x_shift);
+        hash->set_value("FEI/y_shift", h->y_shift);
+        hash->set_value("FEI/defocus", h->defocus);
+        hash->set_value("FEI/exp_time", h->exp_time);
+        hash->set_value("FEI/mean_int", h->mean_int);
+        hash->set_value("FEI/tilt_axis", h->tilt_axis);
+        hash->set_value("FEI/magnification", h->magnification);
+        hash->set_value("FEI/ht", h->ht);
+        hash->set_value("FEI/binning", h->binning);
+        hash->set_value("FEI/appliedDefocus", h->appliedDefocus);
+    }
+
+    // load external XML file with FEI metadata, if available
+    bim::xstring fn = fmtHndl->fileName;
+    fn = fn.replace(".mrc", ".xml");
+    pugi::xml_document doc;
+    if (doc.load_file(fn.c_str())) {
+        try {
+            pugi::xpath_node matrix = doc.select_node("/MicroscopeImage/ReferenceTransformation/matrix");
+            /*for (pugi::xpath_node_set::const_iterator it = channels.begin(); it != channels.end(); ++it) {
+                pugi::xpath_node node = *it;
+                bim::xstring medium = node.node().attribute("Name").value();
+            }*/
+
+            pugi::xpath_node node = doc.select_node("/MicroscopeImage/SpatialScale/pixelSize/x/numericValue");
+            double xres = node.node().text().as_double();
+            hash->set_value("pixel_resolution_x", xres);
+
+            node = doc.select_node("/MicroscopeImage/SpatialScale/pixelSize/y/numericValue");
+            double yres = node.node().text().as_double();
+            hash->set_value("pixel_resolution_y", yres);
+
+        } catch (pugi::xpath_exception& e) {
+            // do nothing
+        }
     }
 
     return 0;
