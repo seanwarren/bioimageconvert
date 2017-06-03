@@ -156,6 +156,7 @@ set(BIC_LIBTIFF_REQUIRED_VERSION 4.0.4)
 set(BIC_PROJ4_REQUIRED_VERSION 4.8.0)
 set(BIC_LIBWEBP_REQUIRED_VERSION 0.4.3)
 set(BIC_EXIV2_REQUIRED_VERSION 0.25)
+set(BIC_LIBJPEG_TURBO_REQUIRED_VERSION 1.2.90)
 
 
 
@@ -962,6 +963,17 @@ if(BIC_INTERNAL_LIBRAW)
     add_definitions(-DLIBRAW_BUILDLIB -DLIBRAW_NODLL -DUSE_JPEG -DUSE_ZLIB -DUSE_LCMS2)
     include_directories(${BIM_LIB_RAW})
 
+    # LibRaw builds on jpeg:
+    if(BIC_ENABLE_LIBJPEG_TURBO)
+        if(BIC_INTERNAL_LIBJPEG_TURBO)
+            include_directories(${BIM_LIB_JPG_TURBO})
+        endif()
+    else()
+        if(BIC_INTERNAL_LIBJPEG)
+            include_directories(${BIM_LIB_JPG})
+        endif()
+    endif()
+
     set(BIC_INTERNAL_LIBRAW_SOURCES ${BIC_INTERNAL_LIBRAW_SOURCES}
         ${BIM_LIB_RAW}/src/libraw_c_api.cpp
         ${BIM_LIB_RAW}/src/libraw_cxx.cpp
@@ -1415,6 +1427,16 @@ endif()
 #---------------------------------------------------------------------
 
 if(BIC_ENABLE_LIBJPEG_TURBO)
+    if(BIC_INTERNAL_LIBJPEG_TURBO STREQUAL "AUTO")
+        find_package(LibJpegTurbo ${BIC_LIBJPEG_TURBO_REQUIRED_VERSION})
+        if(LibJpegTurbo_FOUND)
+            set(BIC_INTERNAL_LIBJPEG_TURBO OFF)
+            message("System jpeg-turbo found in suitable version, disabling internal jpeg-turbo.")
+        else()
+            set(BIC_INTERNAL_LIBJPEG_TURBO ON)
+            message("System jpeg-turbo not found (or found unsuitable version), enabling internal jpeg-turbo.")
+        endif()
+    endif()
     if(BIC_INTERNAL_LIBJPEG_TURBO)
         include_directories(${BIM_LIB_JPG_TURBO})
         set(BIC_INTERNAL_LIBJPEG_TURBO_SOURCES ${BIC_INTERNAL_LIBJPEG_TURBO_SOURCES}
