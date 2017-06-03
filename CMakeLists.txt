@@ -1968,6 +1968,7 @@ if(LIBBIOIMAGE)
         foreach(LIB ${LINK_LIBRARIES})
             set(BIOIMAGE_DEPENDENCY_LIBRARIES "${BIOIMAGE_DEPENDENCY_LIBRARIES} ${LIB}")
         endforeach()
+        string(REPLACE "${CMAKE_CURRENT_BINARY_DIR}" "${CMAKE_INSTALL_PREFIX}/lib" BIOIMAGE_DEPENDENCY_LIBRARIES "${BIOIMAGE_DEPENDENCY_LIBRARIES}")
 
         # Produce a pkg-config file for linking against the shared lib
         configure_file("bioimage.pc.in" "bioimage.pc" @ONLY)
