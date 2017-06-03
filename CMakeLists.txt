@@ -169,10 +169,6 @@ if(LIBBIOIMAGE AND BIC_ENABLE_QT)
     find_package(Qt5Gui REQUIRED)
 endif()
 
-# Find thread support (via pthread if possible):
-set(THREADS_PREFER_PTHREAD_FLAG ON)
-find_package(Threads REQUIRED)
-
 
 # set default CXX flags:
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
@@ -554,11 +550,10 @@ if(LIBBIOIMAGE)
             if(NOT EXISTS ${BIM_LIBS_PLTFM}/libfftw3.a)
                 message(FATAL_ERROR "Requested to link pre-build binary libraries from '${BIM_LIBS_PLTFM}', but they do not exist. Please download and extract the optional binary libraries archive.")
             endif()
-            set(LINK_LIBRARIES ${LINK_LIBRARIES} ${BIM_LIBS_PLTFM}/libfftw3.a)
+            set(FFTW_LIBRARIES ${BIM_LIBS_PLTFM}/libfftw3.a)
         elseif(UNIX OR MINGW)
             find_package(FFTW REQUIRED)
             include_directories(${FFTW_INCLUDE_DIR})
-            set(LINK_LIBRARIES ${LINK_LIBRARIES} ${FFTW_LIBRARIES})
         endif()
 
         set(SOURCES ${SOURCES}
@@ -667,7 +662,7 @@ if(BIC_INTERNAL_POLE)
     internal_add_library(pole "${BIC_INTERNAL_POLE_SOURCES}" "${BIC_INTERNAL_POLE_HEADERS}" "${BIC_INTERNAL_POLE_INSTALLHEADERS}" "${BIC_INTERNAL_POLE_LINK_LIBRARIES}")
 
     # TODO FIXME: merge this linker command with the automatic system library detection below:
-    set(LINK_LIBRARIES ${LINK_LIBRARIES} "${LIBRARY_OUTPUT_PATH}/${CMAKE_LIBRARY_PREFIX}pole${CMAKE_LIBRARY_SUFFIX}")
+    set(POLE_LIBRARIES "${LIBRARY_OUTPUT_PATH}/${CMAKE_LIBRARY_PREFIX}pole${CMAKE_LIBRARY_SUFFIX}")
 elseif(LIBBIOIMAGE)
     message(FATAL_ERROR "Automatic detection of system pole library not implemented")
 endif()
@@ -684,8 +679,7 @@ if(BIC_INTERNAL_JZON)
 
     internal_add_library(jzon "${BIC_INTERNAL_JZON_SOURCES}" "${BIC_INTERNAL_JZON_HEADERS}" "${BIC_INTERNAL_JZON_INSTALLHEADERS}" "${BIC_INTERNAL_JZON_LINK_LIBRARIES}")
 
-    # TODO FIXME: merge this linker command with the automatic system library detection below:
-    set(LINK_LIBRARIES ${LINK_LIBRARIES} "${LIBRARY_OUTPUT_PATH}/${CMAKE_LIBRARY_PREFIX}jzon${CMAKE_LIBRARY_SUFFIX}")
+    set(JZON_LIBRARIES "${LIBRARY_OUTPUT_PATH}/${CMAKE_LIBRARY_PREFIX}jzon${CMAKE_LIBRARY_SUFFIX}")
 elseif(LIBBIOIMAGE)
     message(FATAL_ERROR "Automatic detection of system jzon library not implemented")
 endif()
@@ -702,8 +696,7 @@ if(BIC_INTERNAL_PUGIXML)
 
     internal_add_library(pugixml "${BIC_INTERNAL_PUGIXML_SOURCES}" "${BIC_INTERNAL_PUGIXML_HEADERS}" "${BIC_INTERNAL_PUGIXML_INSTALLHEADERS}" "${BIC_INTERNAL_PUGIXML_LINK_LIBRARIES}")
 
-    # TODO FIXME: merge this linker command with the automatic system library detection below:
-    set(LINK_LIBRARIES ${LINK_LIBRARIES} "${LIBRARY_OUTPUT_PATH}/${CMAKE_LIBRARY_PREFIX}pugixml${CMAKE_LIBRARY_SUFFIX}")
+    set(PUGIXML_LIBRARIES "${LIBRARY_OUTPUT_PATH}/${CMAKE_LIBRARY_PREFIX}pugixml${CMAKE_LIBRARY_SUFFIX}")
 elseif(LIBBIOIMAGE)
     message(FATAL_ERROR "Automatic detection of system pugixml library not implemented")
 endif()
@@ -741,12 +734,10 @@ if(BIC_ENABLE_NIFTI)
 
         internal_add_library(nifti "${BIC_INTERNAL_NIFTI_SOURCES}" "${BIC_INTERNAL_NIFTI_HEADERS}" "${BIC_INTERNAL_NIFTI_INSTALLHEADERS}" "${BIC_INTERNAL_NIFTI_LINK_LIBRARIES}")
 
-        # TODO FIXME: merge this linker command with the automatic system library detection below:
-        set(LINK_LIBRARIES ${LINK_LIBRARIES} "${LIBRARY_OUTPUT_PATH}/${CMAKE_LIBRARY_PREFIX}nifti${CMAKE_LIBRARY_SUFFIX}")
+        set(NIFTI_LIBRARIES "${LIBRARY_OUTPUT_PATH}/${CMAKE_LIBRARY_PREFIX}nifti${CMAKE_LIBRARY_SUFFIX}")
     elseif(LIBBIOIMAGE)
         find_package(NIFTI REQUIRED)
         include_directories(${NIFTI_INCLUDE_DIR})
-        set(LINK_LIBRARIES ${LINK_LIBRARIES} ${NIFTI_LIBRARIES})
     endif()
 endif()
 
@@ -767,44 +758,55 @@ if(BIC_ENABLE_FFMPEG)
             if(NOT EXISTS ${BIM_LIBS_PLTFM}/avformat.lib)
                 message(FATAL_ERROR "Requested to link pre-build binary libraries from '${BIM_LIBS_PLTFM}', but they do not exist. Please download and extract the optional binary libraries archive.")
             endif()
-            set(LINK_LIBRARIES ${LINK_LIBRARIES} ${BIM_LIBS_PLTFM}/avcodec.lib)
-            set(LINK_LIBRARIES ${LINK_LIBRARIES} ${BIM_LIBS_PLTFM}/avformat.lib)
-            set(LINK_LIBRARIES ${LINK_LIBRARIES} ${BIM_LIBS_PLTFM}/avutil.lib)
-            set(LINK_LIBRARIES ${LINK_LIBRARIES} ${BIM_LIBS_PLTFM}/swscale.lib)
+            set(FFMPEG_LIBRARIES
+                ${BIM_LIBS_PLTFM}/avcodec.lib
+                ${BIM_LIBS_PLTFM}/avformat.lib
+                ${BIM_LIBS_PLTFM}/avutil.lib
+                ${BIM_LIBS_PLTFM}/swscale.lib)
         elseif(APPLE)
             if(NOT EXISTS ${BIM_LIBS_PLTFM}/libavformat.a)
                 message(FATAL_ERROR "Requested to link pre-build binary libraries from '${BIM_LIBS_PLTFM}', but they do not exist. Please download and extract the optional binary libraries archive.")
             endif()
-            set(LINK_LIBRARIES ${LINK_LIBRARIES} ${BIM_LIBS_PLTFM}/libavformat.a)
-            set(LINK_LIBRARIES ${LINK_LIBRARIES} ${BIM_LIBS_PLTFM}/libavcodec.a)
-            set(LINK_LIBRARIES ${LINK_LIBRARIES} ${BIM_LIBS_PLTFM}/libswscale.a)
-            set(LINK_LIBRARIES ${LINK_LIBRARIES} ${BIM_LIBS_PLTFM}/libavutil.a)
-            set(LINK_LIBRARIES ${LINK_LIBRARIES} ${BIM_LIBS_PLTFM}/libvpx.a)
-            set(LINK_LIBRARIES ${LINK_LIBRARIES} ${BIM_LIBS_PLTFM}/libx264.a)
-            set(LINK_LIBRARIES ${LINK_LIBRARIES} ${BIM_LIBS_PLTFM}/libx264.a)
-            set(LINK_LIBRARIES ${LINK_LIBRARIES} ${BIM_LIBS_PLTFM}/libvpx.a)
-            set(LINK_LIBRARIES ${LINK_LIBRARIES} ${BIM_LIBS_PLTFM}/libxvidcore.a)
-            set(LINK_LIBRARIES ${LINK_LIBRARIES} ${BIM_LIBS_PLTFM}/libogg.a)
-            set(LINK_LIBRARIES ${LINK_LIBRARIES} ${BIM_LIBS_PLTFM}/libtheora.a)
-            set(LINK_LIBRARIES ${LINK_LIBRARIES} ${BIM_LIBS_PLTFM}/libtheoraenc.a)
-            set(LINK_LIBRARIES ${LINK_LIBRARIES} ${BIM_LIBS_PLTFM}/libtheoradec.a)
-            set(LINK_LIBRARIES ${LINK_LIBRARIES} -framework CoreFoundation -framework VideoDecodeAcceleration -framework QuartzCore)
+            set(FFMPEG_LIBRARIES
+                ${BIM_LIBS_PLTFM}/libavformat.a
+                ${BIM_LIBS_PLTFM}/libavcodec.a
+                ${BIM_LIBS_PLTFM}/libswscale.a
+                ${BIM_LIBS_PLTFM}/libavutil.a
+                ${BIM_LIBS_PLTFM}/libvpx.a
+                ${BIM_LIBS_PLTFM}/libx264.a
+                ${BIM_LIBS_PLTFM}/libx264.a
+                ${BIM_LIBS_PLTFM}/libvpx.a
+                ${BIM_LIBS_PLTFM}/libxvidcore.a
+                ${BIM_LIBS_PLTFM}/libogg.a
+                ${BIM_LIBS_PLTFM}/libtheora.a
+                ${BIM_LIBS_PLTFM}/libtheoraenc.a
+                ${BIM_LIBS_PLTFM}/libtheoradec.a
+                -framework CoreFoundation
+                -framework VideoDecodeAcceleration
+                -framework QuartzCore)
         elseif(UNIX)
             if(NOT EXISTS ${BIM_LIBS_PLTFM}/libavformat.a)
                 message(FATAL_ERROR "Requested to link pre-build binary libraries from '${BIM_LIBS_PLTFM}', but they do not exist. Please download and extract the optional binary libraries archive.")
             endif()
-            set(LINK_LIBRARIES ${LINK_LIBRARIES} ${BIM_LIBS_PLTFM}/libavformat.a)
-            set(LINK_LIBRARIES ${LINK_LIBRARIES} ${BIM_LIBS_PLTFM}/libavcodec.a)
-            set(LINK_LIBRARIES ${LINK_LIBRARIES} ${BIM_LIBS_PLTFM}/libswscale.a)
-            set(LINK_LIBRARIES ${LINK_LIBRARIES} ${BIM_LIBS_PLTFM}/libavutil.a)
-            set(LINK_LIBRARIES ${LINK_LIBRARIES} ${BIM_LIBS_PLTFM}/libvpx.a)
-            set(LINK_LIBRARIES ${LINK_LIBRARIES} ${BIM_LIBS_PLTFM}/libx264.a)
-            set(LINK_LIBRARIES ${LINK_LIBRARIES} -lpthread -lxvidcore -lopenjpeg -lschroedinger-1.0 -ltheora -ltheoraenc -ltheoradec -lbz2)
+            set(FFMPEG_LIBRARIES
+                ${BIM_LIBS_PLTFM}/libavformat.a
+                ${BIM_LIBS_PLTFM}/libavcodec.a
+                ${BIM_LIBS_PLTFM}/libswscale.a
+                ${BIM_LIBS_PLTFM}/libavutil.a
+                ${BIM_LIBS_PLTFM}/libvpx.a
+                ${BIM_LIBS_PLTFM}/libx264.a
+                -lxvidcore
+                -lopenjpeg
+                -lschroedinger-1.0
+                -ltheora
+                -ltheoraenc
+                -ltheoradec
+                -lpthread
+                -lbz2)
         endif()
     elseif(LIBBIOIMAGE)
         find_package(FFMPEG REQUIRED)
         include_directories(${FFMPEG_INCLUDE_DIR})
-        set(LINK_LIBRARIES ${LINK_LIBRARIES} ${FFMPEG_LIBRARIES})
     endif()
 endif()
 
@@ -832,37 +834,39 @@ if(BIC_ENABLE_GDCM)
             if(NOT EXISTS ${BIM_LIBS_PLTFM}/gdcm/gdcmcharls.lib)
                 message(FATAL_ERROR "Requested to link pre-build binary libraries from '${BIM_LIBS_PLTFM}', but they do not exist. Please download and extract the optional binary libraries archive.")
             endif()
-            set(LINK_LIBRARIES ${LINK_LIBRARIES} ${BIM_LIBS_PLTFM}/gdcm/gdcmcharls.lib)
-            set(LINK_LIBRARIES ${LINK_LIBRARIES} ${BIM_LIBS_PLTFM}/gdcm/gdcmCommon.lib)
-            set(LINK_LIBRARIES ${LINK_LIBRARIES} ${BIM_LIBS_PLTFM}/gdcm/gdcmDICT.lib)
-            set(LINK_LIBRARIES ${LINK_LIBRARIES} ${BIM_LIBS_PLTFM}/gdcm/gdcmDSED.lib)
-            set(LINK_LIBRARIES ${LINK_LIBRARIES} ${BIM_LIBS_PLTFM}/gdcm/gdcmexpat.lib)
-            set(LINK_LIBRARIES ${LINK_LIBRARIES} ${BIM_LIBS_PLTFM}/gdcm/gdcmgetopt.lib)
-            set(LINK_LIBRARIES ${LINK_LIBRARIES} ${BIM_LIBS_PLTFM}/gdcm/gdcmIOD.lib)
-            set(LINK_LIBRARIES ${LINK_LIBRARIES} ${BIM_LIBS_PLTFM}/gdcm/gdcmjpeg12.lib)
-            set(LINK_LIBRARIES ${LINK_LIBRARIES} ${BIM_LIBS_PLTFM}/gdcm/gdcmjpeg16.lib)
-            set(LINK_LIBRARIES ${LINK_LIBRARIES} ${BIM_LIBS_PLTFM}/gdcm/gdcmjpeg8.lib)
-            set(LINK_LIBRARIES ${LINK_LIBRARIES} ${BIM_LIBS_PLTFM}/gdcm/gdcmMEXD.lib)
-            set(LINK_LIBRARIES ${LINK_LIBRARIES} ${BIM_LIBS_PLTFM}/gdcm/gdcmMSFF.lib)
-            set(LINK_LIBRARIES ${LINK_LIBRARIES} ${BIM_LIBS_PLTFM}/gdcm/gdcmopenjpeg.lib)
-            set(LINK_LIBRARIES ${LINK_LIBRARIES} ${BIM_LIBS_PLTFM}/gdcm/gdcmzlib.lib)
-            set(LINK_LIBRARIES ${LINK_LIBRARIES} ${BIM_LIBS_PLTFM}/gdcm/socketxx.lib)
+            set(GDCM_LIBRARIES
+                ${BIM_LIBS_PLTFM}/gdcm/gdcmcharls.lib    
+                ${BIM_LIBS_PLTFM}/gdcm/gdcmCommon.lib    
+                ${BIM_LIBS_PLTFM}/gdcm/gdcmDICT.lib    
+                ${BIM_LIBS_PLTFM}/gdcm/gdcmDSED.lib    
+                ${BIM_LIBS_PLTFM}/gdcm/gdcmexpat.lib    
+                ${BIM_LIBS_PLTFM}/gdcm/gdcmgetopt.lib    
+                ${BIM_LIBS_PLTFM}/gdcm/gdcmIOD.lib    
+                ${BIM_LIBS_PLTFM}/gdcm/gdcmjpeg12.lib    
+                ${BIM_LIBS_PLTFM}/gdcm/gdcmjpeg16.lib    
+                ${BIM_LIBS_PLTFM}/gdcm/gdcmjpeg8.lib    
+                ${BIM_LIBS_PLTFM}/gdcm/gdcmMEXD.lib    
+                ${BIM_LIBS_PLTFM}/gdcm/gdcmMSFF.lib    
+                ${BIM_LIBS_PLTFM}/gdcm/gdcmopenjpeg.lib    
+                ${BIM_LIBS_PLTFM}/gdcm/gdcmzlib.lib    
+                ${BIM_LIBS_PLTFM}/gdcm/socketxx.lib)
         else()
             if(NOT EXISTS ${BIM_LIBS_PLTFM}/gdcm/libgdcmcharls.a)
                 message(FATAL_ERROR "Requested to link pre-build binary libraries from '${BIM_LIBS_PLTFM}', but they do not exist. Please download and extract the optional binary libraries archive.")
             endif()
-            set(LINK_LIBRARIES ${LINK_LIBRARIES} ${BIM_LIBS_PLTFM}/gdcm/libgdcmcharls.a)
-            set(LINK_LIBRARIES ${LINK_LIBRARIES} ${BIM_LIBS_PLTFM}/gdcm/libgdcmCommon.a)
-            set(LINK_LIBRARIES ${LINK_LIBRARIES} ${BIM_LIBS_PLTFM}/gdcm/libgdcmDICT.a)
-            set(LINK_LIBRARIES ${LINK_LIBRARIES} ${BIM_LIBS_PLTFM}/gdcm/libgdcmDSED.a)
-            set(LINK_LIBRARIES ${LINK_LIBRARIES} ${BIM_LIBS_PLTFM}/gdcm/libgdcmexpat.a)
-            set(LINK_LIBRARIES ${LINK_LIBRARIES} ${BIM_LIBS_PLTFM}/gdcm/libgdcmIOD.a)
-            set(LINK_LIBRARIES ${LINK_LIBRARIES} ${BIM_LIBS_PLTFM}/gdcm/libgdcmjpeg12.a)
-            set(LINK_LIBRARIES ${LINK_LIBRARIES} ${BIM_LIBS_PLTFM}/gdcm/libgdcmjpeg16.a)
-            set(LINK_LIBRARIES ${LINK_LIBRARIES} ${BIM_LIBS_PLTFM}/gdcm/libgdcmjpeg8.a)
-            set(LINK_LIBRARIES ${LINK_LIBRARIES} ${BIM_LIBS_PLTFM}/gdcm/libgdcmMSFF.a)
-            set(LINK_LIBRARIES ${LINK_LIBRARIES} ${BIM_LIBS_PLTFM}/gdcm/libgdcmopenjpeg.a)
-            set(LINK_LIBRARIES ${LINK_LIBRARIES} ${BIM_LIBS_PLTFM}/gdcm/libgdcmzlib.a)
+            set(GDCM_LIBRARIES
+                ${BIM_LIBS_PLTFM}/gdcm/libgdcmcharls.a    
+                ${BIM_LIBS_PLTFM}/gdcm/libgdcmCommon.a    
+                ${BIM_LIBS_PLTFM}/gdcm/libgdcmDICT.a    
+                ${BIM_LIBS_PLTFM}/gdcm/libgdcmDSED.a    
+                ${BIM_LIBS_PLTFM}/gdcm/libgdcmexpat.a    
+                ${BIM_LIBS_PLTFM}/gdcm/libgdcmIOD.a    
+                ${BIM_LIBS_PLTFM}/gdcm/libgdcmjpeg12.a    
+                ${BIM_LIBS_PLTFM}/gdcm/libgdcmjpeg16.a    
+                ${BIM_LIBS_PLTFM}/gdcm/libgdcmjpeg8.a    
+                ${BIM_LIBS_PLTFM}/gdcm/libgdcmMSFF.a    
+                ${BIM_LIBS_PLTFM}/gdcm/libgdcmopenjpeg.a    
+                ${BIM_LIBS_PLTFM}/gdcm/libgdcmzlib.a)
         endif()
     elseif(LIBBIOIMAGE)
         #find_package(gdcm REQUIRED)
@@ -934,8 +938,7 @@ if(BIC_INTERNAL_OPENJPEG)
 
     internal_add_library(openjpeg "${BIC_INTERNAL_OPENJPEG_SOURCES}" "${BIC_INTERNAL_OPENJPEG_HEADERS}" "${BIC_INTERNAL_OPENJPEG_INSTALLHEADERS}" "${BIC_INTERNAL_OPENJPEG_LINK_LIBRARIES}")
 
-    # TODO FIXME: merge this linker command with the automatic system library detection below:
-    set(LINK_LIBRARIES ${LINK_LIBRARIES} "${LIBRARY_OUTPUT_PATH}/${CMAKE_LIBRARY_PREFIX}openjpeg${CMAKE_LIBRARY_SUFFIX}")
+    set(OPENJPEG_LIBRARIES "${LIBRARY_OUTPUT_PATH}/${CMAKE_LIBRARY_PREFIX}openjpeg${CMAKE_LIBRARY_SUFFIX}")
 elseif(LIBBIOIMAGE)
     message(FATAL_ERROR "Automatic detection of system openjpeg library not implemented")
 endif()
@@ -979,13 +982,10 @@ if(BIC_INTERNAL_LIBRAW)
     internal_add_library(raw "${BIC_INTERNAL_LIBRAW_SOURCES}" "${BIC_INTERNAL_LIBRAW_HEADERS}" "${BIC_INTERNAL_LIBRAW_INSTALLHEADERS}" "${BIC_INTERNAL_LIBRAW_LINK_LIBRARIES}")
 
     # TODO FIXME: merge this linker command with the automatic system library detection below:
-    set(LINK_LIBRARIES ${LINK_LIBRARIES} "${LIBRARY_OUTPUT_PATH}/${CMAKE_LIBRARY_PREFIX}raw${CMAKE_LIBRARY_SUFFIX}")
+    set(LibRaw_LIBRARIES "${LIBRARY_OUTPUT_PATH}/${CMAKE_LIBRARY_PREFIX}raw${CMAKE_LIBRARY_SUFFIX}")
 elseif(LIBBIOIMAGE)
     find_package(LibRaw ${BIC_LIBRAW_REQUIRED_VERSION} REQUIRED)
     include_directories(${LibRaw_INCLUDE_DIR})
-    set(LINK_LIBRARIES ${LINK_LIBRARIES} ${LibRaw_LIBRARIES})
-    # to be thread-safe, better use:
-    #set(LINK_LIBRARIES ${LINK_LIBRARIES} ${LibRaw_r_LIBRARIES})
 endif()
 
 
@@ -994,15 +994,13 @@ endif()
 #---------------------------------------------------------------------
 
 # some configs first
-if(UNIX OR MINGW)
+if(UNIX OR MINGW OR APPLE)
     add_definitions(-DHAVE_UNISTD_H)
 endif()
 if(WIN32 AND NOT MINGW)
     add_definitions(-DHAVE_IO_H)
 endif()
-
 if(APPLE)
-    add_definitions(-DHAVE_UNISTD_H)
     add_definitions(-DWORDS_BIGENDIAN)
 endif()
 
@@ -1106,7 +1104,6 @@ elseif(LIBBIOIMAGE OR BIC_INTERNAL_LIBGEOTIFF)
     find_package(TIFF REQUIRED)
     include_directories(${TIFF_INCLUDE_DIR})
 endif()
-set(LINK_LIBRARIES ${LINK_LIBRARIES} ${TIFF_LIBRARIES})
 
 
 #---------------------------------------------------------------------
@@ -1295,7 +1292,6 @@ if(BIC_INTERNAL_PROJ4)
 elseif(LIBBIOIMAGE OR BIC_INTERNAL_LIBGEOTIFF)
     find_package(PROJ4 ${BIC_PROJ4_REQUIRED_VERSION} REQUIRED)
 endif()
-set(LINK_LIBRARIES ${LINK_LIBRARIES} ${PROJ4_LIBRARIES})
 
 
 #---------------------------------------------------------------------
@@ -1358,12 +1354,10 @@ if(BIC_INTERNAL_LIBGEOTIFF)
         add_dependencies(geotiff tiff)
     endif()
 
-    # TODO FIXME: merge this linker command with the automatic system library detection below:
-    set(LINK_LIBRARIES ${LINK_LIBRARIES} "${LIBRARY_OUTPUT_PATH}/${CMAKE_LIBRARY_PREFIX}geotiff${CMAKE_LIBRARY_SUFFIX}")
+    set(GEOTIFF_LIBRARIES "${LIBRARY_OUTPUT_PATH}/${CMAKE_LIBRARY_PREFIX}geotiff${CMAKE_LIBRARY_SUFFIX}")
 elseif(LIBBIOIMAGE)
     find_package(GeoTIFF REQUIRED)
     include_directories(${GEOTIFF_INCLUDE_DIR})
-    set(LINK_LIBRARIES ${LINK_LIBRARIES} ${GEOTIFF_LIBRARIES})
 endif()
 
 
@@ -1406,15 +1400,13 @@ if(BIC_INTERNAL_LIBPNG)
 
     internal_add_library(png "${BIC_INTERNAL_PNG_SOURCES}" "${BIC_INTERNAL_PNG_HEADERS}" "${BIC_INTERNAL_PNG_INSTALLHEADERS}" "${BIC_INTERNAL_PNG_LINK_LIBRARIES}")
 
-    # TODO FIXME: merge this linker command with the automatic system library detection below:
-    set(LINK_LIBRARIES ${LINK_LIBRARIES} "${LIBRARY_OUTPUT_PATH}/${CMAKE_LIBRARY_PREFIX}png${CMAKE_LIBRARY_SUFFIX}")
+    set(PNG_LIBRARY "${LIBRARY_OUTPUT_PATH}/${CMAKE_LIBRARY_PREFIX}png${CMAKE_LIBRARY_SUFFIX}")
 elseif(LIBBIOIMAGE)
     find_package(PNG REQUIRED)
-    include_directories(${PNG_INCLUDE_DIR})
-    set(LINK_LIBRARIES ${LINK_LIBRARIES} ${PNG_LIBRARY})
-    if(NOT "${PNG_VERSION_STRING}" MATCHES "^1.[4-9]|^2")
+    if(NOT "${PNG_VERSION_STRING}" MATCHES "^1.[4-9]|^[2.9]")
         message(FATAL_ERROR "Found png ${PNG_VERSION_STRING} is not sufficient, requiring at least png 1.4")
     endif()
+    include_directories(${PNG_INCLUDE_DIR})
 endif()
 
 
@@ -1432,11 +1424,9 @@ if(BIC_ENABLE_LIBJPEG_TURBO)
 
         internal_add_library(turbojpeg "${BIC_INTERNAL_LIBJPEG_TURBO_SOURCES}" "${BIC_INTERNAL_LIBJPEG_TURBO_HEADERS}" "${BIC_INTERNAL_LIBJPEG_TURBO_INSTALLHEADERS}" "${BIC_INTERNAL_LIBJPEG_TURBO_LINK_LIBRARIES}")
 
-        # TODO FIXME: merge this linker command with the automatic system library detection below:
-        set(LINK_LIBRARIES ${LINK_LIBRARIES} "${LIBRARY_OUTPUT_PATH}/${CMAKE_LIBRARY_PREFIX}turbojpeg${CMAKE_LIBRARY_SUFFIX}")
+        set(LibJpegTurbo_LIBRARIES "${LIBRARY_OUTPUT_PATH}/${CMAKE_LIBRARY_PREFIX}turbojpeg${CMAKE_LIBRARY_SUFFIX}")
     elseif(LIBBIOIMAGE)
         find_package(LibJpegTurbo REQUIRED)
-        set(LINK_LIBRARIES ${LINK_LIBRARIES} ${LibJpegTurbo_LIBRARIES})
         include_directories(${LibJpegTurbo_INCLUDE_DIRS})
     endif()
 endif()
@@ -1499,17 +1489,10 @@ if(NOT BIC_ENABLE_LIBJPEG_TURBO)
 
         internal_add_library(jpeg "${BIC_INTERNAL_LIBJPEG_SOURCES}" "${BIC_INTERNAL_LIBJPEG_HEADERS}" "${BIC_INTERNAL_LIBJPEG_INSTALLHEADERS}" "${BIC_INTERNAL_LIBJPEG_LINK_LIBRARIES}")
 
-        # TODO FIXME: merge this linker command with the automatic system library detection below:
-        set(LINK_LIBRARIES ${LINK_LIBRARIES} "${LIBRARY_OUTPUT_PATH}/${CMAKE_LIBRARY_PREFIX}jpeg${CMAKE_LIBRARY_SUFFIX}")
+        set(JPEG_LIBRARIES "${LIBRARY_OUTPUT_PATH}/${CMAKE_LIBRARY_PREFIX}jpeg${CMAKE_LIBRARY_SUFFIX}")
     elseif(LIBBIOIMAGE)
-        if(UNIX OR MINGW OR APPLE)
-            set(LINK_LIBRARIES ${LINK_LIBRARIES} -ljpeg)
-        elseif(WIN32)
-            if(NOT EXISTS ${BIM_LIBS_PLTFM}/libjpeg.lib)
-                message(FATAL_ERROR "Requested to link pre-build binary libraries from '${BIM_LIBS_PLTFM}', but they do not exist. Please download and extract the optional binary libraries archive.")
-            endif()
-            set(LINK_LIBRARIES ${LINK_LIBRARIES} ${BIM_LIBS_PLTFM}/libjpeg.lib)
-        endif()
+        find_package(JPEG REQUIRED)
+        include_directories(${JPEG_INCLUDE_DIR})
     endif()
 endif()
 
@@ -1673,12 +1656,10 @@ if(BIC_INTERNAL_EXIV2)
     internal_add_library(exiv2 "${BIC_INTERNAL_EXIV2_SOURCES}" "${BIC_INTERNAL_EXIV2_HEADERS}" "${BIC_INTERNAL_EXIV2_INSTALLHEADERS}" "${BIC_INTERNAL_EXIV2_LINK_LIBRARIES}")
     target_compile_definitions(exiv2 PUBLIC SUPPRESS_WARNINGS _FILE_OFFSET_BITS=64 EXV_BUILDING_LIB=1 DLL_EXPORT)
 
-    # TODO FIXME: merge this linker command with the automatic system library detection below:
-    set(LINK_LIBRARIES ${LINK_LIBRARIES} "${LIBRARY_OUTPUT_PATH}/${CMAKE_LIBRARY_PREFIX}exiv2${CMAKE_LIBRARY_SUFFIX}")
+    set(EXIV2_LIBRARIES "${LIBRARY_OUTPUT_PATH}/${CMAKE_LIBRARY_PREFIX}exiv2${CMAKE_LIBRARY_SUFFIX}")
 elseif(LIBBIOIMAGE)
     find_package(Exiv2 ${BIC_EXIV2_REQUIRED_VERSION} REQUIRED)
     include_directories(${EXIV2_INCLUDE_DIR})
-    set(LINK_LIBRARIES ${LINK_LIBRARIES} ${EXIV2_LIBRARIES})
 endif()
 
 
@@ -1708,8 +1689,9 @@ if(BIC_ENABLE_JXRLIB)
         if(NOT EXISTS ${BIM_LIBS_PLTFM}/libjxrglue.a)
             message(FATAL_ERROR "Requested to link pre-build binary libraries from '${BIM_LIBS_PLTFM}', but they do not exist. Please download and extract the optional binary libraries archive.")
         endif()
-        set(LINK_LIBRARIES ${LINK_LIBRARIES} ${BIM_LIBS_PLTFM}/libjxrglue.a)
-        set(LINK_LIBRARIES ${LINK_LIBRARIES} ${BIM_LIBS_PLTFM}/libjpegxr.a)
+        set(JXR_LIBRARIES
+            ${BIM_LIBS_PLTFM}/libjxrglue.a
+            ${BIM_LIBS_PLTFM}/libjpegxr.a)
 
         #set(BIC_INTERNAL_JXRLIB_SOURCES ${BIC_INTERNAL_JXRLIB_SOURCES}
         #    ${BIM_LIB_JXRLIB}/)
@@ -1725,7 +1707,6 @@ if(BIC_ENABLE_JXRLIB)
     elseif(LIBBIOIMAGE)
         find_package(JXR ${BIC_JXRLIB_REQUIRED_VERSION} REQUIRED)
         include_directories(${JXR_INCLUDE_DIR})
-        set(LINK_LIBRARIES ${LINK_LIBRARIES} ${JXR_LIBRARIES})
     endif()
 endif()
 
@@ -1750,12 +1731,14 @@ if(BIC_ENABLE_LIBWEBP)
             message(FATAL_ERROR "Requested to link pre-build binary libraries from '${BIM_LIBS_PLTFM}', but they do not exist. Please download and extract the optional binary libraries archive.")
         endif()
         set(WebP_INCLUDE_DIRS ${BIM_LIB_LIBWEBP}/src)
-        set(WebP_LIBRARIES ${BIM_LIBS_PLTFM}/libwebp.a ${BIM_LIBS_PLTFM}/libwebpmux.a ${BIM_LIBS_PLTFM}/libwebpdemux.a)
+        set(WebP_LIBRARIES
+            ${BIM_LIBS_PLTFM}/libwebp.a
+            ${BIM_LIBS_PLTFM}/libwebpmux.a
+            ${BIM_LIBS_PLTFM}/libwebpdemux.a)
     elseif(LIBBIOIMAGE)
         find_package(WebP ${BIC_LIBWEBP_REQUIRED_VERSION} REQUIRED)
     endif()
     include_directories(${WebP_INCLUDE_DIRS})
-    set(LINK_LIBRARIES ${LINK_LIBRARIES} ${WebP_LIBRARIES})
 endif()
 
 
@@ -1808,12 +1791,10 @@ if(BIC_INTERNAL_LCMS2)
 
     internal_add_library(lcms2 "${BIC_INTERNAL_LCMS2_SOURCES}" "${BIC_INTERNAL_LCMS2_HEADERS}" "${BIC_INTERNAL_LCMS2_INSTALLHEADERS}" "${BIC_INTERNAL_LCMS2_LINK_LIBRARIES}")
 
-    # TODO FIXME: merge this linker command with the automatic system library detection below:
-    set(LINK_LIBRARIES ${LINK_LIBRARIES} "${LIBRARY_OUTPUT_PATH}/${CMAKE_LIBRARY_PREFIX}lcms2${CMAKE_LIBRARY_SUFFIX}")
+    set(LCMS2_LIBRARIES "${LIBRARY_OUTPUT_PATH}/${CMAKE_LIBRARY_PREFIX}lcms2${CMAKE_LIBRARY_SUFFIX}")
 elseif(LIBBIOIMAGE)
     find_package(LCMS2 ${BIC_LCMS2_REQUIRED_VERSION} REQUIRED)
     include_directories(${LCMS2_INCLUDE_DIR})
-    set(LINK_LIBRARIES ${LINK_LIBRARIES} ${LCMS2_LIBRARIES})
 endif()
 
 
@@ -1827,7 +1808,6 @@ if(BIC_INTERNAL_LZMA)
 elseif(LIBBIOIMAGE)
     find_package(LibLZMA REQUIRED)
     include_directories(${LIBLZMA_INCLUDE_DIRS})
-    set(LINK_LIBRARIES ${LINK_LIBRARIES} ${LIBLZMA_LIBRARIES})
 endif()
 
 
@@ -1853,17 +1833,10 @@ if(BIC_INTERNAL_ZLIB)
 
     internal_add_library(z "${BIC_INTERNAL_ZLIB_SOURCES}" "${BIC_INTERNAL_ZLIB_HEADERS}" "${BIC_INTERNAL_ZLIB_INSTALLHEADERS}" "${BIC_INTERNAL_ZLIB_LINK_LIBRARIES}")
 
-    # TODO FIXME: merge this linker command with the automatic system library detection below:
-    set(LINK_LIBRARIES ${LINK_LIBRARIES} "${LIBRARY_OUTPUT_PATH}/${CMAKE_LIBRARY_PREFIX}z${CMAKE_LIBRARY_SUFFIX}")
+    set(ZLIB_LIBRARIES "${LIBRARY_OUTPUT_PATH}/${CMAKE_LIBRARY_PREFIX}z${CMAKE_LIBRARY_SUFFIX}")
 elseif(LIBBIOIMAGE)
-    if(UNIX OR MINGW OR APPLE)
-        set(LINK_LIBRARIES ${LINK_LIBRARIES} -lz)
-    elseif(WIN32)
-        if(NOT EXISTS ${BIM_LIBS_PLTFM}/zlib.lib)
-            message(FATAL_ERROR "Requested to link pre-build binary libraries from '${BIM_LIBS_PLTFM}', but they do not exist. Please download and extract the optional binary libraries archive.")
-        endif()
-        set(LINK_LIBRARIES ${LINK_LIBRARIES} ${BIM_LIBS_PLTFM}/zlib.lib)
-    endif()
+    find_package(ZLIB REQUIRED)
+    include_directories(${ZLIB_INCLUDE_DIRS})
 endif()
 
 
@@ -1884,25 +1857,92 @@ if(BIC_INTERNAL_BZLIB)
 
     internal_add_library(bz2 "${BIC_INTERNAL_BZLIB_SOURCES}" "${BIC_INTERNAL_BZLIB_HEADERS}" "${BIC_INTERNAL_BZLIB_INSTALLHEADERS}" "${BIC_INTERNAL_BZLIB_LINK_LIBRARIES}")
 
-    # TODO FIXME: merge this linker command with the automatic system library detection below:
-    set(LINK_LIBRARIES ${LINK_LIBRARIES} "${LIBRARY_OUTPUT_PATH}/${CMAKE_LIBRARY_PREFIX}bz2${CMAKE_LIBRARY_SUFFIX}")
+    set(BZIP2_LIBRARIES "${LIBRARY_OUTPUT_PATH}/${CMAKE_LIBRARY_PREFIX}bz2${CMAKE_LIBRARY_SUFFIX}")
 elseif(LIBBIOIMAGE)
-    if(UNIX OR MINGW OR APPLE)
-        set(LINK_LIBRARIES ${LINK_LIBRARIES} -lbz2)
-    elseif(WIN32)
-        if(NOT EXISTS ${BIM_LIBS_PLTFM}/libbz2.lib)
-            message(FATAL_ERROR "Requested to link pre-build binary libraries from '${BIM_LIBS_PLTFM}', but they do not exist. Please download and extract the optional binary libraries archive.")
-        endif()
-        set(LINK_LIBRARIES ${LINK_LIBRARIES} ${BIM_LIBS_PLTFM}/libbz2.lib)
-    endif()
+    find_package(BZip2 REQUIRED)
+    include_directories(${BZIP2_INCLUDE_DIR})
 endif()
 
 
-# generate a pkg-config configuration for bioimage:
+#---------------------------------------------------------------------
+# Linker library interdependency:
+# In order to define a matching linker order, shuffle the libraries
+# here as required. They will be linked (and defined in pkg-config)
+# in the order they appear here.
+#---------------------------------------------------------------------
+if(FFTW_LIBRARIES)
+    set(LINK_LIBRARIES ${LINK_LIBRARIES} ${FFTW_LIBRARIES})
+endif()
+set(LINK_LIBRARIES ${LINK_LIBRARIES} ${POLE_LIBRARIES})
+set(LINK_LIBRARIES ${LINK_LIBRARIES} ${JZON_LIBRARIES})
+set(LINK_LIBRARIES ${LINK_LIBRARIES} ${PUGIXML_LIBRARIES})
+if(NIFTI_LIBRARIES)
+    set(LINK_LIBRARIES ${LINK_LIBRARIES} ${NIFTI_LIBRARIES})
+endif()
+if(FFMPEG_LIBRARIES)
+    set(LINK_LIBRARIES ${LINK_LIBRARIES} ${FFMPEG_LIBRARIES})
+endif()
+if(GDCM_LIBRARIES)
+    set(LINK_LIBRARIES ${LINK_LIBRARIES} ${GDCM_LIBRARIES})
+endif()
+set(LINK_LIBRARIES ${LINK_LIBRARIES} ${OPENJPEG_LIBRARIES})
+set(LINK_LIBRARIES ${LINK_LIBRARIES} ${LibRaw_LIBRARIES})
+# to be thread-safe, better use for libraw:
+#set(LINK_LIBRARIES ${LINK_LIBRARIES} ${LibRaw_r_LIBRARIES})
+# NOTE: geotiff depends on proj4 so it must be listed before proj4:
+set(LINK_LIBRARIES ${LINK_LIBRARIES} ${GEOTIFF_LIBRARIES})
+set(LINK_LIBRARIES ${LINK_LIBRARIES} ${PROJ4_LIBRARIES})
+set(LINK_LIBRARIES ${LINK_LIBRARIES} ${TIFF_LIBRARIES})
+set(LINK_LIBRARIES ${LINK_LIBRARIES} ${PNG_LIBRARY})
+if(LibJpegTurbo_LIBRARIES)
+    set(LINK_LIBRARIES ${LINK_LIBRARIES} ${LibJpegTurbo_LIBRARIES})
+endif()
+if(JPEG_LIBRARIES)
+    set(LINK_LIBRARIES ${LINK_LIBRARIES} ${JPEG_LIBRARIES})
+endif()
+set(LINK_LIBRARIES ${LINK_LIBRARIES} ${EXIV2_LIBRARIES})
+if(JXR_LIBRARIES)
+    set(LINK_LIBRARIES ${LINK_LIBRARIES} ${JXR_LIBRARIES})
+endif()
+if(WebP_LIBRARIES)
+    set(LINK_LIBRARIES ${LINK_LIBRARIES} ${WebP_LIBRARIES})
+endif()
+set(LINK_LIBRARIES ${LINK_LIBRARIES} ${LCMS2_LIBRARIES})
+set(LINK_LIBRARIES ${LINK_LIBRARIES} ${LIBLZMA_LIBRARIES})
+set(LINK_LIBRARIES ${LINK_LIBRARIES} ${BZIP2_LIBRARIES})
+set(LINK_LIBRARIES ${LINK_LIBRARIES} ${ZLIB_LIBRARIES})
+if(UNIX)
+    find_package(DL REQUIRED)
+    include_directories(${DL_INCLUDES})
+    set(LINK_LIBRARIES ${LINK_LIBRARIES} ${DL_LIBRARIES})
+elseif(MINGW)
+    set(LINK_LIBRARIES ${LINK_LIBRARIES} -lws2_32)
+endif()
+if(UNIX OR MINGW)
+    # Find thread support (via pthread if possible):
+    set(THREADS_PREFER_PTHREAD_FLAG ON)
+    find_package(Threads REQUIRED)
+    #set(LINK_LIBRARIES ${LINK_LIBRARIES} Threads::Threads)
+    #if(THREADS_HAVE_PTHREAD_ARG)
+    #    target_compile_options(imgcnv PUBLIC "-pthread")
+    #endif()
+    #if(CMAKE_THREAD_LIBS_INIT)
+    #    set(LINK_LIBRARIES ${LINK_LIBRARIES} "${CMAKE_THREAD_LIBS_INIT}")
+    #endif()
+    set(LINK_LIBRARIES ${LINK_LIBRARIES} -lpthread)
+endif()
+
+
 if(LIBBIOIMAGE)
+    # generate a pkg-config configuration for bioimage:
     find_package(PkgConfig)
     if(PKG_CONFIG_FOUND)
-        # add linker flag '-l' to the names of libs:
+        # TODO FIXME: in the pkg-config we have absolute paths to most libraries,
+        # but not i.e. to libbioimage. We could add libbioimage also like this:
+        # "${LIBRARY_OUTPUT_PATH}/${CMAKE_LIBRARY_PREFIX}bioimage${CMAKE_LIBRARY_SUFFIX}"
+        # instead of like this: -L${libdir} -lbioimage
+
+        # separate libraries by space instead of semicolon:
         foreach(LIB ${LINK_LIBRARIES})
             set(BIOIMAGE_DEPENDENCY_LIBRARIES "${BIOIMAGE_DEPENDENCY_LIBRARIES} ${LIB}")
         endforeach()
@@ -1915,13 +1955,7 @@ if(LIBBIOIMAGE)
     # linking the library against its dependencies is not required
     # on all architectures, but it is required i.e. on Windows:
     target_link_libraries(bioimage ${LINK_LIBRARIES})
-    if(UNIX)
-        target_link_libraries(bioimage dl)
-    elseif(MINGW)
-        target_link_libraries(bioimage ws2_32)
-    endif()
 endif()
-
 
 
 if(BIC_ENABLE_IMGCNV)
@@ -1939,11 +1973,6 @@ if(BIC_ENABLE_IMGCNV)
     target_compile_options(imgcnv PRIVATE "$<$<CONFIG:DEBUG>:${DEBUG_FLAGS}>")
 
     target_link_libraries(imgcnv bioimage ${LINK_LIBRARIES})
-    if(UNIX)
-        target_link_libraries(imgcnv dl Threads::Threads)
-    elseif(MINGW)
-        target_link_libraries(imgcnv ws2_32)
-    endif()
 
     # Install target
     install(TARGETS imgcnv DESTINATION bin)
