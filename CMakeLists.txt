@@ -309,6 +309,16 @@ if(APPLE AND BIC_INTERNAL_ZLIB)
     message(FATAL_ERROR "Internal static zlib not supported on Apple platform.")
 endif()
 
+# some configs first
+if(UNIX OR MINGW OR APPLE)
+    add_definitions(-DHAVE_UNISTD_H)
+endif()
+if(WIN32 AND NOT MINGW)
+    add_definitions(-DHAVE_IO_H)
+endif()
+if(APPLE)
+    add_definitions(-DWORDS_BIGENDIAN)
+endif()
 
 
 #---------------------------------------------------------------------
@@ -1079,6 +1089,103 @@ endif()
 
 
 #---------------------------------------------------------------------
+# libjpeg-turbo
+#---------------------------------------------------------------------
+
+if(BIC_ENABLE_LIBJPEG_TURBO)
+    if(BIC_INTERNAL_LIBJPEG_TURBO STREQUAL "AUTO")
+        find_package(LibJpegTurbo ${BIC_LIBJPEG_TURBO_REQUIRED_VERSION})
+        if(LibJpegTurbo_FOUND)
+            set(BIC_INTERNAL_LIBJPEG_TURBO OFF)
+            message("System jpeg-turbo found in suitable version, disabling internal jpeg-turbo.")
+        else()
+            set(BIC_INTERNAL_LIBJPEG_TURBO ON)
+            message("System jpeg-turbo not found (or found unsuitable version), enabling internal jpeg-turbo.")
+        endif()
+    endif()
+    if(BIC_INTERNAL_LIBJPEG_TURBO)
+        include_directories(${BIM_LIB_JPG_TURBO})
+        set(BIC_INTERNAL_LIBJPEG_TURBO_SOURCES ${BIC_INTERNAL_LIBJPEG_TURBO_SOURCES}
+            ${BIM_LIB_JPG_TURBO}/jaricom.c
+            ${BIM_LIB_JPG_TURBO}/jcapimin.c
+            ${BIM_LIB_JPG_TURBO}/jcapistd.c)
+
+        internal_add_library(turbojpeg "${BIC_INTERNAL_LIBJPEG_TURBO_SOURCES}" "${BIC_INTERNAL_LIBJPEG_TURBO_HEADERS}" "${BIC_INTERNAL_LIBJPEG_TURBO_INSTALLHEADERS}" "${BIC_INTERNAL_LIBJPEG_TURBO_LINK_LIBRARIES}")
+
+        set(LibJpegTurbo_LIBRARIES "${LIBRARY_OUTPUT_PATH}/${CMAKE_LIBRARY_PREFIX}turbojpeg${CMAKE_LIBRARY_SUFFIX}")
+    elseif(LIBBIOIMAGE)
+        find_package(LibJpegTurbo ${BIC_LIBJPEG_TURBO_REQUIRED_VERSION} REQUIRED)
+        include_directories(${LibJpegTurbo_INCLUDE_DIRS})
+    endif()
+endif()
+
+
+#---------------------------------------------------------------------
+# libjpeg
+#---------------------------------------------------------------------
+
+if(NOT BIC_ENABLE_LIBJPEG_TURBO)
+    if(BIC_INTERNAL_LIBJPEG)
+        include_directories(${BIM_LIB_JPG})
+        set(BIC_INTERNAL_LIBJPEG_SOURCES ${BIC_INTERNAL_LIBJPEG_SOURCES}
+            ${BIM_LIB_JPG}/jaricom.c
+            ${BIM_LIB_JPG}/jcapimin.c
+            ${BIM_LIB_JPG}/jcapistd.c
+            ${BIM_LIB_JPG}/jcarith.c
+            ${BIM_LIB_JPG}/jccoefct.c
+            ${BIM_LIB_JPG}/jccolor.c
+            ${BIM_LIB_JPG}/jcdctmgr.c
+            ${BIM_LIB_JPG}/jchuff.c
+            ${BIM_LIB_JPG}/jcinit.c
+            ${BIM_LIB_JPG}/jcmainct.c
+            ${BIM_LIB_JPG}/jcmarker.c
+            ${BIM_LIB_JPG}/jcmaster.c
+            ${BIM_LIB_JPG}/jcomapi.c
+            ${BIM_LIB_JPG}/jcparam.c
+            ${BIM_LIB_JPG}/jcprepct.c
+            ${BIM_LIB_JPG}/jcsample.c
+            ${BIM_LIB_JPG}/jctrans.c
+            ${BIM_LIB_JPG}/jdapimin.c
+            ${BIM_LIB_JPG}/jdapistd.c
+            ${BIM_LIB_JPG}/jdarith.c
+            ${BIM_LIB_JPG}/jdatadst.c
+            ${BIM_LIB_JPG}/jdatasrc.c
+            ${BIM_LIB_JPG}/jdcoefct.c
+            ${BIM_LIB_JPG}/jdcolor.c
+            ${BIM_LIB_JPG}/jddctmgr.c
+            ${BIM_LIB_JPG}/jdhuff.c
+            ${BIM_LIB_JPG}/jdinput.c
+            ${BIM_LIB_JPG}/jdmainct.c
+            ${BIM_LIB_JPG}/jdmarker.c
+            ${BIM_LIB_JPG}/jdmaster.c
+            ${BIM_LIB_JPG}/jdmerge.c
+            ${BIM_LIB_JPG}/jdpostct.c
+            ${BIM_LIB_JPG}/jdsample.c
+            ${BIM_LIB_JPG}/jdtrans.c
+            ${BIM_LIB_JPG}/jerror.c
+            ${BIM_LIB_JPG}/jfdctflt.c
+            ${BIM_LIB_JPG}/jfdctfst.c
+            ${BIM_LIB_JPG}/jfdctint.c
+            ${BIM_LIB_JPG}/jidctflt.c
+            ${BIM_LIB_JPG}/jidctfst.c
+            ${BIM_LIB_JPG}/jidctint.c
+            ${BIM_LIB_JPG}/jmemmgr.c
+            ${BIM_LIB_JPG}/jquant1.c
+            ${BIM_LIB_JPG}/jquant2.c
+            ${BIM_LIB_JPG}/jutils.c
+            ${BIM_LIB_JPG}/jmemansi.c)
+
+        internal_add_library(jpeg "${BIC_INTERNAL_LIBJPEG_SOURCES}" "${BIC_INTERNAL_LIBJPEG_HEADERS}" "${BIC_INTERNAL_LIBJPEG_INSTALLHEADERS}" "${BIC_INTERNAL_LIBJPEG_LINK_LIBRARIES}")
+
+        set(JPEG_LIBRARIES "${LIBRARY_OUTPUT_PATH}/${CMAKE_LIBRARY_PREFIX}jpeg${CMAKE_LIBRARY_SUFFIX}")
+    elseif(LIBBIOIMAGE)
+        find_package(JPEG REQUIRED)
+        include_directories(${JPEG_INCLUDE_DIR})
+    endif()
+endif()
+
+
+#---------------------------------------------------------------------
 # libraw
 #---------------------------------------------------------------------
 
@@ -1095,17 +1202,6 @@ endif()
 if(BIC_INTERNAL_LIBRAW)
     add_definitions(-DLIBRAW_BUILDLIB -DLIBRAW_NODLL -DUSE_JPEG -DUSE_ZLIB -DUSE_LCMS2)
     include_directories(${BIM_LIB_RAW})
-
-    # LibRaw builds on jpeg:
-    if(BIC_ENABLE_LIBJPEG_TURBO)
-        if(BIC_INTERNAL_LIBJPEG_TURBO)
-            include_directories(${BIM_LIB_JPG_TURBO})
-        endif()
-    else()
-        if(BIC_INTERNAL_LIBJPEG)
-            include_directories(${BIM_LIB_JPG})
-        endif()
-    endif()
 
     set(BIC_INTERNAL_LIBRAW_SOURCES ${BIC_INTERNAL_LIBRAW_SOURCES}
         ${BIM_LIB_RAW}/src/libraw_c_api.cpp
@@ -1131,22 +1227,6 @@ if(BIC_INTERNAL_LIBRAW)
 elseif(LIBBIOIMAGE)
     find_package(LibRaw ${BIC_LIBRAW_REQUIRED_VERSION} REQUIRED)
     include_directories(${LibRaw_INCLUDE_DIR})
-endif()
-
-
-#---------------------------------------------------------------------
-# Now adding static libraries
-#---------------------------------------------------------------------
-
-# some configs first
-if(UNIX OR MINGW OR APPLE)
-    add_definitions(-DHAVE_UNISTD_H)
-endif()
-if(WIN32 AND NOT MINGW)
-    add_definitions(-DHAVE_IO_H)
-endif()
-if(APPLE)
-    add_definitions(-DWORDS_BIGENDIAN)
 endif()
 
 
@@ -1552,103 +1632,6 @@ elseif(LIBBIOIMAGE)
         message(FATAL_ERROR "Found png ${PNG_VERSION_STRING} is not sufficient, requiring at least png 1.4")
     endif()
     include_directories(${PNG_INCLUDE_DIR})
-endif()
-
-
-#---------------------------------------------------------------------
-# libjpeg-turbo
-#---------------------------------------------------------------------
-
-if(BIC_ENABLE_LIBJPEG_TURBO)
-    if(BIC_INTERNAL_LIBJPEG_TURBO STREQUAL "AUTO")
-        find_package(LibJpegTurbo ${BIC_LIBJPEG_TURBO_REQUIRED_VERSION})
-        if(LibJpegTurbo_FOUND)
-            set(BIC_INTERNAL_LIBJPEG_TURBO OFF)
-            message("System jpeg-turbo found in suitable version, disabling internal jpeg-turbo.")
-        else()
-            set(BIC_INTERNAL_LIBJPEG_TURBO ON)
-            message("System jpeg-turbo not found (or found unsuitable version), enabling internal jpeg-turbo.")
-        endif()
-    endif()
-    if(BIC_INTERNAL_LIBJPEG_TURBO)
-        include_directories(${BIM_LIB_JPG_TURBO})
-        set(BIC_INTERNAL_LIBJPEG_TURBO_SOURCES ${BIC_INTERNAL_LIBJPEG_TURBO_SOURCES}
-            ${BIM_LIB_JPG_TURBO}/jaricom.c
-            ${BIM_LIB_JPG_TURBO}/jcapimin.c
-            ${BIM_LIB_JPG_TURBO}/jcapistd.c)
-
-        internal_add_library(turbojpeg "${BIC_INTERNAL_LIBJPEG_TURBO_SOURCES}" "${BIC_INTERNAL_LIBJPEG_TURBO_HEADERS}" "${BIC_INTERNAL_LIBJPEG_TURBO_INSTALLHEADERS}" "${BIC_INTERNAL_LIBJPEG_TURBO_LINK_LIBRARIES}")
-
-        set(LibJpegTurbo_LIBRARIES "${LIBRARY_OUTPUT_PATH}/${CMAKE_LIBRARY_PREFIX}turbojpeg${CMAKE_LIBRARY_SUFFIX}")
-    elseif(LIBBIOIMAGE)
-        find_package(LibJpegTurbo ${BIC_LIBJPEG_TURBO_REQUIRED_VERSION} REQUIRED)
-        include_directories(${LibJpegTurbo_INCLUDE_DIRS})
-    endif()
-endif()
-
-
-#---------------------------------------------------------------------
-# libjpeg
-#---------------------------------------------------------------------
-
-if(NOT BIC_ENABLE_LIBJPEG_TURBO)
-    if(BIC_INTERNAL_LIBJPEG)
-        include_directories(${BIM_LIB_JPG})
-        set(BIC_INTERNAL_LIBJPEG_SOURCES ${BIC_INTERNAL_LIBJPEG_SOURCES}
-            ${BIM_LIB_JPG}/jaricom.c
-            ${BIM_LIB_JPG}/jcapimin.c
-            ${BIM_LIB_JPG}/jcapistd.c
-            ${BIM_LIB_JPG}/jcarith.c
-            ${BIM_LIB_JPG}/jccoefct.c
-            ${BIM_LIB_JPG}/jccolor.c
-            ${BIM_LIB_JPG}/jcdctmgr.c
-            ${BIM_LIB_JPG}/jchuff.c
-            ${BIM_LIB_JPG}/jcinit.c
-            ${BIM_LIB_JPG}/jcmainct.c
-            ${BIM_LIB_JPG}/jcmarker.c
-            ${BIM_LIB_JPG}/jcmaster.c
-            ${BIM_LIB_JPG}/jcomapi.c
-            ${BIM_LIB_JPG}/jcparam.c
-            ${BIM_LIB_JPG}/jcprepct.c
-            ${BIM_LIB_JPG}/jcsample.c
-            ${BIM_LIB_JPG}/jctrans.c
-            ${BIM_LIB_JPG}/jdapimin.c
-            ${BIM_LIB_JPG}/jdapistd.c
-            ${BIM_LIB_JPG}/jdarith.c
-            ${BIM_LIB_JPG}/jdatadst.c
-            ${BIM_LIB_JPG}/jdatasrc.c
-            ${BIM_LIB_JPG}/jdcoefct.c
-            ${BIM_LIB_JPG}/jdcolor.c
-            ${BIM_LIB_JPG}/jddctmgr.c
-            ${BIM_LIB_JPG}/jdhuff.c
-            ${BIM_LIB_JPG}/jdinput.c
-            ${BIM_LIB_JPG}/jdmainct.c
-            ${BIM_LIB_JPG}/jdmarker.c
-            ${BIM_LIB_JPG}/jdmaster.c
-            ${BIM_LIB_JPG}/jdmerge.c
-            ${BIM_LIB_JPG}/jdpostct.c
-            ${BIM_LIB_JPG}/jdsample.c
-            ${BIM_LIB_JPG}/jdtrans.c
-            ${BIM_LIB_JPG}/jerror.c
-            ${BIM_LIB_JPG}/jfdctflt.c
-            ${BIM_LIB_JPG}/jfdctfst.c
-            ${BIM_LIB_JPG}/jfdctint.c
-            ${BIM_LIB_JPG}/jidctflt.c
-            ${BIM_LIB_JPG}/jidctfst.c
-            ${BIM_LIB_JPG}/jidctint.c
-            ${BIM_LIB_JPG}/jmemmgr.c
-            ${BIM_LIB_JPG}/jquant1.c
-            ${BIM_LIB_JPG}/jquant2.c
-            ${BIM_LIB_JPG}/jutils.c
-            ${BIM_LIB_JPG}/jmemansi.c)
-
-        internal_add_library(jpeg "${BIC_INTERNAL_LIBJPEG_SOURCES}" "${BIC_INTERNAL_LIBJPEG_HEADERS}" "${BIC_INTERNAL_LIBJPEG_INSTALLHEADERS}" "${BIC_INTERNAL_LIBJPEG_LINK_LIBRARIES}")
-
-        set(JPEG_LIBRARIES "${LIBRARY_OUTPUT_PATH}/${CMAKE_LIBRARY_PREFIX}jpeg${CMAKE_LIBRARY_SUFFIX}")
-    elseif(LIBBIOIMAGE)
-        find_package(JPEG REQUIRED)
-        include_directories(${JPEG_INCLUDE_DIR})
-    endif()
 endif()
 
 
