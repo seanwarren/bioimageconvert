@@ -1615,9 +1615,6 @@ endif()
 
 if(BIC_INTERNAL_LIBPNG)
     include_directories(${BIM_LIB_PNG})
-    if(LIBBIOIMAGE)
-        target_include_directories(bioimage BEFORE PUBLIC ${BIM_LIB_PNG})
-    endif()
 
     # by default disable intel asm code
     if(UNIX)
