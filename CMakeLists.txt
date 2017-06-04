@@ -157,6 +157,7 @@ set(BIC_PROJ4_REQUIRED_VERSION 4.8.0)
 set(BIC_LIBWEBP_REQUIRED_VERSION 0.4.3)
 set(BIC_EXIV2_REQUIRED_VERSION 0.25)
 set(BIC_LIBJPEG_TURBO_REQUIRED_VERSION 1.2.90)
+set(BIC_ZLIB_REQUIRED_VERSION 1.2.7)
 
 
 
@@ -652,6 +653,138 @@ endif()
 
 
 #---------------------------------------------------------------------
+# zlib
+#---------------------------------------------------------------------
+
+if(BIC_INTERNAL_ZLIB STREQUAL "AUTO")
+    find_package(ZLIB ${BIC_ZLIB_REQUIRED_VERSION})
+    if(ZLIB_FOUND)
+        set(BIC_INTERNAL_ZLIB OFF)
+        message("System ZLib found in suitable version, disabling internal ZLib.")
+    else()
+        set(BIC_INTERNAL_ZLIB ON)
+        message("System ZLib not found (or found unsuitable version), enabling internal ZLib.")
+    endif()
+endif()
+if(BIC_INTERNAL_ZLIB)
+    include_directories(${BIM_LIB_Z})
+
+    set(BIC_INTERNAL_ZLIB_SOURCES ${BIC_INTERNAL_ZLIB_SOURCES}
+        ${BIM_LIB_Z}/adler32.c
+        ${BIM_LIB_Z}/compress.c
+        ${BIM_LIB_Z}/crc32.c
+        ${BIM_LIB_Z}/deflate.c
+        ${BIM_LIB_Z}/infback.c
+        ${BIM_LIB_Z}/inffast.c
+        ${BIM_LIB_Z}/inflate.c
+        ${BIM_LIB_Z}/inftrees.c
+        ${BIM_LIB_Z}/trees.c
+        ${BIM_LIB_Z}/uncompr.c
+        ${BIM_LIB_Z}/zutil.c)
+
+    internal_add_library(z "${BIC_INTERNAL_ZLIB_SOURCES}" "${BIC_INTERNAL_ZLIB_HEADERS}" "${BIC_INTERNAL_ZLIB_INSTALLHEADERS}" "${BIC_INTERNAL_ZLIB_LINK_LIBRARIES}")
+
+    set(ZLIB_LIBRARIES "${LIBRARY_OUTPUT_PATH}/${CMAKE_LIBRARY_PREFIX}z${CMAKE_LIBRARY_SUFFIX}")
+elseif(LIBBIOIMAGE)
+    find_package(ZLIB ${BIC_ZLIB_REQUIRED_VERSION} REQUIRED)
+    include_directories(${ZLIB_INCLUDE_DIRS})
+endif()
+
+
+#---------------------------------------------------------------------
+# bzlib
+#---------------------------------------------------------------------
+
+if(BIC_INTERNAL_BZLIB)
+    include_directories(${BIM_LIB_BZ2})
+    set(BIC_INTERNAL_BZLIB_SOURCES ${BIC_INTERNAL_BZLIB_SOURCES}
+        ${BIM_LIB_BZ2}/blocksort.c
+        ${BIM_LIB_BZ2}/bzlib.c
+        ${BIM_LIB_BZ2}/randtable.c
+        ${BIM_LIB_BZ2}/compress.c
+        ${BIM_LIB_BZ2}/crctable.c
+        ${BIM_LIB_BZ2}/decompress.c
+        ${BIM_LIB_BZ2}/huffman.c)
+
+    internal_add_library(bz2 "${BIC_INTERNAL_BZLIB_SOURCES}" "${BIC_INTERNAL_BZLIB_HEADERS}" "${BIC_INTERNAL_BZLIB_INSTALLHEADERS}" "${BIC_INTERNAL_BZLIB_LINK_LIBRARIES}")
+
+    set(BZIP2_LIBRARIES "${LIBRARY_OUTPUT_PATH}/${CMAKE_LIBRARY_PREFIX}bz2${CMAKE_LIBRARY_SUFFIX}")
+elseif(LIBBIOIMAGE)
+    find_package(BZip2 REQUIRED)
+    include_directories(${BZIP2_INCLUDE_DIR})
+endif()
+
+
+#---------------------------------------------------------------------
+# lcms2
+#---------------------------------------------------------------------
+
+if(BIC_INTERNAL_LCMS2 STREQUAL "AUTO")
+    find_package(LCMS2 ${BIC_LCMS2_REQUIRED_VERSION})
+    if(LCMS2_FOUND)
+        set(BIC_INTERNAL_LCMS2 OFF)
+        message("System lcms2 found in suitable version, disabling internal lcms2.")
+    else()
+        set(BIC_INTERNAL_LCMS2 ON)
+        message("System lcms2 not found (or found unsuitable version), enabling internal lcms2.")
+    endif()
+endif()
+if(BIC_INTERNAL_LCMS2)
+    include_directories(lcms2 ${BIM_LIB_LCMS2}/include)
+    set(BIC_INTERNAL_LCMS2_SOURCES ${BIC_INTERNAL_LCMS2_SOURCES}
+        ${BIM_LIB_LCMS2}/src/cmscam02.c
+        ${BIM_LIB_LCMS2}/src/cmscgats.c
+        ${BIM_LIB_LCMS2}/src/cmscnvrt.c
+        ${BIM_LIB_LCMS2}/src/cmserr.c
+        ${BIM_LIB_LCMS2}/src/cmsgamma.c
+        ${BIM_LIB_LCMS2}/src/cmsgmt.c
+        ${BIM_LIB_LCMS2}/src/cmshalf.c
+        ${BIM_LIB_LCMS2}/src/cmsintrp.c
+        ${BIM_LIB_LCMS2}/src/cmsio0.c
+        ${BIM_LIB_LCMS2}/src/cmsio1.c
+        ${BIM_LIB_LCMS2}/src/cmslut.c
+        ${BIM_LIB_LCMS2}/src/cmsmd5.c
+        ${BIM_LIB_LCMS2}/src/cmsmtrx.c
+        ${BIM_LIB_LCMS2}/src/cmsnamed.c
+        ${BIM_LIB_LCMS2}/src/cmsopt.c
+        ${BIM_LIB_LCMS2}/src/cmspack.c
+        ${BIM_LIB_LCMS2}/src/cmspcs.c
+        ${BIM_LIB_LCMS2}/src/cmsplugin.c
+        ${BIM_LIB_LCMS2}/src/cmsps2.c
+        ${BIM_LIB_LCMS2}/src/cmssamp.c
+        ${BIM_LIB_LCMS2}/src/cmssm.c
+        ${BIM_LIB_LCMS2}/src/cmstypes.c
+        ${BIM_LIB_LCMS2}/src/cmsvirt.c
+        ${BIM_LIB_LCMS2}/src/cmswtpnt.c
+        ${BIM_LIB_LCMS2}/src/cmsxform.c)
+
+    set(BIC_INTERNAL_LCMS2_INSTALLHEADERS ${BIC_INTERNAL_LCMS2_INSTALLHEADERS}
+        ${BIM_LIB_LCMS2}/include/lcms2.h
+        ${BIM_LIB_LCMS2}/include/lcms2_plugin.h)
+
+    internal_add_library(lcms2 "${BIC_INTERNAL_LCMS2_SOURCES}" "${BIC_INTERNAL_LCMS2_HEADERS}" "${BIC_INTERNAL_LCMS2_INSTALLHEADERS}" "${BIC_INTERNAL_LCMS2_LINK_LIBRARIES}")
+
+    set(LCMS2_LIBRARIES "${LIBRARY_OUTPUT_PATH}/${CMAKE_LIBRARY_PREFIX}lcms2${CMAKE_LIBRARY_SUFFIX}")
+elseif(LIBBIOIMAGE)
+    find_package(LCMS2 ${BIC_LCMS2_REQUIRED_VERSION} REQUIRED)
+    include_directories(${LCMS2_INCLUDE_DIR})
+endif()
+
+
+#---------------------------------------------------------------------
+# LZMA - XZ Utils
+#---------------------------------------------------------------------
+
+if(BIC_INTERNAL_LZMA)
+    include_directories(${BIM_LIB_LZMA}/liblzma/api)
+    message(FATAL_ERROR "Internal lzma currently not implemented.")
+elseif(LIBBIOIMAGE)
+    find_package(LibLZMA REQUIRED)
+    include_directories(${LIBLZMA_INCLUDE_DIRS})
+endif()
+
+
+#---------------------------------------------------------------------
 # Pole
 #---------------------------------------------------------------------
 
@@ -1113,7 +1246,7 @@ if(BIC_INTERNAL_LIBTIFF)
 
     set(TIFF_LIBRARIES "${LIBRARY_OUTPUT_PATH}/${CMAKE_LIBRARY_PREFIX}tiff${CMAKE_LIBRARY_SUFFIX}")
 elseif(LIBBIOIMAGE OR BIC_INTERNAL_LIBGEOTIFF)
-    find_package(TIFF REQUIRED)
+    find_package(TIFF ${BIC_LIBTIFF_REQUIRED_VERSION} REQUIRED)
     include_directories(${TIFF_INCLUDE_DIR})
 endif()
 
@@ -1448,7 +1581,7 @@ if(BIC_ENABLE_LIBJPEG_TURBO)
 
         set(LibJpegTurbo_LIBRARIES "${LIBRARY_OUTPUT_PATH}/${CMAKE_LIBRARY_PREFIX}turbojpeg${CMAKE_LIBRARY_SUFFIX}")
     elseif(LIBBIOIMAGE)
-        find_package(LibJpegTurbo REQUIRED)
+        find_package(LibJpegTurbo ${BIC_LIBJPEG_TURBO_REQUIRED_VERSION} REQUIRED)
         include_directories(${LibJpegTurbo_INCLUDE_DIRS})
     endif()
 endif()
@@ -1764,127 +1897,6 @@ if(BIC_ENABLE_LIBWEBP)
 endif()
 
 
-#---------------------------------------------------------------------
-# lcms2
-#---------------------------------------------------------------------
-
-if(BIC_INTERNAL_LCMS2 STREQUAL "AUTO")
-    find_package(LCMS2 ${BIC_LCMS2_REQUIRED_VERSION})
-    if(LCMS2_FOUND)
-        set(BIC_INTERNAL_LCMS2 OFF)
-        message("System lcms2 found in suitable version, disabling internal lcms2.")
-    else()
-        set(BIC_INTERNAL_LCMS2 ON)
-        message("System lcms2 not found (or found unsuitable version), enabling internal lcms2.")
-    endif()
-endif()
-if(BIC_INTERNAL_LCMS2)
-    include_directories(lcms2 ${BIM_LIB_LCMS2}/include)
-    set(BIC_INTERNAL_LCMS2_SOURCES ${BIC_INTERNAL_LCMS2_SOURCES}
-        ${BIM_LIB_LCMS2}/src/cmscam02.c
-        ${BIM_LIB_LCMS2}/src/cmscgats.c
-        ${BIM_LIB_LCMS2}/src/cmscnvrt.c
-        ${BIM_LIB_LCMS2}/src/cmserr.c
-        ${BIM_LIB_LCMS2}/src/cmsgamma.c
-        ${BIM_LIB_LCMS2}/src/cmsgmt.c
-        ${BIM_LIB_LCMS2}/src/cmshalf.c
-        ${BIM_LIB_LCMS2}/src/cmsintrp.c
-        ${BIM_LIB_LCMS2}/src/cmsio0.c
-        ${BIM_LIB_LCMS2}/src/cmsio1.c
-        ${BIM_LIB_LCMS2}/src/cmslut.c
-        ${BIM_LIB_LCMS2}/src/cmsmd5.c
-        ${BIM_LIB_LCMS2}/src/cmsmtrx.c
-        ${BIM_LIB_LCMS2}/src/cmsnamed.c
-        ${BIM_LIB_LCMS2}/src/cmsopt.c
-        ${BIM_LIB_LCMS2}/src/cmspack.c
-        ${BIM_LIB_LCMS2}/src/cmspcs.c
-        ${BIM_LIB_LCMS2}/src/cmsplugin.c
-        ${BIM_LIB_LCMS2}/src/cmsps2.c
-        ${BIM_LIB_LCMS2}/src/cmssamp.c
-        ${BIM_LIB_LCMS2}/src/cmssm.c
-        ${BIM_LIB_LCMS2}/src/cmstypes.c
-        ${BIM_LIB_LCMS2}/src/cmsvirt.c
-        ${BIM_LIB_LCMS2}/src/cmswtpnt.c
-        ${BIM_LIB_LCMS2}/src/cmsxform.c)
-
-    set(BIC_INTERNAL_LCMS2_INSTALLHEADERS ${BIC_INTERNAL_LCMS2_INSTALLHEADERS}
-        ${BIM_LIB_LCMS2}/include/lcms2.h
-        ${BIM_LIB_LCMS2}/include/lcms2_plugin.h)
-
-    internal_add_library(lcms2 "${BIC_INTERNAL_LCMS2_SOURCES}" "${BIC_INTERNAL_LCMS2_HEADERS}" "${BIC_INTERNAL_LCMS2_INSTALLHEADERS}" "${BIC_INTERNAL_LCMS2_LINK_LIBRARIES}")
-
-    set(LCMS2_LIBRARIES "${LIBRARY_OUTPUT_PATH}/${CMAKE_LIBRARY_PREFIX}lcms2${CMAKE_LIBRARY_SUFFIX}")
-elseif(LIBBIOIMAGE)
-    find_package(LCMS2 ${BIC_LCMS2_REQUIRED_VERSION} REQUIRED)
-    include_directories(${LCMS2_INCLUDE_DIR})
-endif()
-
-
-#---------------------------------------------------------------------
-# LZMA - XZ Utils
-#---------------------------------------------------------------------
-
-if(BIC_INTERNAL_LZMA)
-    include_directories(${BIM_LIB_LZMA}/liblzma/api)
-    message(FATAL_ERROR "Internal lzma currently not implemented.")
-elseif(LIBBIOIMAGE)
-    find_package(LibLZMA REQUIRED)
-    include_directories(${LIBLZMA_INCLUDE_DIRS})
-endif()
-
-
-#---------------------------------------------------------------------
-# zlib
-#---------------------------------------------------------------------
-
-if(BIC_INTERNAL_ZLIB)
-    include_directories(${BIM_LIB_Z})
-
-    set(BIC_INTERNAL_ZLIB_SOURCES ${BIC_INTERNAL_ZLIB_SOURCES}
-        ${BIM_LIB_Z}/adler32.c
-        ${BIM_LIB_Z}/compress.c
-        ${BIM_LIB_Z}/crc32.c
-        ${BIM_LIB_Z}/deflate.c
-        ${BIM_LIB_Z}/infback.c
-        ${BIM_LIB_Z}/inffast.c
-        ${BIM_LIB_Z}/inflate.c
-        ${BIM_LIB_Z}/inftrees.c
-        ${BIM_LIB_Z}/trees.c
-        ${BIM_LIB_Z}/uncompr.c
-        ${BIM_LIB_Z}/zutil.c)
-
-    internal_add_library(z "${BIC_INTERNAL_ZLIB_SOURCES}" "${BIC_INTERNAL_ZLIB_HEADERS}" "${BIC_INTERNAL_ZLIB_INSTALLHEADERS}" "${BIC_INTERNAL_ZLIB_LINK_LIBRARIES}")
-
-    set(ZLIB_LIBRARIES "${LIBRARY_OUTPUT_PATH}/${CMAKE_LIBRARY_PREFIX}z${CMAKE_LIBRARY_SUFFIX}")
-elseif(LIBBIOIMAGE)
-    find_package(ZLIB REQUIRED)
-    include_directories(${ZLIB_INCLUDE_DIRS})
-endif()
-
-
-#---------------------------------------------------------------------
-# bzlib
-#---------------------------------------------------------------------
-
-if(BIC_INTERNAL_BZLIB)
-    include_directories(${BIM_LIB_BZ2})
-    set(BIC_INTERNAL_BZLIB_SOURCES ${BIC_INTERNAL_BZLIB_SOURCES}
-        ${BIM_LIB_BZ2}/blocksort.c
-        ${BIM_LIB_BZ2}/bzlib.c
-        ${BIM_LIB_BZ2}/randtable.c
-        ${BIM_LIB_BZ2}/compress.c
-        ${BIM_LIB_BZ2}/crctable.c
-        ${BIM_LIB_BZ2}/decompress.c
-        ${BIM_LIB_BZ2}/huffman.c)
-
-    internal_add_library(bz2 "${BIC_INTERNAL_BZLIB_SOURCES}" "${BIC_INTERNAL_BZLIB_HEADERS}" "${BIC_INTERNAL_BZLIB_INSTALLHEADERS}" "${BIC_INTERNAL_BZLIB_LINK_LIBRARIES}")
-
-    set(BZIP2_LIBRARIES "${LIBRARY_OUTPUT_PATH}/${CMAKE_LIBRARY_PREFIX}bz2${CMAKE_LIBRARY_SUFFIX}")
-elseif(LIBBIOIMAGE)
-    find_package(BZip2 REQUIRED)
-    include_directories(${BZIP2_INCLUDE_DIR})
-endif()
-
 
 #---------------------------------------------------------------------
 # Linker library interdependency:
@@ -1953,6 +1965,7 @@ if(UNIX OR MINGW)
     #endif()
     set(LINK_LIBRARIES ${LINK_LIBRARIES} -lpthread)
 endif()
+
 
 
 if(LIBBIOIMAGE)
