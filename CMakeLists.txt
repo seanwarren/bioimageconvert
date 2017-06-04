@@ -14,6 +14,29 @@
 #                Dmitry Fedorov ()
 #
 #
+# TODO / NOTES:
+# Currently these cmake build instructions are ordered by libraries,
+# for historic reasons. So currently the order of instructions is:
+#  (1)   library X
+#  (1a)  automatic detection of X
+#  (1b)  add include paths for internal X
+#  (1c)  build instructions for internal X
+#  (2)   library Y
+#  ...
+#  (end) linker commands for *all* libraries
+#
+# Better would be to shuffle the order such that the above blocks are
+# split as outlined here 1-4:
+#  (1) automatic detection for *all* libraries
+#  (2) add include paths for *all* libraries
+#  (3) build instructions for *all* internal libraries
+#  (4) linker commands for *all* libraries
+# This would be more correct, because then the include paths are always
+# shared for all internal libraries. Currently this is not the case! If
+# currently library X is listed below Y, then X will see the includes
+# of Y, but not vice versa! Recursive dependencies are currently not
+# supported at all, and the order of this build file is relevant!
+#
 ######################################################################
 cmake_minimum_required(VERSION 2.8.12 FATAL_ERROR)
 
