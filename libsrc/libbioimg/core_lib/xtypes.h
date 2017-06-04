@@ -50,7 +50,7 @@ typedef	unsigned char uint8;
 typedef	short int16;
 typedef	unsigned short uint16;
 
-#if defined WIN32 || defined WIN64 || defined _WIN32 || defined _WIN64 || defined _MSVC
+#if defined(WIN32) || defined(WIN64) || defined(_WIN32) || defined(_WIN64) || defined(_MSVC)
 typedef __int32 int32;
 typedef __int64 int64;
 typedef unsigned __int32 uint32;
@@ -77,7 +77,7 @@ typedef	long double float80;
 #undef max
 #endif
 
-#if (defined WIN32 || defined WIN64 || defined _WIN32 || defined _WIN64 || defined _MSVC) && !defined(__MINGW32__)
+#if ((defined(WIN32) || defined(WIN64) || defined(_WIN32) || defined(_WIN64) || defined(_MSVC)) && !defined(__MINGW32__))
 #define BIM_WIN
 #endif
 
