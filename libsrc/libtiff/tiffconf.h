@@ -7,6 +7,8 @@
 #ifndef _TIFFCONF_
 #define _TIFFCONF_
 
+#include <stdint.h>
+
 /* The size of a `int', as computed by sizeof. */
 #define SIZEOF_INT 4
 
@@ -23,14 +25,12 @@
 #define TIFF_INT64_FORMAT "%I64d"
 
 /* Signed 64-bit type */
-#if ((defined(_WIN64) || defined(WIN64) || defined(_WIN32) || defined(WIN32)) && !defined(__MINGW32__))
+#if defined(_WIN64) || defined(WIN64) || defined(_WIN32) || defined(WIN32)
 #define TIFF_INT64_T signed __int64
-#else
-#if defined(__x86_64__)
+#elif defined(__x86_64__)
 #define TIFF_INT64_T signed long
 #else
 #define TIFF_INT64_T signed long long
-#endif
 #endif
 
 /* Signed 8-bit type */
@@ -49,14 +49,12 @@
 #define TIFF_UINT64_FORMAT "%I64u"
 
 /* Unsigned 64-bit type */
-#if ((defined(_WIN64) || defined(WIN64) || defined(_WIN32) || defined(WIN32)) && !defined(__MINGW32__))
+#if defined(_WIN64) || defined(WIN64) || defined(_WIN32) || defined(WIN32)
 #define TIFF_UINT64_T unsigned __int64
-#else
-#if defined(__x86_64__)
+#elif defined(__x86_64__)
 #define TIFF_UINT64_T unsigned long
 #else
 #define TIFF_UINT64_T unsigned long long
-#endif
 #endif
 
 /* Unsigned 8-bit type */
