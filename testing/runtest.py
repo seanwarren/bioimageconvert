@@ -584,6 +584,12 @@ fetch_file('IMG_1913_prophoto_q90.webp')
 fetch_file('6J0A3548.CR2')
 fetch_file('IMG_0184_RGBA.png')
 
+fetch_file('20150917_05195_DNA-TET-25k-DE20_raw.region_000.sum-all_003-072.mrc')
+fetch_file('golgi.mrc')
+fetch_file('Tile_19491580_0_1.mrc')
+fetch_file('dual.rec')
+
+
 #**************************************************************
 # run tests
 #**************************************************************
@@ -655,6 +661,10 @@ if 'all' in mode or 'reading' in mode:
     test_image_read( "H264", "out_h264.mp4" )
     test_image_read( "H265", "out_h265.mp4" )
     test_image_read( "WebM", "out.webm" )
+
+    # MRC
+    test_image_read( "MRC", "Tile_19491580_0_1.mrc" )
+    test_image_read( "MRC", "golgi.mrc" )
 
 
 if 'all' in mode or 'writing' in mode:
@@ -1525,6 +1535,67 @@ if 'all' in mode or 'readmeta' in mode:
 #    meta_test['Exif/GPSInfo/GPSLatitude'] = '34deg 29.12550'
 #    test_metadata_read( "WebP", "IMG_1913_prophoto_q90.webp", meta_test )
 
+    meta_test = {}
+    meta_test['image_num_c'] = '1'
+    meta_test['image_num_t'] = '1'
+    meta_test['image_num_z'] = '1'
+    meta_test['image_num_x'] = '5120'
+    meta_test['image_num_y'] = '3840'
+    meta_test['image_pixel_depth'] = '32'
+    meta_test['image_pixel_format'] = 'floating point'
+    meta_test['pixel_resolution_x'] = '2.510000'
+    meta_test['pixel_resolution_y'] = '2.510000'
+    meta_test['pixel_resolution_z'] = '1.000000'
+    meta_test['pixel_resolution_unit_x'] = 'angstroms'
+    meta_test['MRC/alpha'] = '90.000000'
+    test_metadata_read( "MRC", "20150917_05195_DNA-TET-25k-DE20_raw.region_000.sum-all_003-072.mrc", meta_test )
+
+    meta_test = {}
+    meta_test['image_num_c'] = '1'
+    meta_test['image_num_t'] = '32'
+    meta_test['image_num_z'] = '1'
+    meta_test['image_num_x'] = '256'
+    meta_test['image_num_y'] = '256'
+    meta_test['image_pixel_depth'] = '8'
+    meta_test['image_pixel_format'] = 'signed integer'
+    meta_test['pixel_resolution_x'] = '1.000000'
+    meta_test['pixel_resolution_y'] = '1.000000'
+    meta_test['pixel_resolution_z'] = '1.000000'
+    meta_test['pixel_resolution_unit_x'] = 'angstroms'
+    meta_test['MRC/alpha'] = '90.000000'
+    test_metadata_read( "MRC", "golgi.mrc", meta_test )
+
+    meta_test = {}
+    meta_test['image_num_c'] = '1'
+    meta_test['image_num_t'] = '1'
+    meta_test['image_num_z'] = '1'
+    meta_test['image_num_x'] = '2048'
+    meta_test['image_num_y'] = '2048'
+    meta_test['image_pixel_depth'] = '16'
+    meta_test['image_pixel_format'] = 'unsigned integer'
+    meta_test['pixel_resolution_x'] = '0.000000'
+    meta_test['pixel_resolution_y'] = '0.000000'
+    meta_test['pixel_resolution_z'] = '0.000000'
+    meta_test['pixel_resolution_unit_x'] = 'angstroms'
+    meta_test['MRC/alpha'] = '0.000000'
+    meta_test['FEI/magnification'] = '84.000000'
+    meta_test['FEI/a_tilt'] = '-0.000066'
+    test_metadata_read( "MRC", "Tile_19491580_0_1.mrc", meta_test )
+
+    meta_test = {}
+    meta_test['image_num_c'] = '1'
+    meta_test['image_num_t'] = '78'
+    meta_test['image_num_z'] = '1'
+    meta_test['image_num_x'] = '572'
+    meta_test['image_num_y'] = '378'
+    meta_test['image_pixel_depth'] = '8'
+    meta_test['image_pixel_format'] = 'signed integer'
+    meta_test['pixel_resolution_x'] = '1.000000'
+    meta_test['pixel_resolution_y'] = '1.000000'
+    meta_test['pixel_resolution_z'] = '1.000000'
+    meta_test['pixel_resolution_unit_x'] = 'angstroms'
+    meta_test['MRC/alpha'] = '90.000000'
+    test_metadata_read( "MRC", "dual.rec", meta_test )
 
 if 'all' in mode or 'video' in mode:
     print
