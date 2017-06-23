@@ -76,7 +76,17 @@ void mrcGetImageInfo(FormatHandle *fmtHndl) {
     info->samples = 1;
     info->pixelType = bim::FMT_UNSIGNED;
     info->number_pages = h->nz;
-    info->number_z = info->number_pages;
+
+    if (h->ispg == 0) {
+        info->number_z = 1;
+        info->number_t = info->number_pages;
+    } else if (h->ispg == 1) {
+        info->number_z = info->number_pages;
+        info->number_t = 1;
+    } else if (h->ispg >= 401) {
+        info->number_z = h->mz;
+        info->number_t = h->nz/h->mz;
+    }
 
     // get correct type size
     switch (h->mode) {
@@ -91,6 +101,10 @@ void mrcGetImageInfo(FormatHandle *fmtHndl) {
     case MRC_MODE_UINT16:
         info->depth = 16;
         info->pixelType = bim::FMT_UNSIGNED;
+        break;
+    case MRC_MODE_INT32:
+        info->depth = 32;
+        info->pixelType = bim::FMT_SIGNED;
         break;
     case MRC_MODE_FLOAT32:
         info->depth = 32;
@@ -151,6 +165,7 @@ int mrcValidateFormatProc(BIM_MAGIC_STREAM *magic, bim::uint length, const bim::
     if (memcmp(ext, "SERI", 4) == 0) return 0; // SerialEM
     if (memcmp(ext, "AGAR", 4) == 0) return 0; // Agard
     if (memcmp(ext, "FEI1", 4) == 0) return 0; // FEI software, e.g.EPU and Xplore3D, Amira, Avizo
+    if (memcmp(ext, "EPUI", 4) == 0) return 0; // Image format from EPU
 
     if (ver == 20140) return 0; // Year * 10 + version within the year(base 0)
 
@@ -286,12 +301,12 @@ bim::uint mrc_append_metadata(FormatHandle *fmtHndl, TagMap *hash) {
     // resolution
     try {
         hash->set_value("pixel_resolution_x", h->xlen/h->mx);
-        hash->set_value("pixel_resolution_y", h->ylen / h->my);
-        hash->set_value("pixel_resolution_z", h->zlen / h->mz);
+        hash->set_value("pixel_resolution_y", h->ylen/h->my);
+        hash->set_value("pixel_resolution_z", h->zlen/h->mz);
 
-        hash->set_value("pixel_resolution_unit_x", "meters");
-        hash->set_value("pixel_resolution_unit_y", "meters");
-        hash->set_value("pixel_resolution_unit_z", "meters");
+        hash->set_value("pixel_resolution_unit_x", "angstroms");
+        hash->set_value("pixel_resolution_unit_y", "angstroms");
+        hash->set_value("pixel_resolution_unit_z", "angstroms");
     } catch (...) {
         //std::cerr << "unknown excepition\n";
     }
@@ -336,9 +351,9 @@ bim::uint mrc_append_metadata(FormatHandle *fmtHndl, TagMap *hash) {
         hash->set_value("pixel_resolution_y", h->pixel_size);
         hash->set_value("pixel_resolution_z", h->pixel_size);
 
-        hash->set_value("pixel_resolution_unit_x", "meters");
-        hash->set_value("pixel_resolution_unit_y", "meters");
-        hash->set_value("pixel_resolution_unit_z", "meters");
+        hash->set_value("pixel_resolution_unit_x", "angstroms");
+        hash->set_value("pixel_resolution_unit_y", "angstroms");
+        hash->set_value("pixel_resolution_unit_z", "angstroms");
 
 
         hash->set_value("FEI/a_tilt", h->a_tilt);
@@ -359,16 +374,17 @@ bim::uint mrc_append_metadata(FormatHandle *fmtHndl, TagMap *hash) {
     }
 
     // load external XML file with FEI metadata, if available
+    /*
     bim::xstring fn = fmtHndl->fileName;
     fn = fn.replace(".mrc", ".xml");
     pugi::xml_document doc;
     if (doc.load_file(fn.c_str())) {
         try {
             pugi::xpath_node matrix = doc.select_node("/MicroscopeImage/ReferenceTransformation/matrix");
-            /*for (pugi::xpath_node_set::const_iterator it = channels.begin(); it != channels.end(); ++it) {
-                pugi::xpath_node node = *it;
-                bim::xstring medium = node.node().attribute("Name").value();
-            }*/
+            //for (pugi::xpath_node_set::const_iterator it = channels.begin(); it != channels.end(); ++it) {
+            //    pugi::xpath_node node = *it;
+            //    bim::xstring medium = node.node().attribute("Name").value();
+            //}
 
             pugi::xpath_node node = doc.select_node("/MicroscopeImage/SpatialScale/pixelSize/x/numericValue");
             double xres = node.node().text().as_double();
@@ -381,7 +397,7 @@ bim::uint mrc_append_metadata(FormatHandle *fmtHndl, TagMap *hash) {
         } catch (pugi::xpath_exception& e) {
             // do nothing
         }
-    }
+    }*/
 
     return 0;
 }
@@ -394,7 +410,7 @@ FormatItem mrcItems[1] = {
     {
         "MRC",            // short name, no spaces
         "Medical Research Council", // Long format name
-        "mrc",        // pipe "|" separated supported extension list
+        "mrc|rec|ali",        // pipe "|" separated supported extension list
         1, //canRead;      // 0 - NO, 1 - YES
         0, //canWrite;     // 0 - NO, 1 - YES
         1, //canReadMeta;  // 0 - NO, 1 - YES

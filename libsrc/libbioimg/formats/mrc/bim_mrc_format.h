@@ -36,6 +36,7 @@ namespace bim {
 #define MRC_MODE_CINT16   3    // transform : complex 16 - bit integers
 #define MRC_MODE_CFLOAT32 4    // transform : complex 32 - bit reals
 #define MRC_MODE_UINT16   6    // 16 - bit unsigned integer
+#define MRC_MODE_INT32    7    // 32 - bit signed integer
 #define MRC_MODE_RGB8     16   // RGB uint8 per channel
 #define MRC_MODE_UINT4    101  // 4 - bit unsigned integer
 
@@ -64,6 +65,11 @@ typedef struct MrcHeader {
     bim::float32 amax;       // maximum pixel value of all images in file
     bim::uint32 amean;       // mean pixel value of all images in file
     bim::uint16 ispg;        // space group number, should be 0 for an image stack, 1 for a volume
+                             // Type of data	ISPG	NZ	  MZ
+                             // Single image	0	    1	  1
+                             // Image stack	    0	    n	  >=1
+                             // Single volume	1 	    m	  m
+                             // Volume stack	>=401   n*m	  m
     bim::uint16 nsymbt;      // size of extended header(which follows main header) in bytes
     bim::uint32 next;        // This value gives the offset (in bytes) from the end of the file header to the first dataset (image). 
                              // Thus you will find the first image at 1024 + next bytes
