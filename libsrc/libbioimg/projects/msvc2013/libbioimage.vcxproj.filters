@@ -309,6 +309,9 @@
     <ClCompile Include="..\..\formats\mrc\bim_mrc_format.cpp">
       <Filter>libbioimg\Formats</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\formats_api\typeize_buffer.cpp">
+      <Filter>libbioimg\FmtAPI</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\libbioimg\formats\bim_format_manager.h">

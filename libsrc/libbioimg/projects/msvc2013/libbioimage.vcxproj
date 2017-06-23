@@ -361,6 +361,7 @@
     <ClCompile Include="..\..\formats_api\bim_image_qt.cpp" />
     <ClCompile Include="..\..\formats_api\bim_image_transforms.cpp" />
     <ClCompile Include="..\..\formats_api\bim_image_win.cpp" />
+    <ClCompile Include="..\..\formats_api\typeize_buffer.cpp" />
     <ClCompile Include="..\..\transforms\chebyshev.cpp" />
     <ClCompile Include="..\..\transforms\FuzzyCalc.cpp" />
     <ClCompile Include="..\..\transforms\radon.cpp" />
