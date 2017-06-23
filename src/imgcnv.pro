@@ -55,18 +55,19 @@ CONFIG += stat_libtiff
 CONFIG += stat_libjpeg_turbo # pick one or the other
 CONFIG += stat_libpng
 CONFIG += stat_zlib
-#CONFIG += ffmpeg
+CONFIG += ffmpeg
+#CONFIG += dyn_ffmpeg
 #CONFIG += stat_bzlib
 CONFIG += dyn_bzlib
-#CONFIG += stat_exiv2
-CONFIG += dyn_exiv2
+CONFIG += stat_exiv2
+#CONFIG += dyn_exiv2
 CONFIG += stat_eigen
 CONFIG += stat_libraw
 CONFIG += stat_openjpeg
-#CONFIG += stat_jxrlib
-CONFIG += dyn_jxrlib
-#CONFIG += stat_libwebp
-CONFIG += dyn_libwebp
+CONFIG += stat_jxrlib
+#CONFIG += dyn_jxrlib
+CONFIG += stat_libwebp
+#CONFIG += dyn_libwebp
 CONFIG += stat_lcms2
 CONFIG += dyn_lzma
 
@@ -124,11 +125,11 @@ unix | mingw {
   BIM_BIN = ../$(PlatformName)/$(ConfigurationName)
 }
 
-DN_LIB_JPG = $$DN_LSRC/libjpeg
-DN_LIB_PNG = $$DN_LSRC/libpng
-DN_LIB_Z   = $$DN_LSRC/zlib
-DN_LIB_BZ2 = $$DN_LSRC/bzip2
-DN_LIB_BIO = $$DN_LSRC/libbioimg
+BIM_LIB_JPG = $$BIM_LSRC/libjpeg
+BIM_LIB_PNG = $$BIM_LSRC/libpng
+BIM_LIB_Z   = $$BIM_LSRC/zlib
+BIM_LIB_BZ2 = $$BIM_LSRC/bzip2
+BIM_LIB_BIO = $$BIM_LSRC/libbioimg
 
 BIM_LIB_TIF = $$BIM_LSRC/libtiff
 stat_libjpeg_turbo {
@@ -326,54 +327,7 @@ ffmpeg {
 
 } # FFMPEG
 
-#---------------------------------------------------------------------
-# GDCM - under linux we only use system dynamic version right now
-#---------------------------------------------------------------------
-
-stat_gdcm {
-
-  win32 {
-    LIBS += $$BIM_LIBS_PLTFM/gdcm/gdcmjpeg12.lib
-    LIBS += $$BIM_LIBS_PLTFM/gdcm/gdcmjpeg16.lib
-    LIBS += $$BIM_LIBS_PLTFM/gdcm/gdcmjpeg8.lib
-    LIBS += $$BIM_LIBS_PLTFM/gdcm/gdcmcharls.lib
-    LIBS += $$BIM_LIBS_PLTFM/gdcm/gdcmCommon.lib
-    LIBS += $$BIM_LIBS_PLTFM/gdcm/gdcmDICT.lib
-    LIBS += $$BIM_LIBS_PLTFM/gdcm/gdcmDSED.lib
-    LIBS += $$BIM_LIBS_PLTFM/gdcm/gdcmexpat.lib
-    LIBS += $$BIM_LIBS_PLTFM/gdcm/gdcmgetopt.lib
-    LIBS += $$BIM_LIBS_PLTFM/gdcm/gdcmIOD.lib
-    LIBS += $$BIM_LIBS_PLTFM/gdcm/gdcmMEXD.lib
-    LIBS += $$BIM_LIBS_PLTFM/gdcm/gdcmMSFF.lib
-    LIBS += $$BIM_LIBS_PLTFM/gdcm/gdcmopenjpeg.lib
-    LIBS += $$BIM_LIBS_PLTFM/gdcm/gdcmzlib.lib
-    LIBS += $$BIM_LIBS_PLTFM/gdcm/socketxx.lib
-  } else {
-    LIBS += $$BIM_LIBS_PLTFM/gdcm/libgdcmDICT.a
-    LIBS += $$BIM_LIBS_PLTFM/gdcm/libgdcmMSFF.a
-    LIBS += $$BIM_LIBS_PLTFM/gdcm/libgdcmCommon.a
-    LIBS += $$BIM_LIBS_PLTFM/gdcm/libgdcmDSED.a
-    LIBS += $$BIM_LIBS_PLTFM/gdcm/libgdcmIOD.a
-    LIBS += $$BIM_LIBS_PLTFM/gdcm/libgdcmcharls.a
-    LIBS += $$BIM_LIBS_PLTFM/gdcm/libgdcmexpat.a
-    LIBS += $$BIM_LIBS_PLTFM/gdcm/libgdcmjpeg8.a
-    LIBS += $$BIM_LIBS_PLTFM/gdcm/libgdcmjpeg12.a
-    LIBS += $$BIM_LIBS_PLTFM/gdcm/libgdcmjpeg16.a
-    LIBS += $$BIM_LIBS_PLTFM/gdcm/libgdcmopenjpeg.a
-    LIBS += $$BIM_LIBS_PLTFM/gdcm/libgdcmzlib.a
-  }
-
-  macx {
-    LIBS += -framework CoreFoundation
-  }
-
-} # static GDCM
-
-
-dyn_gdcm {
-  DEFINES += BIM_GDCM_FORMAT
-  SOURCES += $$BIM_FMT_DICOM/bim_dicom_format.cpp
-
+dyn_ffmpeg {
   win32 {
     #LIBS += -lavformat
   } else:macx {

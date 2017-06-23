@@ -54,8 +54,8 @@ CONFIG += stat_libpng
 CONFIG += stat_zlib
 #CONFIG += stat_bzlib
 CONFIG += dyn_bzlib
-#CONFIG += stat_exiv2
-CONFIG += dyn_exiv2
+CONFIG += stat_exiv2
+#CONFIG += dyn_exiv2
 CONFIG += stat_eigen
 CONFIG += stat_libraw
 CONFIG += stat_libgeotiff
@@ -63,11 +63,12 @@ CONFIG += stat_proj4
 CONFIG += libbioimage_transforms
 CONFIG += stat_pugixml
 CONFIG += stat_openjpeg
-#CONFIG += stat_jxrlib
-CONFIG += dyn_jxrlib
-#CONFIG += stat_libwebp
-CONFIG += dyn_libwebp
+CONFIG += stat_jxrlib
+#CONFIG += dyn_jxrlib
+CONFIG += stat_libwebp
+#CONFIG += dyn_libwebp
 CONFIG += stat_lcms2
+#CONFIG += dyn_lcms2
 macx:CONFIG += stat_lzma
 
 CONFIG += stat_gdcm
@@ -302,6 +303,7 @@ SOURCES += $$BIM_FMTS/bim_format_manager.cpp \
            $$BIM_FMTS/ole/bim_zvi_format_io.cpp \
            $$BIM_FMTS/ole/zvi.cpp \
            $$BIM_FMTS/dcraw/bim_dcraw_format.cpp \
+           $$BIM_FMTS/mrc/bim_mrc_format.cpp \
            $$BIM_FMTS/jp2/bim_jp2_format.cpp
 
            #$$BIM_FMTS/jp2/bim_jp2_color.cpp \
@@ -344,6 +346,7 @@ HEADERS += $$BIM_FMTS/dcraw/bim_dcraw_format.h \
            $$BIM_FMTS/mpeg/OVideo.h \
            $$BIM_FMTS/ome/bim_ome_format.h \
            $$BIM_FMTS/meta_format_manager.h \
+           $$BIM_FMTS/mrc/bim_mrc_format.h \
            $$BIM_FMTS/jp2/bim_jp2_format.h
 
 
@@ -980,6 +983,7 @@ stat_libwebp {
 
 stat_lcms2 {
   INCLUDEPATH += $$BIM_LIB_LCMS2/include
+} else:dyn_lcms2 {
   unix | mingw:LIBS += -llcms2
 }
 
