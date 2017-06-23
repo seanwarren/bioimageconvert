@@ -340,6 +340,7 @@
     </ClCompile>
     <ClCompile Include="..\..\formats\jp2\bim_jp2_format.cpp" />
     <ClCompile Include="..\..\formats\jxr\bim_jxr_format.cpp" />
+    <ClCompile Include="..\..\formats\mrc\bim_mrc_format.cpp" />
     <ClCompile Include="..\..\formats\nifti\bim_nifti_format.cpp" />
     <ClCompile Include="..\..\formats\ole\bim_oib_format_io.cpp" />
     <ClCompile Include="..\..\formats\ole\bim_zvi_format_io.cpp" />
