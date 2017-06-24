@@ -21,6 +21,10 @@ from subprocess import Popen, call, PIPE
 import time
 import urllib
 import posixpath
+import datetime
+import pytz
+from dateutil.parser import parse as date_parse
+import collections
 
 IMGCNV = './imgcnv'
 IMGCNVVER = __version__
@@ -31,6 +35,7 @@ local_store_tests   = 'tests'
 failed = 0
 passed = 0
 results = []
+
 
 ###############################################################
 # misc
@@ -88,6 +93,52 @@ def fetch_file(filename):
         print '!!! Could not find required test image: "%s" !!!'%filename
     return path
 
+def compare_datetime(dt1, dt2):
+    try:
+        tz = ('%+06.2f'%(time.timezone/-3600.0)).replace('.', '')
+
+        if isinstance(dt1, (datetime.datetime, datetime.time, datetime.date)) is not True:
+            dt1 = date_parse('%s%s'%(dt1, tz))
+
+        if isinstance(dt2, (datetime.datetime, datetime.time, datetime.date)) is not True:
+            dt2 = date_parse('%s%s'%(dt2, tz))
+
+        dt1 = dt1.astimezone(tz=pytz.utc)
+        dt2 = dt2.astimezone(tz=pytz.utc)
+        return (dt1==dt2)
+    except Exception:
+        return False
+
+def compare_iterables(v1, v2):
+    #print v1
+    #print v2
+    if isinstance(v1, list) is not True:
+        v1 = v1.split(',')
+    if isinstance(v2, list) is not True:
+        v2 = v2.split(',')
+    #print v1
+    #print v2
+    if len(v1) != len(v2): return False
+    for i in range(len(v1)):
+        #print v1[i]
+        #print v2[i]
+        if compare_values(v1[i], v2[i]) is not True:
+            return False
+    return True
+
+def compare_values(iv, tv):
+    try:
+        if isinstance(tv, (int, long)):
+            return (int(iv)==tv)
+        if isinstance(tv, (float)):
+            return (float(iv)==tv)
+        if isinstance(tv, (datetime.datetime, datetime.time, datetime.date)):
+            return compare_datetime(iv, tv)
+        if isinstance(tv, list):
+            return compare_iterables(iv, tv)
+    except:
+        pass
+    return (iv==tv)
 
 ###############################################################
 # info comparisons
@@ -101,15 +152,10 @@ class InfoComparator(object):
         print_failed('%s failed comparison [%s] [%s]'%(k, iv, tv))
 
 class InfoEquality(InfoComparator):
+
     def compare(self, iv, tv):
-        try:
-            if isinstance(tv, (int, long)):
-                return (int(iv)==tv)
-            if isinstance(tv, (float)):
-                return (float(iv)==tv)
-        except:
-            pass
-        return (iv==tv)
+        return compare_values(iv, tv)
+
     def fail(self, k, iv, tv):
         print_failed('%s failed comparison %s = %s'%(k, iv, tv))
 
@@ -121,14 +167,15 @@ class InfoNumericLessEqual(InfoComparator):
 
 
 def compare_info(info, test, cc=InfoEquality() ):
+    success = True
     for tk in test:
         if tk not in info:
             print_failed('%s not found in info'%(tk))
-            return False;
+            success = False
         if not cc.compare(info[tk], test[tk]):
             cc.fail( tk, info[tk], test[tk] )
-            return False;
-    return True
+            success = False
+    return success
 
 
 ###############################################################
@@ -198,7 +245,7 @@ def test_image_read( format, filename ):
     else:
         print_passed('loading thumbnail info')
 
-    if compare_info( info_thb, {'pages':'1', 'channels':'3', 'depth':'8'} )==True:
+    if compare_info( info_thb, {'pages':1, 'channels':3, 'depth':8} )==True:
         if compare_info(info_thb, {'width':'128', 'height':'128'}, InfoNumericLessEqual())==True:
             print_passed('thumbnail geometry')
 
@@ -431,7 +478,9 @@ def test_image_commands( extra, filename, meta_test  ):
     print '%s - %s'%(extra, filename)
     print '---------------------------------------'
 
+    extra = [str(i) for i in extra]
     format = 'tiff'
+
     out_name = 'tests/_test_command_%s_%s.%s'%(filename, '_'.join(extra), format)
     out_fmt = format
     filename = 'images/%s'%(filename)
@@ -585,9 +634,12 @@ fetch_file('6J0A3548.CR2')
 fetch_file('IMG_0184_RGBA.png')
 
 fetch_file('20150917_05195_DNA-TET-25k-DE20_raw.region_000.sum-all_003-072.mrc')
+fetch_file('29kx_30epi_058_aligned.mrc')
 fetch_file('golgi.mrc')
 fetch_file('Tile_19491580_0_1.mrc')
 fetch_file('dual.rec')
+fetch_file('EMD-3001.map')
+fetch_file('EMD-3197.map')
 
 
 #**************************************************************
@@ -714,22 +766,22 @@ if 'all' in mode or 'meta' in mode:
     print '***************************************************'
 
     meta_test = {}
-    meta_test['image_num_z'] = '6'
-    meta_test['image_num_t'] = '1'
-    meta_test['pixel_resolution_x'] = '0.192406'
-    meta_test['pixel_resolution_y'] = '0.192406'
-    meta_test['pixel_resolution_z'] = '1.185000'
+    meta_test['image_num_z'] = 6
+    meta_test['image_num_t'] = 1
+    meta_test['pixel_resolution_x'] = 0.192406
+    meta_test['pixel_resolution_y'] = 0.192406
+    meta_test['pixel_resolution_z'] = 1.185
     meta_test['pixel_resolution_unit_x'] = 'microns'
     meta_test['pixel_resolution_unit_y'] = 'microns'
     meta_test['pixel_resolution_unit_z'] = 'microns'
     test_image_metadata( "PIC", "MZ2.PIC", meta_test )
 
     meta_test = {}
-    meta_test['image_num_z'] = '13'
-    meta_test['image_num_t'] = '1'
-    meta_test['pixel_resolution_x'] = '0.207160'
-    meta_test['pixel_resolution_y'] = '0.207160'
-    meta_test['pixel_resolution_z'] = '1.000000'
+    meta_test['image_num_z'] = 13
+    meta_test['image_num_t'] = 1
+    meta_test['pixel_resolution_x'] = 0.20716
+    meta_test['pixel_resolution_y'] = 0.20716
+    meta_test['pixel_resolution_z'] = 1
     meta_test['pixel_resolution_unit_x'] = 'microns'
     meta_test['pixel_resolution_unit_y'] = 'microns'
     meta_test['pixel_resolution_unit_z'] = 'microns'
@@ -738,15 +790,15 @@ if 'all' in mode or 'meta' in mode:
     # the following fields will not be tested for conversion into OME-TIFF
     meta_test_full = deepcopy(meta_test)
     meta_test_full['objective/name'] = 'UPLAPO 40XO'
-    meta_test_full['objective/magnification'] = 40.0
+    meta_test_full['objective/magnification'] = 40
     test_image_metadata( "TIFF Fluoview", "161pkcvampz1Live2-17-2004_11-57-21_AM.tif", meta_test_full, meta_test )
 
     meta_test = {}
-    meta_test['image_num_z'] = '30'
-    meta_test['image_num_t'] = '1'
-    meta_test['pixel_resolution_x'] = '0.138661'
-    meta_test['pixel_resolution_y'] = '0.138661'
-    meta_test['pixel_resolution_z'] = '1.000000'
+    meta_test['image_num_z'] = 30
+    meta_test['image_num_t'] = 1
+    meta_test['pixel_resolution_x'] = 0.138661
+    meta_test['pixel_resolution_y'] = 0.138661
+    meta_test['pixel_resolution_z'] = 1
     meta_test['pixel_resolution_unit_x'] = 'microns'
     meta_test['pixel_resolution_unit_y'] = 'microns'
     meta_test['pixel_resolution_unit_z'] = 'microns'
@@ -768,11 +820,11 @@ if 'all' in mode or 'meta' in mode:
     test_image_metadata( "TIFF Zeiss LSM", "combinedsubtractions.lsm", meta_test_full, meta_test )
 
     meta_test = {}
-    meta_test['image_num_z'] = '152'
-    meta_test['image_num_t'] = '1'
-    meta_test['pixel_resolution_x'] = '0.124000'
-    meta_test['pixel_resolution_y'] = '0.124000'
-    meta_test['pixel_resolution_z'] = '0.350000'
+    meta_test['image_num_z'] = 152
+    meta_test['image_num_t'] = 1
+    meta_test['pixel_resolution_x'] = 0.124
+    meta_test['pixel_resolution_y'] = 0.124
+    meta_test['pixel_resolution_z'] = 0.35
     meta_test['pixel_resolution_unit_x'] = 'microns'
     meta_test['pixel_resolution_unit_y'] = 'microns'
     meta_test['pixel_resolution_unit_z'] = 'microns'
@@ -782,39 +834,39 @@ if 'all' in mode or 'meta' in mode:
     # the following fields will not be tested for conversion into OME-TIFF
     meta_test_full = deepcopy(meta_test)
     meta_test_full['objective/name'] = 'UPLFLN    40X O  NA:1.30'
-    meta_test_full['objective/magnification'] = 40.0
+    meta_test_full['objective/magnification'] = 40
     meta_test_full['objective/numerical_aperture'] = 1.3
     test_image_metadata( "OME-TIFF", "wta.ome.tif", meta_test_full, meta_test )
 
     meta_test = {}
-    meta_test['image_num_z'] = '1'
-    meta_test['image_num_t'] = '31'
-    meta_test['pixel_resolution_t'] = '4.000000'
+    meta_test['image_num_z'] = 1
+    meta_test['image_num_t'] = 31
+    meta_test['pixel_resolution_t'] = 4
     test_image_metadata( "STK", "K560-tax-6-7-7-1.stk", meta_test )
 
     meta_test = {}
-    meta_test['image_num_z'] = '105'
-    meta_test['image_num_t'] = '1'
-    meta_test['pixel_resolution_x'] = '0.430000'
-    meta_test['pixel_resolution_y'] = '0.430000'
-    meta_test['pixel_resolution_z'] = '0.488000'
+    meta_test['image_num_z'] = 105
+    meta_test['image_num_t'] = 1
+    meta_test['pixel_resolution_x'] = 0.43
+    meta_test['pixel_resolution_y'] = 0.43
+    meta_test['pixel_resolution_z'] = 0.488
     meta_test['pixel_resolution_unit_x'] = 'microns'
     meta_test['pixel_resolution_unit_y'] = 'microns'
     meta_test['pixel_resolution_unit_z'] = 'microns'
     # the following fields will not be tested for conversion into OME-TIFF
     meta_test_full = deepcopy(meta_test)
-    meta_test_full['stage_distance_z'] = '0.488000'
-    meta_test_full['stage_position_x'] = '3712.200000'
-    meta_test_full['stage_position_y'] = '-2970.340000'
-    meta_test_full['stage_position_z'] = '25.252000'
+    meta_test_full['stage_distance_z'] = 0.488
+    meta_test_full['stage_position_x'] = 3712.2
+    meta_test_full['stage_position_y'] = -2970.34
+    meta_test_full['stage_position_z'] = 25.252
     test_image_metadata( "STK", "sxn3_w1RGB-488nm_s1.stk", meta_test_full, meta_test )
 
     meta_test = {}
-    meta_test['image_num_z'] = '16'
-    meta_test['image_num_t'] = '1'
-    meta_test['pixel_resolution_x'] = '2.483410'
-    meta_test['pixel_resolution_y'] = '2.480193'
-    meta_test['pixel_resolution_z'] = '0.937500'
+    meta_test['image_num_z'] = 16
+    meta_test['image_num_t'] = 1
+    meta_test['pixel_resolution_x'] = 2.48341
+    meta_test['pixel_resolution_y'] = 2.48019
+    meta_test['pixel_resolution_z'] = 0.9375
     meta_test['pixel_resolution_unit_x'] = 'microns'
     meta_test['pixel_resolution_unit_y'] = 'microns'
     meta_test['pixel_resolution_unit_z'] = 'microns'
@@ -823,36 +875,36 @@ if 'all' in mode or 'meta' in mode:
     test_image_metadata( "OIB", "MB_10X_20100303.oib", meta_test )
 
     meta_test = {}
-    meta_test['image_num_z'] = '1'
-    meta_test['image_num_t'] = '1'
-    meta_test['pixel_resolution_x'] = '0.177539'
-    meta_test['pixel_resolution_y'] = '0.177539'
+    meta_test['image_num_z'] = 1
+    meta_test['image_num_t'] = 1
+    meta_test['pixel_resolution_x'] = 0.177539
+    meta_test['pixel_resolution_y'] = 0.177539
     meta_test['pixel_resolution_unit_x'] = 'microns'
     meta_test['pixel_resolution_unit_y'] = 'microns'
     test_image_metadata( "PSIA", "040130Topography001.tif", meta_test )
 
     meta_test = {}
-    meta_test['image_num_z'] = '1'
-    meta_test['image_num_t'] = '1'
+    meta_test['image_num_z'] = 1
+    meta_test['image_num_t'] = 1
     #meta_test['image_num_p'] = '2'
-    meta_test['pixel_resolution_x'] = '0.058594'
-    meta_test['pixel_resolution_y'] = '0.058594'
+    meta_test['pixel_resolution_x'] = 0.0585938
+    meta_test['pixel_resolution_y'] = 0.0585938
     meta_test['pixel_resolution_unit_x'] = 'microns'
     meta_test['pixel_resolution_unit_y'] = 'microns'
     test_image_metadata( "NANOSCOPE", "AXONEME.002", meta_test )
 
     meta_test = {}
-    meta_test['image_num_z'] = '1'
-    meta_test['image_num_t'] = '1'
-    #meta_test['image_num_p'] = '3'
+    meta_test['image_num_z'] = 1
+    meta_test['image_num_t'] = 1
+    #meta_test['image_num_p'] = 3
     test_image_metadata( "IBW", "tubule20000.ibw", meta_test )
 
     meta_test = {}
-    meta_test['image_num_z'] = '13'
-    meta_test['image_num_t'] = '1'
-    meta_test['pixel_resolution_x'] = '0.207160'
-    meta_test['pixel_resolution_y'] = '0.207160'
-    meta_test['pixel_resolution_z'] = '1.000000'
+    meta_test['image_num_z'] = 13
+    meta_test['image_num_t'] = 1
+    meta_test['pixel_resolution_x'] = 0.20716
+    meta_test['pixel_resolution_y'] = 0.20716
+    meta_test['pixel_resolution_z'] = 1
     meta_test['pixel_resolution_unit_x'] = 'microns'
     meta_test['pixel_resolution_unit_y'] = 'microns'
     meta_test['pixel_resolution_unit_z'] = 'microns'
@@ -861,12 +913,12 @@ if 'all' in mode or 'meta' in mode:
     test_image_metadata( "OME-BigTIFF", "bigtiff.ome.btf", meta_test )
 
     meta_test = {}
-    meta_test['image_num_z'] = '1'
-    meta_test['image_num_t'] = '1'
-    meta_test['image_num_x'] = '256'
-    meta_test['image_num_y'] = '256'
-    meta_test['image_num_c'] = '1'
-    meta_test['image_pixel_depth'] = '32'
+    meta_test['image_num_z'] = 1
+    meta_test['image_num_t'] = 1
+    meta_test['image_num_x'] = 256
+    meta_test['image_num_y'] = 256
+    meta_test['image_num_c'] = 1
+    meta_test['image_pixel_depth'] = 32
     meta_test['image_pixel_format'] = 'floating point'
     test_image_metadata( "TIFF float", "autocorrelation.tif", meta_test )
 
@@ -909,9 +961,9 @@ if 'all' in mode or 'readmeta' in mode:
     # reading metadata from OIB v 2.0.0.0
     meta_test = {}
     meta_test['date_time'] = '2010-06-04 08:26:06'
-    meta_test['pixel_resolution_x'] = '0.206798'
-    meta_test['pixel_resolution_y'] = '0.206798'
-    meta_test['pixel_resolution_z'] = '0.428571'
+    meta_test['pixel_resolution_x'] = 0.206798
+    meta_test['pixel_resolution_y'] = 0.206798
+    meta_test['pixel_resolution_z'] = 0.428571
     meta_test['pixel_resolution_unit_x'] = 'microns'
     meta_test['pixel_resolution_unit_y'] = 'microns'
     meta_test['pixel_resolution_unit_z'] = 'microns'
@@ -923,20 +975,20 @@ if 'all' in mode or 'readmeta' in mode:
     meta_test['display_channel_gray'] = '-1'
     meta_test['display_channel_green'] = '0'
     meta_test['display_channel_magenta'] = '-1'
-    meta_test['display_channel_red'] = '1'
+    meta_test['display_channel_red'] = 1
     meta_test['display_channel_yellow'] = '-1'
     test_metadata_read( "OIB.2", "CSR 4 mo COX g M cone r PNA b z1.oib", meta_test )
 
     # reading metadata from large OIB
     meta_test = {}
-    meta_test['image_num_x'] = '1024'
-    meta_test['image_num_y'] = '1024'
-    meta_test['image_num_c'] = '1'
-    meta_test['image_num_t'] = '1'
-    meta_test['image_num_z'] = '528'
-    meta_test['pixel_resolution_x'] = '1.240787'
-    meta_test['pixel_resolution_y'] = '1.240787'
-    meta_test['pixel_resolution_z'] = '1.237652'
+    meta_test['image_num_x'] = 1024
+    meta_test['image_num_y'] = 1024
+    meta_test['image_num_c'] = 1
+    meta_test['image_num_t'] = 1
+    meta_test['image_num_z'] = 528
+    meta_test['pixel_resolution_x'] = 1.24079
+    meta_test['pixel_resolution_y'] = 1.24079
+    meta_test['pixel_resolution_z'] = 1.23765
     meta_test['pixel_resolution_unit_x'] = 'microns'
     meta_test['pixel_resolution_unit_y'] = 'microns'
     meta_test['pixel_resolution_unit_z'] = 'microns'
@@ -946,16 +998,16 @@ if 'all' in mode or 'readmeta' in mode:
 
     # reading metadata from OIB with strange Z planes and only actual one Z image
     meta_test = {}
-    meta_test['image_num_c'] = '4'
-    meta_test['image_num_p'] = '1'
-    meta_test['image_num_z'] = '1'
-    meta_test['image_num_t'] = '1'
-    meta_test['image_num_x'] = '640'
-    meta_test['image_num_y'] = '640'
-    meta_test['image_pixel_depth'] = '16'
+    meta_test['image_num_c'] = 4
+    meta_test['image_num_p'] = 1
+    meta_test['image_num_z'] = 1
+    meta_test['image_num_t'] = 1
+    meta_test['image_num_x'] = 640
+    meta_test['image_num_y'] = 640
+    meta_test['image_pixel_depth'] = 16
     meta_test['date_time'] = '2010-11-19 14:32:33'
-    meta_test['pixel_resolution_x'] = '0.496223'
-    meta_test['pixel_resolution_y'] = '0.496223'
+    meta_test['pixel_resolution_x'] = 0.496223
+    meta_test['pixel_resolution_y'] = 0.496223
     meta_test['pixel_resolution_unit_x'] = 'microns'
     meta_test['pixel_resolution_unit_y'] = 'microns'
     meta_test['channel_0_name'] = 'Alexa Fluor 405'
@@ -963,8 +1015,8 @@ if 'all' in mode or 'readmeta' in mode:
     meta_test['channel_2_name'] = 'Cy3'
     meta_test['channel_3_name'] = 'Cy5'
     meta_test['display_channel_red']     = '2'
-    meta_test['display_channel_green']   = '1'
-    meta_test['display_channel_blue']    = '3'
+    meta_test['display_channel_green']   = 1
+    meta_test['display_channel_blue']    = 3
     meta_test['display_channel_cyan']    = '-1'
     meta_test['display_channel_magenta'] = '-1'
     meta_test['display_channel_yellow']  = '-1'
@@ -974,9 +1026,9 @@ if 'all' in mode or 'readmeta' in mode:
 
     # reading metadata from Zeiss ZVI
     meta_test = {}
-    meta_test['date_time'] = '2006-06-22 08:27:13'
-    meta_test['pixel_resolution_x'] = '0.157153'
-    meta_test['pixel_resolution_y'] = '0.157153'
+    meta_test['date_time'] = date_parse('2006-06-22T08:27:13-0800')
+    meta_test['pixel_resolution_x'] = 0.157153
+    meta_test['pixel_resolution_y'] = 0.157153
     meta_test['pixel_resolution_unit_x'] = 'microns'
     meta_test['pixel_resolution_unit_y'] = 'microns'
     meta_test['channel_0_name'] = 'Cy5'
@@ -990,17 +1042,17 @@ if 'all' in mode or 'readmeta' in mode:
 
     # reading metadata from Zeiss ZVI
     meta_test = {}
-    meta_test['image_num_c'] = '2'
-    meta_test['image_num_p'] = '14'
-    meta_test['image_num_t'] = '1'
-    meta_test['image_num_z'] = '14'
-    meta_test['image_pixel_depth'] = '16'
-    meta_test['image_num_x'] = '1388'
-    meta_test['image_num_y'] = '1040'
-    meta_test['date_time'] = '2010-01-06 03:53:37'
-    meta_test['pixel_resolution_x'] = '0.102381'
-    meta_test['pixel_resolution_y'] = '0.102381'
-    meta_test['pixel_resolution_z'] = '0.320000'
+    meta_test['image_num_c'] = 2
+    meta_test['image_num_p'] = 14
+    meta_test['image_num_t'] = 1
+    meta_test['image_num_z'] = 14
+    meta_test['image_pixel_depth'] = 16
+    meta_test['image_num_x'] = 1388
+    meta_test['image_num_y'] = 1040
+    meta_test['date_time'] = date_parse('2010-01-06T03:53:37-0800')
+    meta_test['pixel_resolution_x'] = 0.102381
+    meta_test['pixel_resolution_y'] = 0.102381
+    meta_test['pixel_resolution_z'] = 0.32
     meta_test['pixel_resolution_unit_x'] = 'microns'
     meta_test['pixel_resolution_unit_y'] = 'microns'
     meta_test['pixel_resolution_unit_z'] = 'microns'
@@ -1008,7 +1060,7 @@ if 'all' in mode or 'readmeta' in mode:
     meta_test['channel_1_name'] = 'eGFP'
     meta_test['display_channel_red'] = '-1'
     meta_test['display_channel_green'] = '0'
-    meta_test['display_channel_blue'] = '1'
+    meta_test['display_channel_blue'] = 1
     meta_test['display_channel_yellow'] = '-1'
     meta_test['display_channel_magenta'] = '-1'
     meta_test['display_channel_cyan'] = '-1'
@@ -1021,31 +1073,31 @@ if 'all' in mode or 'readmeta' in mode:
 
     # reading metadata from Andor
     meta_test = {}
-    meta_test['image_num_c'] = '1'
-    meta_test['image_num_p'] = '12'
-    meta_test['image_num_x'] = '512'
-    meta_test['image_num_y'] = '512'
+    meta_test['image_num_c'] = 1
+    meta_test['image_num_p'] = 12
+    meta_test['image_num_x'] = 512
+    meta_test['image_num_y'] = 512
     meta_test['date_time'] = '2010-06-08 10:10:36'
-    meta_test['pixel_resolution_x'] = '1.000000'
-    meta_test['pixel_resolution_y'] = '1.000000'
+    meta_test['pixel_resolution_x'] = 1
+    meta_test['pixel_resolution_y'] = 1
     meta_test['pixel_resolution_unit_x'] = 'microns'
     meta_test['pixel_resolution_unit_y'] = 'microns'
-    meta_test['stage_position/0/x'] = '923.497006'
-    meta_test['stage_position/0/y'] = '-1660.502994'
-    meta_test['stage_position/0/z'] = '49.990000'
+    meta_test['stage_position/0/x'] = 923.497
+    meta_test['stage_position/0/y'] = -1660.5
+    meta_test['stage_position/0/z'] = 49.99
     test_metadata_read( "Andor", "MF Mon 2x2.tif", meta_test )
 
 
     # reading metadata from MicroManager OME-TIFF
     meta_test = {}
-    meta_test['image_num_c'] = '3'
-    meta_test['image_num_t'] = '3'
-    meta_test['image_num_z'] = '3'
-    meta_test['image_num_x'] = '512'
-    meta_test['image_num_y'] = '512'
-    meta_test['pixel_resolution_x'] = '1.000000'
-    meta_test['pixel_resolution_y'] = '1.000000'
-    meta_test['pixel_resolution_z'] = '1.000000'
+    meta_test['image_num_c'] = 3
+    meta_test['image_num_t'] = 3
+    meta_test['image_num_z'] = 3
+    meta_test['image_num_x'] = 512
+    meta_test['image_num_y'] = 512
+    meta_test['pixel_resolution_x'] = 1
+    meta_test['pixel_resolution_y'] = 1
+    meta_test['pixel_resolution_z'] = 1
     meta_test['pixel_resolution_unit_x'] = 'microns'
     meta_test['pixel_resolution_unit_y'] = 'microns'
     meta_test['pixel_resolution_unit_z'] = 'microns'
@@ -1055,13 +1107,13 @@ if 'all' in mode or 'readmeta' in mode:
 
     # reading metadata from DCRAW - Adobe DNG
     meta_test = {}
-    meta_test['image_num_c'] = '3'
-    meta_test['image_num_t'] = '1'
-    meta_test['image_num_z'] = '1'
-    meta_test['image_num_x'] = '2616'
-    meta_test['image_num_y'] = '1960'
-    meta_test['image_num_z'] = '1'
-    meta_test['image_pixel_depth'] = '16'
+    meta_test['image_num_c'] = 3
+    meta_test['image_num_t'] = 1
+    meta_test['image_num_z'] = 1
+    meta_test['image_num_x'] = 2616
+    meta_test['image_num_y'] = 1960
+    meta_test['image_num_z'] = 1
+    meta_test['image_pixel_depth'] = 16
     meta_test['Exif/Image/Make'] = 'Canon'
     meta_test['Exif/Image/Model'] = 'Canon PowerShot G5'
     meta_test['Exif/Photo/ExposureTime'] = '1/160 s'
@@ -1072,13 +1124,13 @@ if 'all' in mode or 'readmeta' in mode:
 
     # reading metadata from DCRAW - Canon CR2
     meta_test = {}
-    meta_test['image_num_c'] = '3'
-    meta_test['image_num_t'] = '1'
-    meta_test['image_num_z'] = '1'
-    meta_test['image_num_x'] = '3522'
-    meta_test['image_num_y'] = '2348'
-    meta_test['image_num_z'] = '1'
-    meta_test['image_pixel_depth'] = '16'
+    meta_test['image_num_c'] = 3
+    meta_test['image_num_t'] = 1
+    meta_test['image_num_z'] = 1
+    meta_test['image_num_x'] = 3522
+    meta_test['image_num_y'] = 2348
+    meta_test['image_num_z'] = 1
+    meta_test['image_pixel_depth'] = 16
     meta_test['Exif/Photo/ISOSpeedRatings'] = '100'
     meta_test['Exif/Photo/ExposureTime'] = '1/3 s'
     meta_test['Exif/Photo/FNumber'] = 'F5.6'
@@ -1086,39 +1138,37 @@ if 'all' in mode or 'readmeta' in mode:
 
     # reading metadata from DCRAW - Canon 5DSr
     meta_test = {}
-    meta_test['image_num_c'] = '3'
-    meta_test['image_num_t'] = '1'
-    meta_test['image_num_z'] = '1'
-    meta_test['image_num_x'] = '8736'
-    meta_test['image_num_y'] = '5856'
-    meta_test['image_num_z'] = '1'
-    meta_test['image_pixel_depth'] = '16'
+    meta_test['image_num_c'] = 3
+    meta_test['image_num_t'] = 1
+    meta_test['image_num_z'] = 1
+    meta_test['image_num_x'] = 8736
+    meta_test['image_num_y'] = 5856
+    meta_test['image_num_z'] = 1
+    meta_test['image_pixel_depth'] = 16
     meta_test['format'] = 'CANON-RAW'
     meta_test['image_mode'] = 'RGB'
     meta_test['Exif/Photo/Flash'] = 'No, compulsory'
     meta_test['Exif/Photo/FocalLength'] = '13.0 mm'
     meta_test['Exif/Photo/FNumber'] = 'F10'
     meta_test['custom/aperture'] = '10.000000'
-    meta_test['custom/focal_length'] = '13.000000'
-    meta_test['custom/iso_speed'] = '100.000000'
+    meta_test['custom/focal_length'] = 13
+    meta_test['custom/iso_speed'] = 100
     meta_test['custom/make'] = 'Canon'
     meta_test['custom/model'] = 'EOS 5DS R'
-    meta_test['custom/shutter'] = '0.005000'
+    meta_test['custom/shutter'] = 0.005
     meta_test['date_time'] = '2016-05-24 15:16:35'
-    meta_test['custom/aperture'] = '10.000000'
-    meta_test['custom/aperture'] = '10.000000'
-    meta_test['custom/aperture'] = '10.000000'
+    meta_test['custom/aperture'] = 10
     test_metadata_read( "Canon 5DSr CR2", "6J0A3548.CR2", meta_test )
 
     # reading metadata from DCRAW - Canon CRW
     meta_test = {}
-    meta_test['image_num_c'] = '3'
-    meta_test['image_num_t'] = '1'
-    meta_test['image_num_z'] = '1'
-    meta_test['image_num_x'] = '2616'
-    meta_test['image_num_y'] = '1960'
-    meta_test['image_num_z'] = '1'
-    meta_test['image_pixel_depth'] = '16'
+    meta_test['image_num_c'] = 3
+    meta_test['image_num_t'] = 1
+    meta_test['image_num_z'] = 1
+    meta_test['image_num_x'] = 2616
+    meta_test['image_num_y'] = 1960
+    meta_test['image_num_z'] = 1
+    meta_test['image_pixel_depth'] = 16
     meta_test['Exif/Image/Make'] = 'Canon'
     meta_test['Exif/Image/Model'] = 'Canon PowerShot G5'
     meta_test['Exif/Photo/ExposureTime'] = '1/156 s'
@@ -1127,68 +1177,68 @@ if 'all' in mode or 'readmeta' in mode:
 
     # reading metadata from DCRAW - Pentax
     meta_test = {}
-    meta_test['image_num_c'] = '3'
-    meta_test['image_num_t'] = '1'
-    meta_test['image_num_z'] = '1'
-    meta_test['image_num_x'] = '3008'
-    meta_test['image_num_y'] = '2000'
-    meta_test['image_num_z'] = '1'
-    meta_test['image_pixel_depth'] = '8'
+    meta_test['image_num_c'] = 3
+    meta_test['image_num_t'] = 1
+    meta_test['image_num_z'] = 1
+    meta_test['image_num_x'] = 3008
+    meta_test['image_num_y'] = 2000
+    meta_test['image_num_z'] = 1
+    meta_test['image_pixel_depth'] = 8
     meta_test['Exif/Photo/ExposureTime'] = '1/125 s'
     meta_test['Exif/Photo/FNumber'] = 'F8'
-    meta_test['Exif/Photo/ISOSpeedRatings'] = '200'
+    meta_test['Exif/Photo/ISOSpeedRatings'] = 200
     test_metadata_read( "Pentax", "PENTAX_IMGP1618.JPG", meta_test )
 
     # reading metadata from DCRAW - Minolta
     meta_test = {}
-    meta_test['image_num_c'] = '3'
-    meta_test['image_num_t'] = '1'
-    meta_test['image_num_z'] = '1'
-    meta_test['image_num_x'] = '3016'
-    meta_test['image_num_y'] = '2008'
-    meta_test['image_num_z'] = '1'
-    meta_test['image_pixel_depth'] = '16'
+    meta_test['image_num_c'] = 3
+    meta_test['image_num_t'] = 1
+    meta_test['image_num_z'] = 1
+    meta_test['image_num_x'] = 3016
+    meta_test['image_num_y'] = 2008
+    meta_test['image_num_z'] = 1
+    meta_test['image_pixel_depth'] = 16
     meta_test['Exif/Photo/ExposureTime'] = '1/80 s'
     meta_test['Exif/Photo/FNumber'] = 'F20'
-    meta_test['Exif/Photo/ISOSpeedRatings'] = '100'
+    meta_test['Exif/Photo/ISOSpeedRatings'] = 100
     test_metadata_read( "Minolta", "PICT1694.MRW", meta_test )
 
 
     # reading metadata from DCRAW - Nikon
     meta_test = {}
-    meta_test['image_num_c'] = '3'
-    meta_test['image_num_t'] = '1'
-    meta_test['image_num_z'] = '1'
-    meta_test['image_num_x'] = '2576'
-    meta_test['image_num_y'] = '1924'
-    meta_test['image_num_z'] = '1'
-    meta_test['image_pixel_depth'] = '16'
+    meta_test['image_num_c'] = 3
+    meta_test['image_num_t'] = 1
+    meta_test['image_num_z'] = 1
+    meta_test['image_num_x'] = 2576
+    meta_test['image_num_y'] = 1924
+    meta_test['image_num_z'] = 1
+    meta_test['image_pixel_depth'] = 16
     meta_test['Exif/Photo/ExposureTime'] = '1 s'
     meta_test['Exif/Photo/FNumber'] = 'F4.2'
     test_metadata_read( "Nikon", "DSCN0041.NEF", meta_test )
 
     # reading metadata from DCRAW - Olympus
     meta_test = {}
-    meta_test['image_num_c'] = '3'
-    meta_test['image_num_t'] = '1'
-    meta_test['image_num_z'] = '1'
-    meta_test['image_num_x'] = '3088'
-    meta_test['image_num_y'] = '2310'
-    meta_test['image_num_z'] = '1'
-    meta_test['image_pixel_depth'] = '16'
+    meta_test['image_num_c'] = 3
+    meta_test['image_num_t'] = 1
+    meta_test['image_num_z'] = 1
+    meta_test['image_num_x'] = 3088
+    meta_test['image_num_y'] = 2310
+    meta_test['image_num_z'] = 1
+    meta_test['image_pixel_depth'] = 16
     meta_test['Exif/Photo/ExposureTime'] = '1/30 s'
     meta_test['Exif/Photo/FNumber'] = 'F2.8'
-    meta_test['Exif/Photo/ISOSpeedRatings'] = '125'
+    meta_test['Exif/Photo/ISOSpeedRatings'] = 125
     test_metadata_read( "Olympus", "P1110010.ORF", meta_test )
 
     # GeoTIFF
     meta_test = {}
-    meta_test['image_num_x'] = '1281'
-    meta_test['image_num_y'] = '1037'
-    meta_test['image_num_c'] = '3'
-    meta_test['image_num_t'] = '1'
-    meta_test['image_num_z'] = '1'
-    meta_test['image_pixel_depth'] = '8'
+    meta_test['image_num_x'] = 1281
+    meta_test['image_num_y'] = 1037
+    meta_test['image_num_c'] = 3
+    meta_test['image_num_t'] = 1
+    meta_test['image_num_z'] = 1
+    meta_test['image_pixel_depth'] = 8
     meta_test['Geo/Tags/ModelPixelScaleTag'] = '0.179859484777536,0.179826422372659,0'
     meta_test['Geo/Tags/ModelTiepointTag'] = '0,0,0;719865.328538339,9859359.12604843,0'
     meta_test['Geo/Model/projection'] = '16136 (UTM zone 36S)'
@@ -1201,72 +1251,72 @@ if 'all' in mode or 'readmeta' in mode:
 
 
     meta_test = {}
-    meta_test['image_num_x'] = '1200'
-    meta_test['image_num_y'] = '1650'
-    meta_test['image_num_c'] = '3'
-    meta_test['image_num_t'] = '1'
-    meta_test['image_num_z'] = '1'
-    meta_test['image_pixel_depth'] = '8'
+    meta_test['image_num_x'] = 1200
+    meta_test['image_num_y'] = 1650
+    meta_test['image_num_c'] = 3
+    meta_test['image_num_t'] = 1
+    meta_test['image_num_z'] = 1
+    meta_test['image_pixel_depth'] = 8
     test_metadata_read( "JPEG-XR", "219j_q050.jxr", meta_test )
 
     meta_test = {}
-    meta_test['image_num_x'] = '1200'
-    meta_test['image_num_y'] = '1650'
-    meta_test['image_num_c'] = '3'
-    meta_test['image_num_t'] = '1'
-    meta_test['image_num_z'] = '1'
-    meta_test['image_pixel_depth'] = '8'
+    meta_test['image_num_x'] = 1200
+    meta_test['image_num_y'] = 1650
+    meta_test['image_num_c'] = 3
+    meta_test['image_num_t'] = 1
+    meta_test['image_num_z'] = 1
+    meta_test['image_pixel_depth'] = 8
     test_metadata_read( "JPEG-2000", "219j.jp2", meta_test )
 
     meta_test = {}
-    meta_test['image_num_x'] = '1200'
-    meta_test['image_num_y'] = '1650'
-    meta_test['image_num_c'] = '3'
-    meta_test['image_num_t'] = '1'
-    meta_test['image_num_z'] = '1'
-    meta_test['image_pixel_depth'] = '8'
+    meta_test['image_num_x'] = 1200
+    meta_test['image_num_y'] = 1650
+    meta_test['image_num_c'] = 3
+    meta_test['image_num_t'] = 1
+    meta_test['image_num_z'] = 1
+    meta_test['image_pixel_depth'] = 8
     test_metadata_read( "WEBP", "219j_q080.webp", meta_test )
 
     # DICOMs
 
     meta_test = {}
-    meta_test['image_num_x'] = '512'
-    meta_test['image_num_y'] = '512'
-    meta_test['image_num_z'] = '1'
-    meta_test['image_num_t'] = '1'
-    meta_test['image_num_c'] = '1'
+    meta_test['image_num_x'] = 512
+    meta_test['image_num_y'] = 512
+    meta_test['image_num_z'] = 1
+    meta_test['image_num_t'] = 1
+    meta_test['image_num_c'] = 1
     meta_test['format']      = 'DICOM'
-    meta_test['image_pixel_depth'] = '16'
+    meta_test['image_pixel_depth'] = 16
     meta_test['image_pixel_format'] = 'signed integer'
-    meta_test['pixel_resolution_x'] = '0.439453'
-    meta_test['pixel_resolution_y'] = '0.439453'
-    meta_test['pixel_resolution_z'] = '5.000000'
+    meta_test['pixel_resolution_x'] = 0.439453
+    meta_test['pixel_resolution_y'] = 0.439453
+    meta_test['pixel_resolution_z'] = 5.0
     meta_test['pixel_resolution_unit_x'] = 'mm'
     meta_test['pixel_resolution_unit_y'] = 'mm'
     meta_test['pixel_resolution_unit_z'] = 'mm'
-    meta_test['DICOM/Rescale Intercept (0028,1052)'] = '-1024'
-    meta_test['DICOM/Rescale Slope (0028,1053)'] = '1'
+    meta_test['DICOM/Rescale Intercept (0028,1052)'] = -1024
+    meta_test['DICOM/Rescale Slope (0028,1053)'] = 1
     meta_test['DICOM/Rescale Type (0028,1054)'] = 'HU'
     meta_test['DICOM/Scan Options (0018,0022)'] = 'AXIAL MODE'
     meta_test['DICOM/Series Description (0008,103e)'] = 'HEAD ST W/O'
-    meta_test['DICOM/Window Center (0028,1050)'] = '40'
-    meta_test['DICOM/Window Width (0028,1051)'] = '80'
+    meta_test['DICOM/Window Center (0028,1050)'] = 40
+    meta_test['DICOM/Window Width (0028,1051)'] = 80
     meta_test['DICOM/Patient\'s Age (0010,1010)'] = '035Y'
     test_metadata_read( "DICOM CT", "10", meta_test )
 
     meta_test = {}
-    meta_test['image_num_x'] = '256'
-    meta_test['image_num_y'] = '256'
-    meta_test['image_num_z'] = '1'
-    meta_test['image_num_t'] = '16'
-    meta_test['image_num_c'] = '1'
+    meta_test['image_num_x'] = 256
+    meta_test['image_num_y'] = 256
+    meta_test['image_num_z'] = 1
+    meta_test['image_num_t'] = 16
+    meta_test['image_num_c'] = 1
     meta_test['format']      = 'DICOM'
-    meta_test['image_pixel_depth'] = '8'
+    meta_test['image_pixel_depth'] = 8
     meta_test['image_pixel_format'] = 'unsigned integer'
-    meta_test['pixel_resolution_x'] = '1.000000'
-    meta_test['pixel_resolution_y'] = '1.000000'
-    meta_test['pixel_resolution_z'] = '10.00'
-    meta_test['pixel_resolution_t'] = '69.470000'
+    meta_test['pixel_resolution_x'] = 1
+    meta_test['pixel_resolution_y'] = 1
+    meta_test['pixel_resolution_z'] = 10.0
+    meta_test['pixel_resolution_t'] = 69.47
     meta_test['pixel_resolution_unit_x'] = 'mm'
     meta_test['pixel_resolution_unit_y'] = 'mm'
     meta_test['pixel_resolution_unit_z'] = 'mm'
@@ -1276,17 +1326,17 @@ if 'all' in mode or 'readmeta' in mode:
     test_metadata_read( "DICOM MR", "MR-MONO2-8-16x-heart", meta_test )
 
     meta_test = {}
-    meta_test['image_num_x'] = '128'
-    meta_test['image_num_y'] = '120'
-    meta_test['image_num_z'] = '1'
-    meta_test['image_num_t'] = '8'
-    meta_test['image_num_c'] = '1'
+    meta_test['image_num_x'] = 128
+    meta_test['image_num_y'] = 120
+    meta_test['image_num_z'] = 1
+    meta_test['image_num_t'] = 8
+    meta_test['image_num_c'] = 1
     meta_test['format']      = 'DICOM'
-    meta_test['image_pixel_depth'] = '8'
+    meta_test['image_pixel_depth'] = 8
     meta_test['image_pixel_format'] = 'unsigned integer'
-    meta_test['pixel_resolution_x'] = '4.000000'
-    meta_test['pixel_resolution_y'] = '3.000000'
-    meta_test['pixel_resolution_t'] = '100.000000'
+    meta_test['pixel_resolution_x'] = 4
+    meta_test['pixel_resolution_y'] = 3
+    meta_test['pixel_resolution_t'] = 100
     meta_test['pixel_resolution_unit_x'] = 'mm'
     meta_test['pixel_resolution_unit_y'] = 'mm'
     meta_test['pixel_resolution_unit_t'] = 'seconds'
@@ -1295,17 +1345,17 @@ if 'all' in mode or 'readmeta' in mode:
     test_metadata_read( "DICOM EXECHO", "US-MONO2-8-8x-execho", meta_test )
 
     meta_test = {}
-    meta_test['image_num_x'] = '600'
-    meta_test['image_num_y'] = '430'
-    meta_test['image_num_z'] = '1'
-    meta_test['image_num_t'] = '10'
-    meta_test['image_num_c'] = '1'
+    meta_test['image_num_x'] = 600
+    meta_test['image_num_y'] = 430
+    meta_test['image_num_z'] = 1
+    meta_test['image_num_t'] = 10
+    meta_test['image_num_c'] = 1
     meta_test['format']      = 'DICOM'
-    meta_test['image_pixel_depth'] = '8'
+    meta_test['image_pixel_depth'] = 8
     meta_test['image_pixel_format'] = 'unsigned integer'
-    meta_test['pixel_resolution_x'] = '1.000000'
-    meta_test['pixel_resolution_y'] = '1.000000'
-    meta_test['pixel_resolution_t'] = '1.000000'
+    meta_test['pixel_resolution_x'] = 1
+    meta_test['pixel_resolution_y'] = 1
+    meta_test['pixel_resolution_t'] = 1
     meta_test['pixel_resolution_unit_x'] = 'mm'
     meta_test['pixel_resolution_unit_y'] = 'mm'
     meta_test['pixel_resolution_unit_t'] = 'seconds'
@@ -1314,16 +1364,16 @@ if 'all' in mode or 'readmeta' in mode:
     test_metadata_read( "DICOM ECHO", "US-PAL-8-10x-echo", meta_test )
 
     meta_test = {}
-    meta_test['image_num_x'] = '1024'
-    meta_test['image_num_y'] = '1024'
-    meta_test['image_num_z'] = '1'
-    meta_test['image_num_t'] = '1'
-    meta_test['image_num_c'] = '1'
+    meta_test['image_num_x'] = 1024
+    meta_test['image_num_y'] = 1024
+    meta_test['image_num_z'] = 1
+    meta_test['image_num_t'] = 1
+    meta_test['image_num_c'] = 1
     meta_test['format']      = 'DICOM'
-    meta_test['image_pixel_depth'] = '8'
+    meta_test['image_pixel_depth'] = 8
     meta_test['image_pixel_format'] = 'unsigned integer'
-    meta_test['pixel_resolution_x'] = '1.000000'
-    meta_test['pixel_resolution_y'] = '1.000000'
+    meta_test['pixel_resolution_x'] = 1
+    meta_test['pixel_resolution_y'] = 1
     meta_test['pixel_resolution_unit_x'] = 'mm'
     meta_test['pixel_resolution_unit_y'] = 'mm'
     meta_test['DICOM/Modality (0008,0060)'] = 'RF'
@@ -1331,17 +1381,17 @@ if 'all' in mode or 'readmeta' in mode:
     test_metadata_read( "DICOM RF", "0015.DCM", meta_test )
 
     meta_test = {}
-    meta_test['image_num_x'] = '600'
-    meta_test['image_num_y'] = '430'
-    meta_test['image_num_z'] = '1'
-    meta_test['image_num_t'] = '11'
-    meta_test['image_num_c'] = '1'
+    meta_test['image_num_x'] = 600
+    meta_test['image_num_y'] = 430
+    meta_test['image_num_z'] = 1
+    meta_test['image_num_t'] = 11
+    meta_test['image_num_c'] = 1
     meta_test['format']      = 'DICOM'
-    meta_test['image_pixel_depth'] = '8'
+    meta_test['image_pixel_depth'] = 8
     meta_test['image_pixel_format'] = 'unsigned integer'
-    meta_test['pixel_resolution_x'] = '1.000000'
-    meta_test['pixel_resolution_y'] = '1.000000'
-    meta_test['pixel_resolution_t'] = '1.000000'
+    meta_test['pixel_resolution_x'] = 1
+    meta_test['pixel_resolution_y'] = 1
+    meta_test['pixel_resolution_t'] = 1
     meta_test['pixel_resolution_unit_x'] = 'mm'
     meta_test['pixel_resolution_unit_y'] = 'mm'
     meta_test['pixel_resolution_unit_t'] = 'seconds'
@@ -1351,59 +1401,59 @@ if 'all' in mode or 'readmeta' in mode:
     test_metadata_read( "DICOM US", "0020.DCM", meta_test )
 
     meta_test = {}
-    meta_test['image_num_x'] = '256'
-    meta_test['image_num_y'] = '256'
-    meta_test['image_num_z'] = '1'
-    meta_test['image_num_t'] = '1'
-    meta_test['image_num_c'] = '1'
+    meta_test['image_num_x'] = 256
+    meta_test['image_num_y'] = 256
+    meta_test['image_num_z'] = 1
+    meta_test['image_num_t'] = 1
+    meta_test['image_num_c'] = 1
     meta_test['format']      = 'DICOM'
-    meta_test['image_pixel_depth'] = '16'
+    meta_test['image_pixel_depth'] = 16
     meta_test['image_pixel_format'] = 'signed integer'
-    meta_test['pixel_resolution_x'] = '1.015620'
-    meta_test['pixel_resolution_y'] = '1.015620'
-    meta_test['pixel_resolution_z'] = '5'
+    meta_test['pixel_resolution_x'] = 1.01562
+    meta_test['pixel_resolution_y'] = 1.01562
+    meta_test['pixel_resolution_z'] = 5
     meta_test['pixel_resolution_unit_x'] = 'mm'
     meta_test['pixel_resolution_unit_y'] = 'mm'
     meta_test['pixel_resolution_unit_z'] = 'mm'
     meta_test['DICOM/Modality (0008,0060)'] = 'MR'
     meta_test['DICOM/Patient\'s Sex (0010,0040)'] = 'M'
     meta_test['DICOM/Study Description (0008,1030)'] = 'ADNI RESEARCH STUDY'
-    meta_test['DICOM/Slice Location (0020,1041)'] = '-46.90000153'
+    meta_test['DICOM/Slice Location (0020,1041)'] = -46.90000153
     test_metadata_read( "DICOM ADNI", "ADNI_002_S_0295_MR_3-plane_localizer__br_raw_20060418193538653_1_S13402_I13712.dcm", meta_test )
 
     meta_test = {}
-    meta_test['image_num_x'] = '256'
-    meta_test['image_num_y'] = '256'
-    meta_test['image_num_z'] = '1'
-    meta_test['image_num_t'] = '1'
-    meta_test['image_num_c'] = '1'
+    meta_test['image_num_x'] = 256
+    meta_test['image_num_y'] = 256
+    meta_test['image_num_z'] = 1
+    meta_test['image_num_t'] = 1
+    meta_test['image_num_c'] = 1
     meta_test['format']      = 'DICOM'
-    meta_test['image_pixel_depth'] = '16'
+    meta_test['image_pixel_depth'] = 16
     meta_test['image_pixel_format'] = 'unsigned integer'
-    meta_test['pixel_resolution_x'] = '1.093750'
-    meta_test['pixel_resolution_y'] = '1.093750'
-    meta_test['pixel_resolution_z'] = '10'
+    meta_test['pixel_resolution_x'] = 1.09375
+    meta_test['pixel_resolution_y'] = 1.09375
+    meta_test['pixel_resolution_z'] = 10
     meta_test['pixel_resolution_unit_x'] = 'mm'
     meta_test['pixel_resolution_unit_y'] = 'mm'
     meta_test['pixel_resolution_unit_z'] = 'mm'
     meta_test['DICOM/Modality (0008,0060)'] = 'MR'
     meta_test['DICOM/Patient\'s Sex (0010,0040)'] = 'F'
     meta_test['DICOM/Study Description (0008,1030)'] = 'RaiGoe^standaard'
-    meta_test['DICOM/Slice Location (0020,1041)'] = '0'
+    meta_test['DICOM/Slice Location (0020,1041)'] = 0
     test_metadata_read( "DICOM MR", "BetSog_20040312_Goebel_C2-0001-0001-0001.dcm", meta_test )
 
     meta_test = {}
-    meta_test['image_num_x'] = '512'
-    meta_test['image_num_y'] = '512'
-    meta_test['image_num_z'] = '1'
-    meta_test['image_num_t'] = '1'
-    meta_test['image_num_c'] = '1'
+    meta_test['image_num_x'] = 512
+    meta_test['image_num_y'] = 512
+    meta_test['image_num_z'] = 1
+    meta_test['image_num_t'] = 1
+    meta_test['image_num_c'] = 1
     meta_test['format']      = 'DICOM'
-    meta_test['image_pixel_depth'] = '16'
+    meta_test['image_pixel_depth'] = 16
     meta_test['image_pixel_format'] = 'unsigned integer'
-    meta_test['pixel_resolution_x'] = '0.361328'
-    meta_test['pixel_resolution_y'] = '0.361328'
-    meta_test['pixel_resolution_z'] = '0.75'
+    meta_test['pixel_resolution_x'] = 0.361328
+    meta_test['pixel_resolution_y'] = 0.361328
+    meta_test['pixel_resolution_z'] = 0.75
     meta_test['pixel_resolution_unit_x'] = 'mm'
     meta_test['pixel_resolution_unit_y'] = 'mm'
     meta_test['pixel_resolution_unit_z'] = 'mm'
@@ -1413,34 +1463,34 @@ if 'all' in mode or 'readmeta' in mode:
     test_metadata_read( "DICOM CT", "IM-0001-0001.dcm", meta_test )
 
     meta_test = {}
-    meta_test['image_num_x'] = '64'
-    meta_test['image_num_y'] = '64'
-    meta_test['image_num_z'] = '21'
-    meta_test['image_num_t'] = '180'
-    meta_test['image_num_c'] = '1'
+    meta_test['image_num_x'] = 64
+    meta_test['image_num_y'] = 64
+    meta_test['image_num_z'] = 21
+    meta_test['image_num_t'] = 180
+    meta_test['image_num_c'] = 1
     meta_test['format']      = 'NIFTI'
-    meta_test['image_pixel_depth'] = '16'
+    meta_test['image_pixel_depth'] = 16
     meta_test['image_pixel_format'] = 'signed integer'
-    meta_test['pixel_resolution_x'] = '4.000000'
-    meta_test['pixel_resolution_y'] = '4.000000'
-    meta_test['pixel_resolution_z'] = '6.000000'
+    meta_test['pixel_resolution_x'] = 4
+    meta_test['pixel_resolution_y'] = 4
+    meta_test['pixel_resolution_z'] = 6
     meta_test['pixel_resolution_unit_x'] = 'mm'
     meta_test['pixel_resolution_unit_y'] = 'mm'
     meta_test['pixel_resolution_unit_z'] = 'mm'
     test_metadata_read( "NIFTI functional", "filtered_func_data.nii", meta_test )
 
     meta_test = {}
-    meta_test['image_num_x'] = '512'
-    meta_test['image_num_y'] = '512'
-    meta_test['image_num_z'] = '32'
-    meta_test['image_num_t'] = '1'
-    meta_test['image_num_c'] = '1'
+    meta_test['image_num_x'] = 512
+    meta_test['image_num_y'] = 512
+    meta_test['image_num_z'] = 32
+    meta_test['image_num_t'] = 1
+    meta_test['image_num_c'] = 1
     meta_test['format']      = 'NIFTI'
-    meta_test['image_pixel_depth'] = '16'
+    meta_test['image_pixel_depth'] = 16
     meta_test['image_pixel_format'] = 'unsigned integer'
-    meta_test['pixel_resolution_x'] = '0.439453'
-    meta_test['pixel_resolution_y'] = '0.439453'
-    meta_test['pixel_resolution_z'] = '5.000000'
+    meta_test['pixel_resolution_x'] = 0.439453
+    meta_test['pixel_resolution_y'] = 0.439453
+    meta_test['pixel_resolution_z'] = 5
     #meta_test['pixel_resolution_unit_x'] = 'mm' # not stored in the image
     #meta_test['pixel_resolution_unit_y'] = 'mm'
     #meta_test['pixel_resolution_unit_z'] = 'mm'
@@ -1448,41 +1498,41 @@ if 'all' in mode or 'readmeta' in mode:
     test_metadata_read( "NIFTI transforms", "16_day1_1_patient_29C93FK6_1.nii", meta_test )
 
     meta_test = {}
-    meta_test['image_num_x'] = '64'
-    meta_test['image_num_y'] = '64'
-    meta_test['image_num_z'] = '35'
-    meta_test['image_num_t'] = '147'
-    meta_test['image_num_c'] = '1'
+    meta_test['image_num_x'] = 64
+    meta_test['image_num_y'] = 64
+    meta_test['image_num_z'] = 35
+    meta_test['image_num_t'] = 147
+    meta_test['image_num_c'] = 1
     meta_test['format']      = 'NIFTI'
-    meta_test['image_pixel_depth'] = '16'
+    meta_test['image_pixel_depth'] = 16
     meta_test['image_pixel_format'] = 'signed integer'
-    meta_test['pixel_resolution_x'] = '3.437500'
-    meta_test['pixel_resolution_y'] = '3.437500'
-    meta_test['pixel_resolution_z'] = '3.999421'
+    meta_test['pixel_resolution_x'] = 3.4375
+    meta_test['pixel_resolution_y'] = 3.4375
+    meta_test['pixel_resolution_z'] = 3.99942
     #meta_test['pixel_resolution_unit_x'] = 'mm' # not stored in the image
     #meta_test['pixel_resolution_unit_y'] = 'mm'
     #meta_test['pixel_resolution_unit_z'] = 'mm'
     meta_test['pixel_resolution_unit_t'] = 'ms'
     meta_test['NIFTI/quaternion'] = '0.000000,0.025615,0.999672;108.281250,103.739151,-83.445091'
     meta_test['XCEDE/study/series/acquisition_protocol/parameters/receivecoilname'] = 'HEAD'
-    meta_test['XCEDE/study/series/id'] = '1'
-    meta_test['XCEDE/subject/id'] = '103'
+    meta_test['XCEDE/study/series/id'] = 1
+    meta_test['XCEDE/subject/id'] = 103
     meta_test['XCEDE/study/series/scanner/manufacturer'] = 'GE'
     meta_test['XCEDE/study/series/scanner/model'] = 'LX NVi 4T'
     test_metadata_read( "NIFTI XCEDE", "newsirp_final_XML.nii", meta_test )
 
     meta_test = {}
-    meta_test['image_num_x'] = '260'
-    meta_test['image_num_y'] = '311'
-    meta_test['image_num_z'] = '260'
-    meta_test['image_num_t'] = '1'
-    meta_test['image_num_c'] = '1'
+    meta_test['image_num_x'] = 260
+    meta_test['image_num_y'] = 311
+    meta_test['image_num_z'] = 260
+    meta_test['image_num_t'] = 1
+    meta_test['image_num_c'] = 1
     meta_test['format']      = 'NIFTI'
-    meta_test['image_pixel_depth'] = '32'
+    meta_test['image_pixel_depth'] = 32
     meta_test['image_pixel_format'] = 'floating point'
-    meta_test['pixel_resolution_x'] = '0.700000'
-    meta_test['pixel_resolution_y'] = '0.700000'
-    meta_test['pixel_resolution_z'] = '0.700000'
+    meta_test['pixel_resolution_x'] = 0.7
+    meta_test['pixel_resolution_y'] = 0.7
+    meta_test['pixel_resolution_z'] = 0.7
     meta_test['pixel_resolution_unit_x'] = 'mm'
     meta_test['pixel_resolution_unit_y'] = 'mm'
     meta_test['pixel_resolution_unit_z'] = 'mm'
@@ -1490,29 +1540,29 @@ if 'all' in mode or 'readmeta' in mode:
     test_metadata_read( "NIFTI GZ", "T1w.nii.gz", meta_test )
 
     meta_test = {}
-    meta_test['image_num_c'] = '3'
-    meta_test['image_num_t'] = '1'
-    meta_test['image_num_z'] = '1'
-    meta_test['image_num_x'] = '5472'
-    meta_test['image_num_y'] = '3648'
-    meta_test['image_num_z'] = '1'
-    meta_test['image_pixel_depth'] = '16'
+    meta_test['image_num_c'] = 3
+    meta_test['image_num_t'] = 1
+    meta_test['image_num_z'] = 1
+    meta_test['image_num_x'] = 5472
+    meta_test['image_num_y'] = 3648
+    meta_test['image_num_z'] = 1
+    meta_test['image_pixel_depth'] = 16
     meta_test['Exif/Photo/ExposureTime'] = '1/400 s'
     meta_test['Exif/Photo/FNumber'] = 'F11'
-    meta_test['Exif/Photo/ISOSpeedRatings'] = '100'
+    meta_test['Exif/Photo/ISOSpeedRatings'] = 100
     meta_test['Iptc/Application2/ProvinceState'] = 'California'
     meta_test['Exif/GPSInfo/GPSLatitude'] = '34deg 29.12550\''
     test_metadata_read( "JPEG-XR", "IMG_1913_16bit_prophoto_q90.jxr", meta_test )
 
     # JPEG-2000 and WebP metadata are not yet implemented
 #    meta_test = {}
-#    meta_test['image_num_c'] = '3'
-#    meta_test['image_num_t'] = '1'
-#    meta_test['image_num_z'] = '1'
+#    meta_test['image_num_c'] = 3
+#    meta_test['image_num_t'] = 1
+#    meta_test['image_num_z'] = 1
 #    meta_test['image_num_x'] = '5472'
 #    meta_test['image_num_y'] = '3648'
-#    meta_test['image_num_z'] = '1'
-#    meta_test['image_pixel_depth'] = '16'
+#    meta_test['image_num_z'] = 1
+#    meta_test['image_pixel_depth'] = 16
 #    meta_test['Exif/Photo/ExposureTime'] = '1/400 s'
 #    meta_test['Exif/Photo/FNumber'] = 'F11'
 #    meta_test['Exif/Photo/ISOSpeedRatings'] = '100'
@@ -1521,13 +1571,13 @@ if 'all' in mode or 'readmeta' in mode:
 #    test_metadata_read( "JPEG-2000", "IMG_1913_16bit_prophoto_ts1024_q90.jp2", meta_test )
 #
 #    meta_test = {}
-#    meta_test['image_num_c'] = '3'
-#    meta_test['image_num_t'] = '1'
-#    meta_test['image_num_z'] = '1'
+#    meta_test['image_num_c'] = 3
+#    meta_test['image_num_t'] = 1
+#    meta_test['image_num_z'] = 1
 #    meta_test['image_num_x'] = '5472'
 #    meta_test['image_num_y'] = '3648'
-#    meta_test['image_num_z'] = '1'
-#    meta_test['image_pixel_depth'] = '16'
+#    meta_test['image_num_z'] = 1
+#    meta_test['image_pixel_depth'] = 16
 #    meta_test['Exif/Photo/ExposureTime'] = '1/400 s'
 #    meta_test['Exif/Photo/FNumber'] = 'F11'
 #    meta_test['Exif/Photo/ISOSpeedRatings'] = '100'
@@ -1535,67 +1585,134 @@ if 'all' in mode or 'readmeta' in mode:
 #    meta_test['Exif/GPSInfo/GPSLatitude'] = '34deg 29.12550'
 #    test_metadata_read( "WebP", "IMG_1913_prophoto_q90.webp", meta_test )
 
+    # MRC
+
     meta_test = {}
-    meta_test['image_num_c'] = '1'
-    meta_test['image_num_t'] = '1'
-    meta_test['image_num_z'] = '1'
-    meta_test['image_num_x'] = '5120'
-    meta_test['image_num_y'] = '3840'
-    meta_test['image_pixel_depth'] = '32'
+    meta_test['image_num_c'] = 1
+    meta_test['image_num_t'] = 1
+    meta_test['image_num_z'] = 1
+    meta_test['image_num_x'] = 5120
+    meta_test['image_num_y'] = 3840
+    meta_test['image_pixel_depth'] = 32
     meta_test['image_pixel_format'] = 'floating point'
-    meta_test['pixel_resolution_x'] = '2.510000'
-    meta_test['pixel_resolution_y'] = '2.510000'
-    meta_test['pixel_resolution_z'] = '1.000000'
+    meta_test['pixel_resolution_x'] = 2.51
+    meta_test['pixel_resolution_y'] = 2.51
+    meta_test['pixel_resolution_z'] = 1
     meta_test['pixel_resolution_unit_x'] = 'angstroms'
-    meta_test['MRC/alpha'] = '90.000000'
+    meta_test['MRC/alpha'] = 90
+    meta_test['MRC/amean'] = 3.30166
+    meta_test['MRC/label_00'] = 'EMAN 9/26/2015 10:08'
     test_metadata_read( "MRC", "20150917_05195_DNA-TET-25k-DE20_raw.region_000.sum-all_003-072.mrc", meta_test )
 
     meta_test = {}
-    meta_test['image_num_c'] = '1'
-    meta_test['image_num_t'] = '32'
-    meta_test['image_num_z'] = '1'
-    meta_test['image_num_x'] = '256'
-    meta_test['image_num_y'] = '256'
-    meta_test['image_pixel_depth'] = '8'
+    meta_test['image_num_c'] = 1
+    meta_test['image_num_t'] = 32
+    meta_test['image_num_z'] = 1
+    meta_test['image_num_x'] = 256
+    meta_test['image_num_y'] = 256
+    meta_test['image_pixel_depth'] = 8
     meta_test['image_pixel_format'] = 'signed integer'
-    meta_test['pixel_resolution_x'] = '1.000000'
-    meta_test['pixel_resolution_y'] = '1.000000'
-    meta_test['pixel_resolution_z'] = '1.000000'
+    meta_test['pixel_resolution_x'] = 1
+    meta_test['pixel_resolution_y'] = 1
+    meta_test['pixel_resolution_z'] = 1
     meta_test['pixel_resolution_unit_x'] = 'angstroms'
-    meta_test['MRC/alpha'] = '90.000000'
+    meta_test['MRC/alpha'] = 90
+    meta_test['MRC/amean'] = 83.7333
     test_metadata_read( "MRC", "golgi.mrc", meta_test )
 
     meta_test = {}
-    meta_test['image_num_c'] = '1'
-    meta_test['image_num_t'] = '1'
-    meta_test['image_num_z'] = '1'
-    meta_test['image_num_x'] = '2048'
-    meta_test['image_num_y'] = '2048'
-    meta_test['image_pixel_depth'] = '16'
+    meta_test['image_num_c'] = 1
+    meta_test['image_num_t'] = 1
+    meta_test['image_num_z'] = 1
+    meta_test['image_num_x'] = 2048
+    meta_test['image_num_y'] = 2048
+    meta_test['image_pixel_depth'] = 16
     meta_test['image_pixel_format'] = 'unsigned integer'
-    meta_test['pixel_resolution_x'] = '0.000000'
-    meta_test['pixel_resolution_y'] = '0.000000'
-    meta_test['pixel_resolution_z'] = '0.000000'
-    meta_test['pixel_resolution_unit_x'] = 'angstroms'
-    meta_test['MRC/alpha'] = '0.000000'
-    meta_test['FEI/magnification'] = '84.000000'
-    meta_test['FEI/a_tilt'] = '-0.000066'
+    meta_test['pixel_resolution_x'] = 2.35294e-007
+    meta_test['pixel_resolution_y'] = 2.35294e-007
+    #meta_test['pixel_resolution_z'] = 2.35294e-007
+    meta_test['pixel_resolution_unit_x'] = 'meters'
+    meta_test['pixel_resolution_unit_y'] = 'meters'
+    meta_test['MRC/alpha'] = 0
+    meta_test['FEI/magnification'] = 84
+    meta_test['FEI/a_tilt'] = -6.6316e-005
+    meta_test['FEI/x_stage'] = -0.000343477
+    meta_test['FEI/y_stage'] = -0.000862657
+    meta_test['FEI/z_stage'] = -0.000210128
     test_metadata_read( "MRC", "Tile_19491580_0_1.mrc", meta_test )
 
     meta_test = {}
-    meta_test['image_num_c'] = '1'
-    meta_test['image_num_t'] = '78'
-    meta_test['image_num_z'] = '1'
-    meta_test['image_num_x'] = '572'
-    meta_test['image_num_y'] = '378'
-    meta_test['image_pixel_depth'] = '8'
+    meta_test['image_num_c'] = 1
+    meta_test['image_num_t'] = 78
+    meta_test['image_num_z'] = 1
+    meta_test['image_num_x'] = 572
+    meta_test['image_num_y'] = 378
+    meta_test['image_pixel_depth'] = 8
     meta_test['image_pixel_format'] = 'signed integer'
-    meta_test['pixel_resolution_x'] = '1.000000'
-    meta_test['pixel_resolution_y'] = '1.000000'
-    meta_test['pixel_resolution_z'] = '1.000000'
+    meta_test['pixel_resolution_x'] = 1
+    meta_test['pixel_resolution_y'] = 1
+    meta_test['pixel_resolution_z'] = 1
     meta_test['pixel_resolution_unit_x'] = 'angstroms'
-    meta_test['MRC/alpha'] = '90.000000'
+    meta_test['MRC/alpha'] = 90
+    meta_test['MRC/label_00'] = 'Clip: 3D FFT                                            22-Aug-00  11:46:25'
     test_metadata_read( "MRC", "dual.rec", meta_test )
+
+
+    meta_test = {}
+    meta_test['image_num_c'] = 1
+    meta_test['image_num_t'] = 1
+    meta_test['image_num_z'] = 1
+    meta_test['image_num_x'] = 3838
+    meta_test['image_num_y'] = 3710
+    meta_test['image_pixel_depth'] = 32
+    meta_test['image_pixel_format'] = 'floating point'
+    #meta_test['pixel_resolution_x'] = 2.51
+    #meta_test['pixel_resolution_y'] = 2.51
+    #meta_test['pixel_resolution_z'] = 1
+    #meta_test['pixel_resolution_unit_x'] = 'angstroms'
+    meta_test['MRC/alpha'] = 90
+    meta_test['MRC/amean'] = 26.4308
+    test_metadata_read( "MRC", "29kx_30epi_058_aligned.mrc", meta_test )
+
+    meta_test = {}
+    meta_test['image_num_c'] = 1
+    meta_test['image_num_t'] = 1
+    meta_test['image_num_z'] = 25
+    meta_test['image_num_x'] = 73
+    meta_test['image_num_y'] = 43
+    meta_test['image_pixel_depth'] = 32
+    meta_test['image_pixel_format'] = 'floating point'
+    meta_test['pixel_resolution_x'] = 0.44825
+    meta_test['pixel_resolution_y'] = 0.3925
+    meta_test['pixel_resolution_z'] = 0.45875
+    meta_test['pixel_resolution_unit_x'] = 'angstroms'
+    meta_test['pixel_resolution_unit_y'] = 'angstroms'
+    meta_test['pixel_resolution_unit_z'] = 'angstroms'
+    meta_test['MRC/alpha'] = 90
+    meta_test['MRC/amean'] = 0.000532967
+    meta_test['MRC/label_00'] = '::::EMDATABANK.org::::EMD-3001::::'
+    test_metadata_read( "MRC", "EMD-3001.map", meta_test )
+
+    meta_test = {}
+    meta_test['image_num_c'] = 1
+    meta_test['image_num_t'] = 1
+    meta_test['image_num_z'] = 20
+    meta_test['image_num_x'] = 20
+    meta_test['image_num_y'] = 20
+    meta_test['image_pixel_depth'] = 32
+    meta_test['image_pixel_format'] = 'floating point'
+    meta_test['pixel_resolution_x'] = 11.4
+    meta_test['pixel_resolution_y'] = 11.4
+    meta_test['pixel_resolution_z'] = 11.4
+    meta_test['pixel_resolution_unit_x'] = 'angstroms'
+    meta_test['pixel_resolution_unit_y'] = 'angstroms'
+    meta_test['pixel_resolution_unit_z'] = 'angstroms'
+    meta_test['MRC/alpha'] = 90
+    meta_test['MRC/amean'] = 0.783612
+    meta_test['MRC/label_00'] = '::::EMDATABANK.org::::EMD-3197::::'
+    test_metadata_read( "MRC", "EMD-3197.map", meta_test )
+
+
 
 if 'all' in mode or 'video' in mode:
     print
@@ -1605,233 +1722,233 @@ if 'all' in mode or 'video' in mode:
     print '***************************************************'
 
     meta_test = {}
-    meta_test['image_num_z'] = '1'
-    meta_test['image_num_t'] = '101'
-    meta_test['image_num_p'] = '101'
-    meta_test['image_num_x'] = '720'
-    meta_test['image_num_y'] = '480'
-    meta_test['video_frames_per_second'] = '29.970000'
+    meta_test['image_num_z'] = 1
+    meta_test['image_num_t'] = 101
+    meta_test['image_num_p'] = 101
+    meta_test['image_num_x'] = 720
+    meta_test['image_num_y'] = 480
+    meta_test['video_frames_per_second'] = 29.97
     meta_test['video_codec_name'] = 'cinepak'
     test_image_video( "AVI CINEPAK", "122906_3Ax(inverted).avi", meta_test )
 
     meta_test = {}
-    meta_test['image_num_z'] = '1'
-    meta_test['image_num_t'] = '37'
-    meta_test['image_num_p'] = '37'
-    meta_test['image_num_x'] = '640'
-    meta_test['image_num_y'] = '480'
-    meta_test['video_frames_per_second'] = '20.000000'
+    meta_test['image_num_z'] = 1
+    meta_test['image_num_t'] = 37
+    meta_test['image_num_p'] = 37
+    meta_test['image_num_x'] = 640
+    meta_test['image_num_y'] = 480
+    meta_test['video_frames_per_second'] = 20
     meta_test['video_codec_name'] = 'cinepak'
     test_image_video( "AVI CINEPAK", "241aligned.avi", meta_test )
 
     meta_test = {}
-    meta_test['image_num_z'] = '1'
-    meta_test['image_num_t'] = '199'
-    meta_test['image_num_p'] = '199'
-    meta_test['image_num_x'] = '826'
-    meta_test['image_num_y'] = '728'
-    meta_test['video_frames_per_second'] = '30.000000'
+    meta_test['image_num_z'] = 1
+    meta_test['image_num_t'] = 199
+    meta_test['image_num_p'] = 199
+    meta_test['image_num_x'] = 826
+    meta_test['image_num_y'] = 728
+    meta_test['video_frames_per_second'] = 30
     meta_test['video_codec_name'] = 'mpeg4'
     test_image_video( "QuickTime MPEG4", "3Dstack.tif.3D.mov", meta_test )
 
     meta_test = {}
-    meta_test['image_num_z'] = '1'
-    meta_test['image_num_t'] = '73'
-    meta_test['image_num_p'] = '73'
-    meta_test['image_num_x'] = '1024'
-    meta_test['image_num_y'] = '947'
-    meta_test['video_frames_per_second'] = '30.303030'
+    meta_test['image_num_z'] = 1
+    meta_test['image_num_t'] = 73
+    meta_test['image_num_p'] = 73
+    meta_test['image_num_x'] = 1024
+    meta_test['image_num_y'] = 947
+    meta_test['video_frames_per_second'] = 30.303
     meta_test['video_codec_name'] = 'rawvideo'
     test_image_video( "AVI RAW", "B4nf.RS.RE.z1.5.15.06.3DAnimation.avi", meta_test )
 
     meta_test = {}
-    meta_test['image_num_z'] = '1'
-    meta_test['image_num_t'] = '2879' # 2878
-    meta_test['image_num_p'] = '2879' # 2878
-    meta_test['image_num_x'] = '352'
-    meta_test['image_num_y'] = '240'
-    meta_test['video_frames_per_second'] = '29.970030'
+    meta_test['image_num_z'] = 1
+    meta_test['image_num_t'] = 2879 # 2878
+    meta_test['image_num_p'] = 2879 # 2878
+    meta_test['image_num_x'] = 352
+    meta_test['image_num_y'] = 240
+    meta_test['video_frames_per_second'] = 29.97
     meta_test['video_codec_name'] = 'mpeg1video'
     test_image_video( "MPEG", "EleanorRigby.mpg", meta_test )
 
     meta_test = {}
-    meta_test['image_num_z'] = '1'
-    meta_test['image_num_t'] = '301'
-    meta_test['image_num_p'] = '301'
-    meta_test['image_num_x'] = '884'
-    meta_test['image_num_y'] = '845'
-    meta_test['video_frames_per_second'] = '29.970030'
+    meta_test['image_num_z'] = 1
+    meta_test['image_num_t'] = 301
+    meta_test['image_num_p'] = 301
+    meta_test['image_num_x'] = 884
+    meta_test['image_num_y'] = 845
+    meta_test['video_frames_per_second'] = 29.97
     meta_test['video_codec_name'] = 'mpeg4'
     test_image_video( "QuickTime MPEG4", "Muller cell z4.oib.3D.mov", meta_test )
 
     meta_test = {}
-    meta_test['image_num_z'] = '1'
-    meta_test['image_num_t'] = '9'
-    meta_test['image_num_p'] = '9'
-    meta_test['image_num_x'] = '316'
-    meta_test['image_num_y'] = '400'
-    meta_test['video_frames_per_second'] = '9.000009'
+    meta_test['image_num_z'] = 1
+    meta_test['image_num_t'] = 9
+    meta_test['image_num_p'] = 9
+    meta_test['image_num_x'] = 316
+    meta_test['image_num_y'] = 400
+    meta_test['video_frames_per_second'] = 9.00001
     meta_test['video_codec_name'] = 'rawvideo'
     test_image_video( "AVI RAW", "radiolaria.avi", meta_test )
 
     meta_test = {}
-    meta_test['image_num_z'] = '1'
-    meta_test['image_num_t'] = '2773'
-    meta_test['image_num_p'] = '2773'
-    meta_test['image_num_x'] = '1440'
-    meta_test['image_num_y'] = '1080'
-    meta_test['video_frames_per_second'] = '24.000000'
+    meta_test['image_num_z'] = 1
+    meta_test['image_num_t'] = 2773
+    meta_test['image_num_p'] = 2773
+    meta_test['image_num_x'] = 1440
+    meta_test['image_num_y'] = 1080
+    meta_test['video_frames_per_second'] = 24
     meta_test['video_codec_name'] = 'wmv3'
     test_image_video( "WMV", "Step_into_Liquid_1080.wmv", meta_test )
 
     meta_test = {}
-    meta_test['image_num_z'] = '1'
-    meta_test['image_num_t'] = '199'
-    meta_test['image_num_p'] = '199'
-    meta_test['image_num_x'] = '826'
-    meta_test['image_num_y'] = '728'
-    meta_test['video_frames_per_second'] = '29.970030'
+    meta_test['image_num_z'] = 1
+    meta_test['image_num_t'] = 199
+    meta_test['image_num_p'] = 199
+    meta_test['image_num_x'] = 826
+    meta_test['image_num_y'] = 728
+    meta_test['video_frames_per_second'] = 29.97
     meta_test['video_codec_name'] = 'theora'
     test_image_video( "OGG", "test.ogv", meta_test )
 
     meta_test = {}
-    meta_test['image_num_z'] = '1'
-    meta_test['image_num_t'] = '36777' # 36776
-    meta_test['image_num_p'] = '36777' # 36776
-    meta_test['image_num_x'] = '1440'
-    meta_test['image_num_y'] = '1080'
-    meta_test['video_frames_per_second'] = '29.970030'
+    meta_test['image_num_z'] = 1
+    meta_test['image_num_t'] = 36777 # 36776
+    meta_test['image_num_p'] = 36777 # 36776
+    meta_test['image_num_x'] = 1440
+    meta_test['image_num_y'] = 1080
+    meta_test['video_frames_per_second'] = 29.97
     meta_test['video_codec_name'] = 'mpeg2video'
     test_image_video( "MPEG2 TS (1)", "B01C0201.M2T", meta_test )
 
     meta_test = {}
-    meta_test['image_num_z'] = '1'
-    meta_test['image_num_t'] = '8562' # 17127
-    meta_test['image_num_p'] = '8562' # 17127
-    meta_test['image_num_x'] = '1440'
-    meta_test['image_num_y'] = '1080'
-    meta_test['video_frames_per_second'] = '29.970030' #'59.940060'
+    meta_test['image_num_z'] = 1
+    meta_test['image_num_t'] = 8562 # 17127
+    meta_test['image_num_p'] = 8562 # 17127
+    meta_test['image_num_x'] = 1440
+    meta_test['image_num_y'] = 1080
+    meta_test['video_frames_per_second'] = 29.97
     meta_test['video_codec_name'] = 'h264'
     test_image_video( "MPEG2 TS (2)", "Girsh_path3.m2ts", meta_test )
 
     meta_test = {}
-    meta_test['image_num_z'] = '1'
-    meta_test['image_num_t'] = '28'
-    meta_test['image_num_p'] = '28'
-    meta_test['image_num_x'] = '640'
-    meta_test['image_num_y'] = '480'
-    meta_test['video_frames_per_second'] = '29.970030'
+    meta_test['image_num_z'] = 1
+    meta_test['image_num_t'] = 28
+    meta_test['image_num_p'] = 28
+    meta_test['image_num_x'] = 640
+    meta_test['image_num_y'] = 480
+    meta_test['video_frames_per_second'] = 29.97
     meta_test['video_codec_name'] = 'mpeg4'
     test_image_video( "AVI MPEG4", "out.avi", meta_test )
 
     meta_test = {}
-    meta_test['image_num_z'] = '1'
-    meta_test['image_num_t'] = '30'
-    meta_test['image_num_p'] = '30'
-    meta_test['image_num_x'] = '640'
-    meta_test['image_num_y'] = '480'
-    meta_test['video_frames_per_second'] = '29.970030'
+    meta_test['image_num_z'] = 1
+    meta_test['image_num_t'] = 30
+    meta_test['image_num_p'] = 30
+    meta_test['image_num_x'] = 640
+    meta_test['image_num_y'] = 480
+    meta_test['video_frames_per_second'] = 29.97
     meta_test['video_codec_name'] = 'flv'
     test_image_video( "Flash video", "out.flv", meta_test )
 
     meta_test = {}
-    meta_test['image_num_z'] = '1'
-    meta_test['image_num_t'] = '28'
-    meta_test['image_num_p'] = '28'
-    meta_test['image_num_x'] = '640'
-    meta_test['image_num_y'] = '480'
-    meta_test['video_frames_per_second'] = '29.970030'
+    meta_test['image_num_z'] = 1
+    meta_test['image_num_t'] = 28
+    meta_test['image_num_p'] = 28
+    meta_test['image_num_x'] = 640
+    meta_test['image_num_y'] = 480
+    meta_test['video_frames_per_second'] = 29.97
     meta_test['video_codec_name'] = 'mpeg4'
     test_image_video( "MPEG4 H.263", "out.m4v", meta_test )
 
     meta_test = {}
-    meta_test['image_num_z'] = '1'
-    meta_test['image_num_t'] = '30'
-    meta_test['image_num_p'] = '30'
-    meta_test['image_num_x'] = '640'
-    meta_test['image_num_y'] = '480'
-    meta_test['video_frames_per_second'] = '29.970030'
+    meta_test['image_num_z'] = 1
+    meta_test['image_num_t'] = 30
+    meta_test['image_num_p'] = 30
+    meta_test['image_num_x'] = 640
+    meta_test['image_num_y'] = 480
+    meta_test['video_frames_per_second'] = 29.97
     meta_test['video_codec_name'] = 'h264'
     test_image_video( "Matroska MPEG4 H.264", "out.mkv", meta_test )
 
     meta_test = {}
-    meta_test['image_num_z'] = '1'
-    meta_test['image_num_t'] = '28'
-    meta_test['image_num_p'] = '28'
-    meta_test['image_num_x'] = '640'
-    meta_test['image_num_y'] = '480'
-    meta_test['video_frames_per_second'] = '29.970030'
+    meta_test['image_num_z'] = 1
+    meta_test['image_num_t'] = 28
+    meta_test['image_num_p'] = 28
+    meta_test['image_num_x'] = 640
+    meta_test['image_num_y'] = 480
+    meta_test['video_frames_per_second'] = 29.97
     meta_test['video_codec_name'] = 'h264'
     test_image_video( "Quicktime MPEG4 H.264", "out.mov", meta_test )
 
 #    meta_test = {}
-#    meta_test['image_num_z'] = '1'
-#    meta_test['image_num_t'] = '28'
-#    meta_test['image_num_p'] = '28'
-#    meta_test['image_num_x'] = '640'
-#    meta_test['image_num_y'] = '480'
-#    meta_test['video_frames_per_second'] = '29.970030'
+#    meta_test['image_num_z'] = 1
+#    meta_test['image_num_t'] = 28
+#    meta_test['image_num_p'] = 28
+#    meta_test['image_num_x'] = 640
+#    meta_test['image_num_y'] = 480
+#    meta_test['video_frames_per_second'] = 29.97003
 #    meta_test['video_codec_name'] = 'mpeg2video'
 #    test_image_video( "MPEG2", "out.mpg", meta_test )
 
     meta_test = {}
-    meta_test['image_num_z'] = '1'
-    meta_test['image_num_t'] = '31'
-    meta_test['image_num_p'] = '31'
-    meta_test['image_num_x'] = '640'
-    meta_test['image_num_y'] = '480'
-    meta_test['video_frames_per_second'] = '29.970030'
+    meta_test['image_num_z'] = 1
+    meta_test['image_num_t'] = 31
+    meta_test['image_num_p'] = 31
+    meta_test['image_num_x'] = 640
+    meta_test['image_num_y'] = 480
+    meta_test['video_frames_per_second'] = 29.97
     meta_test['video_codec_name'] = 'theora'
     test_image_video( "OGG Theora", "out.ogg", meta_test )
 
     meta_test = {}
-    meta_test['image_num_z'] = '1'
-    meta_test['image_num_t'] = '31' # 30
-    meta_test['image_num_p'] = '31' # 30
-    meta_test['image_num_x'] = '640'
-    meta_test['image_num_y'] = '480'
-    meta_test['video_frames_per_second'] = '29.970030'
+    meta_test['image_num_z'] = 1
+    meta_test['image_num_t'] = 31 # 30
+    meta_test['image_num_p'] = 31 # 30
+    meta_test['image_num_x'] = 640
+    meta_test['image_num_y'] = 480
+    meta_test['video_frames_per_second'] = 29.97
     meta_test['video_codec_name'] = 'mpeg1video'
     test_image_video( "MPEG1", "out.vcd", meta_test )
 
     meta_test = {}
-    meta_test['image_num_z'] = '1'
-    meta_test['image_num_t'] = '27'
-    meta_test['image_num_p'] = '27'
-    meta_test['image_num_x'] = '640'
-    meta_test['image_num_y'] = '480'
-    meta_test['video_frames_per_second'] = '29.970030'
+    meta_test['image_num_z'] = 1
+    meta_test['image_num_t'] = 27
+    meta_test['image_num_p'] = 27
+    meta_test['image_num_x'] = 640
+    meta_test['image_num_y'] = 480
+    meta_test['video_frames_per_second'] = 29.97
     meta_test['video_codec_name'] = 'msmpeg4'
     test_image_video( "WMV", "out.wmv", meta_test )
 
     meta_test = {}
-    meta_test['image_num_z'] = '1'
-    meta_test['image_num_t'] = '30'
-    meta_test['image_num_p'] = '30'
-    meta_test['image_num_x'] = '640'
-    meta_test['image_num_y'] = '480'
-    meta_test['video_frames_per_second'] = '29.970030'
+    meta_test['image_num_z'] = 1
+    meta_test['image_num_t'] = 30
+    meta_test['image_num_p'] = 30
+    meta_test['image_num_x'] = 640
+    meta_test['image_num_y'] = 480
+    meta_test['video_frames_per_second'] = 29.97
     meta_test['video_codec_name'] = 'vp8'
     test_image_video( "WebM", "out.webm", meta_test )
 
     meta_test = {}
-    meta_test['image_num_z'] = '1'
-    meta_test['image_num_t'] = '28'
-    meta_test['image_num_p'] = '28'
-    meta_test['image_num_x'] = '640'
-    meta_test['image_num_y'] = '480'
-    meta_test['video_frames_per_second'] = '29.970030'
+    meta_test['image_num_z'] = 1
+    meta_test['image_num_t'] = 28
+    meta_test['image_num_p'] = 28
+    meta_test['image_num_x'] = 640
+    meta_test['image_num_y'] = 480
+    meta_test['video_frames_per_second'] = 29.97
     meta_test['video_codec_name'] = 'h264'
     test_image_video( "MPEG4 AVC H.264", "out_h264.mp4", meta_test )
 
     meta_test = {}
-    meta_test['image_num_z'] = '1'
-    meta_test['image_num_t'] = '25'
-    meta_test['image_num_p'] = '25'
-    meta_test['image_num_x'] = '1920'
-    meta_test['image_num_y'] = '1080'
-    meta_test['image_num_c'] = '3'
-    meta_test['video_frames_per_second'] = '29.970030'
+    meta_test['image_num_z'] = 1
+    meta_test['image_num_t'] = 25
+    meta_test['image_num_p'] = 25
+    meta_test['image_num_x'] = 1920
+    meta_test['image_num_y'] = 1080
+    meta_test['image_num_c'] = 3
+    meta_test['video_frames_per_second'] = 29.97
     meta_test['video_codec_name'] = 'hevc'
     test_image_video( "MPEG4 AVC H.265", "out_h265.mp4", meta_test )
 
@@ -1843,82 +1960,82 @@ if 'all' in mode or 'transforms' in mode:
     print '***************************************************'
 
     meta_test = {}
-    meta_test['image_num_z'] = '1'
-    meta_test['image_num_t'] = '1'
-    meta_test['image_num_c'] = '3'
-    meta_test['image_num_x'] = '1024'
-    meta_test['image_num_y'] = '768'
-    meta_test['image_pixel_depth'] = '8'
+    meta_test['image_num_z'] = 1
+    meta_test['image_num_t'] = 1
+    meta_test['image_num_c'] = 3
+    meta_test['image_num_x'] = 1024
+    meta_test['image_num_y'] = 768
+    meta_test['image_pixel_depth'] = 8
     meta_test['image_pixel_format'] = 'unsigned integer'
     test_image_transforms( '-filter', 'edge', "flowers_24bit_nointr.png", meta_test )
 
     meta_test = {}
-    meta_test['image_num_z'] = '1'
-    meta_test['image_num_t'] = '1'
-    meta_test['image_num_c'] = '1'
-    meta_test['image_num_x'] = '1024'
-    meta_test['image_num_y'] = '768'
-    meta_test['image_pixel_depth'] = '8'
+    meta_test['image_num_z'] = 1
+    meta_test['image_num_t'] = 1
+    meta_test['image_num_c'] = 1
+    meta_test['image_num_x'] = 1024
+    meta_test['image_num_y'] = 768
+    meta_test['image_pixel_depth'] = 8
     meta_test['image_pixel_format'] = 'unsigned integer'
     test_image_transforms( '-filter', 'wndchrmcolor', "flowers_24bit_nointr.png", meta_test )
 
     meta_test = {}
-    meta_test['image_num_z'] = '1'
-    meta_test['image_num_t'] = '1'
-    meta_test['image_num_c'] = '3'
-    meta_test['image_num_x'] = '1024'
-    meta_test['image_num_y'] = '768'
-    meta_test['image_pixel_depth'] = '8'
+    meta_test['image_num_z'] = 1
+    meta_test['image_num_t'] = 1
+    meta_test['image_num_c'] = 3
+    meta_test['image_num_x'] = 1024
+    meta_test['image_num_y'] = 768
+    meta_test['image_pixel_depth'] = 8
     meta_test['image_pixel_format'] = 'unsigned integer'
     test_image_transforms( '-transform_color', 'rgb2hsv', "flowers_24bit_nointr.png", meta_test )
 
     meta_test = {}
-    meta_test['image_num_z'] = '1'
-    meta_test['image_num_t'] = '1'
-    meta_test['image_num_c'] = '3'
-    meta_test['image_num_x'] = '1024'
-    meta_test['image_num_y'] = '768'
-    meta_test['image_pixel_depth'] = '8'
+    meta_test['image_num_z'] = 1
+    meta_test['image_num_t'] = 1
+    meta_test['image_num_c'] = 3
+    meta_test['image_num_x'] = 1024
+    meta_test['image_num_y'] = 768
+    meta_test['image_pixel_depth'] = 8
     meta_test['image_pixel_format'] = 'unsigned integer'
     test_image_transforms( '-transform_color', 'hsv2rgb', 'flowers_24bit_hsv.tif', meta_test )
 
     meta_test = {}
-    meta_test['image_num_z'] = '1'
-    meta_test['image_num_t'] = '1'
-    meta_test['image_num_c'] = '1'
-    meta_test['image_num_x'] = '768'
-    meta_test['image_num_y'] = '768'
-    meta_test['image_pixel_depth'] = '64'
+    meta_test['image_num_z'] = 1
+    meta_test['image_num_t'] = 1
+    meta_test['image_num_c'] = 1
+    meta_test['image_num_x'] = 768
+    meta_test['image_num_y'] = 768
+    meta_test['image_pixel_depth'] = 64
     meta_test['image_pixel_format'] = 'floating point'
     test_image_transforms( '-transform', 'chebyshev', 'flowers_8bit_gray.png', meta_test )
 
     meta_test = {}
-    meta_test['image_num_z'] = '1'
-    meta_test['image_num_t'] = '1'
-    meta_test['image_num_c'] = '1'
-    meta_test['image_num_x'] = '1024'
-    meta_test['image_num_y'] = '768'
-    meta_test['image_pixel_depth'] = '64'
+    meta_test['image_num_z'] = 1
+    meta_test['image_num_t'] = 1
+    meta_test['image_num_c'] = 1
+    meta_test['image_num_x'] = 1024
+    meta_test['image_num_y'] = 768
+    meta_test['image_pixel_depth'] = 64
     meta_test['image_pixel_format'] = 'floating point'
     test_image_transforms( '-transform', 'fft', 'flowers_8bit_gray.png', meta_test )
 
     meta_test = {}
-    meta_test['image_num_z'] = '1'
-    meta_test['image_num_t'] = '1'
-    meta_test['image_num_c'] = '1'
-    meta_test['image_num_x'] = '1032'
-    meta_test['image_num_y'] = '776'
-    meta_test['image_pixel_depth'] = '64'
+    meta_test['image_num_z'] = 1
+    meta_test['image_num_t'] = 1
+    meta_test['image_num_c'] = 1
+    meta_test['image_num_x'] = 1032
+    meta_test['image_num_y'] = 776
+    meta_test['image_pixel_depth'] = 64
     meta_test['image_pixel_format'] = 'floating point'
     test_image_transforms( '-transform', 'wavelet', 'flowers_8bit_gray.png', meta_test )
 
     meta_test = {}
-    meta_test['image_num_z'] = '1'
-    meta_test['image_num_t'] = '1'
-    meta_test['image_num_c'] = '1'
-    meta_test['image_num_x'] = '180'
-    meta_test['image_num_y'] = '1283'
-    meta_test['image_pixel_depth'] = '64'
+    meta_test['image_num_z'] = 1
+    meta_test['image_num_t'] = 1
+    meta_test['image_num_c'] = 1
+    meta_test['image_num_x'] = 180
+    meta_test['image_num_y'] = 1283
+    meta_test['image_pixel_depth'] = 64
     meta_test['image_pixel_format'] = 'floating point'
     test_image_transforms( '-transform', 'radon', 'flowers_8bit_gray.png', meta_test )
 
@@ -1930,64 +2047,64 @@ if 'all' in mode or 'commands' in mode:
     print '***************************************************'
 
     meta_test = {}
-    meta_test['image_num_c'] = '3'
-    meta_test['image_num_x'] = '3264'
-    meta_test['image_num_y'] = '2448'
-    meta_test['image_pixel_depth'] = '8'
+    meta_test['image_num_c'] = 3
+    meta_test['image_num_x'] = 3264
+    meta_test['image_num_y'] = 2448
+    meta_test['image_pixel_depth'] = 8
     test_image_commands( ['-rotate', 'guess'], "IMG_0562.JPG", meta_test )
 
     meta_test = {}
-    meta_test['image_num_c'] = '3'
-    meta_test['image_num_x'] = '2448'
-    meta_test['image_num_y'] = '3264'
-    meta_test['image_pixel_depth'] = '8'
+    meta_test['image_num_c'] = 3
+    meta_test['image_num_x'] = 2448
+    meta_test['image_num_y'] = 3264
+    meta_test['image_pixel_depth'] = 8
     test_image_commands( ['-rotate', 'guess'], "IMG_0593.JPG", meta_test )
 
     meta_test = {}
-    meta_test['image_num_c'] = '3'
-    meta_test['image_num_x'] = '3264'
-    meta_test['image_num_y'] = '2448'
-    meta_test['image_pixel_depth'] = '8'
+    meta_test['image_num_c'] = 3
+    meta_test['image_num_x'] = 3264
+    meta_test['image_num_y'] = 2448
+    meta_test['image_pixel_depth'] = 8
     test_image_commands( ['-rotate', 'guess'], "IMG_1003.JPG", meta_test )
 
     meta_test = {}
-    meta_test['image_num_c'] = '1'
-    meta_test['image_num_x'] = '1024'
-    meta_test['image_num_y'] = '768'
-    meta_test['image_pixel_depth'] = '32'
-    test_image_commands( ['-superpixels', '16'], 'flowers_8bit_gray.png', meta_test )
+    meta_test['image_num_c'] = 1
+    meta_test['image_num_x'] = 1024
+    meta_test['image_num_y'] = 768
+    meta_test['image_pixel_depth'] = 32
+    test_image_commands( ['-superpixels', 16], 'flowers_8bit_gray.png', meta_test )
 
     meta_test = {}
-    meta_test['image_num_c'] = '1'
-    meta_test['image_num_x'] = '1024'
-    meta_test['image_num_y'] = '768'
-    meta_test['image_pixel_depth'] = '32'
-    test_image_commands( ['-superpixels', '16'], 'flowers_24bit_nointr.png', meta_test )
+    meta_test['image_num_c'] = 1
+    meta_test['image_num_x'] = 1024
+    meta_test['image_num_y'] = 768
+    meta_test['image_pixel_depth'] = 32
+    test_image_commands( ['-superpixels', 16], 'flowers_24bit_nointr.png', meta_test )
 
     meta_test = {}
-    meta_test['image_num_c'] = '2'
-    meta_test['image_num_x'] = '256'
-    meta_test['image_num_y'] = '256'
-    meta_test['image_num_z'] = '7'
-    meta_test['image_pixel_depth'] = '16'
-    meta_test['pixel_resolution_x'] = '0.414320'
-    meta_test['pixel_resolution_y'] = '0.414320'
-    meta_test['pixel_resolution_z'] = '1.857143'
+    meta_test['image_num_c'] = 2
+    meta_test['image_num_x'] = 256
+    meta_test['image_num_y'] = 256
+    meta_test['image_num_z'] = 7
+    meta_test['image_pixel_depth'] = 16
+    meta_test['pixel_resolution_x'] = 0.41432
+    meta_test['pixel_resolution_y'] = 0.41432
+    meta_test['pixel_resolution_z'] = 1.85714
     meta_test['channel_0_name'] = 'FITC'
     meta_test['channel_1_name'] = 'Cy3'
     test_image_commands( ['-t', 'ome-tiff', '-resize3d', '256,0,0,TC'], '161pkcvampz1Live2-17-2004_11-57-21_AM.tif', meta_test )
 
     meta_test = {}
-    meta_test['image_num_p'] = '256'
-    meta_test['image_num_c'] = '2'
-    meta_test['image_num_x'] = '512'
-    meta_test['image_num_y'] = '13'
-    meta_test['image_num_z'] = '256'
-    meta_test['image_num_t'] = '1'
-    meta_test['image_pixel_depth'] = '16'
-    meta_test['pixel_resolution_x'] = '0.207160'
-    meta_test['pixel_resolution_y'] = '1.000000'
-    meta_test['pixel_resolution_z'] = '0.414320'
+    meta_test['image_num_p'] = 256
+    meta_test['image_num_c'] = 2
+    meta_test['image_num_x'] = 512
+    meta_test['image_num_y'] = 13
+    meta_test['image_num_z'] = 256
+    meta_test['image_num_t'] = 1
+    meta_test['image_pixel_depth'] = 16
+    meta_test['pixel_resolution_x'] = 0.20716
+    meta_test['pixel_resolution_y'] = 1
+    meta_test['pixel_resolution_z'] = 0.41432
     meta_test['pixel_resolution_unit_x'] = 'microns'
     meta_test['pixel_resolution_unit_y'] = 'microns'
     meta_test['pixel_resolution_unit_z'] = 'microns'
@@ -1997,16 +2114,16 @@ if 'all' in mode or 'commands' in mode:
     test_image_commands( ['-t', 'ome-tiff', '-rearrange3d', 'xzy'], 'cells.ome.tif', meta_test )
 
     meta_test = {}
-    meta_test['image_num_p'] = '512'
-    meta_test['image_num_c'] = '2'
-    meta_test['image_num_x'] = '13'
-    meta_test['image_num_y'] = '256'
-    meta_test['image_num_z'] = '512'
-    meta_test['image_num_t'] = '1'
-    meta_test['image_pixel_depth'] = '16'
-    meta_test['pixel_resolution_x'] = '1.000000'
-    meta_test['pixel_resolution_y'] = '0.414320'
-    meta_test['pixel_resolution_z'] = '0.207160'
+    meta_test['image_num_p'] = 512
+    meta_test['image_num_c'] = 2
+    meta_test['image_num_x'] = 13
+    meta_test['image_num_y'] = 256
+    meta_test['image_num_z'] = 512
+    meta_test['image_num_t'] = 1
+    meta_test['image_pixel_depth'] = 16
+    meta_test['pixel_resolution_x'] = 1
+    meta_test['pixel_resolution_y'] = 0.41432
+    meta_test['pixel_resolution_z'] = 0.20716
     meta_test['pixel_resolution_unit_x'] = 'microns'
     meta_test['pixel_resolution_unit_y'] = 'microns'
     meta_test['pixel_resolution_unit_z'] = 'microns'
@@ -2025,269 +2142,269 @@ if 'all' in mode or 'pyramids' in mode:
 
     # test reading pyramidal metadata
     meta_test = {}
-    meta_test['image_num_c'] = '3'
-    meta_test['image_num_t'] = '1'
-    meta_test['image_num_z'] = '1'
-    meta_test['image_num_x'] = '5000'
-    meta_test['image_num_y'] = '2853'
-    meta_test['image_pixel_depth'] = '8'
-    meta_test['image_num_resolution_levels'] = '4'
-    meta_test['image_resolution_level_scales'] = '1.000000,0.500000,0.250000,0.125000'
+    meta_test['image_num_c'] = 3
+    meta_test['image_num_t'] = 1
+    meta_test['image_num_z'] = 1
+    meta_test['image_num_x'] = 5000
+    meta_test['image_num_y'] = 2853
+    meta_test['image_pixel_depth'] = 8
+    meta_test['image_num_resolution_levels'] = 4
+    meta_test['image_resolution_level_scales'] = [1.0, 0.5, 0.25, 0.125]
     test_metadata_read( "Photoshop pyramid", "monument_photoshop.tif", meta_test )
 
     meta_test = {}
-    meta_test['image_num_c'] = '3'
-    meta_test['image_num_t'] = '1'
-    meta_test['image_num_z'] = '1'
-    meta_test['image_num_x'] = '5000'
-    meta_test['image_num_y'] = '2853'
-    meta_test['tile_num_x'] = '512'
-    meta_test['tile_num_y'] = '512'
-    meta_test['image_pixel_depth'] = '8'
-    meta_test['image_num_resolution_levels'] = '5'
-    meta_test['image_resolution_level_scales'] = '1.000000,0.500000,0.250000,0.125000,0.062400'
+    meta_test['image_num_c'] = 3
+    meta_test['image_num_t'] = 1
+    meta_test['image_num_z'] = 1
+    meta_test['image_num_x'] = 5000
+    meta_test['image_num_y'] = 2853
+    meta_test['tile_num_x'] = 512
+    meta_test['tile_num_y'] = 512
+    meta_test['image_pixel_depth'] = 8
+    meta_test['image_num_resolution_levels'] = 5
+    meta_test['image_resolution_level_scales'] = [1.0,0.5,0.25,0.125,0.0624]
     test_metadata_read( "Imagemagick pyramid", "monument_vips.tif", meta_test )
 
     meta_test = {}
-    meta_test['image_num_c'] = '3'
-    meta_test['image_num_t'] = '1'
-    meta_test['image_num_z'] = '1'
-    meta_test['image_num_x'] = '5000'
-    meta_test['image_num_y'] = '2853'
-    meta_test['tile_num_x'] = '512'
-    meta_test['tile_num_y'] = '512'
-    meta_test['image_pixel_depth'] = '8'
-    meta_test['image_num_resolution_levels'] = '7'
-    meta_test['image_resolution_level_scales'] = '1.000000,0.500000,0.250000,0.125000,0.062400,0.031200,0.015600'
+    meta_test['image_num_c'] = 3
+    meta_test['image_num_t'] = 1
+    meta_test['image_num_z'] = 1
+    meta_test['image_num_x'] = 5000
+    meta_test['image_num_y'] = 2853
+    meta_test['tile_num_x'] = 512
+    meta_test['tile_num_y'] = 512
+    meta_test['image_pixel_depth'] = 8
+    meta_test['image_num_resolution_levels'] = 7
+    meta_test['image_resolution_level_scales'] = [1.0,0.5,0.25,0.125,0.0624,0.0312,0.0156]
     test_metadata_read( "Top-IFD TIFF pyramid", "monument_imgcnv_topdirs.tif", meta_test )
 
     meta_test = {}
-    meta_test['image_num_c'] = '3'
-    meta_test['image_num_t'] = '1'
-    meta_test['image_num_z'] = '1'
-    meta_test['image_num_x'] = '5000'
-    meta_test['image_num_y'] = '2853'
-    meta_test['tile_num_x'] = '512'
-    meta_test['tile_num_y'] = '512'
-    meta_test['image_pixel_depth'] = '8'
-    meta_test['image_num_resolution_levels'] = '7'
-    meta_test['image_resolution_level_scales'] = '1.000000,0.500000,0.250000,0.125000,0.062400,0.031200,0.015600'
+    meta_test['image_num_c'] = 3
+    meta_test['image_num_t'] = 1
+    meta_test['image_num_z'] = 1
+    meta_test['image_num_x'] = 5000
+    meta_test['image_num_y'] = 2853
+    meta_test['tile_num_x'] = 512
+    meta_test['tile_num_y'] = 512
+    meta_test['image_pixel_depth'] = 8
+    meta_test['image_num_resolution_levels'] = 7
+    meta_test['image_resolution_level_scales'] = [1.0,0.5,0.25,0.125,0.0624,0.0312,0.0156]
     test_metadata_read( "Sub-IFD TIFF pyramid", "monument_imgcnv_subdirs.tif", meta_test )
 
     meta_test = {}
-    meta_test['image_num_c'] = '3'
-    meta_test['image_num_t'] = '1'
-    meta_test['image_num_z'] = '1'
-    meta_test['image_num_x'] = '5000'
-    meta_test['image_num_y'] = '2853'
-    meta_test['tile_num_x'] = '512'
-    meta_test['tile_num_y'] = '512'
-    meta_test['image_pixel_depth'] = '8'
-    meta_test['image_num_resolution_levels'] = '7'
-    meta_test['image_resolution_level_scales'] = '1.000000,0.500000,0.250000,0.125000,0.062400,0.031200,0.015600'
+    meta_test['image_num_c'] = 3
+    meta_test['image_num_t'] = 1
+    meta_test['image_num_z'] = 1
+    meta_test['image_num_x'] = 5000
+    meta_test['image_num_y'] = 2853
+    meta_test['tile_num_x'] = 512
+    meta_test['tile_num_y'] = 512
+    meta_test['image_pixel_depth'] = 8
+    meta_test['image_num_resolution_levels'] = 7
+    meta_test['image_resolution_level_scales'] = [1.0,0.5,0.25,0.125,0.0624,0.0312,0.0156]
     test_metadata_read( "OME-TIFF pyramid", "monument_imgcnv.ome.tif", meta_test )
 
     meta_test = {}
-    meta_test['image_num_c'] = '3'
-    meta_test['image_num_t'] = '1'
-    meta_test['image_num_z'] = '1'
-    meta_test['image_num_x'] = '5000'
-    meta_test['image_num_y'] = '2853'
-    meta_test['tile_num_x'] = '256'
-    meta_test['tile_num_y'] = '256'
-    meta_test['image_pixel_depth'] = '8'
-    meta_test['image_num_resolution_levels'] = '7'
-    meta_test['image_resolution_level_scales'] = '1.000000,0.500000,0.250000,0.125000,0.062400,0.031200,0.015600'
+    meta_test['image_num_c'] = 3
+    meta_test['image_num_t'] = 1
+    meta_test['image_num_z'] = 1
+    meta_test['image_num_x'] = 5000
+    meta_test['image_num_y'] = 2853
+    meta_test['tile_num_x'] = 256
+    meta_test['tile_num_y'] = 256
+    meta_test['image_pixel_depth'] = 8
+    meta_test['image_num_resolution_levels'] = 7
+    meta_test['image_resolution_level_scales'] = [1.0,0.5,0.25,0.125,0.0624,0.0312,0.0156]
     test_metadata_read( "256px tiles TIFF pyramid", "monument_imgcnv.256.tif", meta_test )
 
     # test reading pyramidal levels
     meta_test = {}
-    meta_test['image_num_x'] = '156'
-    meta_test['image_num_y'] = '89'
-    meta_test['image_num_c'] = '3'
-    meta_test['image_num_z'] = '1'
-    meta_test['image_num_t'] = '1'
-    meta_test['image_pixel_depth'] = '8'
+    meta_test['image_num_x'] = 156
+    meta_test['image_num_y'] = 89
+    meta_test['image_num_c'] = 3
+    meta_test['image_num_z'] = 1
+    meta_test['image_num_t'] = 1
+    meta_test['image_pixel_depth'] = 8
     test_image_commands( ['-t', 'tiff', '-res-level', '5'], 'monument_imgcnv_subdirs.tif', meta_test )
 
     meta_test = {}
-    meta_test['image_num_x'] = '156'
-    meta_test['image_num_y'] = '89'
-    meta_test['image_num_c'] = '3'
-    meta_test['image_num_z'] = '1'
-    meta_test['image_num_t'] = '1'
-    meta_test['image_pixel_depth'] = '8'
+    meta_test['image_num_x'] = 156
+    meta_test['image_num_y'] = 89
+    meta_test['image_num_c'] = 3
+    meta_test['image_num_z'] = 1
+    meta_test['image_num_t'] = 1
+    meta_test['image_pixel_depth'] = 8
     test_image_commands( ['-t', 'tiff', '-res-level', '5'], 'monument_imgcnv_topdirs.tif', meta_test )
 
     meta_test = {}
-    meta_test['image_num_x'] = '156'
-    meta_test['image_num_y'] = '89'
-    meta_test['image_num_c'] = '3'
-    meta_test['image_num_z'] = '1'
-    meta_test['image_num_t'] = '1'
-    meta_test['image_pixel_depth'] = '8'
+    meta_test['image_num_x'] = 156
+    meta_test['image_num_y'] = 89
+    meta_test['image_num_c'] = 3
+    meta_test['image_num_z'] = 1
+    meta_test['image_num_t'] = 1
+    meta_test['image_pixel_depth'] = 8
     test_image_commands( ['-t', 'tiff', '-res-level', '5'], 'monument_imgcnv.ome.tif', meta_test )
 
     meta_test = {}
-    meta_test['image_num_x'] = '156'
-    meta_test['image_num_y'] = '89'
-    meta_test['image_num_c'] = '3'
-    meta_test['image_num_z'] = '1'
-    meta_test['image_num_t'] = '1'
-    meta_test['image_pixel_depth'] = '8'
+    meta_test['image_num_x'] = 156
+    meta_test['image_num_y'] = 89
+    meta_test['image_num_c'] = 3
+    meta_test['image_num_z'] = 1
+    meta_test['image_num_t'] = 1
+    meta_test['image_pixel_depth'] = 8
     test_image_commands( ['-t', 'tiff', '-res-level', '5'], 'monument_imgcnv.256.tif', meta_test )
 
     meta_test = {}
-    meta_test['image_num_x'] = '312'
-    meta_test['image_num_y'] = '178'
-    meta_test['image_num_c'] = '3'
-    meta_test['image_num_z'] = '1'
-    meta_test['image_num_t'] = '1'
-    meta_test['image_pixel_depth'] = '8'
+    meta_test['image_num_x'] = 312
+    meta_test['image_num_y'] = 178
+    meta_test['image_num_c'] = 3
+    meta_test['image_num_z'] = 1
+    meta_test['image_num_t'] = 1
+    meta_test['image_pixel_depth'] = 8
     test_image_commands( ['-t', 'tiff', '-res-level', '4'], 'monument_vips.tif', meta_test )
 
     meta_test = {}
-    meta_test['image_num_x'] = '625'
-    meta_test['image_num_y'] = '357'
-    meta_test['image_num_c'] = '3'
-    meta_test['image_num_z'] = '1'
-    meta_test['image_num_t'] = '1'
-    meta_test['image_pixel_depth'] = '8'
-    test_image_commands( ['-t', 'tiff', '-res-level', '3'], 'monument_photoshop.tif', meta_test )
+    meta_test['image_num_x'] = 625
+    meta_test['image_num_y'] = 357
+    meta_test['image_num_c'] = 3
+    meta_test['image_num_z'] = 1
+    meta_test['image_num_t'] = 1
+    meta_test['image_pixel_depth'] = 8
+    test_image_commands( ['-t', 'tiff', '-res-level', 3], 'monument_photoshop.tif', meta_test )
 
     # test reading pyramidal tiles
 
     # - subifds
     meta_test = {}
-    meta_test['image_num_x'] = '512'
-    meta_test['image_num_y'] = '512'
-    meta_test['image_num_c'] = '3'
-    meta_test['image_num_z'] = '1'
-    meta_test['image_num_t'] = '1'
-    meta_test['image_pixel_depth'] = '8'
+    meta_test['image_num_x'] = 512
+    meta_test['image_num_y'] = 512
+    meta_test['image_num_c'] = 3
+    meta_test['image_num_z'] = 1
+    meta_test['image_num_t'] = 1
+    meta_test['image_pixel_depth'] = 8
     test_image_commands( ['-t', 'tiff', '-tile', '512,0,0,2'], 'monument_imgcnv_subdirs.tif', meta_test ) # first tile
 
     meta_test = {}
-    meta_test['image_num_x'] = '226'
-    meta_test['image_num_y'] = '201'
-    meta_test['image_num_c'] = '3'
-    meta_test['image_num_z'] = '1'
-    meta_test['image_num_t'] = '1'
-    meta_test['image_pixel_depth'] = '8'
+    meta_test['image_num_x'] = 226
+    meta_test['image_num_y'] = 201
+    meta_test['image_num_c'] = 3
+    meta_test['image_num_z'] = 1
+    meta_test['image_num_t'] = 1
+    meta_test['image_pixel_depth'] = 8
     test_image_commands( ['-t', 'tiff', '-tile', '512,2,1,2'], 'monument_imgcnv_subdirs.tif', meta_test ) # last tile
 
     meta_test = {}
-    meta_test['image_num_x'] = '256'
-    meta_test['image_num_y'] = '256'
-    meta_test['image_num_c'] = '3'
-    meta_test['image_num_z'] = '1'
-    meta_test['image_num_t'] = '1'
-    meta_test['image_pixel_depth'] = '8'
+    meta_test['image_num_x'] = 256
+    meta_test['image_num_y'] = 256
+    meta_test['image_num_c'] = 3
+    meta_test['image_num_z'] = 1
+    meta_test['image_num_t'] = 1
+    meta_test['image_pixel_depth'] = 8
     test_image_commands( ['-t', 'tiff', '-tile', '256,1,1,2'], 'monument_imgcnv_subdirs.tif', meta_test ) # tile size different from stored
 
     # - vips
     meta_test = {}
-    meta_test['image_num_x'] = '512'
-    meta_test['image_num_y'] = '512'
-    meta_test['image_num_c'] = '3'
-    meta_test['image_num_z'] = '1'
-    meta_test['image_num_t'] = '1'
-    meta_test['image_pixel_depth'] = '8'
+    meta_test['image_num_x'] = 512
+    meta_test['image_num_y'] = 512
+    meta_test['image_num_c'] = 3
+    meta_test['image_num_z'] = 1
+    meta_test['image_num_t'] = 1
+    meta_test['image_pixel_depth'] = 8
     test_image_commands( ['-t', 'tiff', '-tile', '512,0,0,2'], 'monument_vips.tif', meta_test ) # first tile
 
     meta_test = {}
-    meta_test['image_num_x'] = '226'
-    meta_test['image_num_y'] = '201'
-    meta_test['image_num_c'] = '3'
-    meta_test['image_num_z'] = '1'
-    meta_test['image_num_t'] = '1'
-    meta_test['image_pixel_depth'] = '8'
+    meta_test['image_num_x'] = 226
+    meta_test['image_num_y'] = 201
+    meta_test['image_num_c'] = 3
+    meta_test['image_num_z'] = 1
+    meta_test['image_num_t'] = 1
+    meta_test['image_pixel_depth'] = 8
     test_image_commands( ['-t', 'tiff', '-tile', '512,2,1,2'], 'monument_vips.tif', meta_test ) # last tile
 
     meta_test = {}
-    meta_test['image_num_x'] = '256'
-    meta_test['image_num_y'] = '256'
-    meta_test['image_num_c'] = '3'
-    meta_test['image_num_z'] = '1'
-    meta_test['image_num_t'] = '1'
-    meta_test['image_pixel_depth'] = '8'
+    meta_test['image_num_x'] = 256
+    meta_test['image_num_y'] = 256
+    meta_test['image_num_c'] = 3
+    meta_test['image_num_z'] = 1
+    meta_test['image_num_t'] = 1
+    meta_test['image_pixel_depth'] = 8
     test_image_commands( ['-t', 'tiff', '-tile', '256,1,1,2'], 'monument_vips.tif', meta_test ) # tile size different from stored
 
     # - ome-tiff
     meta_test = {}
-    meta_test['image_num_x'] = '512'
-    meta_test['image_num_y'] = '512'
-    meta_test['image_num_c'] = '3'
-    meta_test['image_num_z'] = '1'
-    meta_test['image_num_t'] = '1'
-    meta_test['image_pixel_depth'] = '8'
+    meta_test['image_num_x'] = 512
+    meta_test['image_num_y'] = 512
+    meta_test['image_num_c'] = 3
+    meta_test['image_num_z'] = 1
+    meta_test['image_num_t'] = 1
+    meta_test['image_pixel_depth'] = 8
     test_image_commands( ['-t', 'tiff', '-tile', '512,0,0,2'], 'monument_imgcnv.ome.tif', meta_test ) # first tile
 
     meta_test = {}
-    meta_test['image_num_x'] = '226'
-    meta_test['image_num_y'] = '201'
-    meta_test['image_num_c'] = '3'
-    meta_test['image_num_z'] = '1'
-    meta_test['image_num_t'] = '1'
-    meta_test['image_pixel_depth'] = '8'
+    meta_test['image_num_x'] = 226
+    meta_test['image_num_y'] = 201
+    meta_test['image_num_c'] = 3
+    meta_test['image_num_z'] = 1
+    meta_test['image_num_t'] = 1
+    meta_test['image_pixel_depth'] = 8
     test_image_commands( ['-t', 'tiff', '-tile', '512,2,1,2'], 'monument_imgcnv.ome.tif', meta_test ) # last tile
 
     meta_test = {}
-    meta_test['image_num_x'] = '256'
-    meta_test['image_num_y'] = '256'
-    meta_test['image_num_c'] = '3'
-    meta_test['image_num_z'] = '1'
-    meta_test['image_num_t'] = '1'
-    meta_test['image_pixel_depth'] = '8'
+    meta_test['image_num_x'] = 256
+    meta_test['image_num_y'] = 256
+    meta_test['image_num_c'] = 3
+    meta_test['image_num_z'] = 1
+    meta_test['image_num_t'] = 1
+    meta_test['image_pixel_depth'] = 8
     test_image_commands( ['-t', 'tiff', '-tile', '256,1,1,2'], 'monument_imgcnv.ome.tif', meta_test ) # tile size different from stored
 
     # JPEG-2000
 
     # meta
     meta_test = {}
-    meta_test['image_num_c'] = '3'
-    meta_test['image_num_t'] = '1'
-    meta_test['image_num_z'] = '1'
-    meta_test['image_num_x'] = '17334'
-    meta_test['image_num_y'] = '17457'
-    meta_test['tile_num_x'] = '2048'
-    meta_test['tile_num_y'] = '2048'
-    meta_test['image_pixel_depth'] = '8'
-    meta_test['image_num_resolution_levels'] = '8'
-    if os.name == 'nt': #dima: some minor precision differences, to be checked
-        meta_test['image_resolution_level_scales'] = '1.000000,0.500000,0.250000,0.125000,0.062500,0.031250,0.015625,0.007813'
+    meta_test['image_num_c'] = 3
+    meta_test['image_num_t'] = 1
+    meta_test['image_num_z'] = 1
+    meta_test['image_num_x'] = 17334
+    meta_test['image_num_y'] = 17457
+    meta_test['tile_num_x'] = 2048
+    meta_test['tile_num_y'] = 2048
+    meta_test['image_pixel_depth'] = 8
+    meta_test['image_num_resolution_levels'] = 8
+    if os.name != 'nt': #dima: some minor precision differences, to be checked
+        meta_test['image_resolution_level_scales'] = [1.0,0.5,0.25,0.125,0.0625,0.03125,0.015625,0.007812]
     else:
-        meta_test['image_resolution_level_scales'] = '1.000000,0.500000,0.250000,0.125000,0.062500,0.031250,0.015625,0.007812'
+        meta_test['image_resolution_level_scales'] = [1.0,0.5,0.25,0.125,0.0625,0.03125,0.015625,0.007813]
     meta_test['image_resolution_level_structure'] = 'flat'
     test_metadata_read( "2048px tiles JPEG-2000 pyramid", "retina.jp2", meta_test )
 
     # levels
     meta_test = {}
-    meta_test['image_num_x'] = '271'
-    meta_test['image_num_y'] = '273'
-    meta_test['image_num_c'] = '3'
-    meta_test['image_num_z'] = '1'
-    meta_test['image_num_t'] = '1'
-    meta_test['image_pixel_depth'] = '8'
+    meta_test['image_num_x'] = 271
+    meta_test['image_num_y'] = 273
+    meta_test['image_num_c'] = 3
+    meta_test['image_num_z'] = 1
+    meta_test['image_num_t'] = 1
+    meta_test['image_pixel_depth'] = 8
     test_image_commands( ['-t', 'tiff', '-res-level', '6'], 'retina.jp2', meta_test )
 
     # tiles
     meta_test = {}
-    meta_test['image_num_x'] = '512'
-    meta_test['image_num_y'] = '512'
-    meta_test['image_num_c'] = '3'
-    meta_test['image_num_z'] = '1'
-    meta_test['image_num_t'] = '1'
-    meta_test['image_pixel_depth'] = '8'
+    meta_test['image_num_x'] = 512
+    meta_test['image_num_y'] = 512
+    meta_test['image_num_c'] = 3
+    meta_test['image_num_z'] = 1
+    meta_test['image_num_t'] = 1
+    meta_test['image_pixel_depth'] = 8
     test_image_commands( ['-t', 'tiff', '-tile', '512,0,0,4'], 'retina.jp2', meta_test ) # first tile
 
     meta_test = {}
-    meta_test['image_num_x'] = '59'
-    meta_test['image_num_y'] = '67'
-    meta_test['image_num_c'] = '3'
-    meta_test['image_num_z'] = '1'
-    meta_test['image_num_t'] = '1'
-    meta_test['image_pixel_depth'] = '8'
+    meta_test['image_num_x'] = 59
+    meta_test['image_num_y'] = 67
+    meta_test['image_num_c'] = 3
+    meta_test['image_num_z'] = 1
+    meta_test['image_num_t'] = 1
+    meta_test['image_pixel_depth'] = 8
     test_image_commands( ['-t', 'tiff', '-tile', '512,2,2,4'], 'retina.jp2', meta_test ) # last tile
 
     # testing tile size different from stored is not required for flat structure

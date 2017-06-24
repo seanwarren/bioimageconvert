@@ -1,7 +1,8 @@
 BioImageConvertor
 
-Copyright © 2005-2016 Center for Bio-Image Informatics, UCSB
-Copyright © 2005-2016 by the Regents of the University of California
+Copyright © 2005-2017 Center for Bio-Image Informatics, UCSB
+Copyright © 2005-2017 by the Regents of the University of California
+Copyright © 2016-2017 ViQi Inc
 All rights reserved
 <http://www.bioimage.ucsb.edu/>
 
