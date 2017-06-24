@@ -77,13 +77,13 @@ void mrcGetImageInfo(FormatHandle *fmtHndl) {
     info->pixelType = bim::FMT_UNSIGNED;
     info->number_pages = h->nz;
 
-    if (h->ispg == 0) {
+    if (h->ispg == MRC_SPACEGROUP_IMAGE_STACK) {
         info->number_z = 1;
         info->number_t = info->number_pages;
-    } else if (h->ispg == 1) {
+    } else if (h->ispg >= MRC_SPACEGROUP_VOLUME && h->ispg < MRC_SPACEGROUP_VOLUME_STACK) {
         info->number_z = info->number_pages;
         info->number_t = 1;
-    } else if (h->ispg >= 401) {
+    } else if (h->ispg >= MRC_SPACEGROUP_VOLUME_STACK) {
         info->number_z = h->mz;
         info->number_t = h->nz/h->mz;
     }
@@ -132,12 +132,11 @@ void mrcGetImageInfo(FormatHandle *fmtHndl) {
     par->data_offset = BIM_MRC_HEADER_SIZE + h->next; // unless extended header is used
 
     // read extended header 
-    if (h->next > 0) {
-        int sz = sizeof(MrcHeaderExt);
-        int nimg = 1024;
-        par->exts.resize(nimg);
+    bim::uint sz = sizeof(FEIHeaderExt)*BIM_FEI_EXT_NUM_IMG;
+    if (h->next == sz) {
+        par->exts.resize(BIM_FEI_EXT_NUM_IMG);
         if (xseek(fmtHndl, BIM_MRC_HEADER_SIZE, SEEK_SET) != 0) return;
-        if (xread(fmtHndl, &par->exts[0], 1, sz*nimg) != sz*nimg) return;
+        if (xread(fmtHndl, &par->exts[0], 1, sz) != sz) return;
     }
 }
 
@@ -152,13 +151,16 @@ int mrcValidateFormatProc(BIM_MAGIC_STREAM *magic, bim::uint length, const bim::
     bim::uint32 mode = h->mode;
     bim::uint32 ver = h->nversion;
     char *ext = h->extType;
+    char *map = h->map;
 
     if (bim::bigendian) {
         swapLong(&mode);
         swapLong(&ver);
     }
 
-    if (mode == 6 || mode == 16 || mode == 101 || (mode >= 0 && mode <= 4)) return 0;
+    if (memcmp(map, "MAP ", 4) == 0) return 0; // MAP identifier
+
+    if (mode == 6 || mode == 7 || mode == 16 || mode == 101 || (mode >= 0 && mode <= 4)) return 0;
 
     if (memcmp(ext, "CCP4", 4) == 0) return 0; // Format from CCP4 suite
     if (memcmp(ext, "MRCO", 4) == 0) return 0; // MRC format
@@ -171,7 +173,7 @@ int mrcValidateFormatProc(BIM_MAGIC_STREAM *magic, bim::uint length, const bim::
 
     // handle bad cases of files written in big-endian format
     swapLong(&mode);
-    if (mode == 6 || mode == 16 || mode == 101 || (mode >= 0 && mode <= 4)) return 0;
+    if (mode == 6 || mode == 7 || mode == 16 || mode == 101 || (mode >= 0 && mode <= 4)) return 0;
 
     return -1;
 }
@@ -327,13 +329,10 @@ bim::uint mrc_append_metadata(FormatHandle *fmtHndl, TagMap *hash) {
     hash->set_value("MRC/amin", h->amin);
     hash->set_value("MRC/amax", h->amax);
     hash->set_value("MRC/amean", h->amean);
-    hash->set_value("MRC/lens", h->lens);
-    hash->set_value("MRC/nd1", h->nd1);
-    hash->set_value("MRC/nd2", h->nd2);
-    hash->set_value("MRC/vd1", h->vd1);
-    hash->set_value("MRC/vd2", h->vd2);
-    hash->set_value("MRC/amin", h->amin);
-    hash->set_value("MRC/amin", h->amin);
+    hash->set_value("MRC/xorg", h->xorg);
+    hash->set_value("MRC/yorg", h->yorg);
+    hash->set_value("MRC/zorg", h->zorg);
+    hash->set_value("MRC/rms", h->rms);
 
     // add labels
     for (int i = 0; i < h->nlabl; ++i) {
@@ -343,18 +342,19 @@ bim::uint mrc_append_metadata(FormatHandle *fmtHndl, TagMap *hash) {
         }
     }
     
-    // extended header
+    // FEI extended header
     if (par->exts.size() > 0) {
-        MrcHeaderExt *h = &par->exts[fmtHndl->pageNumber];
+        FEIHeaderExt *h = &par->exts[fmtHndl->pageNumber];
 
-        hash->set_value("pixel_resolution_x", h->pixel_size);
-        hash->set_value("pixel_resolution_y", h->pixel_size);
-        hash->set_value("pixel_resolution_z", h->pixel_size);
+        if (h->pixel_size > 0) {
+            hash->set_value("pixel_resolution_x", h->pixel_size);
+            hash->set_value("pixel_resolution_y", h->pixel_size);
+            hash->set_value("pixel_resolution_z", h->pixel_size);
 
-        hash->set_value("pixel_resolution_unit_x", "angstroms");
-        hash->set_value("pixel_resolution_unit_y", "angstroms");
-        hash->set_value("pixel_resolution_unit_z", "angstroms");
-
+            hash->set_value("pixel_resolution_unit_x", "meters");
+            hash->set_value("pixel_resolution_unit_y", "meters");
+            hash->set_value("pixel_resolution_unit_z", "meters");
+        }
 
         hash->set_value("FEI/a_tilt", h->a_tilt);
         hash->set_value("FEI/b_tilt", h->b_tilt);
@@ -410,7 +410,7 @@ FormatItem mrcItems[1] = {
     {
         "MRC",            // short name, no spaces
         "Medical Research Council", // Long format name
-        "mrc|rec|ali",        // pipe "|" separated supported extension list
+        "mrc|rec|ali|map",        // pipe "|" separated supported extension list
         1, //canRead;      // 0 - NO, 1 - YES
         0, //canWrite;     // 0 - NO, 1 - YES
         1, //canReadMeta;  // 0 - NO, 1 - YES

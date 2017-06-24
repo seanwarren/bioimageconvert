@@ -1,5 +1,11 @@
 = Version Change Log =
 
+== 2.2.0 ==
+
+ * New: Added MRC format support
+ * New: Added support for compressed NIFTI files
+ * Fix: Many fixes from contributions
+
 == 2.1.0 ==
 
  * Fix: Several important fixes for SLIC superpixels, ROIs, fuse...

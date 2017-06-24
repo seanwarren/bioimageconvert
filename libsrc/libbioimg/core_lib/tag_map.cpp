@@ -61,9 +61,9 @@ xstring Variant::as_string(const std::string &def) const {
     } if (tt.startsWith("unsigned")) {
         return xstring::xprintf("%d", this->as_unsigned(0));
     } if (tt.startsWith("float")) {
-        return xstring::xprintf("%f", this->as_float(0));
+        return xstring::xprintf("%g", this->as_float(0));
     } if (tt.startsWith("double")) {
-        return xstring::xprintf("%f", this->as_double(0));
+        return xstring::xprintf("%g", this->as_double(0));
     } if (tt.startsWith("boolean")) {
         return this->as_boolean(false) ? "true" : "false";
     } else {
