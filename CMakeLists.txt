@@ -51,9 +51,17 @@ endif()
 if(POLICY CMP0020)
     cmake_policy(SET CMP0020 NEW)
 endif()
+# Target names with colon are always ALIAS or IMPORTED targets for us:
+if(POLICY CMP0028)
+    cmake_policy(SET CMP0028 NEW)
+endif()
 # Allow to set a version number in project:
 if(POLICY CMP0048)
     cmake_policy(SET CMP0048 NEW)
+endif()
+# Always link libraries by full path, to avoid linking i.e. the system zlib:
+if(POLICY CMP0060)
+    cmake_policy(SET CMP0060 NEW)
 endif()
 
 
@@ -188,10 +196,14 @@ set(BIC_ZLIB_REQUIRED_VERSION 1.2.7)
 # automatic configuration and compile instructions
 #---------------------------------------------------------------------
 
-# Find the QtWidgets library
+# Find the Qt library
 if(LIBBIOIMAGE AND BIC_ENABLE_QT)
     find_package(Qt5Core REQUIRED)
     find_package(Qt5Gui REQUIRED)
+    # NOTE: We use the absolute paths to the libraries for pkg-config:
+    get_target_property(Qt5Core_LIBRARIES Qt5::Core LOCATION)
+    get_target_property(Qt5Gui_LIBRARIES Qt5::Gui LOCATION)
+    set(QT_LIBRARIES ${Qt5Core_LIBRARIES} ${Qt5Gui_LIBRARIES})
 endif()
 
 
@@ -676,7 +688,10 @@ if(LIBBIOIMAGE)
     set_property(TARGET bioimage PROPERTY POSITION_INDEPENDENT_CODE ON)
 
     if(BIC_ENABLE_QT)
-        qt5_use_modules(bioimage Core Gui)
+        # NOTE: We use this call to add linker libraries andinclude paths etc.
+        #       This is used independent of the variable QT_LIBRARIES, which is
+        #       mostly relevant for the pkg-config search path.
+        target_link_libraries(bioimage Qt5::Core Qt5::Gui)
     endif()
 
     # Install library and headers
@@ -1907,6 +1922,9 @@ endif()
 # here as required. They will be linked (and defined in pkg-config)
 # in the order they appear here.
 #---------------------------------------------------------------------
+if(QT_LIBRARIES)
+    set(LINK_LIBRARIES ${LINK_LIBRARIES} ${QT_LIBRARIES})
+endif()
 if(FFTW_LIBRARIES)
     set(LINK_LIBRARIES ${LINK_LIBRARIES} ${FFTW_LIBRARIES})
 endif()
