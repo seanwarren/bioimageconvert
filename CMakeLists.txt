@@ -38,7 +38,9 @@
 # supported at all, and the order of this build file is relevant!
 #
 ######################################################################
-cmake_minimum_required(VERSION 2.8.12 FATAL_ERROR)
+#
+# default to at least cmake 3.1.0 because older cmake is effort to support:
+cmake_minimum_required(VERSION 3.1.0 FATAL_ERROR)
 
 #---------------------------------------------------------------------
 # cmake policies define the behavior
