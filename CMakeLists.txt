@@ -1615,7 +1615,7 @@ if(BIC_INTERNAL_LIBGEOTIFF)
     if(BIC_INTERNAL_PROJ4)
         add_dependencies(geotiff proj)
     endif()
-    if(BIC_INTERNAL_PROJ4)
+    if(BIC_INTERNAL_LIBTIFF)
         add_dependencies(geotiff tiff)
     endif()
 
