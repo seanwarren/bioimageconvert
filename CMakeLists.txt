@@ -543,6 +543,7 @@ if(LIBBIOIMAGE)
         ${BIM_FMTS}/ole/bim_zvi_format_io.cpp
         ${BIM_FMTS}/ole/zvi.cpp
         ${BIM_FMTS}/dcraw/bim_dcraw_format.cpp
+        ${BIM_FMTS}/mrc/bim_mrc_format.cpp
         ${BIM_FMTS}/jp2/bim_jp2_format.cpp)
 
     set(INSTALLHEADERS ${INSTALLHEADERS}
@@ -551,6 +552,7 @@ if(LIBBIOIMAGE)
 
     set(HEADERS ${HEADERS}
         ${BIM_FMTS}/dcraw/bim_dcraw_format.h
+        ${BIM_FMTS}/mrc/bim_mrc_format.h
         ${BIM_FMTS}/bmp/bim_bmp_format.h
         ${BIM_FMTS}/bim_exiv_parse.h
         ${BIM_FMTS}/ole/oib.h
