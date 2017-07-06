@@ -1838,6 +1838,14 @@ elseif(LIBBIOIMAGE)
     find_package(Exiv2 ${BIC_EXIV2_REQUIRED_VERSION} REQUIRED)
     include_directories(${EXIV2_INCLUDE_DIR})
 endif()
+if(BIC_INTERNAL_EXIV2 OR LIBBIOIMAGE)
+    # Find the Iconv library that is a required dependency of exiv2
+    if(LIBBIOIMAGE AND BIC_ENABLE_QT)
+        find_package(Iconv REQUIRED)
+        include_directories(${ICONV_INCLUDE_DIR})
+    endif()
+endif()
+
 
 
 #---------------------------------------------------------------------
@@ -1960,6 +1968,7 @@ if(JPEG_LIBRARIES)
     set(LINK_LIBRARIES ${LINK_LIBRARIES} ${JPEG_LIBRARIES})
 endif()
 set(LINK_LIBRARIES ${LINK_LIBRARIES} ${EXIV2_LIBRARIES})
+set(LINK_LIBRARIES ${LINK_LIBRARIES} ${ICONV_LIBRARIES})
 if(JXR_LIBRARIES)
     set(LINK_LIBRARIES ${LINK_LIBRARIES} ${JXR_LIBRARIES})
 endif()
