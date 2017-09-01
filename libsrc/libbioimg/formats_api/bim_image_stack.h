@@ -110,6 +110,7 @@ class ImageStack {
     void convertToDepth( const ImageLut & );
     void normalize( int to_bpp = 8, bool planes_independent = false );
     void ensureTypedDepth();
+    void ensureColorSpace();
 
     void resize( uint w, uint h=0, uint d=0, Image::ResizeMethod method = Image::szNearestNeighbor, bool keep_aspect_ratio = false );
 

@@ -265,6 +265,12 @@ void dicomGetImageInfo(FormatHandle *fmtHndl) {
     else if (photometric == gdcm::PhotometricInterpretation::PALETTE_COLOR) {
         info->imageMode = IM_INDEXED;
     }
+    else if (photometric == gdcm::PhotometricInterpretation::YBR_FULL) {
+        info->imageMode = IM_YCbCr;
+    }
+    else if (photometric == gdcm::PhotometricInterpretation::YBR_ICT) {
+        info->imageMode = IM_YCbCr;
+    }
 
     //---------------------------------------------------------------
     // read LUT
