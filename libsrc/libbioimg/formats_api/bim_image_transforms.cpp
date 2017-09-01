@@ -272,6 +272,10 @@ Image operation_transform(Image &img, const bim::xstring &arguments, const xoper
 // 3c Color Transforms 
 //------------------------------------------------------------------------------------
 
+//------------------------------------------------------------------------------------
+// RGB - HSV
+//------------------------------------------------------------------------------------
+
 inline void rgb2hsv ( const double &i1, const double &i2, const double &i3, double &o1, double &o2, double &o3, const double &tmax, const double &tmin, const double &range ) {
     double r = (i1 - tmin) / range;
     double g = (i2 - tmin) / range;
@@ -310,7 +314,7 @@ inline void hsv2rgb ( const double &i1, const double &i2, const double &i3, doub
 	  double H = i1;
 	  double S = i2/240.0;
 	  double V = i3/240.0;
-	  if (S == 0 && H == 0) {R=G=B=V;}  /*if S=0 and H is undefined*/
+	  if (S == 0 && H == 0) {R=G=B=V;}  //if S=0 and H is undefined
 	  H = H*(360.0/240.0);
 	  if (H == 360) H=0;
 	  H = H/60;
@@ -332,6 +336,10 @@ inline void hsv2rgb ( const double &i1, const double &i2, const double &i3, doub
 	  o3 = B*range + tmin;
 }
 
+//------------------------------------------------------------------------------------
+// HSV - WndChrmColor
+//------------------------------------------------------------------------------------
+
 inline void hsv2wndchrmcolor ( const double &h, const double &s, const double &v, double &o1, double &o2, double &o3, const double &tmax, const double &tmin, const double &range ) {
     long color_index = FindColor( h, s, v );
     o1 = ( range * color_index ) / COLORS_NUM;
@@ -339,20 +347,14 @@ inline void hsv2wndchrmcolor ( const double &h, const double &s, const double &v
     o3 = 0;
 }
 
+//------------------------------------------------------------------------------------
+// RGB - XYZ
+//------------------------------------------------------------------------------------
 
 inline void rgb2xyz ( const double &i1, const double &i2, const double &i3, double &o1, double &o2, double &o3, const double &tmax, const double &tmin, const double &range ) {
-/*
-void RGB2XYZ(
-	const int&		sR,
-	const int&		sG,
-	const int&		sB,
-	double&			X,
-	double&			Y,
-	double&			Z)
-{
-	double R = sR/255.0;
-	double G = sG/255.0;
-	double B = sB/255.0;
+	double R = i1/255.0;
+	double G = i2/255.0;
+	double B = i2/255.0;
 
 	double r, g, b;
 
@@ -363,22 +365,25 @@ void RGB2XYZ(
 	if(B <= 0.04045)	b = B/12.92;
 	else				b = pow((B+0.055)/1.055,2.4);
 
-	X = r*0.4124564 + g*0.3575761 + b*0.1804375;
-	Y = r*0.2126729 + g*0.7151522 + b*0.0721750;
-	Z = r*0.0193339 + g*0.1191920 + b*0.9503041;
-}
-*/
+	o1 = r*0.4124564 + g*0.3575761 + b*0.1804375;
+	o2 = r*0.2126729 + g*0.7151522 + b*0.0721750;
+	o3 = r*0.0193339 + g*0.1191920 + b*0.9503041;
 }
 
+inline void xyz2rgb(const double &i1, const double &i2, const double &i3, double &o1, double &o2, double &o3, const double &tmax, const double &tmin, const double &range) {
+
+}
+
+//------------------------------------------------------------------------------------
+// RGB - Lab
+//------------------------------------------------------------------------------------
+
 inline void rgb2lab ( const double &i1, const double &i2, const double &i3, double &o1, double &o2, double &o3, const double &tmax, const double &tmin, const double &range ) {
-/*
-void RGB2LAB(const int& sR, const int& sG, const int& sB, double& lval, double& aval, double& bval)
-{
 	//------------------------
 	// sRGB to XYZ conversion
 	//------------------------
 	double X, Y, Z;
-	RGB2XYZ(sR, sG, sB, X, Y, Z);
+    rgb2xyz(i1, i2, i3, X, Y, Z, tmax, tmin, range);
 
 	//------------------------
 	// XYZ to LAB conversion
@@ -402,11 +407,85 @@ void RGB2LAB(const int& sR, const int& sG, const int& sB, double& lval, double& 
 	if(zr > epsilon)	fz = pow(zr, 1.0/3.0);
 	else				fz = (kappa*zr + 16.0)/116.0;
 
-	lval = 116.0*fy-16.0;
-	aval = 500.0*(fx-fy);
-	bval = 200.0*(fy-fz);
+	o1 = 116.0*fy-16.0;
+	o2 = 500.0*(fx-fy);
+	o3 = 200.0*(fy-fz);
 }
-*/
+
+inline void lab2rgb(const double &i1, const double &i2, const double &i3, double &o1, double &o2, double &o3, const double &tmax, const double &tmin, const double &range) {
+
+}
+
+//------------------------------------------------------------------------------------
+// RGB - YcBcR
+//------------------------------------------------------------------------------------
+
+// full range [0..255]
+inline void rgb2ycbcrFull(const double &i1, const double &i2, const double &i3, double &o1, double &o2, double &o3, const double &tmax, const double &tmin, const double &range) {
+    double R = i1;
+    double G = i2;
+    double B = i2;
+    o1 = +.2990*R + .5870*G + .1140*B;
+    o2 = -.1687*R - .3313*G + .5000*B + 128;
+    o3 = +.5000*R - .4187*G - .0813*B + 128;
+}
+
+inline void ycbcrFull2rgb(const double &i1, const double &i2, const double &i3, double &o1, double &o2, double &o3, const double &tmax, const double &tmin, const double &range) {
+    double Y = i1;
+    double CB = i2 - 128;
+    double CR = i2 - 128;
+    double R = +1.000*Y + 0.000*CB + 1.400*CR;
+    double G = +1.000*Y - .3430*CB - .7110*CR;
+    double B = +1.000*Y + 1.765*CB + 0.000*CR;
+    o1 = bim::trim<double>(R, 0, 255);
+    o2 = bim::trim<double>(G, 0, 255);
+    o3 = bim::trim<double>(B, 0, 255);
+}
+
+// clamped range Y [16..235], Cb/Cr [16..240], R/G/B [0..255]
+
+inline void rgb2ycbcrClamped(const double &i1, const double &i2, const double &i3, double &o1, double &o2, double &o3, const double &tmax, const double &tmin, const double &range) {
+    double R = i1;
+    double G = i2;
+    double B = i2;
+    o1 = +.2570*R + .5040*G + .0980*B + 16;
+    o2 = -.1480*R - .2910*G + .4390*B + 128;
+    o3 = +.4390*R - .3680*G - .0710*B + 128;
+}
+
+inline void ycbcrClamped2rgb(const double &i1, const double &i2, const double &i3, double &o1, double &o2, double &o3, const double &tmax, const double &tmin, const double &range) {
+    double Y = i1 - 16;
+    double CB = i2 - 128;
+    double CR = i2 - 128;
+    double R = +1.164*Y + 0.000*CB + 1.596*CR;
+    double G = +1.164*Y - .3920*CB - .8130*CR;
+    double B = +1.164*Y + 2.017*CB + 0.000*CR;
+    o1 = bim::trim<double>(R, 0, 255);
+    o2 = bim::trim<double>(G, 0, 255);
+    o3 = bim::trim<double>(B, 0, 255);
+}
+
+// HDTV range Y [16..235], Cb/Cr [16..240], R/G/B [0..255]
+
+inline void rgb2ycbcrHDTV(const double &i1, const double &i2, const double &i3, double &o1, double &o2, double &o3, const double &tmax, const double &tmin, const double &range) {
+    double R = i1;
+    double G = i2;
+    double B = i2;
+    o1 = +.1830*R + .6140*G + .0062*B + 16;
+    o2 = -.1010*R - .3390*G + .4390*B + 128;
+    o3 = +.4390*R - .3990*G - .0400*B + 128;
+}
+
+inline void ycbcrHDTV2rgb(const double &i1, const double &i2, const double &i3, double &o1, double &o2, double &o3, const double &tmax, const double &tmin, const double &range) {
+    double Y = i1 - 16;
+    double CB = i2 - 128;
+    double CR = i2 - 128;
+    double R = +1.164*Y + 0.000*CB + 1.793*CR;
+    double G = +1.164*Y - .2130*CB - .5330*CR;
+    double B = +1.164*Y + 2.112*CB + 0.000*CR;
+    o1 = bim::trim<double>(R, 0, 255);
+    o2 = bim::trim<double>(G, 0, 255);
+    o3 = bim::trim<double>(B, 0, 255);
 }
 
 //------------------------------------------------------------------------------------
@@ -496,7 +575,38 @@ Image Image::transform_color( Image::TransformColorMethod type ) const {
         convert_colors( out, out, hsv2wndchrmcolor );
         out.extractChannel(bim::Red);
         out.bmp->i.imageMode = bim::IM_GRAYSCALE;
+    } else if (type == Image::tmcRGB2XYZ) {
+        convert_colors(*this, out, rgb2xyz);
+        out.bmp->i.imageMode = bim::IM_XYZ;
+    } else if (type == Image::tmcXYZ2RGB) {
+        //convert_colors(*this, out, xyz2rgb);
+        //out.bmp->i.imageMode = bim::IM_RGB;
+    } else if (type == Image::tmcRGB2LAB) {
+        convert_colors(*this, out, rgb2lab);
+        out.bmp->i.imageMode = bim::IM_LAB;
+    } else if (type == Image::tmcLAB2RGB) {
+        //convert_colors(*this, out, lab2rgb);
+        //out.bmp->i.imageMode = bim::IM_RGB;
+    } else if (type == Image::tmcRGB2YBRF) {
+        convert_colors(*this, out, rgb2ycbcrFull);
+        out.bmp->i.imageMode = bim::IM_YCbCr;
+    } else if (type == Image::tmcYBRF2RGB) {
+        convert_colors(*this, out, ycbcrFull2rgb);
+        out.bmp->i.imageMode = bim::IM_RGB;
+    } else if (type == Image::tmcRGB2YBRC) {
+        convert_colors(*this, out, rgb2ycbcrClamped);
+        out.bmp->i.imageMode = bim::IM_YCbCr;
+    } else if (type == Image::tmcYBRC2RGB) {
+        convert_colors(*this, out, ycbcrClamped2rgb);
+        out.bmp->i.imageMode = bim::IM_RGB;
+    } else if (type == Image::tmcRGB2YBRH) {
+        convert_colors(*this, out, rgb2ycbcrHDTV);
+        out.bmp->i.imageMode = bim::IM_YCbCr;
+    } else if (type == Image::tmcYBRH2RGB) {
+        convert_colors(*this, out, ycbcrHDTV2rgb);
+        out.bmp->i.imageMode = bim::IM_RGB;
     }
+
     return out;
 }
 
@@ -504,6 +614,24 @@ Image operation_transform_color(Image &img, const bim::xstring &arguments, const
     Image::TransformColorMethod transform_color = Image::tmcNone;
     if (arguments.toLowerCase() == "rgb2hsv") transform_color = Image::tmcRGB2HSV;
     if (arguments.toLowerCase() == "hsv2rgb") transform_color = Image::tmcHSV2RGB;
+
+    if (arguments.toLowerCase() == "rgb2wndchrm") transform_color = Image::tmcRGB2WndChrmColor;
+    if (arguments.toLowerCase() == "wndchrm2rgb") transform_color = Image::tmcWndChrmColor2RGB; // impossible
+
+    if (arguments.toLowerCase() == "rgb2xyz") transform_color = Image::tmcRGB2XYZ;
+    if (arguments.toLowerCase() == "xyz2rgb") transform_color = Image::tmcXYZ2RGB; // not implemented
+
+    if (arguments.toLowerCase() == "rgb2lab") transform_color = Image::tmcRGB2LAB;
+    if (arguments.toLowerCase() == "lab2rgb") transform_color = Image::tmcLAB2RGB; // not implemented
+
+    if (arguments.toLowerCase() == "rgb2ycbcr") transform_color = Image::tmcRGB2YBRF;
+    if (arguments.toLowerCase() == "ycbcr2rgb") transform_color = Image::tmcYBRF2RGB;
+
+    if (arguments.toLowerCase() == "rgb2ycbcrClamp") transform_color = Image::tmcRGB2YBRC;
+    if (arguments.toLowerCase() == "ycbcrClamp2rgb") transform_color = Image::tmcYBRC2RGB;
+
+    if (arguments.toLowerCase() == "rgb2ycbcrHDTV") transform_color = Image::tmcRGB2YBRH;
+    if (arguments.toLowerCase() == "ycbcrHDTV2rgb") transform_color = Image::tmcYBRH2RGB;
 
     if (transform_color != Image::tmcNone)
         return img.transform_color(transform_color);

@@ -87,6 +87,7 @@ bool ImagePyramid::fromFile( const char *fileName, int page ) {
   bool res = img.fromFile( fileName, page );
   if (res) {
     img = img.ensureTypedDepth();
+    img = img.ensureColorSpace();
     createFrom( img );
   }
   return res;

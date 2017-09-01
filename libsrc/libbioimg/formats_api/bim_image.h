@@ -353,6 +353,7 @@ class Image {
     Image normalize( int to_bpp = 8, ImageHistogram *hist=0 ) const;
     bool  isUnTypedDepth() const;    
     Image ensureTypedDepth() const;
+    Image ensureColorSpace() const;
 
     Image ROI(bim::uint64 x, bim::uint64 y, bim::uint64 w, bim::uint64 h) const;
 
@@ -467,6 +468,16 @@ class Image {
       tmcHSV2RGB=2, 
       tmcRGB2WndChrmColor=3, 
       tmcWndChrmColor2RGB = 4, // impossible
+      tmcRGB2XYZ = 5,
+      tmcXYZ2RGB = 6, // not implemented
+      tmcRGB2LAB = 7,
+      tmcLAB2RGB = 8, // not implemented
+      tmcRGB2YBRF = 9, // YcBcR Full range
+      tmcYBRF2RGB = 10, // 
+      tmcRGB2YBRC = 11, // YcBcR Clamped range
+      tmcYBRC2RGB = 12, // 
+      tmcRGB2YBRH = 13, // YcBcR HDTV range
+      tmcYBRH2RGB = 14, // 
     };
     Image transform_color( TransformColorMethod type ) const;
 

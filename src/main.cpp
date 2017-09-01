@@ -109,7 +109,7 @@
                 
 *******************************************************************************/
 
-#define IMGCNV_VER "2.2.0"
+#define IMGCNV_VER "2.2.1"
 
 #include <cmath>
 #include <cstdio>
@@ -582,7 +582,19 @@ void DConf::init() {
 
   tmp = "transforms input image 3 channel image in color space, ex: -transform_color rgb2hsv\n";
   tmp += "    hsv2rgb - converts HSV -> RGB\n";
-  tmp += "    rgb2hsv - converts RGB -> HSV";
+  tmp += "    rgb2hsv - converts RGB -> HSV\n";
+  tmp += "    rgb2wndchrm - converts RGB -> WndChrmColor\n";
+  //tmp += "    wndchrm2rgb - converts WndChrmColor -> RGB\n";
+  tmp += "    rgb2xyz - converts RGB -> XYZ\n";
+  //tmp += "    xyz2rgb - converts XYZ -> RGB\n";
+  tmp += "    rgb2lab - converts RGB -> Lab\n";
+  //tmp += "    lab2rgb - converts Lab -> RGB\n";
+  tmp += "    rgb2ycbcr - converts RGB -> YcBcR (for full [0..255] range)\n";
+  tmp += "    ycbcr2rgb - converts YcBcR -> RGB  (for full [0..255] range)\n";
+  tmp += "    rgb2ycbcrClamp - converts RGB -> YcBcR (for clamped range)\n";
+  tmp += "    ycbcrClamp2rgb - converts YcBcR -> RGB (for clamped range)\n";
+  tmp += "    rgb2ycbcrHDTV - converts RGB -> YcBcR (for HDTV range)\n";
+  tmp += "    ycbcrHDTV2rgb - converts YcBcR -> RGB (for HDTV range)\n";
   appendArgumentDefinition( "-transform_color", 1, tmp );
 
   tmp = "Segments image using SLIC superpixel method, takes region size and regularization, ex: -superpixels 16,0.2[,0.7]\n";
@@ -1212,6 +1224,24 @@ void DConf::processArguments() {
     xstring strl = getValue( "-transform_color");
     if ( strl.toLowerCase() == "rgb2hsv") transform_color = Image::tmcRGB2HSV;
     if ( strl.toLowerCase() == "hsv2rgb") transform_color = Image::tmcHSV2RGB;
+
+    if (strl.toLowerCase() == "rgb2wndchrm") transform_color = Image::tmcRGB2WndChrmColor;
+    if (strl.toLowerCase() == "wndchrm2rgb") transform_color = Image::tmcWndChrmColor2RGB; // impossible
+
+    if (strl.toLowerCase() == "rgb2xyz") transform_color = Image::tmcRGB2XYZ;
+    if (strl.toLowerCase() == "xyz2rgb") transform_color = Image::tmcXYZ2RGB; // not implemented
+
+    if (strl.toLowerCase() == "rgb2lab") transform_color = Image::tmcRGB2LAB;
+    if (strl.toLowerCase() == "lab2rgb") transform_color = Image::tmcLAB2RGB; // not implemented
+
+    if (strl.toLowerCase() == "rgb2ycbcr") transform_color = Image::tmcRGB2YBRF;
+    if (strl.toLowerCase() == "ycbcr2rgb") transform_color = Image::tmcYBRF2RGB;
+
+    if (strl.toLowerCase() == "rgb2ycbcrClamp") transform_color = Image::tmcRGB2YBRC;
+    if (strl.toLowerCase() == "ycbcrClamp2rgb") transform_color = Image::tmcYBRC2RGB;
+
+    if (strl.toLowerCase() == "rgb2ycbcrHDTV") transform_color = Image::tmcRGB2YBRH;
+    if (strl.toLowerCase() == "ycbcrHDTV2rgb") transform_color = Image::tmcYBRH2RGB;
   }
 
   if (keyExists("-superpixels")) {
@@ -1523,6 +1553,7 @@ int resize_3d(DConf *c) {
     ImageStack stack(c->i_names, c->c, &before);
     if (stack.isEmpty()) return IMGCNV_ERROR_READING_FILE;
     stack.ensureTypedDepth();
+    stack.ensureColorSpace();
     stack.resize( c->w, c->h, c->z, c->resize_method, c->resize_preserve_aspect_ratio );  
     stack.process(after, 0, c);
     stack.toFile(c->o_name, c->o_fmt, c->options );
@@ -1542,6 +1573,7 @@ int rearrangeDimensions(DConf *c) {
     ImageStack stack(c->i_names, c->c, &before);
     if (stack.isEmpty()) return IMGCNV_ERROR_READING_FILE;
     stack.ensureTypedDepth();
+    stack.ensureColorSpace();
     stack.process(after, 0, c);
     if (!stack.rearrange3DToFile( c->rearrange3d, c->o_name, c->o_fmt, c->options )) {
         c->error(xstring::xprintf("Cannot write into: %s\n", c->o_name.c_str()));
@@ -1566,6 +1598,7 @@ int texture_atlas(DConf *c) {
     ImageStack stack(c->i_names, c->c, &before);
     if (stack.isEmpty()) return IMGCNV_ERROR_READING_FILE;
     stack.ensureTypedDepth();
+    stack.ensureColorSpace();
     Image atlas = stack.textureAtlas(arguments);
     atlas.process(after, 0, c);
     atlas.toFile(c->o_name, c->o_fmt, c->options );
@@ -1957,6 +1990,7 @@ int main( int argc, char** argv ) {
 
     // make sure red image is in supported pixel format, e.g. will convert 12 bit to 16 bit
     img = img.ensureTypedDepth();
+    img = img.ensureColorSpace();
 
     // ------------------------------------    
     // if asked to append channels

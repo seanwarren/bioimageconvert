@@ -904,14 +904,10 @@ Image Image::ensureTypedDepth( ) const {
                 
                 if (bmp->i.depth == 1) {
                     cnv_buffer_1to8bit((unsigned char *)dest, (const unsigned char *)src, w);
-                } else {
-                    if (bmp->i.depth == 4) {
-                        cnv_buffer_4to8bit((unsigned char *)dest, (const unsigned char *)src, w);
-                    } else {
-                        if (bmp->i.depth == 12) {
-                            cnv_buffer_12to16bit((unsigned char *)dest, (const unsigned char *)src, w);
-                        }
-                    }
+                } else if (bmp->i.depth == 4) {
+                    cnv_buffer_4to8bit((unsigned char *)dest, (const unsigned char *)src, w);
+                } else if (bmp->i.depth == 12) {
+                    cnv_buffer_12to16bit((unsigned char *)dest, (const unsigned char *)src, w);
                 }
             } // for y
         } // for sample
@@ -923,6 +919,13 @@ Image Image::ensureTypedDepth( ) const {
     //img.histo = this->histo;
 
     return img;
+}
+
+Image Image::ensureColorSpace() const {
+    if (this->imageMode() == IM_YCbCr) {
+        return this->transform_color(Image::tmcYBRF2RGB);
+    }
+    return *this;
 }
 
 // return a pointer to the buffer of line y formed in iterleaved format xRGB

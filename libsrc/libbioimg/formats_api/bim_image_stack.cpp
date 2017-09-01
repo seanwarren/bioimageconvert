@@ -158,6 +158,7 @@ bool ImageStack::fromFile(const char *fileName, unsigned int limit_width, unsign
 
       if (operations) {
           img = img.ensureTypedDepth();
+          img = img.ensureColorSpace();
           img.process(*operations);
       }
 
@@ -229,6 +230,7 @@ bool ImageStack::fromFileList(const std::vector<xstring> &files, unsigned int nu
 
         if (operations) {
             img = img.ensureTypedDepth();
+            img = img.ensureColorSpace();
             img.process(*operations);
         }
 
@@ -315,6 +317,11 @@ void ImageStack::normalize( int to_bpp, bool planes_independent ) {
 void ImageStack::ensureTypedDepth() {
   for (unsigned int i=0; i<images.size(); ++i)
     images[i] = images[i].ensureTypedDepth();
+}
+
+void ImageStack::ensureColorSpace() {
+    for (unsigned int i = 0; i<images.size(); ++i)
+        images[i] = images[i].ensureColorSpace();
 }
 
 //------------------------------------------------------------------------------
