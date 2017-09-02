@@ -39,7 +39,7 @@ win32 {
 #---------------------------------------------------------------------
 
 TEMPLATE = lib
-VERSION = 2.1.1
+VERSION = 2.2.1
 
 CONFIG += staticlib
 
@@ -71,8 +71,8 @@ CONFIG += stat_lcms2
 #CONFIG += dyn_lcms2
 macx:CONFIG += stat_lzma
 
-CONFIG += stat_gdcm
-#CONFIG += dyn_gdcm
+#CONFIG += stat_gdcm
+CONFIG += dyn_gdcm
 
 macx {
     CONFIG += ffmpeg
@@ -92,11 +92,11 @@ macx {
   QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.11
 } else:unix {
   QMAKE_CFLAGS_DEBUG += -pg -fPIC -ggdb
-  QMAKE_CXXFLAGS_DEBUG += -pg -fPIC -ggdb
+  QMAKE_CXXFLAGS_DEBUG += -pg -fPIC -ggdb -std=c++11
   QMAKE_LFLAGS_DEBUG += -pg -fPIC -ggdb
 
   QMAKE_CFLAGS_RELEASE += -fPIC -fopenmp -O3 -ftree-vectorize -msse2 -ffast-math -ftree-vectorizer-verbose=0
-  QMAKE_CXXFLAGS_RELEASE += -fPIC -fopenmp -O3 -ftree-vectorize -msse2 -ffast-math -ftree-vectorizer-verbose=0
+  QMAKE_CXXFLAGS_RELEASE += -fPIC -fopenmp -O3 -ftree-vectorize -msse2 -ffast-math -ftree-vectorizer-verbose=0 -std=c++11
   QMAKE_LFLAGS_RELEASE += -fPIC -fopenmp -O3 -ftree-vectorize -msse2 -ffast-math -ftree-vectorizer-verbose=0
 }
 
@@ -111,7 +111,13 @@ BIM_IMGS = $${_PRO_FILE_PWD_}/../../images
 
 HOSTTYPE = $$(HOSTTYPE)
 
-unix | mingw {
+unix: {
+  BIM_GENS = .generated/$$HOSTTYPE
+  # path for object files
+  BIM_OBJ = $$BIM_GENS/obj
+  # path for generated binary
+  BIM_BIN = $$BIM_GENS
+} else:mingw {
   BIM_GENS = ../../.generated/$$HOSTTYPE
   # path for object files
   BIM_OBJ = $$BIM_GENS/obj

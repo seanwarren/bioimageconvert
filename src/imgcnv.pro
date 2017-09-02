@@ -1,6 +1,6 @@
 ######################################################################
 # Manually generated !!!
-# libBioImage v 1.55 Project file
+# BioImageConvert v 2.2.1 Project file
 # run:
 #   qmake -r imgcnv.pro - in order to generate Makefile for your platform
 #   make all - to compile the library
@@ -41,7 +41,7 @@ APP_NAME = imgcnv
 TARGET = $$APP_NAME
 
 TEMPLATE = app
-VERSION = 2.1.1
+VERSION = 2.2.1
 
 CONFIG += console
 
@@ -55,8 +55,6 @@ CONFIG += stat_libtiff
 CONFIG += stat_libjpeg_turbo # pick one or the other
 CONFIG += stat_libpng
 CONFIG += stat_zlib
-CONFIG += ffmpeg
-#CONFIG += dyn_ffmpeg
 #CONFIG += stat_bzlib
 CONFIG += dyn_bzlib
 CONFIG += stat_exiv2
@@ -71,8 +69,8 @@ CONFIG += stat_libwebp
 CONFIG += stat_lcms2
 CONFIG += dyn_lzma
 
-CONFIG += stat_gdcm
-#CONFIG += dyn_gdcm # ubuntu 16 comes with a reasonably new version of GDCM
+#CONFIG += stat_gdcm
+CONFIG += dyn_gdcm # ubuntu 16 comes with a reasonably new version of GDCM
 
 macx {
     CONFIG += ffmpeg
@@ -92,11 +90,11 @@ macx {
   QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.11
 } else:unix {
   QMAKE_CFLAGS_DEBUG += -pg -fPIC -ggdb
-  QMAKE_CXXFLAGS_DEBUG += -pg -fPIC -ggdb
+  QMAKE_CXXFLAGS_DEBUG += -pg -fPIC -ggdb -std=c++11
   QMAKE_LFLAGS_DEBUG += -pg -fPIC -ggdb
 
   QMAKE_CFLAGS_RELEASE += -fPIC -fopenmp -O3 -ftree-vectorize -msse2 -ffast-math -ftree-vectorizer-verbose=0
-  QMAKE_CXXFLAGS_RELEASE += -fPIC -fopenmp -O3 -ftree-vectorize -msse2 -ffast-math -ftree-vectorizer-verbose=0
+  QMAKE_CXXFLAGS_RELEASE += -fPIC -fopenmp -O3 -ftree-vectorize -msse2 -ffast-math -ftree-vectorizer-verbose=0 -std=c++11
   QMAKE_LFLAGS_RELEASE += -fPIC -fopenmp -O3 -ftree-vectorize -msse2 -ffast-math -ftree-vectorizer-verbose=0
 }
 
@@ -140,7 +138,6 @@ stat_libjpeg_turbo {
 BIM_LIB_PNG = $$BIM_LSRC/libpng
 BIM_LIB_Z   = $$BIM_LSRC/zlib
 BIM_LIB_BZ2 = $$BIM_LSRC/bzip2
-BIM_LIB_BIO = $$BIM_LSRC/libbioimg
 
 BIM_CORE     = $$BIM_LIB_BIO/core_lib
 BIM_FMTS     = $$BIM_LIB_BIO/formats
@@ -239,13 +236,15 @@ INCLUDEPATH += $$BIM_FMTS_API
 INCLUDEPATH += $$BIM_FMTS
 INCLUDEPATH += $$BIM_CORE
 
-PRE_TARGETDEPS = $$BIM_LIB_BIO/.generated/libbioimage.a
+#PRE_TARGETDEPS = $$BIM_LIB_BIO/.generated/libbioimage.a
 LIBS += $$BIM_LIB_BIO/.generated/libbioimage.a
 
-BimLib.target = $$BIM_LIB_BIO/.generated/libbioimage.a
+#BimLib.target = $$BIM_LIB_BIO/.generated/libbioimage.a
 #BimLib.commands = cd $$BIM_LIB_BIO && qmake bioimage.pro && make
-BimLib.depends = $$BIM_LIB_BIO/Makefile
-QMAKE_EXTRA_TARGETS += BimLib
+#BimLib.depends = $$BIM_LIB_BIO/Makefile
+#QMAKE_EXTRA_TARGETS += BimLib
+
+
 
 #---------------------------------------------------------------------
 # eigen
