@@ -29,7 +29,7 @@ TARGET = imgcnv
 
 TEMPLATE = lib
 CONFIG  += dll
-VERSION = 2.1.1
+VERSION = 2.2.1
 
 CONFIG += console
 
@@ -53,8 +53,8 @@ CONFIG += stat_libwebp
 CONFIG += stat_lcms2
 CONFIG += dyn_lzma
 
-CONFIG += stat_gdcm
-#CONFIG += dyn_gdcm # ubuntu 16 comes with a reasonably new version of GDCM
+#CONFIG += stat_gdcm
+CONFIG += dyn_gdcm # ubuntu 16 comes with a reasonably new version of GDCM
 
 macx {
     CONFIG += ffmpeg
@@ -209,13 +209,13 @@ INCLUDEPATH += $$DN_FMTS_API
 INCLUDEPATH += $$DN_FMTS
 INCLUDEPATH += $$DN_CORE
 
-PRE_TARGETDEPS = $$DN_GENS/libbioimage.a
-LIBS += $$DN_GENS/libbioimage.a
+#PRE_TARGETDEPS = $$DN_GENS/libbioimage.a
+LIBS += $$DN_LIB_BIO/.generated/libbioimage.a
 
-BimLib.target = $$DN_GENS/libbioimage.a
+#BimLib.target = $$DN_GENS/libbioimage.a
 #BimLib.commands = cd $$DN_LIB_BIO && qmake bioimage.pro && make
-BimLib.depends = $$DN_LIB_BIO/Makefile
-QMAKE_EXTRA_TARGETS += BimLib
+#BimLib.depends = $$DN_LIB_BIO/Makefile
+#QMAKE_EXTRA_TARGETS += BimLib
 
 #---------------------------------------------------------------------
 # eigen

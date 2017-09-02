@@ -58,7 +58,7 @@ Win10 MSVC2017 i7  449 tests:
 Win10 MSVC2017 i7   35 tests:
 debian jessie loup 449 tests:
 debian jessie loup  35 tests:
-ubuntu16 i7core6   449 tests:
-ubuntu16 i7core6    35 tests:
+ubuntu16 i7core6   449 tests: 137.326552868 seconds
+ubuntu16 i7core6    35 tests: 5.68785691261 seconds
 MacOSX 10.10       449 tests:
 MacOSX 10.10        35 tests:
