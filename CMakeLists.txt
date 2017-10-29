@@ -111,6 +111,7 @@ option(BIC_ENABLE_GDCM            "Enable BioImageConvert gdcm support (optional
 option(BIC_ENABLE_FFMPEG          "Enable BioImageConvert ffmpeg support (optional)"                             OFF)
 option(BIC_ENABLE_NIFTI           "Enable BioImageConvert NIfTI support (optional)"                              ON)
 option(BIC_ENABLE_LIBJPEG_TURBO   "Enable BioImageConvert turbojpeg support instead of standard jpeg (optional)" ON)
+option(BIC_ENABLE_OPENCV          "Enable BioImageConvert OpenCV support (optional)"                             ON)
 option(BIC_ENABLE_IMGCNV          "Enable BioImageConvert bimread command line program"                          OFF)
 option(BIC_ENABLE_OPENMP          "Enable OpenMP parallelization for release builds (optional)"                  OFF)
 option(BIC_ENABLE_THREADSAFE      "Enable Thread Safety for parallelization usage (optional)"                    ON)
@@ -217,13 +218,9 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     if(CMAKE_VERSION VERSION_LESS "3.1")
         set(CMAKE_CXX_FLAGS "--std=c++11 ${CMAKE_CXX_FLAGS}")
-    else()
-        set(CMAKE_CXX_STANDARD 11)
-        set(CMAKE_CXX_STANDARD_REQUIRED ON)
-        set(CMAKE_CXX_EXTENSIONS OFF)
     endif()
 else()
-    message(FATAL_ERROR "Setting C++11 standard on platforms other than GNU GCC is currently not supported.")
+    set(CMAKE_CXX_STANDARD 11)
 endif()
 
 STRING(TOLOWER "${CMAKE_BUILD_TYPE}" CMAKE_BUILD_TYPE_LOWER)
@@ -428,8 +425,13 @@ if(LIBBIOIMAGE)
     if(BIC_ENABLE_QT)
         add_definitions(-DBIM_USE_QT)
     endif()
+
+    if(BIC_ENABLE_OPENCV)
+        find_package(OpenCV REQUIRED)
+        add_definitions(-DBIM_USE_OPENCV)
+    endif()
+
     #add_definitions(-DBIM_USE_ITK)
-    #add_definitions(-DBIM_USE_OPENCV)
     #add_definitions(-DBIM_USE_NUMPY)
     # this is automatically set based on BIM_WIN in libsrc/libbioimg/core_lib/xstring.h:
     #add_definitions(-DBIM_USE_CODECVT)
@@ -596,17 +598,9 @@ if(LIBBIOIMAGE)
         add_definitions(-DBIM_USE_FILTERS)
         add_definitions(-DBIM_USE_TRANSFORMS)
 
-        if(APPLE)
-            include_directories(${BIM_LIB_FFT}/api)
-            if(NOT EXISTS ${BIM_LIBS_PLTFM}/libfftw3.a)
-                message(FATAL_ERROR "Requested to link pre-build binary libraries from '${BIM_LIBS_PLTFM}', but they do not exist. Please download and extract the optional binary libraries archive.")
-            endif()
-            set(FFTW_LIBRARIES ${BIM_LIBS_PLTFM}/libfftw3.a)
-        elseif(UNIX OR MINGW)
-            find_package(FFTW REQUIRED)
-            include_directories(${FFTW_INCLUDE_DIR})
-        endif()
-
+        find_package(FFTW REQUIRED)
+        include_directories(${FFTW_INCLUDE_DIR})
+        
         set(SOURCES ${SOURCES}
             ${BIM_TRANSFORMS}/chebyshev.cpp
             ${BIM_TRANSFORMS}/FuzzyCalc.cpp

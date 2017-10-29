@@ -922,9 +922,11 @@ Image Image::ensureTypedDepth( ) const {
 }
 
 Image Image::ensureColorSpace() const {
+    #ifdef LIBBIOIMAGE_TRANSFORMS
     if (this->imageMode() == IM_YCbCr) {
         return this->transform_color(Image::tmcYBRF2RGB);
     }
+    #endif
     return *this;
 }
 

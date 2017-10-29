@@ -28,7 +28,7 @@
 #if defined(_WIN64) || defined(WIN64) || defined(_WIN32) || defined(WIN32)
 #define TIFF_INT64_T signed __int64
 #elif defined(__x86_64__)
-#define TIFF_INT64_T signed long
+#define TIFF_INT64_T signed long long
 #else
 #define TIFF_INT64_T signed long long
 #endif
@@ -52,7 +52,7 @@
 #if defined(_WIN64) || defined(WIN64) || defined(_WIN32) || defined(WIN32)
 #define TIFF_UINT64_T unsigned __int64
 #elif defined(__x86_64__)
-#define TIFF_UINT64_T unsigned long
+#define TIFF_UINT64_T unsigned long long
 #else
 #define TIFF_UINT64_T unsigned long long
 #endif
