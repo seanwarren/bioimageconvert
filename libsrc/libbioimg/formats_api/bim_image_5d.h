@@ -67,7 +67,10 @@ class Image5D {
     unsigned int currentZ() const { return current_position[Image5D::z]; }
     unsigned int numberT() const { return image_size[Image5D::t]; }
     unsigned int numberZ() const { return image_size[Image5D::z]; }
-
+    unsigned int numberC() const { return image_size[Image5D::c]; }
+    unsigned int numberX() const { return image_size[Image5D::x]; }
+    unsigned int numberY() const { return image_size[Image5D::y]; }
+    
     bool getTimeLooping() const { return loop_time; }
     void setTimeLooping( bool v ) { loop_time=v; }
 
