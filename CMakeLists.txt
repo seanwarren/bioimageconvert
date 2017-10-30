@@ -379,9 +379,9 @@ macro(internal_add_library NAME SOURCES HEADERS INSTALLHEADERS LINK_LIBRARIES)
     add_library(${NAME} ${SOURCES} ${HEADERS})
 
     # add a dependency on this internal library:
-    if(LIBBIOIMAGE)
-        add_dependencies(bioimage ${NAME})
-    endif()
+    #if(LIBBIOIMAGE)
+    #    add_dependencies(bioimage ${NAME})
+    #endif()
 
     target_compile_options(${NAME} PRIVATE "$<$<CONFIG:RELEASE>:${RELEASE_FLAGS}>")
     target_compile_options(${NAME} PRIVATE "$<$<CONFIG:DEBUG>:${DEBUG_FLAGS}>")
@@ -396,6 +396,7 @@ macro(internal_add_library NAME SOURCES HEADERS INSTALLHEADERS LINK_LIBRARIES)
 
     # Install library and headers
     install(TARGETS ${NAME} EXPORT BioImageTargets DESTINATION lib)
+    message(STATUS "INSTALLING ${NAME}")
     install(FILES ${INSTALLHEADERS} DESTINATION include)
 endmacro()
 
@@ -679,8 +680,8 @@ if(LIBBIOIMAGE)
 
     set_target_properties(bioimage PROPERTIES VERSION ${LIBBIOIMAGE_VERSION} SOVERSION ${LIBBIOIMAGE_VERSION_MAJOR})
 
-    target_compile_options(bioimage PRIVATE "$<$<CONFIG:RELEASE>:${RELEASE_FLAGS}>")
-    target_compile_options(bioimage PRIVATE "$<$<CONFIG:DEBUG>:${DEBUG_FLAGS}>")
+    #target_compile_options(bioimage PRIVATE "$<$<CONFIG:RELEASE>:${RELEASE_FLAGS}>")
+    #target_compile_options(bioimage PRIVATE "$<$<CONFIG:DEBUG>:${DEBUG_FLAGS}>")
 
     # shared libraries need PIC:
     set_property(TARGET bioimage PROPERTY POSITION_INDEPENDENT_CODE ON)
@@ -730,7 +731,7 @@ if(BIC_INTERNAL_ZLIB)
 
     internal_add_library(z "${BIC_INTERNAL_ZLIB_SOURCES}" "${BIC_INTERNAL_ZLIB_HEADERS}" "${BIC_INTERNAL_ZLIB_INSTALLHEADERS}" "${BIC_INTERNAL_ZLIB_LINK_LIBRARIES}")
 
-    set(ZLIB_LIBRARIES "${LIBRARY_OUTPUT_PATH}/${CMAKE_LIBRARY_PREFIX}z${CMAKE_LIBRARY_SUFFIX}")
+    set(ZLIB_LIBRARIES z)
 elseif(LIBBIOIMAGE)
     find_package(ZLIB ${BIC_ZLIB_REQUIRED_VERSION} REQUIRED)
     include_directories(${ZLIB_INCLUDE_DIRS})
@@ -754,7 +755,7 @@ if(BIC_INTERNAL_BZLIB)
 
     internal_add_library(bz2 "${BIC_INTERNAL_BZLIB_SOURCES}" "${BIC_INTERNAL_BZLIB_HEADERS}" "${BIC_INTERNAL_BZLIB_INSTALLHEADERS}" "${BIC_INTERNAL_BZLIB_LINK_LIBRARIES}")
 
-    set(BZIP2_LIBRARIES "${LIBRARY_OUTPUT_PATH}/${CMAKE_LIBRARY_PREFIX}bz2${CMAKE_LIBRARY_SUFFIX}")
+    set(BZIP2_LIBRARIES bz2)
 elseif(LIBBIOIMAGE)
     find_package(BZip2 REQUIRED)
     include_directories(${BZIP2_INCLUDE_DIR})
@@ -810,7 +811,7 @@ if(BIC_INTERNAL_LCMS2)
 
     internal_add_library(lcms2 "${BIC_INTERNAL_LCMS2_SOURCES}" "${BIC_INTERNAL_LCMS2_HEADERS}" "${BIC_INTERNAL_LCMS2_INSTALLHEADERS}" "${BIC_INTERNAL_LCMS2_LINK_LIBRARIES}")
 
-    set(LCMS2_LIBRARIES "${LIBRARY_OUTPUT_PATH}/${CMAKE_LIBRARY_PREFIX}lcms2${CMAKE_LIBRARY_SUFFIX}")
+    set(LCMS2_LIBRARIES lcms2)
 elseif(LIBBIOIMAGE)
     find_package(LCMS2 ${BIC_LCMS2_REQUIRED_VERSION} REQUIRED)
     include_directories(${LCMS2_INCLUDE_DIR})
@@ -842,7 +843,7 @@ if(BIC_INTERNAL_POLE)
     internal_add_library(pole "${BIC_INTERNAL_POLE_SOURCES}" "${BIC_INTERNAL_POLE_HEADERS}" "${BIC_INTERNAL_POLE_INSTALLHEADERS}" "${BIC_INTERNAL_POLE_LINK_LIBRARIES}")
 
     # TODO FIXME: merge this linker command with the automatic system library detection below:
-    set(POLE_LIBRARIES "${LIBRARY_OUTPUT_PATH}/${CMAKE_LIBRARY_PREFIX}pole${CMAKE_LIBRARY_SUFFIX}")
+    set(POLE_LIBRARIES pole)
 elseif(LIBBIOIMAGE)
     message(FATAL_ERROR "Automatic detection of system pole library not implemented")
 endif()
@@ -859,7 +860,7 @@ if(BIC_INTERNAL_JZON)
 
     internal_add_library(jzon "${BIC_INTERNAL_JZON_SOURCES}" "${BIC_INTERNAL_JZON_HEADERS}" "${BIC_INTERNAL_JZON_INSTALLHEADERS}" "${BIC_INTERNAL_JZON_LINK_LIBRARIES}")
 
-    set(JZON_LIBRARIES "${LIBRARY_OUTPUT_PATH}/${CMAKE_LIBRARY_PREFIX}jzon${CMAKE_LIBRARY_SUFFIX}")
+    set(JZON_LIBRARIES jzon)
 elseif(LIBBIOIMAGE)
     message(FATAL_ERROR "Automatic detection of system jzon library not implemented")
 endif()
@@ -876,7 +877,7 @@ if(BIC_INTERNAL_PUGIXML)
 
     internal_add_library(pugixml "${BIC_INTERNAL_PUGIXML_SOURCES}" "${BIC_INTERNAL_PUGIXML_HEADERS}" "${BIC_INTERNAL_PUGIXML_INSTALLHEADERS}" "${BIC_INTERNAL_PUGIXML_LINK_LIBRARIES}")
 
-    set(PUGIXML_LIBRARIES "${LIBRARY_OUTPUT_PATH}/${CMAKE_LIBRARY_PREFIX}pugixml${CMAKE_LIBRARY_SUFFIX}")
+    set(PUGIXML_LIBRARIES pugixml)
 elseif(LIBBIOIMAGE)
     message(FATAL_ERROR "Automatic detection of system pugixml library not implemented")
 endif()
@@ -914,7 +915,7 @@ if(BIC_ENABLE_NIFTI)
 
         internal_add_library(nifti "${BIC_INTERNAL_NIFTI_SOURCES}" "${BIC_INTERNAL_NIFTI_HEADERS}" "${BIC_INTERNAL_NIFTI_INSTALLHEADERS}" "${BIC_INTERNAL_NIFTI_LINK_LIBRARIES}")
 
-        set(NIFTI_LIBRARIES "${LIBRARY_OUTPUT_PATH}/${CMAKE_LIBRARY_PREFIX}nifti${CMAKE_LIBRARY_SUFFIX}")
+        set(NIFTI_LIBRARIES nifti)
     elseif(LIBBIOIMAGE)
         find_package(NIFTI REQUIRED)
         include_directories(${NIFTI_INCLUDE_DIR})
@@ -1118,7 +1119,7 @@ if(BIC_INTERNAL_OPENJPEG)
 
     internal_add_library(openjpeg "${BIC_INTERNAL_OPENJPEG_SOURCES}" "${BIC_INTERNAL_OPENJPEG_HEADERS}" "${BIC_INTERNAL_OPENJPEG_INSTALLHEADERS}" "${BIC_INTERNAL_OPENJPEG_LINK_LIBRARIES}")
 
-    set(OPENJPEG_LIBRARIES "${LIBRARY_OUTPUT_PATH}/${CMAKE_LIBRARY_PREFIX}openjpeg${CMAKE_LIBRARY_SUFFIX}")
+    set(OPENJPEG_LIBRARIES openjpeg)
 elseif(LIBBIOIMAGE)
     message(FATAL_ERROR "Automatic detection of system openjpeg library not implemented")
 endif()
@@ -1148,7 +1149,7 @@ if(BIC_ENABLE_LIBJPEG_TURBO)
 
         internal_add_library(turbojpeg "${BIC_INTERNAL_LIBJPEG_TURBO_SOURCES}" "${BIC_INTERNAL_LIBJPEG_TURBO_HEADERS}" "${BIC_INTERNAL_LIBJPEG_TURBO_INSTALLHEADERS}" "${BIC_INTERNAL_LIBJPEG_TURBO_LINK_LIBRARIES}")
 
-        set(LibJpegTurbo_LIBRARIES "${LIBRARY_OUTPUT_PATH}/${CMAKE_LIBRARY_PREFIX}turbojpeg${CMAKE_LIBRARY_SUFFIX}")
+        set(LibJpegTurbo_LIBRARIES turbojpeg)
     elseif(LIBBIOIMAGE)
         find_package(LibJpegTurbo ${BIC_LIBJPEG_TURBO_REQUIRED_VERSION} REQUIRED)
         include_directories(${LibJpegTurbo_INCLUDE_DIRS})
@@ -1213,7 +1214,7 @@ if(NOT BIC_ENABLE_LIBJPEG_TURBO)
 
         internal_add_library(jpeg "${BIC_INTERNAL_LIBJPEG_SOURCES}" "${BIC_INTERNAL_LIBJPEG_HEADERS}" "${BIC_INTERNAL_LIBJPEG_INSTALLHEADERS}" "${BIC_INTERNAL_LIBJPEG_LINK_LIBRARIES}")
 
-        set(JPEG_LIBRARIES "${LIBRARY_OUTPUT_PATH}/${CMAKE_LIBRARY_PREFIX}jpeg${CMAKE_LIBRARY_SUFFIX}")
+        set(JPEG_LIBRARIES jpeg)
     elseif(LIBBIOIMAGE)
         find_package(JPEG REQUIRED)
         include_directories(${JPEG_INCLUDE_DIR})
@@ -1259,7 +1260,7 @@ if(BIC_INTERNAL_LIBRAW)
     internal_add_library(raw "${BIC_INTERNAL_LIBRAW_SOURCES}" "${BIC_INTERNAL_LIBRAW_HEADERS}" "${BIC_INTERNAL_LIBRAW_INSTALLHEADERS}" "${BIC_INTERNAL_LIBRAW_LINK_LIBRARIES}")
 
     # TODO FIXME: merge this linker command with the automatic system library detection below:
-    set(LibRaw_LIBRARIES "${LIBRARY_OUTPUT_PATH}/${CMAKE_LIBRARY_PREFIX}raw${CMAKE_LIBRARY_SUFFIX}")
+    set(LibRaw_LIBRARIES raw)
 elseif(LIBBIOIMAGE)
     find_package(LibRaw ${BIC_LIBRAW_REQUIRED_VERSION} REQUIRED)
     include_directories(${LibRaw_INCLUDE_DIR})
@@ -1360,7 +1361,7 @@ if(BIC_INTERNAL_LIBTIFF)
     #set(BIC_INTERNAL_LIBTIFF_LINK_LIBRARIES ${BIC_INTERNAL_LIBTIFF_LINK_LIBRARIES} jpeg lzma z)
     internal_add_library(tiff "${BIC_INTERNAL_LIBTIFF_SOURCES}" "${BIC_INTERNAL_LIBTIFF_HEADERS}" "${BIC_INTERNAL_LIBTIFF_INSTALLHEADERS}" "${BIC_INTERNAL_LIBTIFF_LINK_LIBRARIES}")
 
-    set(TIFF_LIBRARIES "${LIBRARY_OUTPUT_PATH}/${CMAKE_LIBRARY_PREFIX}tiff${CMAKE_LIBRARY_SUFFIX}")
+    set(TIFF_LIBRARIES tiff)
 elseif(LIBBIOIMAGE OR BIC_INTERNAL_LIBGEOTIFF)
     find_package(TIFF ${BIC_LIBTIFF_REQUIRED_VERSION} REQUIRED)
     include_directories(${TIFF_INCLUDE_DIR})
@@ -1549,7 +1550,7 @@ if(BIC_INTERNAL_PROJ4)
 
     internal_add_library(proj "${BIC_INTERNAL_PROJ4_SOURCES}" "${BIC_INTERNAL_PROJ4_HEADERS}" "${BIC_INTERNAL_PROJ4_INSTALLHEADERS}" "${BIC_INTERNAL_PROJ4_LINK_LIBRARIES}")
 
-    set(PROJ4_LIBRARIES "${LIBRARY_OUTPUT_PATH}/${CMAKE_LIBRARY_PREFIX}proj${CMAKE_LIBRARY_SUFFIX}")
+    set(PROJ4_LIBRARIES proj)
 elseif(LIBBIOIMAGE OR BIC_INTERNAL_LIBGEOTIFF)
     find_package(PROJ4 ${BIC_PROJ4_REQUIRED_VERSION} REQUIRED)
 endif()
@@ -1608,14 +1609,8 @@ if(BIC_INTERNAL_LIBGEOTIFF)
     set(BIC_INTERNAL_LIBGEOTIFF_LINK_LIBRARIES ${BIC_INTERNAL_LIBGEOTIFF_LINK_LIBRARIES} ${PROJ4_LIBRARIES} ${TIFF_LIBRARIES})
 
     internal_add_library(geotiff "${BIC_INTERNAL_LIBGEOTIFF_SOURCES}" "${BIC_INTERNAL_LIBGEOTIFF_HEADERS}" "${BIC_INTERNAL_LIBGEOTIFF_INSTALLHEADERS}" "${BIC_INTERNAL_LIBGEOTIFF_LINK_LIBRARIES}")
-    if(BIC_INTERNAL_PROJ4)
-        add_dependencies(geotiff proj)
-    endif()
-    if(BIC_INTERNAL_LIBTIFF)
-        add_dependencies(geotiff tiff)
-    endif()
 
-    set(GEOTIFF_LIBRARIES "${LIBRARY_OUTPUT_PATH}/${CMAKE_LIBRARY_PREFIX}geotiff${CMAKE_LIBRARY_SUFFIX}")
+    set(GEOTIFF_LIBRARIES geotiff)
 elseif(LIBBIOIMAGE)
     find_package(GeoTIFF REQUIRED)
     include_directories(${GEOTIFF_INCLUDE_DIR})
@@ -1658,7 +1653,7 @@ if(BIC_INTERNAL_LIBPNG)
 
     internal_add_library(png "${BIC_INTERNAL_PNG_SOURCES}" "${BIC_INTERNAL_PNG_HEADERS}" "${BIC_INTERNAL_PNG_INSTALLHEADERS}" "${BIC_INTERNAL_PNG_LINK_LIBRARIES}")
 
-    set(PNG_LIBRARY "${LIBRARY_OUTPUT_PATH}/${CMAKE_LIBRARY_PREFIX}png${CMAKE_LIBRARY_SUFFIX}")
+    set(PNG_LIBRARY png)
 elseif(LIBBIOIMAGE)
     find_package(PNG REQUIRED)
     if(NOT "${PNG_VERSION_STRING}" MATCHES "^1.[4-9]|^[2.9]")
@@ -1827,7 +1822,7 @@ if(BIC_INTERNAL_EXIV2)
     internal_add_library(exiv2 "${BIC_INTERNAL_EXIV2_SOURCES}" "${BIC_INTERNAL_EXIV2_HEADERS}" "${BIC_INTERNAL_EXIV2_INSTALLHEADERS}" "${BIC_INTERNAL_EXIV2_LINK_LIBRARIES}")
     target_compile_definitions(exiv2 PUBLIC SUPPRESS_WARNINGS _FILE_OFFSET_BITS=64 EXV_BUILDING_LIB=1 DLL_EXPORT)
 
-    set(EXIV2_LIBRARIES "${LIBRARY_OUTPUT_PATH}/${CMAKE_LIBRARY_PREFIX}exiv2${CMAKE_LIBRARY_SUFFIX}")
+    set(EXIV2_LIBRARIES exiv2)
 elseif(LIBBIOIMAGE)
     find_package(Exiv2 ${BIC_EXIV2_REQUIRED_VERSION} REQUIRED)
     include_directories(${EXIV2_INCLUDE_DIR})
@@ -2019,10 +2014,6 @@ if(LIBBIOIMAGE)
     # linking the library against its dependencies is not required
     # on all architectures, but it is required i.e. on Windows:
     target_link_libraries(bioimage ${LINK_LIBRARIES})
-
- 
-    # Add all targets to the build-tree export set
-    export(TARGETS bioimage FILE BioImageTargets.cmake)
 
     # Export the package for use from the build-tree
     # (this registers the build-tree with a global CMake-registry)
