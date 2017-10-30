@@ -1,0 +1,17 @@
+# - Config file for the BIOIMAGE package
+# It defines the following variables
+#  BIOIMAGE_INCLUDE_DIRS - include directories for BIOIMAGE
+#  BIOIMAGE_LIBRARIES    - libraries to link against
+#  BIOIMAGE_EXECUTABLE   - the bar executable
+ 
+# Compute paths
+get_filename_component(BIOIMAGE_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
+set(BIOIMAGE_INCLUDE_DIRS "@CONF_INCLUDE_DIRS@")
+ 
+# Our library dependencies (contains definitions for IMPORTED targets)
+if(NOT TARGET foo AND NOT BIOIMAGE_BINARY_DIR)
+  include("${BIOIMAGE_CMAKE_DIR}/BioImageTargets.cmake")
+endif()
+ 
+# These are IMPORTED targets created by BioImageTargets.cmake
+set(BIOIMAGE_LIBRARIES bioimage)

@@ -211,7 +211,7 @@ endif()
 
 
 # set default CXX flags:
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -pedantic -Wextra")
 
 # Set required compiler parameters:
@@ -390,12 +390,12 @@ macro(internal_add_library NAME SOURCES HEADERS INSTALLHEADERS LINK_LIBRARIES)
     set_property(TARGET ${NAME} PROPERTY POSITION_INDEPENDENT_CODE ON)
 
     # allow thirdparty libraries to have slightly less strict compiler warnings:
-    target_compile_options(${NAME} PUBLIC -Wno-sign-compare -Wno-unused-variable -Wno-unused-parameter -Wno-unused-but-set-variable -Wno-unused-function -Wno-misleading-indentation)
+    #target_compile_options(${NAME} PUBLIC -Wno-sign-compare -Wno-unused-variable -Wno-unused-parameter -Wno-unused-but-set-variable -Wno-unused-function -Wno-misleading-indentation)
 
     target_link_libraries(${NAME} ${LINK_LIBRARIES})
 
     # Install library and headers
-    install(TARGETS ${NAME} DESTINATION lib)
+    install(TARGETS ${NAME} EXPORT BioImageTargets DESTINATION lib)
     install(FILES ${INSTALLHEADERS} DESTINATION include)
 endmacro()
 
@@ -693,7 +693,7 @@ if(LIBBIOIMAGE)
     endif()
 
     # Install library and headers
-    install(TARGETS bioimage DESTINATION lib)
+    install(TARGETS bioimage EXPORT BioImageTargets DESTINATION lib)
     install(FILES ${INSTALLHEADERS} DESTINATION include)
 endif()
 
@@ -2019,6 +2019,39 @@ if(LIBBIOIMAGE)
     # linking the library against its dependencies is not required
     # on all architectures, but it is required i.e. on Windows:
     target_link_libraries(bioimage ${LINK_LIBRARIES})
+
+ 
+    # Add all targets to the build-tree export set
+    export(TARGETS bioimage FILE BioImageTargets.cmake)
+
+    # Export the package for use from the build-tree
+    # (this registers the build-tree with a global CMake-registry)
+    export(PACKAGE bioimage)
+
+    # Create the BioImageConfig.cmake and FooBarConfigVersion files
+    #file(RELATIVE_PATH REL_INCLUDE_DIR "${CMAKE_INSTALL_PREFIX}" include)
+    # ... for the build tree
+    set(CONF_INCLUDE_DIRS "${PROJECT_SOURCE_DIR}" "${PROJECT_BINARY_DIR}")
+    configure_file(BioImageConfig.cmake.in
+    "${PROJECT_BINARY_DIR}/BioImageConfig.cmake" @ONLY)
+    # ... for the install tree
+    #set(CONF_INCLUDE_DIRS "\${FOOBAR_CMAKE_DIR}/${REL_INCLUDE_DIR}")
+    configure_file(BioImageConfig.cmake.in
+    "${PROJECT_BINARY_DIR}/cmake/BioImageConfig.cmake" @ONLY)
+    # ... for both
+#    configure_file(FooBarConfigVersion.cmake.in
+#    "${PROJECT_BINARY_DIR}/FooBarConfigVersion.cmake" @ONLY)
+
+    # Install the BioImageConfig.cmake and FooBarConfigVersion.cmake
+    install(FILES
+    "${PROJECT_BINARY_DIR}/cmake/BioImageConfig.cmake" #    "${PROJECT_BINARY_DIR}/FooBarConfigVersion.cmake"
+    DESTINATION "${CMAKE_INSTALL_PREFIX}/cmake" COMPONENT dev)
+
+    # Install the export set for use with the install-tree
+    install(EXPORT BioImageTargets DESTINATION
+    "${CMAKE_INSTALL_PREFIX}/cmake" COMPONENT dev)
+
+
 endif()
 
 
