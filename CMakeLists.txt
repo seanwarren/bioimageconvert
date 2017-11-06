@@ -350,9 +350,6 @@ endif()
 if(WIN32 AND NOT MINGW)
     add_definitions(-DHAVE_IO_H)
 endif()
-if(APPLE)
-    add_definitions(-DWORDS_BIGENDIAN)
-endif()
 
 
 #---------------------------------------------------------------------
