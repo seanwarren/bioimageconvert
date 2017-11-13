@@ -9,7 +9,7 @@ get_filename_component(BIOIMAGE_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
 set(BIOIMAGE_INCLUDE_DIRS "@CONF_INCLUDE_DIRS@")
  
 # Our library dependencies (contains definitions for IMPORTED targets)
-if(NOT TARGET foo AND NOT BIOIMAGE_BINARY_DIR)
+if(NOT TARGET BioImage AND NOT BIOIMAGE_BINARY_DIR)
   include("${BIOIMAGE_CMAKE_DIR}/BioImageTargets.cmake")
 endif()
  

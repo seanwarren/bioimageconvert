@@ -35,10 +35,19 @@ FIND_LIBRARY(LibRaw_LIBRARIES NAMES raw
              ${PC_LIBRAW_LIBDIR}
              ${PC_LIBRAW_LIBRARY_DIRS})
 
+FIND_LIBRARY(LibRaw_LIBRARIES_DEBUG NAMES rawd
+             HINTS
+             ${PC_LIBRAW_LIBDIR}
+             ${PC_LIBRAW_LIBRARY_DIRS})
+
 FIND_LIBRARY(LibRaw_r_LIBRARIES NAMES raw_r
              HINTS
              ${PC_LIBRAW_R_LIBDIR}
              ${PC_LIBRAW_R_LIBRARY_DIRS})
+
+IF(EXISTS "${LibRaw_LIBRARIES_DEBUG}")
+    set(LibRaw_LIBRARIES optimized;${LibRaw_LIBRARIES};debug;${LibRaw_LIBRARIES_DEBUG})
+ENDIF()
 
 IF(LibRaw_INCLUDE_DIR)
     FILE(READ ${LibRaw_INCLUDE_DIR}/libraw_version.h _libraw_version_content)

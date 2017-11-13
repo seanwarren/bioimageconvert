@@ -24,6 +24,16 @@ find_library(LibJpegTurbo_LIBRARY
   PATHS ${LibJpegTurbo_PKGCONF_LIBRARY_DIRS} /opt/libjpeg-turbo/lib $ENV{LIBJPEGTURBO_ROOT}/lib
 )
 
+# Finally the library itself
+find_library(LibJpegTurbo_LIBRARY_DEBUG
+NAMES libturbojpegd.so libturbojpegd.so.0 libturbojpegd.a turbojpegd.lib libturbojpegd.dylib
+PATHS ${LibJpegTurbo_PKGCONF_LIBRARY_DIRS} /opt/libjpeg-turbo/lib $ENV{LIBJPEGTURBO_ROOT}/lib
+)
+
+IF(EXISTS "${LibJpegTurbo_LIBRARY_DEBUG}")
+  set(LibJpegTurbo_LIBRARY optimized;${LibJpegTurbo_LIBRARY};debug;${LibJpegTurbo_LIBRARY_DEBUG})
+ENDIF()
+
 # Set the include dir variables and the libraries and let libfind_process do the rest.
 # NOTE: Singular variables for this library, plural for libraries this this lib depends on.
 set(LibJpegTurbo_PROCESS_INCLUDES LibJpegTurbo_INCLUDE_DIR)

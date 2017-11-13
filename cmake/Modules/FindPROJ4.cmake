@@ -22,6 +22,7 @@ FIND_PATH(PROJ4_INCLUDE_DIR "proj_api.h"
           /opt/include)
 
 SET(PROJ4_NAMES Proj4 proj proj_4_8 proj_4_9)
+SET(PROJ4_NAMES_DEBUG Proj4d projd proj_4_8d proj_4_9d)
 
 FIND_LIBRARY(PROJ4_LIBRARY NAMES ${PROJ4_NAMES}
              PATHS
@@ -35,6 +36,23 @@ FIND_LIBRARY(PROJ4_LIBRARY NAMES ${PROJ4_NAMES}
              /opt/csw
              /opt
              PATH_SUFFIXES lib lib64)
+
+FIND_LIBRARY(PROJ4_LIBRARY_DEBUG NAMES ${PROJ4_NAMES_DEBUG}
+             PATHS
+             $ENV{EXTERNLIBS}/proj4
+             ~/Library/Frameworks
+             /Library/Frameworks
+             /usr/local
+             /usr
+             /sw
+             /opt/local
+             /opt/csw
+             /opt
+             PATH_SUFFIXES lib lib64)
+
+IF(EXISTS "${PROJ4_LIBRARY_DEBUG}")
+    set(PROJ4_LIBRARY optimized;${PROJ4_LIBRARY};debug;${PROJ4_LIBRARY_DEBUG})
+ENDIF()
 
 IF(PROJ4_INCLUDE_DIR)
     FILE(READ ${PROJ4_INCLUDE_DIR}/proj_api.h _proj_api_content)
@@ -59,7 +77,7 @@ SET(PROJ4_LIBRARIES ${PROJ4_LIBRARY})
 
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(PROJ4 DEFAULT_MSG PROJ4_LIBRARY PROJ4_INCLUDE_DIR)
 
-MARK_AS_ADVANCED(PROJ4_LIBRARY PROJ4_INCLUDE_DIR)
+MARK_AS_ADVANCED(PROJ4_LIBRARY PROJ4_LIBRARY_DEBUG PROJ4_INCLUDE_DIR)
 
 IF(PROJ4_FOUND)
     SET(PROJ4_INCLUDE_DIRS ${PROJ4_INCLUDE_DIR})
