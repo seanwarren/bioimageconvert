@@ -65,7 +65,10 @@ endif()
 if(POLICY CMP0060)
     cmake_policy(SET CMP0060 NEW)
 endif()
-
+# Make IMPORTED_LINK_INTERFACE_LIBRARIES per configuration when exported
+if(POLICY CMP0022)
+    cmake_policy(SET CMP0022 OLD)
+endif()
 
 #---------------------------------------------------------------------
 # Set project information
